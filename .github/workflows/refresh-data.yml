@@ -1,0 +1,31 @@
+name: Refresh hero data
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: refresh-data
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run fetch-data -w services/engine -- --pages 300
+      - name: Commit the new snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add services/engine/data/snapshot.json
+          git diff --cached --quiet || git commit -m "Refresh hero data"
+          git push
