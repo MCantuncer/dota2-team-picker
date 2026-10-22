@@ -2,5 +2,12 @@
   "name": "@dota2-team-picker/accounts",
   "version": "0.1.0",
   "private": true,
-  "description": "User accounts on Supabase: database schema, Steam login and profile sync."
+  "description": "User accounts on Supabase: database schema, Steam login and profile sync.",
+  "scripts": {
+    "typecheck": "deno check --node-modules-dir=none --no-lock supabase/functions",
+    "test": "deno test --node-modules-dir=none --no-lock supabase/functions"
+  },
+  "devDependencies": {
+    "deno": "^2.0.0"
+  }
 }
