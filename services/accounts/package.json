@@ -1,0 +1,6 @@
+{
+  "name": "@dota2-team-picker/accounts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "User accounts on Supabase: database schema, Steam login and profile sync."
+}

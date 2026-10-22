@@ -13,6 +13,7 @@ Each service is its own folder under `services/`, set up as an npm workspace.
 | Service                               | What it does                                             |
 | ------------------------------------- | -------------------------------------------------------- |
 | [`services/engine`](services/engine)  | Downloads hero data from OpenDota daily and scores picks.|
+| [`services/accounts`](services/accounts) | User accounts on Supabase: profiles and favorite heroes. |
 
 ## Development
 
