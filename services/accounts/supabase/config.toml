@@ -245,9 +245,14 @@ otp_expiry = 3600
 # sender_name = "Admin"
 
 # Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# Team invites (team-invite function). The links go through the website's /auth/confirm page.
+[auth.email.template.invite]
+subject = "Join your team on Dota 2 Team Picker"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.magic_link]
+subject = "You've been invited to a team"
+content_path = "./supabase/templates/magic_link.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
@@ -416,4 +421,8 @@ enabled = true
 
 # Steam sends the browser here without a Supabase token.
 [functions.steam-login]
+verify_jwt = false
+
+# Steam's callback carries no user token; the function checks the token itself on POST.
+[functions.steam-link]
 verify_jwt = false
