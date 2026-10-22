@@ -10,7 +10,8 @@
  * swaps that token for a normal Supabase session.
  *
  * Steam users have no real email, so each gets a placeholder address
- * <SteamID64>@steam.invalid that never receives mail.
+ * <SteamID64>@steam.invalid that never receives mail. A user who signed up
+ * by email and linked Steam later (steam-link) signs in to that account.
  */
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { steamLoginUrl, verifySteamLogin } from "../_shared/steam.ts";
@@ -41,13 +42,15 @@ Deno.serve(async (req) => {
     const steamId = await verifySteamLogin(url, callback);
     if (!steamId) return failed("Steam did not confirm the sign-in");
 
-    const email = `${steamId}@steam.invalid`;
-    const created = await admin.auth.admin.createUser({
-      email,
-      email_confirm: true,
-      app_metadata: { provider: "steam", providers: ["steam"], steam_id: steamId },
-    });
-    if (created.error && created.error.code !== "email_exists") throw created.error;
+    const email = (await linkedEmail(steamId)) ?? `${steamId}@steam.invalid`;
+    if (email.endsWith("@steam.invalid")) {
+      const created = await admin.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        app_metadata: { provider: "steam", providers: ["steam"], steam_id: steamId },
+      });
+      if (created.error && created.error.code !== "email_exists") throw created.error;
+    }
 
     const link = await admin.auth.admin.generateLink({ type: "magiclink", email });
     if (link.error) throw link.error;
@@ -68,6 +71,14 @@ Deno.serve(async (req) => {
     return failed("Steam sign-in failed");
   }
 });
+
+/** The email of a user who signed up by email and linked this Steam account later, if any. */
+async function linkedEmail(steamId: string): Promise<string | null> {
+  const { data: profile } = await admin.from("profiles").select("id").eq("steam_id", steamId).maybeSingle();
+  if (!profile) return null;
+  const { data } = await admin.auth.admin.getUserById(profile.id);
+  return data.user?.email ?? null;
+}
 
 /** Only allow paths on our own site, so the login cannot be used to redirect elsewhere. */
 function safeNext(next: string | null): string {
