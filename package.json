@@ -1,0 +1,12 @@
+{
+  "name": "dota2-team-picker-backend",
+  "private": true,
+  "description": "Backend services for Dota 2 Team Picker.",
+  "workspaces": [
+    "services/*"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm test --workspaces"
+  }
+}

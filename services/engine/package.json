@@ -1,0 +1,19 @@
+{
+  "name": "@dota2-team-picker/engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Hero data download and pick scoring engine.",
+  "scripts": {
+    "fetch-data": "tsx src/data/fetch.ts",
+    "suggest": "tsx scripts/suggest.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0"
+  }
+}
