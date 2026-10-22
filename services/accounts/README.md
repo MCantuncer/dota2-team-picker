@@ -10,7 +10,8 @@ User accounts for the Dota 2 Team Picker, hosted on [Supabase](https://supabase.
 - **Profile sync** (`sync-profile` function): reads a Steam user's rank, name, picture and per-hero
   record from OpenDota.
 
-Every user can read and change only their own rows (row level security). Users can edit their
+Every user can read and change only their own rows (row level security), including the friends
+they add for Captain mode. Users can edit their
 name and picture; Steam and rank fields are written only by the server.
 
 ## Tables
@@ -19,6 +20,9 @@ name and picture; Steam and rank fields are written only by the server.
 | ----------------- | ------------------------------------------------------------------------------------------------- |
 | `profiles`        | `id`, `display_name`, `avatar_url`, `steam_id`, `rank_tier`, `hero_stats`, `synced_at`             |
 | `favorite_heroes` | `user_id`, `hero_id`                                                                              |
+| `friends`         | `id`, `owner_id`, `name`, `usual_position`: friends a captain drafts for, not logins             |
+| `friend_favorite_heroes` | `friend_id`, `hero_id`                                                                     |
+| `captain_lineups` | `owner_id`, `slots` (friend id per position, null = not a friend), `rank_bracket`                 |
 
 `rank_tier` is OpenDota's number: tens digit is the medal (1 Herald ... 8 Immortal), ones digit
 the star, so 54 is Legend 4. `rank_bracket(profiles)` returns just the medal, which is what the
