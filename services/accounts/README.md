@@ -51,7 +51,8 @@ Steam user. It refreshes at most every 10 minutes. Rank and hero record only sho
 
 **`team-invite`**: the captain's page calls `supabase.functions.invoke("team-invite", {body: {teamId,
 email}})`. It saves the invite and emails a link. A friend without an account gets the **Invite**
-email, one with an account gets the **Magic link** email. Both links open
+email, one with an account gets the **Magic link** email. Both name the captain and the team (the
+function puts them in the user's metadata, which the templates read), and both links open
 `<SITE_URL>/join/<invite id>`, where the friend picks a name and password and accepts.
 `get_team_invite(id)` returns what the join page shows; `accept_team_invite(id)` joins the team if
 the signed-in user's email is the invited one and the invite was sent in the last 7 days.
@@ -84,9 +85,26 @@ with Steam" opens the same account.
    a few per hour. Under **Authentication > Emails > SMTP Settings**, turn on custom SMTP. With a
    Gmail account: host `smtp.gmail.com`, port `465`, user your Gmail address, password a
    [Google app password](https://myaccount.google.com/apppasswords).
-5. Under **Authentication > Emails > Templates**, paste `supabase/templates/invite.html` into
-   **Invite user** and `supabase/templates/magic_link.html` into **Magic link**, with the subjects
-   from `supabase/config.toml`. Their links go through the website so it can sign the friend in.
+5. Under **Authentication > Emails > Templates**, set each template's **Subject** and paste its
+   file as the body (open the file, copy everything, paste over the old body, **Save changes**):
+
+   | Template             | Subject                                           | File                                    |
+   | -------------------- | ------------------------------------------------- | --------------------------------------- |
+   | Confirm signup       | Confirm your email for Dota 2 Team Picker         | `supabase/templates/confirmation.html`  |
+   | Invite user          | You're invited to a team on Dota 2 Team Picker    | `supabase/templates/invite.html`        |
+   | Magic link           | Your Dota 2 Team Picker link                      | `supabase/templates/magic_link.html`    |
+   | Change email address | Confirm your new email for Dota 2 Team Picker     | `supabase/templates/email_change.html`  |
+   | Reset password       | Reset your Dota 2 Team Picker password            | `supabase/templates/recovery.html`      |
+   | Reauthentication     | Your Dota 2 Team Picker verification code         | `supabase/templates/reauthentication.html` |
+
+   The invite, magic link and confirm signup links go through the website's `/auth/confirm` page,
+   so they work even when the email is opened on another device. The emails load the logo from
+   `<Site URL>/email/logo.png` (the website's `public/email/logo.png`) and say the link expires in
+   1 hour, which is the default **Email OTP Expiration**.
+
+   The templates are built from `supabase/emails/build.ts`: change that file, run
+   `npm run emails -w services/accounts`, and paste the changed files again. The tests fail if the
+   files and `build.ts` (or the subjects in `config.toml`) don't match.
 6. Deploy the functions and tell them where the website is:
 
    ```sh
