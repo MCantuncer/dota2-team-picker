@@ -3,6 +3,7 @@ import { NEED_LABELS, traitsOf, unmetNeeds } from "./traits";
 import {
   POSITIONS,
   type DraftInput,
+  type Position,
   type GamesWins,
   type HeroInfo,
   type ScoreBreakdown,
@@ -95,6 +96,27 @@ export class Engine {
     return (shrink(gw, expected, PRIOR_GAMES.matchup) - expected) * 100;
   }
 
+  /** Chance (0-1) that each enemy is one you face in lane when playing `pos`. */
+  laneChances(enemies: number[], pos: Position): number[] {
+    return guessEnemyPositions(enemies.map((e) => this.fit(e))).map((fit) =>
+      LANE_OPPONENTS[pos].reduce((s, p) => s + fit[p], 0),
+    );
+  }
+
+  /** Points for how natural the hero is in a position, 0 for an average fit. */
+  positionScore(id: number, pos: Position): number {
+    return WEIGHTS.positionFit * (Math.min(this.fit(id)[pos], 0.6) - 0.3);
+  }
+
+  /** Counter points against each enemy; likely lane opponents (from `laneChances`) count extra. */
+  counterEdges(id: number, enemies: number[], laneChance: number[]): { enemy: number; edge: number; lane: boolean }[] {
+    return enemies.map((enemy, i) => ({
+      enemy,
+      edge: this.matchupEdge(id, enemy) * (1 + WEIGHTS.laneOpponent * laneChance[i]!),
+      lane: laneChance[i]! > 0.5,
+    }));
+  }
+
   suggest(input: DraftInput): Suggestion[] {
     const pos = input.myPosition;
     const allyIds = input.allies.map((a) => a.heroId);
@@ -104,8 +126,7 @@ export class Engine {
     const earliness = Math.max(0, 1 - picksSoFar / 9);
     const favorites = new Set(input.favorites ?? []);
 
-    const enemyPositions = guessEnemyPositions(input.enemies.map((e) => this.fit(e)));
-    const laneChance = enemyPositions.map((fit) => LANE_OPPONENTS[pos].reduce((s, p) => s + fit[p], 0));
+    const laneChance = this.laneChances(input.enemies, pos);
 
     const allies = allyIds.map((id) => this.hero(id));
     const needs = unmetNeeds(allies);
@@ -126,20 +147,16 @@ export class Engine {
       const warnings: { text: string; value: number }[] = [];
 
       // Counters: how this hero does against the enemies already picked.
-      let counter = 0;
-      const edges = input.enemies.map((e, i) => {
-        const edge = this.matchupEdge(hero.id, e) * (1 + WEIGHTS.laneOpponent * laneChance[i]!);
-        counter += edge;
-        return { e, edge, lane: laneChance[i]! > 0.5 };
-      });
+      const edges = this.counterEdges(hero.id, input.enemies, laneChance);
+      const counter = edges.reduce((s, x) => s + x.edge, 0);
       const good = edges.filter((x) => x.edge >= 0.5).sort((a, b) => b.edge - a.edge);
       const bad = edges.filter((x) => x.edge <= -0.5).sort((a, b) => a.edge - b.edge);
       if (good.length) {
         const lane = good.some((x) => x.lane) ? " (including your likely lane opponent)" : "";
-        reasons.push({ text: `Strong against ${this.names(good.map((x) => x.e))}${lane}`, value: counter });
+        reasons.push({ text: `Strong against ${this.names(good.map((x) => x.enemy))}${lane}`, value: counter });
       }
       if (bad.length) {
-        warnings.push({ text: `Struggles against ${this.names(bad.map((x) => x.e))}`, value: -bad[0]!.edge });
+        warnings.push({ text: `Struggles against ${this.names(bad.map((x) => x.enemy))}`, value: -bad[0]!.edge });
       }
 
       // Synergy with the allies already picked.
@@ -157,7 +174,7 @@ export class Engine {
       else if (meta <= -2) warnings.push({ text: `Low win rate right now: ${(wr * 100).toFixed(1)}%${where}`, value: -meta });
 
       // Position fit.
-      const positionScore = WEIGHTS.positionFit * (Math.min(fit[pos], 0.6) - 0.3);
+      const positionScore = this.positionScore(hero.id, pos);
       if (fit[pos] >= 0.5) reasons.push({ text: `A natural pos ${pos} (${Math.round(fit[pos] * 100)}% of games)`, value: positionScore });
       else if (fit[pos] < 0.2) warnings.push({ text: `Rarely played as pos ${pos}`, value: -positionScore });
 
@@ -174,7 +191,7 @@ export class Engine {
       }
       const mine = input.personal?.[hero.id];
       if (mine && mine.games > 0) {
-        const personal = (shrink(mine, 0.5, PRIOR_GAMES.personal) - 0.5) * 100 * WEIGHTS.personal;
+        const personal = personalScore(mine);
         comfort += personal;
         const text = `You have won ${mine.wins} of ${mine.games} games on this hero`;
         if (personal >= 0.5) reasons.push({ text, value: personal });
@@ -223,11 +240,14 @@ export class Engine {
     );
   }
 
-  private names(ids: number[]): string {
+  names(ids: number[]): string {
     const names = ids.slice(0, 3).map((id) => this.hero(id).name);
     return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0]!;
   }
 }
+
+/** Points for the user's own record on a hero, after shrinking small samples. */
+export const personalScore = (mine: GamesWins) => (shrink(mine, 0.5, PRIOR_GAMES.personal) - 0.5) * 100 * WEIGHTS.personal;
 
 const mean = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0);
 const round = (x: number) => Math.round(x * 100) / 100;
