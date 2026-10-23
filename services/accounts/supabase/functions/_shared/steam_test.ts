@@ -1,5 +1,12 @@
 import { assertEquals } from "jsr:@std/assert@1";
-import { STEAM_OPENID, steamIdToAccountId, steamLoginUrl, verifySteamLogin } from "./steam.ts";
+import {
+  isSteamAvatar,
+  isSteamOnlyEmail,
+  STEAM_OPENID,
+  steamIdToAccountId,
+  steamLoginUrl,
+  verifySteamLogin,
+} from "./steam.ts";
 
 const RETURN_TO = "https://ref.supabase.co/functions/v1/steam-login/callback?next=%2Fprofile";
 const STEAM_ID = "76561198047011640";
@@ -68,4 +75,19 @@ Deno.test("rejects assertions meant for another site or from another provider", 
 
 Deno.test("converts SteamID64 to account id", () => {
   assertEquals(steamIdToAccountId(STEAM_ID), 86745912);
+});
+
+Deno.test("Steam-only accounts are the ones with the placeholder email", () => {
+  assertEquals(isSteamOnlyEmail("76561198047011640@steam.invalid"), true);
+  assertEquals(isSteamOnlyEmail(undefined), true);
+  assertEquals(isSteamOnlyEmail("can@example.com"), false);
+});
+
+Deno.test("recognises pictures served by Steam", () => {
+  assertEquals(isSteamAvatar("https://avatars.steamstatic.com/a_full.jpg"), true);
+  assertEquals(isSteamAvatar("https://steamcdn-a.akamaihd.net/a.jpg"), true);
+  assertEquals(isSteamAvatar("https://evil.akamaihd.net/a.jpg"), false);
+  assertEquals(isSteamAvatar("https://example.com/steamstatic.com.jpg"), false);
+  assertEquals(isSteamAvatar("not a url"), false);
+  assertEquals(isSteamAvatar(null), false);
 });

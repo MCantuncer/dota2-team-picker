@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
 
   const { data: profile, error } = await admin
     .from("profiles")
-    .select("steam_id, display_name, avatar_url, rank_tier, synced_at")
+    .select("steam_id, display_name, avatar_url, steam_name, rank_tier, synced_at")
     .eq("id", auth.user.id)
     .single();
   if (error) return json({ error: "Profile not found" }, 404);
