@@ -10,6 +10,10 @@
  * the link lands on /join/<invite id>, where they finish a short sign up and
  * accept. Sending again for the same email re-sends the link.
  *
+ * Only captains listed in the CAPTAIN_USER_IDS secret (comma separated
+ * Supabase user ids) may send, at most 30 emails a day each and one per
+ * address per minute, so the sender can't be used to spam people.
+ *
  * The website calls it with supabase.functions.invoke("team-invite", {body}).
  */
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -17,6 +21,11 @@ import { corsHeaders, json } from "../_shared/cors.ts";
 
 const SITE_URL = (Deno.env.get("SITE_URL") ?? "http://localhost:3000").replace(/\/$/, "");
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Unset means nobody may send, so a missing setting fails closed. */
+const CAPTAINS = new Set((Deno.env.get("CAPTAIN_USER_IDS") ?? "").split(",").map((id) => id.trim()).filter(Boolean));
+const DAILY_LIMIT = 30;
+const RESEND_AFTER_MS = 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -29,6 +38,7 @@ Deno.serve(async (req) => {
   const token = req.headers.get("Authorization")?.replace(/^Bearer /, "");
   const { data: auth } = token ? await admin.auth.getUser(token) : { data: { user: null } };
   if (!auth.user) return json({ error: "Not signed in" }, 401);
+  if (!CAPTAINS.has(auth.user.id)) return json({ error: "Only captains can send invites" }, 403);
 
   const body = await req.json().catch(() => ({}));
   const teamId = typeof body.teamId === "string" ? body.teamId : "";
@@ -43,10 +53,24 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (!team) return json({ error: "Team not found" }, 404);
 
+  const { data: teams } = await admin.from("teams").select("id").eq("owner_id", auth.user.id);
+  const { data: recent } = await admin
+    .from("team_invites")
+    .select("team_id, email, sent_at")
+    .in("team_id", (teams ?? []).map((t) => t.id))
+    .gte("sent_at", new Date(Date.now() - DAY_MS).toISOString());
+  if ((recent ?? []).length >= DAILY_LIMIT) {
+    return json({ error: `You can send ${DAILY_LIMIT} invites a day. Try again tomorrow.` }, 429);
+  }
+  const last = (recent ?? []).find((r) => r.team_id === team.id && r.email === email);
+  if (last && Date.now() - Date.parse(last.sent_at) < RESEND_AFTER_MS) {
+    return json({ error: "Invite just sent. Wait a minute before sending it again." }, 429);
+  }
+
   const { data: invite, error } = await admin
     .from("team_invites")
-    .upsert({ team_id: team.id, email }, { onConflict: "team_id,email" })
-    .select("id, email, created_at, accepted_at")
+    .upsert({ team_id: team.id, email, sent_at: new Date().toISOString() }, { onConflict: "team_id,email" })
+    .select("id, email, created_at, sent_at, accepted_at")
     .single();
   if (error) {
     console.error("Saving invite failed", error);
