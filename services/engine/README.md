@@ -57,8 +57,9 @@ Each slot is a position, a colon and that player's favorite heroes split by `|`.
 hero that is already picked. Positions left out are planned without a player.
 
 1. Every open slot gets its 10 best candidates on their own: counters against the known enemies,
-   meta, position fit and comfort. Heroes from the player's pool get +5, so a hero from outside
-   the pool only makes the plan when it is clearly better.
+   meta, position fit and comfort. Heroes from the player's pool get +8, so a hero from outside
+   the pool only makes the plan when it is clearly better. Outside the pool, only heroes played
+   in that position at least 30% of the time are considered.
 2. Every combination of candidates is tried. The team score adds half of each pair's synergy
    (a team has 10 pairs, and adding them in full lets noisy pairs take over) and takes points off
    for each team need the five leave uncovered.

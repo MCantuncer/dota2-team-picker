@@ -75,7 +75,7 @@ const WEIGHTS = {
    * percent better on heroes they know, and the plan should be built around
    * them, so a hero from outside the pool only makes it when clearly better.
    */
-  inPool: 5,
+  inPool: 8,
   /**
    * Share of each pair's synergy that counts. A team has 10 pairs and their
    * edges overlap, so adding them all in full overstates synergy and lets
@@ -99,8 +99,11 @@ const MISSING_LABELS: Record<Need, string> = {
 
 /** Candidates kept per open slot before trying combinations. 10^5 combinations at most. */
 const CANDIDATES = 10;
-/** Heroes played in a position less often than this are not planned for it, unless in the pool. */
-const MIN_POSITION_FIT = 0.15;
+/**
+ * Heroes played in a position less often than this are not planned for it, unless in the pool.
+ * Stricter than for single picks, so the plan sticks to heroes clearly at home in each role.
+ */
+const MIN_POSITION_FIT = 0.3;
 
 interface Candidate {
   hero: HeroInfo;
