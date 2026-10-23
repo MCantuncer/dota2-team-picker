@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { countMatch, decayCounts, laneRolesDue } from "../src/data/fetch";
+import { dailyPath } from "../src/data/upload";
 import type { Snapshot } from "../src/engine/types";
 
 const empty = (): Snapshot => ({ generatedAt: "", heroes: {}, bracketStats: {}, matchups: {}, synergy: {}, laneRoles: {} });
@@ -55,5 +56,11 @@ describe("laneRolesDue", () => {
     expect(laneRolesDue(data, new Date("2026-10-26T00:00:00Z"))).toBe(false);
     expect(laneRolesDue(data, new Date("2026-10-27T00:00:00Z"))).toBe(true);
     expect(laneRolesDue(empty(), new Date())).toBe(true);
+  });
+});
+
+describe("dailyPath", () => {
+  it("names the daily copy after the day the data was made", () => {
+    expect(dailyPath({ ...empty(), generatedAt: "2026-10-23T09:06:00.000Z" })).toBe("daily/2026-10-23.json");
   });
 });
