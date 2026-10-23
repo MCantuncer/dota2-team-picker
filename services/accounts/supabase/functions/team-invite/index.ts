@@ -8,7 +8,8 @@
  * without an account gets Supabase's invite email, which signs them in on
  * first click; a friend who already has one gets a sign-in link. Either way
  * the link lands on /join/<invite id>, where they finish a short sign up and
- * accept. Sending again for the same email re-sends the link.
+ * accept. Sending again for the same email re-sends the link. Both emails name
+ * the captain and the team (see supabase/templates).
  *
  * Only captains listed in the CAPTAIN_USER_IDS secret (comma separated
  * Supabase user ids) may send, at most 30 emails a day each and one per
@@ -80,19 +81,29 @@ Deno.serve(async (req) => {
   const { data: owner } = await admin.from("profiles").select("display_name").eq("id", auth.user.id).single();
   const captain = owner?.display_name ?? "Your captain";
   const redirectTo = `${SITE_URL}/auth/confirm?next=${encodeURIComponent(`/join/${invite.id}`)}`;
-  const sent = await admin.auth.admin.inviteUserByEmail(email, {
-    redirectTo,
-    data: { team_name: team.name, captain_name: captain },
-  });
+  // The email templates read these from the user's metadata ({{ .Data.team_name }}), so both the
+  // invite and the sign-in email say who invited them and to which team.
+  const details = { team_name: team.name, captain_name: captain };
+  const sent = await admin.auth.admin.inviteUserByEmail(email, { redirectTo, data: details });
   if (sent.error?.code === "email_exists") {
-    // Already has an account: send a sign-in link that lands on the same join page.
+    // Already has an account: send a sign-in link that lands on the same join page. The invite
+    // details are set just for this email and removed after, so a later sign-in email stays plain.
+    const { data: userId } = await admin.rpc("user_id_by_email", { address: email });
+    if (userId) await setInviteDetails(userId, details);
     const otp = await admin.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo, shouldCreateUser: false } });
+    if (userId) await setInviteDetails(userId, { team_name: null, captain_name: null });
     if (otp.error) return failed(otp.error);
   } else if (sent.error) {
     return failed(sent.error);
   }
   return json(invite);
 });
+
+/** Merges into user_metadata; null removes a key. A failure only makes the email less specific. */
+async function setInviteDetails(userId: string, details: Record<string, string | null>) {
+  const { error } = await admin.auth.admin.updateUserById(userId, { user_metadata: details });
+  if (error) console.error("Updating invite details failed", error);
+}
 
 function failed(err: unknown): Response {
   console.error("Sending invite email failed", err);
