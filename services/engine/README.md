@@ -44,6 +44,29 @@ Every part of the score is in win-rate percentage points, so `+2.0` roughly mean
 Small samples are pulled toward the expected value, so a 3-0 matchup does not look like a sure win.
 The weights live at the top of [`src/engine/score.ts`](src/engine/score.ts).
 
+## WCST team plan
+
+WCST (Wombo-Combo Super Team) plans all five heroes for a Captain mode team at once, and
+re-plans the open slots every time a hero is picked.
+
+```sh
+npm run plan -w services/engine -- --slots "1:=Juggernaut,2:Storm Spirit|Puck,3:Mars|Axe,5:=Dazzle" --enemies "Pudge,Anti-Mage"
+```
+
+Each slot is a position, a colon and that player's favorite heroes split by `|`. Put `=` before a
+hero that is already picked. Positions left out are planned without a player.
+
+1. Every open slot gets its 10 best candidates on their own: counters against the known enemies,
+   meta, position fit and comfort. Heroes from the player's pool get +5, so a hero from outside
+   the pool only makes the plan when it is clearly better.
+2. Every combination of candidates is tried. The team score adds half of each pair's synergy
+   (a team has 10 pairs, and adding them in full lets noisy pairs take over) and takes points off
+   for each team need the five leave uncovered.
+3. Each open slot also gets 2 backups, with how much the team score drops if one is used instead.
+
+In code: `planTeam(engine, { slots, enemies, bans, rankBracket })` from
+[`src/engine/plan.ts`](src/engine/plan.ts).
+
 ## Data
 
 `npm run fetch-data` downloads data from the free [OpenDota API](https://docs.opendota.com/)

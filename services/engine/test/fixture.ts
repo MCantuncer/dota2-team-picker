@@ -1,6 +1,6 @@
 import type { HeroInfo, Snapshot } from "../src/engine/types";
 
-/** A tiny hand-made snapshot: two mids, a carry, an offlaner and two supports. */
+/** A tiny hand-made snapshot: a carry, two mids, two offlaners and two supports. */
 export function fixture(): Snapshot {
   const hero = (id: number, name: string, roles: string[]): HeroInfo => ({
     id,
@@ -16,6 +16,7 @@ export function fixture(): Snapshot {
     hero(4, "Support Four", ["Support", "Disabler"]),
     hero(5, "Offlane Five", ["Initiator", "Durable", "Disabler"]),
     hero(6, "Support Six", ["Support", "Nuker"]),
+    hero(7, "Offlane Seven", ["Durable"]),
   ];
   const even = { picks: Array(8).fill(1000), wins: Array(8).fill(500) };
   return {
@@ -35,6 +36,7 @@ export function fixture(): Snapshot {
       4: { "1": 50, "3": 50 },
       5: { "3": 100 },
       6: { "1": 100 },
+      7: { "3": 100 },
     },
   };
 }
