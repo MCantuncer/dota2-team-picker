@@ -27,7 +27,7 @@ name and picture; Steam and rank fields are written only by the server.
 | `favorite_positions` | `user_id`, `position`                                                                         |
 | `teams`           | `id`, `owner_id` (the captain), `name`                                                            |
 | `team_members`    | `team_id`, `user_id`: added only by accepting an invite (`accept_team_invite`)                  |
-| `team_invites`    | `id` (the secret in the join link), `team_id`, `email`, `accepted_at`                            |
+| `team_invites`    | `id` (the secret in the join link), `team_id`, `email`, `sent_at` (expires 7 days later), `accepted_at` |
 | `team_lineups`    | `team_id`, `slots` (member id per position, null = not in the team), `rank_bracket`             |
 | `steam_link_requests` | pending Steam links, used only by `steam-link`                                               |
 
@@ -54,7 +54,10 @@ email}})`. It saves the invite and emails a link. A friend without an account ge
 email, one with an account gets the **Magic link** email. Both links open
 `<SITE_URL>/join/<invite id>`, where the friend picks a name and password and accepts.
 `get_team_invite(id)` returns what the join page shows; `accept_team_invite(id)` joins the team if
-the signed-in user's email is the invited one.
+the signed-in user's email is the invited one and the invite was sent in the last 7 days.
+
+Only users in the `CAPTAIN_USER_IDS` secret (comma-separated Supabase user ids) can send invites,
+at most 30 a day each and one per address per minute. With the secret unset, nobody can.
 
 **`steam-link`**: the profile page calls `supabase.functions.invoke("steam-link", {body: {next}})`
 and sends the browser to the returned Steam address. Steam sends it back to the function, which
@@ -88,6 +91,7 @@ with Steam" opens the same account.
 
    ```sh
    npx supabase secrets set SITE_URL=https://your-site.vercel.app
+   npx supabase secrets set CAPTAIN_USER_IDS=<your Supabase user id>
    npx supabase functions deploy
    ```
 
