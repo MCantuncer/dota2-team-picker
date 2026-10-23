@@ -22,6 +22,7 @@ export async function syncProfile(admin: SupabaseClient, userId: string, steamId
     hero_stats: player.heroStats,
     synced_at: new Date().toISOString(),
   };
+  if (player.name) update.steam_name = player.name.slice(0, 64);
   if (player.avatarUrl) update.avatar_url = player.avatarUrl;
   // New Steam users start with their SteamID as name; keep any name they chose.
   if (player.name && current.display_name === steamId) update.display_name = player.name.slice(0, 40);
@@ -30,7 +31,7 @@ export async function syncProfile(admin: SupabaseClient, userId: string, steamId
     .from("profiles")
     .update(update)
     .eq("id", userId)
-    .select("display_name, avatar_url, rank_tier, synced_at")
+    .select("display_name, avatar_url, steam_name, rank_tier, synced_at")
     .single();
   if (error) throw error;
   return data;

@@ -22,7 +22,7 @@ name and picture; Steam and rank fields are written only by the server.
 
 | Table             | Columns                                                                                           |
 | ----------------- | ------------------------------------------------------------------------------------------------- |
-| `profiles`        | `id`, `display_name`, `avatar_url`, `steam_id`, `rank_tier`, `hero_stats`, `synced_at`             |
+| `profiles`        | `id`, `display_name`, `avatar_url`, `steam_id`, `steam_name`, `rank_tier`, `hero_stats`, `synced_at` |
 | `favorite_heroes` | `user_id`, `position` (1–5, 0 = any position), `hero_id`                                     |
 | `favorite_positions` | `user_id`, `position`                                                                         |
 | `teams`           | `id`, `owner_id` (the captain), `name`                                                            |
@@ -65,6 +65,11 @@ and sends the browser to the returned Steam address. Steam sends it back to the 
 saves the SteamID on the user's profile, syncs it, and returns to `next?steam=linked` (or `taken`
 when another account already uses that Steam account, `failed`, `expired`). From then on "Sign in
 with Steam" opens the same account.
+
+**`steam-unlink`**: the My heroes page's **Disconnect** button calls it (POST, with the user's
+token). It removes the SteamID and everything copied from Steam and OpenDota (Steam name, rank,
+hero record, and the picture if it came from Steam). Accounts made by "Sign in with Steam" have no
+other way to sign in, so they get `409` and keep their Steam account.
 
 ## Setup
 

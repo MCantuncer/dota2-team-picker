@@ -62,3 +62,19 @@ export async function verifySteamLogin(
 export function steamIdToAccountId(steamId: string): number {
   return Number(BigInt(steamId) - STEAM_ID_BASE);
 }
+
+/** Users who signed in with Steam have this placeholder email and no other way to sign in. */
+export function isSteamOnlyEmail(email: string | undefined): boolean {
+  return !email || email.endsWith("@steam.invalid");
+}
+
+/** True for a picture served by Steam, which the profile sync copies from OpenDota. */
+export function isSteamAvatar(url: string | null): boolean {
+  if (!url) return false;
+  try {
+    const host = new URL(url).hostname;
+    return host === "steamstatic.com" || host.endsWith(".steamstatic.com") || host === "steamcdn-a.akamaihd.net";
+  } catch {
+    return false;
+  }
+}
