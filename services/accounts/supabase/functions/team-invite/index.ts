@@ -11,9 +11,9 @@
  * accept. Sending again for the same email re-sends the link. Both emails name
  * the captain and the team (see supabase/templates).
  *
- * Only captains listed in the CAPTAIN_USER_IDS secret (comma separated
- * Supabase user ids) may send, at most 30 emails a day each and one per
- * address per minute, so the sender can't be used to spam people.
+ * Only accounts whose profiles.user_type is captain or admin may send, at
+ * most 30 emails a day each and one per address per minute, so the sender
+ * can't be used to spam people.
  *
  * The website calls it with supabase.functions.invoke("team-invite", {body}).
  */
@@ -22,8 +22,7 @@ import { corsHeaders, json } from "../_shared/cors.ts";
 
 const SITE_URL = (Deno.env.get("SITE_URL") ?? "http://localhost:3000").replace(/\/$/, "");
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-/** Unset means nobody may send, so a missing setting fails closed. */
-const CAPTAINS = new Set((Deno.env.get("CAPTAIN_USER_IDS") ?? "").split(",").map((id) => id.trim()).filter(Boolean));
+const CAPTAIN_TYPES = ["captain", "admin"];
 const DAILY_LIMIT = 30;
 const RESEND_AFTER_MS = 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -39,7 +38,8 @@ Deno.serve(async (req) => {
   const token = req.headers.get("Authorization")?.replace(/^Bearer /, "");
   const { data: auth } = token ? await admin.auth.getUser(token) : { data: { user: null } };
   if (!auth.user) return json({ error: "Not signed in" }, 401);
-  if (!CAPTAINS.has(auth.user.id)) return json({ error: "Only captains can send invites" }, 403);
+  const { data: sender } = await admin.from("profiles").select("user_type").eq("id", auth.user.id).maybeSingle();
+  if (!CAPTAIN_TYPES.includes(sender?.user_type)) return json({ error: "Only captains can send invites" }, 403);
 
   const body = await req.json().catch(() => ({}));
   const teamId = typeof body.teamId === "string" ? body.teamId : "";

@@ -22,7 +22,7 @@ name and picture; Steam and rank fields are written only by the server.
 
 | Table             | Columns                                                                                           |
 | ----------------- | ------------------------------------------------------------------------------------------------- |
-| `profiles`        | `id`, `display_name`, `avatar_url`, `steam_id`, `steam_name`, `rank_tier`, `hero_stats`, `synced_at` |
+| `profiles`        | `id`, `display_name`, `avatar_url`, `user_type` (user, captain, admin), `steam_id`, `steam_name`, `rank_tier`, `hero_stats`, `synced_at` |
 | `favorite_heroes` | `user_id`, `position` (1–5, 0 = any position), `hero_id`                                     |
 | `favorite_positions` | `user_id`, `position`                                                                         |
 | `teams`           | `id`, `owner_id` (the captain), `name`                                                            |
@@ -57,8 +57,8 @@ function puts them in the user's metadata, which the templates read), and both l
 `get_team_invite(id)` returns what the join page shows; `accept_team_invite(id)` joins the team if
 the signed-in user's email is the invited one and the invite was sent in the last 7 days.
 
-Only users in the `CAPTAIN_USER_IDS` secret (comma-separated Supabase user ids) can send invites,
-at most 30 a day each and one per address per minute. With the secret unset, nobody can.
+Only captains can create teams and send invites, at most 30 a day each and one per address per
+minute. See **Account types** below.
 
 **`steam-link`**: the profile page calls `supabase.functions.invoke("steam-link", {body: {next}})`
 and sends the browser to the returned Steam address. Steam sends it back to the function, which
@@ -70,6 +70,16 @@ with Steam" opens the same account.
 token). It removes the SteamID and everything copied from Steam and OpenDota (Steam name, rank,
 hero record, and the picture if it came from Steam). Accounts made by "Sign in with Steam" have no
 other way to sign in, so they get `409` and keep their Steam account.
+
+## Account types
+
+`profiles.user_type` is `user` (the default), `captain` (can run Captain mode: create teams and
+send invites) or `admin` (captain plus the admin pages). Users can't change it; set it by hand in
+the dashboard's **SQL Editor**:
+
+```sql
+update public.profiles set user_type = 'admin' where id = '<user id from Authentication > Users>';
+```
 
 ## Setup
 
@@ -114,7 +124,6 @@ other way to sign in, so they get `409` and keep their Steam account.
 
    ```sh
    npx supabase secrets set SITE_URL=https://your-site.vercel.app
-   npx supabase secrets set CAPTAIN_USER_IDS=<your Supabase user id>
    npx supabase functions deploy
    ```
 
