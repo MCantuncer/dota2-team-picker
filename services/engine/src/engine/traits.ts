@@ -46,7 +46,7 @@ export function traitsOf(hero: HeroInfo): Set<Need> {
 }
 
 /** How many heroes on a finished team should have each trait. */
-const WANTED: Record<Need, number> = {
+export const WANTED: Record<Need, number> = {
   disable: 2,
   initiation: 1,
   save: 1,

@@ -63,7 +63,12 @@ hero that is already picked. Positions left out are planned without a player.
 2. Every combination of candidates is tried. The team score adds half of each pair's synergy
    (a team has 10 pairs, and adding them in full lets noisy pairs take over) and takes points off
    for each team need the five leave uncovered.
-3. Each open slot also gets 2 backups, with how much the team score drops if one is used instead.
+3. On top of the match data, a hand-kept game plan in [`src/engine/gameplan.ts`](src/engine/gameplan.ts)
+   adds +1.5 per known spell combo in the five (Magnus + Sven, Mars + Snapfire and so on) and +1 per
+   hero beyond two that shares the team's main style (teamfight, push, pick-off or late game).
+   A combo partner just outside a slot's top 10 is still tried. The plan ends with one line on how
+   to play it, such as "Teamfight: group up and win the big fights with your ultimates. Key combo: ...".
+4. Each open slot also gets 2 backups, with how much the team score drops if one is used instead.
 
 In code: `planTeam(engine, { slots, enemies, bans, rankBracket })` from
 [`src/engine/plan.ts`](src/engine/plan.ts).

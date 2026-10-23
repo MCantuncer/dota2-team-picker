@@ -1,6 +1,9 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { COMBOS, STYLES } from "../src/engine/gameplan";
 import { planTeam } from "../src/engine/plan";
 import { Engine } from "../src/engine/score";
+import type { Snapshot } from "../src/engine/types";
 import { fixture } from "./fixture";
 
 describe("planTeam", () => {
@@ -37,6 +40,30 @@ describe("planTeam", () => {
     const plan = planTeam(new Engine(fixture()), { slots: [], bans: [5] });
     expect(plan.slots.map((s) => s.heroId)).not.toContain(5);
     expect(plan.missing).toContain("an initiator");
+  });
+
+  it("finds known combos and a shared style, and says how to play", () => {
+    const data = fixture();
+    // Rename three heroes so the fixture has a combo (Mars + Snapfire) and three teamfight heroes.
+    data.heroes[3]!.name = "Puck";
+    data.heroes[4]!.name = "Snapfire";
+    data.heroes[5]!.name = "Mars";
+    const plan = planTeam(new Engine(data), { slots: [] });
+    expect(plan.combos).toEqual([{ heroes: ["Mars", "Snapfire"], text: expect.stringMatching(/Arena/) }]);
+    expect(plan.style).toMatchObject({ key: "teamfight", heroes: 3 });
+    expect(plan.gamePlan).toMatch(/^Teamfight: .* Key combo: Mars \+ Snapfire/);
+    expect(plan.slots[2]!.reasons[0]).toMatch(/^Combo with Snapfire/);
+  });
+
+  it("calls a team without a shared style balanced", () => {
+    expect(planTeam(new Engine(fixture()), { slots: [] }).gamePlan).toMatch(/^Balanced/);
+  });
+
+  it("only names heroes that exist in the hero data", () => {
+    const data = JSON.parse(readFileSync("data/snapshot.json", "utf8")) as Snapshot;
+    const names = new Set(Object.values(data.heroes).map((h) => h.name));
+    const listed = [...Object.values(STYLES).flatMap((s) => s.heroes), ...COMBOS.flatMap((c) => c.heroes)];
+    expect(listed.filter((n) => !names.has(n))).toEqual([]);
   });
 
   it("rejects a position listed twice", () => {

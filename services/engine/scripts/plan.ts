@@ -72,5 +72,6 @@ for (const s of plan.slots) {
     console.log(`     backups: ${alts.join(", ")}`);
   }
 }
+console.log(plan.gamePlan);
 console.log(`Team score ${plan.score >= 0 ? "+" : ""}${plan.score.toFixed(1)}`);
 if (plan.missing.length) console.log(`Still missing: ${plan.missing.join(", ")}`);
