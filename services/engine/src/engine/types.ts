@@ -36,6 +36,8 @@ export interface Snapshot {
   synergy: Record<string, GamesWins>;
   /** Games per lane role (1 safe, 2 mid, 3 off, 4 jungle). */
   laneRoles: Record<string, Partial<Record<"1" | "2" | "3" | "4", number>>>;
+  /** When lane roles were last downloaded; they are refreshed weekly. */
+  laneRolesAt?: string;
   /** Highest public match id already counted, so daily runs only add new matches. */
   lastPublicMatchId?: number;
 }
