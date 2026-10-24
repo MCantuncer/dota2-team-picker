@@ -3,11 +3,13 @@ import { fetchPlayer } from "./opendota.ts";
 
 function openDota(responses: Record<string, unknown>) {
   const requested: string[] = [];
-  const fetchFn = (async (url: string, init?: RequestInit) => {
+  const fetchFn = ((url: string, init?: RequestInit) => {
     requested.push(`${init?.method ?? "GET"} ${url}`);
     const path = new URL(url).pathname.replace("/api", "");
-    if (init?.method === "POST") return new Response("{}");
-    return path in responses ? Response.json(responses[path]) : new Response("not found", { status: 404 });
+    if (init?.method === "POST") return Promise.resolve(new Response("{}"));
+    return Promise.resolve(
+      path in responses ? Response.json(responses[path]) : new Response("not found", { status: 404 }),
+    );
   }) as typeof fetch;
   return { fetchFn, requested };
 }
