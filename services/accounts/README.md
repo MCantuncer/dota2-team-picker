@@ -26,8 +26,8 @@ name and picture; Steam and rank fields are written only by the server.
 | `favorite_heroes` | `user_id`, `position` (1–5, 0 = any position), `hero_id`                                     |
 | `favorite_positions` | `user_id`, `position`                                                                         |
 | `teams`           | `id`, `owner_id` (the captain), `name`                                                            |
-| `team_members`    | `team_id`, `user_id`: added only by accepting an invite (`accept_team_invite`)                  |
-| `team_invites`    | `id` (the secret in the join link), `team_id`, `email`, `sent_at` (expires 7 days later), `accepted_at` |
+| `team_members`    | `team_id`, `user_id`, `role` (`player` or `co_captain`, set by the owner): added only by accepting an invite (`accept_team_invite`) |
+| `team_invites`    | `id` (the secret in the join link), `team_id`, `email`, `sent_at` (expires 7 days later), `sent_by`, `accepted_at` |
 | `team_lineups`    | `team_id`, `slots` (member id per position, null = not in the team), `rank_bracket`             |
 | `steam_link_requests` | pending Steam links, used only by `steam-link`                                               |
 
@@ -57,7 +57,7 @@ function puts them in the user's metadata, which the templates read), and both l
 `get_team_invite(id)` returns what the join page shows; `accept_team_invite(id)` joins the team if
 the signed-in user's email is the invited one and the invite was sent in the last 7 days.
 
-Only captains can create teams and send invites, at most 30 a day each and one per address per
+Only captains can create teams. Owners and co-captains can send invites, at most 30 a day each and one per address per
 minute. See **Account types** below.
 
 **`steam-link`**: the profile page calls `supabase.functions.invoke("steam-link", {body: {next}})`
@@ -80,6 +80,10 @@ the dashboard's **SQL Editor**:
 ```sql
 update public.profiles set user_type = 'admin' where id = '<user id from Authentication > Users>';
 ```
+
+A team's owner can also make any member a **co-captain** (`team_members.role`). Co-captains don't
+need the captain type: they can run the draft, send and cancel invites, and remove players on that
+team. Only the owner can rename or delete the team, change roles, or remove a co-captain.
 
 ## Setup
 
@@ -153,3 +157,19 @@ Tests and type checks for the functions run with Deno, installed by `npm install
 npm test -w services/accounts
 npm run typecheck -w services/accounts
 ```
+
+### Database tests
+
+`supabase/tests/database/` holds [pgTAP](https://pgtap.org) tests for the schema and its row level security:
+who can read or change profiles, favorites, teams, members, invites and lineups. Each file signs in as
+test users (`tests.sign_in_as`) and rolls back at the end, so nothing is left behind. They need Docker:
+
+```sh
+npm run db:start -w services/accounts   # Postgres only, with every migration applied
+npm run db:lint -w services/accounts    # Supabase schema lint
+npm run test:db -w services/accounts
+npm run db:stop -w services/accounts
+```
+
+CI runs these on every pull request. A new table or policy should come with tests here; the first file
+fails if any table in `public` has row level security off.
