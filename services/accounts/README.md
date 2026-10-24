@@ -97,9 +97,19 @@ update public.profiles set user_type = 'admin' where id = '<user id from Authent
    website's address (for example `https://your-site.vercel.app`) and add
    `http://localhost:3000/**` to **Redirect URLs** for local development.
 4. Team invites send email, and Supabase's built-in sender only mails your own Supabase team and
-   a few per hour. Under **Authentication > Emails > SMTP Settings**, turn on custom SMTP. With a
-   Gmail account: host `smtp.gmail.com`, port `465`, user your Gmail address, password a
-   [Google app password](https://myaccount.google.com/apppasswords).
+   a few per hour. Send through [Resend](https://resend.com) from your own domain, so inboxes can
+   check the mail is genuine (SPF, DKIM, DMARC) and don't file it as spam:
+   - In Resend, add the domain and add the DNS records it lists (`resend._domainkey` TXT, `send`
+     MX and `send` TXT), plus a `_dmarc` TXT record such as `v=DMARC1; p=none; rua=mailto:you@example.com`.
+     Verify the domain.
+   - Create an API key with **Sending access** for that domain only.
+   - Under **Authentication > Emails > SMTP Settings**, turn on custom SMTP: sender email
+     `noreply@<your domain>`, sender name `Dota 2 Team Picker`, host `smtp.resend.com`, port `465`,
+     user `resend`, password the API key.
+
+   Resend's **Emails** page shows whether each email was delivered or bounced. A personal Gmail
+   account with an [app password](https://myaccount.google.com/apppasswords) (host
+   `smtp.gmail.com`, port `465`) also works for local testing, but its invites often land in spam.
 5. Under **Authentication > Emails > Templates**, set each template's **Subject** and paste its
    file as the body (open the file, copy everything, paste over the old body, **Save changes**):
 
