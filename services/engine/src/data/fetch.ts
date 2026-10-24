@@ -13,6 +13,8 @@
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { positionFit } from "../engine/positions";
+import { fetchPositions } from "./stratz";
 import { rankGroup, type GamesWins, type HeroInfo, type RankBracket, type Snapshot } from "../engine/types";
 
 const API = "https://api.opendota.com/api";
@@ -182,6 +184,21 @@ export function countMatch(snapshot: Snapshot, m: PublicMatch): boolean {
   return true;
 }
 
+/** Prints games per position and the heroes whose main position STRATZ corrects, as a sanity check. */
+function logPositions(snapshot: Snapshot) {
+  const positions = snapshot.positions ?? {};
+  const totals = [0, 0, 0, 0, 0];
+  for (const games of Object.values(positions)) games.forEach((g, i) => (totals[i]! += g));
+  console.log(`Positions for ${Object.keys(positions).length} heroes, games per position: ${totals.join(" / ")}`);
+  const main = (fit: Record<number, number>) => [1, 2, 3, 4, 5].reduce((a, b) => (fit[b]! > fit[a]! ? b : a));
+  const changed = Object.values(snapshot.heroes).flatMap((h) => {
+    const before = main(positionFit(h, snapshot.laneRoles[h.id]));
+    const after = main(positionFit(h, snapshot.laneRoles[h.id], positions[h.id]));
+    return before === after ? [] : [`${h.name} ${before}->${after}`];
+  });
+  console.log(`Main position corrected for ${changed.length} heroes: ${changed.join(", ")}`);
+}
+
 async function main() {
   const pagesArg = process.argv.indexOf("--pages");
   const maxPages = pagesArg > 0 ? Number(process.argv[pagesArg + 1]) : 200;
@@ -231,6 +248,21 @@ async function main() {
     snapshot.laneRolesAt = now.toISOString();
   } else {
     console.log(`Lane roles are from ${snapshot.laneRolesAt}, keeping them.`);
+  }
+
+  const stratzToken = process.env.STRATZ_TOKEN;
+  if (stratzToken) {
+    console.log("Positions from STRATZ...");
+    try {
+      snapshot.positions = await fetchPositions(stratzToken);
+      snapshot.positionsAt = now.toISOString();
+      logPositions(snapshot);
+    } catch (err) {
+      // Positions are an extra; keep the last ones (or lane roles) and go on.
+      console.warn(`::warning::${(err as Error).message}`);
+    }
+  } else {
+    console.log("No STRATZ_TOKEN, positions come from lane roles.");
   }
 
   decayCounts(snapshot, now);

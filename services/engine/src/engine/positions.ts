@@ -2,14 +2,26 @@ import { POSITIONS, type HeroInfo, type Position, type Snapshot } from "./types"
 
 export type PositionFit = Record<Position, number>;
 
+/** Below this many games, STRATZ position counts are too thin to use on their own. */
+const MIN_POSITION_GAMES = 200;
+
 /**
  * How likely a hero is to be played in each position, summing to 1.
  *
+ * STRATZ position counts are used when there are enough of them. Otherwise
  * OpenDota tells us which lane a hero goes to, but not whether it is the core
  * or the support in that lane, so the safe lane is split between pos 1 and 5
  * and the offlane between pos 3 and 4 using the hero's Support/Carry roles.
  */
-export function positionFit(hero: HeroInfo, lanes: Snapshot["laneRoles"][string] | undefined): PositionFit {
+export function positionFit(
+  hero: HeroInfo,
+  lanes: Snapshot["laneRoles"][string] | undefined,
+  positions?: number[],
+): PositionFit {
+  if (positions && positions.reduce((s, g) => s + g, 0) >= MIN_POSITION_GAMES) {
+    const [p1 = 0, p2 = 0, p3 = 0, p4 = 0, p5 = 0] = positions;
+    return normalize({ 1: p1, 2: p2, 3: p3, 4: p4, 5: p5 });
+  }
   const isSupport = hero.roles.includes("Support");
   const isCarry = hero.roles.includes("Carry");
   const supportShare = isSupport ? (isCarry ? 0.5 : 0.85) : 0.1;

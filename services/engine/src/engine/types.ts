@@ -49,6 +49,9 @@ export interface Snapshot {
   laneRoles: Record<string, Partial<Record<"1" | "2" | "3" | "4", number>>>;
   /** When lane roles were last downloaded; they are refreshed weekly. */
   laneRolesAt?: string;
+  /** Games per position [pos 1, ..., pos 5] in the last week, from STRATZ. */
+  positions?: Record<string, number[]>;
+  positionsAt?: string;
   /** The patch the counts are for, from OpenDota's patch list. */
   patch?: { name: string; startedAt: string };
   /** Highest public match id already counted, so daily runs only add new matches. */
