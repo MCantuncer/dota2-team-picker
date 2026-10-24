@@ -13,6 +13,7 @@
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { fetchPositions } from "./stratz";
 import { rankGroup, type GamesWins, type HeroInfo, type RankBracket, type Snapshot } from "../engine/types";
 
 const API = "https://api.opendota.com/api";
@@ -221,6 +222,21 @@ async function main() {
     snapshot.laneRolesAt = now.toISOString();
   } else {
     console.log(`Lane roles are from ${snapshot.laneRolesAt}, keeping them.`);
+  }
+
+  const stratzToken = process.env.STRATZ_TOKEN;
+  if (stratzToken) {
+    console.log("Positions from STRATZ...");
+    try {
+      snapshot.positions = await fetchPositions(stratzToken);
+      snapshot.positionsAt = now.toISOString();
+      console.log(`Positions for ${Object.keys(snapshot.positions).length} heroes.`);
+    } catch (err) {
+      // Positions are an extra; keep the last ones (or lane roles) and go on.
+      console.warn(`::warning::${(err as Error).message}`);
+    }
+  } else {
+    console.log("No STRATZ_TOKEN, positions come from lane roles.");
   }
 
   decayCounts(snapshot, now);

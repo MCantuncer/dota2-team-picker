@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "0 4 * * *"
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Fetch and build the data, but don't upload it or open issues"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -18,6 +23,7 @@ jobs:
     env:
       SUPABASE_URL: https://odigcdwsvajkbvcxeskj.supabase.co
       SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -32,9 +38,10 @@ jobs:
         run: npm run pull-data || echo "::warning::No published data yet, starting from the repo copy"
       - id: fetch
         run: npm run fetch-data -w services/engine -- --pages 300
-      - run: npm run upload-data -w services/engine
+      - if: ${{ !inputs.dry_run }}
+        run: npm run upload-data -w services/engine
       - name: Open a review issue for the new patch
-        if: steps.fetch.outputs.new_patch
+        if: ${{ steps.fetch.outputs.new_patch && !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ github.token }}
           PATCH: ${{ steps.fetch.outputs.new_patch }}

@@ -58,7 +58,7 @@ export class Engine {
   constructor(readonly data: Snapshot) {
     this.heroes = Object.values(data.heroes).sort((a, b) => a.id - b.id);
     for (const h of this.heroes) {
-      this.fits.set(h.id, positionFit(h, data.laneRoles[h.id]));
+      this.fits.set(h.id, positionFit(h, data.laneRoles[h.id], data.positions?.[h.id]));
       this.overallWr.set(h.id, this.winRate(h.id));
     }
   }

@@ -90,6 +90,15 @@ into `data/snapshot.json`:
   for all ranks and again for the match's rank group (`rankMatchups`, `rankSynergy`)
 - the patch list (`/constants/patch`)
 
+and, when the `STRATZ_TOKEN` secret is set, games per position (pos 1-5) for every hero over the
+last week from the [STRATZ API](https://stratz.com/api). STRATZ detects each player's real
+position, so a roaming pos 4 (Riki, Earth Spirit) no longer looks like a mid the way OpenDota's
+lane data makes it look. A hero with fewer than 200 STRATZ games falls back to lane data. If STRATZ
+is down, the run keeps the last positions and carries on.
+
+The Action can be started by hand with **dry run** ticked to fetch and build the data without
+uploading it, for example to test a change on a branch.
+
 Each run adds new matches to the counts already saved and fades old ones by 1% per day since
 the last run, so the data follows the meta as players find new builds. Fading changes how much
 old games count, not the win rates they show. Lane roles take one request per hero and change
