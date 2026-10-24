@@ -13,7 +13,7 @@
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import type { GamesWins, HeroInfo, Snapshot } from "../engine/types";
+import { rankGroup, type GamesWins, type HeroInfo, type RankBracket, type Snapshot } from "../engine/types";
 
 const API = "https://api.opendota.com/api";
 const SNAPSHOT_PATH = "data/snapshot.json";
@@ -88,6 +88,8 @@ export interface PublicMatch {
   game_mode: number;
   /** Unix seconds. */
   start_time: number;
+  /** Average OpenDota rank tier of the ranked players (54 = Legend 4), when known. */
+  avg_rank_tier?: number | null;
   radiant_team: number[];
   dire_team: number[];
 }
@@ -112,8 +114,9 @@ function scaleCounts(snapshot: Snapshot, factor: number) {
     gw.games = Math.round(gw.games * factor * 10) / 10;
     gw.wins = Math.round(gw.wins * factor * 10) / 10;
   };
-  for (const row of Object.values(snapshot.matchups)) Object.values(row).forEach(scale);
-  Object.values(snapshot.synergy).forEach(scale);
+  const matchupMaps = [snapshot.matchups, ...Object.values(snapshot.rankMatchups ?? {})];
+  for (const matchups of matchupMaps) for (const row of Object.values(matchups)) Object.values(row).forEach(scale);
+  for (const synergy of [snapshot.synergy, ...Object.values(snapshot.rankSynergy ?? {})]) Object.values(synergy).forEach(scale);
 }
 
 /** Fades all matchup and synergy counts by DECAY_PER_DAY for each day since the last run. */
@@ -145,15 +148,27 @@ export function countMatch(snapshot: Snapshot, m: PublicMatch): boolean {
   if (!GAME_MODES.has(m.game_mode) || (m.lobby_type !== 0 && m.lobby_type !== 7) || m.duration < MIN_DURATION_S) return false;
   if (teams.some((t) => t?.length !== 5 || t.includes(0))) return false;
 
-  teams.forEach((team, side) => {
-    const won = side === 0 ? m.radiant_win : !m.radiant_win;
-    const enemies = teams[1 - side]!;
-    for (const hero of team) {
-      const row = (snapshot.matchups[hero] ??= {});
-      for (const enemy of enemies) add(row, String(enemy), won);
-      for (const ally of team) if (ally > hero) add(snapshot.synergy, `${hero}-${ally}`, won);
-    }
-  });
+  const targets = [{ matchups: snapshot.matchups, synergy: snapshot.synergy }];
+  const medal = Math.floor((m.avg_rank_tier ?? 0) / 10);
+  if (medal >= 1 && medal <= 8) {
+    const group = rankGroup(medal as RankBracket);
+    targets.push({
+      matchups: ((snapshot.rankMatchups ??= {})[group] ??= {}),
+      synergy: ((snapshot.rankSynergy ??= {})[group] ??= {}),
+    });
+  }
+
+  for (const { matchups, synergy } of targets) {
+    teams.forEach((team, side) => {
+      const won = side === 0 ? m.radiant_win : !m.radiant_win;
+      const enemies = teams[1 - side]!;
+      for (const hero of team) {
+        const row = (matchups[hero] ??= {});
+        for (const enemy of enemies) add(row, String(enemy), won);
+        for (const ally of team) if (ally > hero) add(synergy, `${hero}-${ally}`, won);
+      }
+    });
+  }
   return true;
 }
 

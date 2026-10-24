@@ -187,7 +187,7 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
       if (i < j) {
         const a = c.hero.id;
         const b = d.hero.id;
-        const v = WEIGHTS.synergy * engine.synergyEdge(a, b) + (combos.has(pairKey(a, b)) ? WEIGHTS.combo : 0);
+        const v = WEIGHTS.synergy * engine.synergyEdge(a, b, input.rankBracket) + (combos.has(pairKey(a, b)) ? WEIGHTS.combo : 0);
         pairScore[i * all.length + j] = pairScore[j * all.length + i] = v;
       }
     }),
@@ -269,7 +269,7 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
         name: pick.hero.name,
         locked: !!s.locked,
         inPool: pick.inPool,
-        reasons: explain(engine, pick, others, unmetNeeds(others.map((c) => c.hero)), combos),
+        reasons: explain(engine, pick, others, unmetNeeds(others.map((c) => c.hero)), combos, input.rankBracket),
         alternatives,
       };
     }),
@@ -299,7 +299,7 @@ function rate(
   const reasons: Candidate["reasons"] = [];
   const inPool = slot.favorites?.includes(hero.id) ?? false;
 
-  const edges = engine.counterEdges(hero.id, enemies, engine.laneChances(enemies, slot.position));
+  const edges = engine.counterEdges(hero.id, enemies, engine.laneChances(enemies, slot.position), slot.rankBracket);
   const counter = edges.reduce((s, x) => s + x.edge, 0);
   const good = edges.filter((x) => x.edge >= 0.5).sort((a, b) => b.edge - a.edge);
   if (good.length) reasons.push({ text: `Strong against ${engine.names(good.map((x) => x.enemy))}`, value: counter });
@@ -322,7 +322,14 @@ function rate(
 }
 
 /** The top reasons a hero is in the plan, including what it adds to the rest of the team. */
-function explain(engine: Engine, pick: Candidate, others: Candidate[], needs: Need[], combos: Map<string, string>): string[] {
+function explain(
+  engine: Engine,
+  pick: Candidate,
+  others: Candidate[],
+  needs: Need[],
+  combos: Map<string, string>,
+  bracket?: RankBracket,
+): string[] {
   const reasons = [...pick.reasons];
   for (const c of others) {
     const a = pick.hero.id;
@@ -332,7 +339,7 @@ function explain(engine: Engine, pick: Candidate, others: Candidate[], needs: Ne
     if (text) reasons.push({ text: `Combo with ${c.hero.name}: ${text}`, value: 100 });
   }
   const friends = others
-    .map((c) => ({ id: c.hero.id, edge: engine.synergyEdge(pick.hero.id, c.hero.id) }))
+    .map((c) => ({ id: c.hero.id, edge: engine.synergyEdge(pick.hero.id, c.hero.id, bracket) }))
     .filter((x) => x.edge >= 0.5)
     .sort((a, b) => b.edge - a.edge);
   if (friends.length) {

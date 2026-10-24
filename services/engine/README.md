@@ -42,6 +42,12 @@ Every part of the score is in win-rate percentage points, so `+2.0` roughly mean
 - **Pick safety**: early in the draft, a hero with hard counters still available loses points.
 
 Small samples are pulled toward the expected value, so a 3-0 matchup does not look like a sure win.
+
+With `--rank`, counters and synergy also use games at that rank group (Herald-Guardian,
+Crusader-Archon, Legend-Ancient, Divine-Immortal), since a matchup can play out differently at
+Herald and at Divine. The rank group's games are pulled toward the all-ranks number rather than
+toward zero, so a group with few games (Divine-Immortal is about 5% of public matches) still gets
+the all-ranks result, and the rank's own pattern takes over as its games add up.
 The weights live at the top of [`src/engine/score.ts`](src/engine/score.ts).
 
 ## WCST team plan
@@ -80,7 +86,8 @@ into `data/snapshot.json`:
 
 - hero list, roles and win rates per rank (`/heroStats`)
 - which lanes each hero is played in (`/scenarios/laneRoles`)
-- recent public matches (`/publicMatches`), counted into hero-vs-hero and same-team records
+- recent public matches (`/publicMatches`), counted into hero-vs-hero and same-team records,
+  for all ranks and again for the match's rank group (`rankMatchups`, `rankSynergy`)
 - the patch list (`/constants/patch`)
 
 Each run adds new matches to the counts already saved and fades old ones by 1% per day since

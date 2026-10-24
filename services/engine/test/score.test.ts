@@ -66,3 +66,19 @@ describe("team needs", () => {
   });
 });
 
+
+describe("rank group matchups", () => {
+  it("uses the all-ranks edge when the rank group has no games", () => {
+    const engine = new Engine(fixture());
+    expect(engine.matchupEdge(3, 5, 6)).toBeCloseTo(engine.matchupEdge(3, 5));
+  });
+
+  it("moves the edge toward what the rank group's games show", () => {
+    const data = fixture();
+    // At Legend-Ancient, hero 5 beats hero 3 in 400 of 500 games.
+    data.rankMatchups = { 3: { 3: { 5: { games: 500, wins: 100 } }, 5: { 3: { games: 500, wins: 400 } } } };
+    const engine = new Engine(data);
+    expect(engine.matchupEdge(3, 5, 5)).toBeLessThan(engine.matchupEdge(3, 5) - 10);
+    expect(engine.matchupEdge(3, 5, 1)).toBeCloseTo(engine.matchupEdge(3, 5));
+  });
+});
