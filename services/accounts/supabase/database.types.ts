@@ -89,6 +89,90 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"parties": {
+                  Row: {
+                    "closed_at": string | null,"created_at": string,"id": string,"leader_id": string,"team_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "closed_at"?: string | null,"created_at"?: string,"id"?: string,"leader_id": string,"team_id"?: string | null
+                  }
+                  Update: {
+                    "closed_at"?: string | null,"created_at"?: string,"id"?: string,"leader_id"?: string,"team_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "parties_leader_id_fkey"
+      columns: ["leader_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "parties_team_id_fkey"
+      columns: ["team_id"]
+isOneToOne: false
+      referencedRelation: "teams"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"party_invites": {
+                  Row: {
+                    "created_at": string,"invited_by": string,"party_id": string,"status": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"invited_by": string,"party_id": string,"status"?: string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"invited_by"?: string,"party_id"?: string,"status"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "party_invites_invited_by_fkey"
+      columns: ["invited_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "party_invites_party_id_fkey"
+      columns: ["party_id"]
+isOneToOne: false
+      referencedRelation: "parties"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "party_invites_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"party_members": {
+                  Row: {
+                    "joined_at": string,"party_id": string,"position": number | null,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "joined_at"?: string,"party_id": string,"position"?: number | null,"user_id": string
+                  }
+                  Update: {
+                    "joined_at"?: string,"party_id"?: string,"position"?: number | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "party_members_party_id_fkey"
+      columns: ["party_id"]
+isOneToOne: false
+      referencedRelation: "parties"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "party_members_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "avatar_url": string | null,"created_at": string,"display_name": string | null,"friend_code": string,"hero_stats": NonNullable<Json>,"id": string,"rank_tier": number | null,"steam_id": string | null,"steam_name": string | null,"synced_at": string | null,"updated_at": string,"user_type": string,"rank_bracket": number | null
@@ -227,6 +311,12 @@ isOneToOne: false
 "accept_team_invite":
 { Args: { "invite": string }; Returns: string
                            },
+"answer_party_invite":
+{ Args: { "accept": boolean,"party": string }; Returns: undefined
+                           },
+"can_invite":
+{ Args: { "target": string }; Returns: boolean
+                           },
 "friend_suggestions":
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_url": string,"display_name": string,"team_name": string,"user_id": string
@@ -237,6 +327,15 @@ isOneToOne: false
               "accepted": boolean,"captain_name": string,"email": string,"expired": boolean,"team_name": string
             }[]
                            },
+"in_party":
+{ Args: { "party": string }; Returns: boolean
+                           },
+"invite_to_party":
+{ Args: { "target": string }; Returns: undefined
+                           },
+"invited_to_party":
+{ Args: { "party": string }; Returns: boolean
+                           },
 "is_captain":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -246,13 +345,29 @@ isOneToOne: false
 "is_team_member":
 { Args: { "team": string }; Returns: boolean
                            },
+"leave_party":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "my_friends":
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_url": string,"display_name": string,"incoming": boolean,"since": string,"status": string,"steam_linked": boolean,"user_id": string
             }[]
                            },
+"my_party":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"my_party_invites":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "created_at": string,"invited_by": string,"inviter_avatar_url": string,"inviter_name": string,"members": number,"party_id": string
+            }[]
+                           },
 "owns_team":
 { Args: { "team": string }; Returns: boolean
+                           },
+"party_view":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "avatar_url": string,"display_name": string,"joined_at": string,"leader_id": string,"party_id": string,"position": number,"team_id": string,"user_id": string
+            }[]
                            },
 "profile_by_friend_code":
 { Args: { "code": string }; Returns: {
@@ -262,11 +377,20 @@ isOneToOne: false
 "rank_bracket":
 { Args: { "p": Omit<Database["public"]['Tables']["profiles"]['Row'], Database["public"]['Tables']["profiles"]['ComputedFields']> }; Returns: number
                            },
+"remove_from_party":
+{ Args: { "target": string }; Returns: undefined
+                           },
 "runs_team":
 { Args: { "team": string }; Returns: boolean
                            },
 "send_friend_request":
 { Args: { "target": string }; Returns: string
+                           },
+"set_party_position":
+{ Args: { "want": number }; Returns: undefined
+                           },
+"start_party":
+{ Args: { "team"?: string }; Returns: string
                            },
 "user_id_by_email":
 { Args: { "address": string }; Returns: string

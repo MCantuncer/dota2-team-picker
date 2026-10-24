@@ -31,12 +31,20 @@ const DECAY_PER_DAY = 0.99;
  */
 const PATCH_CARRYOVER = 0.25;
 const LANE_ROLES_MAX_AGE_DAYS = 7;
+/**
+ * Stop reading match pages when the API's daily allowance drops this low.
+ * The free tier allows about 3,000 requests a day per IP, and GitHub runners
+ * share IPs, so leave room for others and for the next run.
+ */
+const DAILY_RESERVE = 300;
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Ranked and unranked normal drafts: All Pick, Captains Mode, Random Draft, Single Draft, All Random, Captains Draft, Ranked All Pick. */
 const GAME_MODES = new Set([1, 2, 3, 4, 5, 16, 22]);
 const MIN_DURATION_S = 15 * 60;
 
 let lastRequest = 0;
+/** Requests left today, from the API's x-rate-limit-remaining-day header. */
+let remainingToday = Infinity;
 
 async function get<T>(path: string): Promise<T> {
   for (let attempt = 0; ; attempt++) {
@@ -44,6 +52,8 @@ async function get<T>(path: string): Promise<T> {
     if (wait > 0) await sleep(wait);
     lastRequest = Date.now();
     const res = await fetch(API + path).catch((err: unknown) => err as Error);
+    const left = res instanceof Error ? null : res.headers.get("x-rate-limit-remaining-day");
+    if (left !== null && Number.isFinite(Number(left))) remainingToday = Number(left);
     if (!(res instanceof Error) && res.ok) return (await res.json()) as T;
     const status = res instanceof Error ? res.message : `HTTP ${res.status}`;
     const limited = !(res instanceof Error) && res.status === 429;
@@ -264,6 +274,10 @@ async function main() {
   let counted = 0;
   try {
     for (let page = 0; page < maxPages; page++) {
+      if (remainingToday < DAILY_RESERVE) {
+        console.log(`Stopping: only ${remainingToday} API requests left today.`);
+        break;
+      }
       const matches = await get<PublicMatch[]>(`/publicMatches${before ? `?less_than_match_id=${before}` : ""}`);
       if (matches.length === 0) break;
       for (const m of matches) {
