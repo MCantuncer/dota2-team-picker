@@ -12,6 +12,7 @@
     "db:stop": "supabase stop --no-backup",
     "db:lint": "supabase db lint --local --level warning --fail-on warning",
     "test:db": "supabase test db",
+    "db:types": "supabase gen types typescript --local > supabase/database.types.ts",
     "emails": "deno run --node-modules-dir=none --no-lock --allow-write=supabase/templates supabase/emails/build.ts"
   },
   "devDependencies": {
