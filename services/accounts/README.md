@@ -31,6 +31,9 @@ name and picture; Steam and rank fields are written only by the server.
 | `team_lineups`    | `team_id`, `slots` (member id per position, null = not in the team), `rank_bracket`             |
 | `steam_link_requests` | pending Steam links, used only by `steam-link`                                               |
 | `friendships`     | `requester_id`, `addressee_id`, `status` (pending, accepted): one row per pair, made only through `send_friend_request` |
+| `parties`         | `id`, `leader_id`, `team_id` (optional), `created_at`, `closed_at` (set when the last player leaves) |
+| `party_members`   | `party_id`, `user_id`, `position` (1–5 this game, null = any), `joined_at`: 5 at most, one open party per player |
+| `party_invites`   | `party_id`, `user_id`, `invited_by`, `status` (pending, accepted, declined), `created_at` |
 
 `rank_tier` is OpenDota's number: tens digit is the medal (1 Herald ... 8 Immortal), ones digit
 the star, so 54 is Legend 4. `rank_bracket(profiles)` returns just the medal, which is what the
@@ -48,6 +51,21 @@ Friends are added on the site only (nothing is sent to Steam). Database function
 | `friend_suggestions()` | People from your teams who aren't friends yet |
 
 Declining, cancelling and unfriending delete the `friendships` row.
+
+Parties work like a party in Dota: anyone starts one, invites friends and teammates, and up to 5
+join. The three party tables are read-only to users, are in the `supabase_realtime` publication
+(so invites pop up live and the lobby updates), and change only through these functions:
+
+| Function | Does |
+| --- | --- |
+| `start_party(team)` | Starts a party with you as leader (`team` optional); leaves your old one |
+| `invite_to_party(target)` | Leader only: invites a friend or teammate; inviting again re-sends it; at most 60 an hour |
+| `answer_party_invite(party, accept)` | Joins (if fewer than 5) or declines |
+| `leave_party()` | Leaves; if you led, the next player to join leads; the last one out closes it |
+| `remove_from_party(target)` | Leader only: removes a player |
+| `set_party_position(want)` | The position you want this game (null = any) |
+| `party_view()` | Your party's players with names and positions, leader first |
+| `my_party_invites()` | Open invites to you, with who sent them and how full the party is |
 
 ## Functions
 
