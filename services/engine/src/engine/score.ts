@@ -2,10 +2,14 @@ import { guessEnemyPositions, LANE_OPPONENTS, positionFit, type PositionFit } fr
 import { NEED_LABELS, traitsOf, unmetNeeds } from "./traits";
 import {
   POSITIONS,
+  RANK_GROUP_BRACKETS,
+  rankGroup,
   type DraftInput,
   type Position,
   type GamesWins,
   type HeroInfo,
+  type RankBracket,
+  type RankGroup,
   type ScoreBreakdown,
   type Snapshot,
   type Suggestion,
@@ -33,7 +37,7 @@ const WEIGHTS = {
 };
 
 /** Games of evidence a value is pulled toward its prior with (Bayesian shrinkage). */
-const PRIOR_GAMES = { heroWinRate: 300, matchup: 250, personal: 15 };
+const PRIOR_GAMES = { heroWinRate: 300, matchup: 250, rankMatchup: 250, personal: 15 };
 
 /** Heroes played in a position less often than this are not suggested for it. */
 const MIN_POSITION_FIT = 0.15;
@@ -71,29 +75,58 @@ export class Engine {
 
   /** Hero win rate at a rank bracket (1-8), or across all brackets. */
   winRate(id: number, bracket?: number): number {
+    return this.winRateIn(id, bracket ? [bracket - 1] : undefined);
+  }
+
+  /** Hero win rate over the given bracket indexes (0 = Herald), or all of them. */
+  private winRateIn(id: number, idx?: number[]): number {
     const s = this.data.bracketStats[id];
     if (!s) return 0.5;
-    const idx = bracket ? [bracket - 1] : s.picks.map((_, i) => i);
-    const games = idx.reduce((n, i) => n + (s.picks[i] ?? 0), 0);
-    const wins = idx.reduce((n, i) => n + (s.wins[i] ?? 0), 0);
+    const use = idx ?? s.picks.map((_, i) => i);
+    const games = use.reduce((n, i) => n + (s.picks[i] ?? 0), 0);
+    const wins = use.reduce((n, i) => n + (s.wins[i] ?? 0), 0);
     return shrink({ games, wins }, 0.5, PRIOR_GAMES.heroWinRate);
   }
 
   /**
    * How much better hero a does against hero b than their overall win rates
-   * predict, in percentage points. Positive means a counters b.
+   * predict, in percentage points. Positive means a counters b. With a rank
+   * bracket, games at that rank group refine the all-ranks edge.
    */
-  matchupEdge(a: number, b: number): number {
-    const expected = 0.5 + (this.overallWr.get(a)! - 0.5) - (this.overallWr.get(b)! - 0.5);
-    const gw = this.data.matchups[a]?.[b];
-    return (shrink(gw, expected, PRIOR_GAMES.matchup) - expected) * 100;
+  matchupEdge(a: number, b: number, bracket?: RankBracket): number {
+    const group = bracket ? rankGroup(bracket) : undefined;
+    const inGroup = group ? this.data.rankMatchups?.[group]?.[a]?.[b] : undefined;
+    return this.edge(a, b, -1, this.data.matchups[a]?.[b], inGroup, group);
   }
 
   /** How much better a and b do together than their overall win rates predict. */
-  synergyEdge(a: number, b: number): number {
-    const expected = 0.5 + (this.overallWr.get(a)! - 0.5) + (this.overallWr.get(b)! - 0.5);
-    const gw = this.data.synergy[a < b ? `${a}-${b}` : `${b}-${a}`];
-    return (shrink(gw, expected, PRIOR_GAMES.matchup) - expected) * 100;
+  synergyEdge(a: number, b: number, bracket?: RankBracket): number {
+    const key = a < b ? `${a}-${b}` : `${b}-${a}`;
+    const group = bracket ? rankGroup(bracket) : undefined;
+    const inGroup = group ? this.data.rankSynergy?.[group]?.[key] : undefined;
+    return this.edge(a, b, 1, this.data.synergy[key], inGroup, group);
+  }
+
+  /**
+   * Shrinks the all-ranks record toward what the heroes' win rates predict.
+   * With a rank group, that group's record is then shrunk toward the
+   * all-ranks edge, so a group with few games falls back to the all-ranks
+   * number instead of to zero.
+   */
+  private edge(
+    a: number,
+    b: number,
+    sign: 1 | -1,
+    all: GamesWins | undefined,
+    inGroup: GamesWins | undefined,
+    group: RankGroup | undefined,
+  ): number {
+    const expected = 0.5 + (this.overallWr.get(a)! - 0.5) + sign * (this.overallWr.get(b)! - 0.5);
+    const edge = shrink(all, expected, PRIOR_GAMES.matchup) - expected;
+    if (!group) return edge * 100;
+    const idx = RANK_GROUP_BRACKETS[group].map((r) => r - 1);
+    const groupExpected = 0.5 + (this.winRateIn(a, idx) - 0.5) + sign * (this.winRateIn(b, idx) - 0.5);
+    return (shrink(inGroup, groupExpected + edge, PRIOR_GAMES.rankMatchup) - groupExpected) * 100;
   }
 
   /** Chance (0-1) that each enemy is one you face in lane when playing `pos`. */
@@ -109,10 +142,15 @@ export class Engine {
   }
 
   /** Counter points against each enemy; likely lane opponents (from `laneChances`) count extra. */
-  counterEdges(id: number, enemies: number[], laneChance: number[]): { enemy: number; edge: number; lane: boolean }[] {
+  counterEdges(
+    id: number,
+    enemies: number[],
+    laneChance: number[],
+    bracket?: RankBracket,
+  ): { enemy: number; edge: number; lane: boolean }[] {
     return enemies.map((enemy, i) => ({
       enemy,
-      edge: this.matchupEdge(id, enemy) * (1 + WEIGHTS.laneOpponent * laneChance[i]!),
+      edge: this.matchupEdge(id, enemy, bracket) * (1 + WEIGHTS.laneOpponent * laneChance[i]!),
       lane: laneChance[i]! > 0.5,
     }));
   }
@@ -135,7 +173,7 @@ export class Engine {
     // Heroes the enemy can still pick, for judging how safe an early pick is.
     const pool = this.heroes.filter((h) => !taken.has(h.id));
     const enemySlotsLeft = 5 - input.enemies.length;
-    const vulnerability = this.vulnerability(pool);
+    const vulnerability = this.vulnerability(pool, input.rankBracket);
     const avgVulnerability = mean([...vulnerability.values()]);
 
     const results: Suggestion[] = [];
@@ -147,7 +185,7 @@ export class Engine {
       const warnings: { text: string; value: number }[] = [];
 
       // Counters: how this hero does against the enemies already picked.
-      const edges = this.counterEdges(hero.id, input.enemies, laneChance);
+      const edges = this.counterEdges(hero.id, input.enemies, laneChance, input.rankBracket);
       const counter = edges.reduce((s, x) => s + x.edge, 0);
       const good = edges.filter((x) => x.edge >= 0.5).sort((a, b) => b.edge - a.edge);
       const bad = edges.filter((x) => x.edge <= -0.5).sort((a, b) => a.edge - b.edge);
@@ -161,7 +199,7 @@ export class Engine {
 
       // Synergy with the allies already picked.
       let synergy = 0;
-      const synergies = allyIds.map((a) => ({ a, edge: this.synergyEdge(hero.id, a) }));
+      const synergies = allyIds.map((a) => ({ a, edge: this.synergyEdge(hero.id, a, input.rankBracket) }));
       for (const s of synergies) synergy += s.edge;
       const friends = synergies.filter((s) => s.edge >= 0.5).sort((a, b) => b.edge - a.edge);
       if (friends.length) reasons.push({ text: `Works well with ${this.names(friends.map((s) => s.a))}`, value: synergy });
@@ -231,10 +269,10 @@ export class Engine {
   }
 
   /** Average edge of each hero against its 5 worst matchups still in the pool (negative = easy to counter). */
-  private vulnerability(pool: HeroInfo[]): Map<number, number> {
+  private vulnerability(pool: HeroInfo[], bracket?: RankBracket): Map<number, number> {
     return new Map(
       pool.map((hero) => {
-        const edges = pool.filter((h) => h.id !== hero.id).map((h) => this.matchupEdge(hero.id, h.id));
+        const edges = pool.filter((h) => h.id !== hero.id).map((h) => this.matchupEdge(hero.id, h.id, bracket));
         return [hero.id, mean(edges.sort((a, b) => a - b).slice(0, 5))];
       }),
     );
