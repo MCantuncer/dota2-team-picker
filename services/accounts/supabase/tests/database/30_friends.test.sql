@@ -1,6 +1,6 @@
 begin;
 \ir _helpers.psql
-select plan(14);
+select plan(18);
 
 select tests.create_user('cap@example.com', 'captain') as cap \gset
 select tests.create_user('ana@example.com') as ana \gset
@@ -51,7 +51,22 @@ select tests.sign_out();
 
 select tests.sign_in_anon();
 select throws_ok('select * from public.my_friends()', '42501', null, 'signed-out visitors cannot list friends');
+select throws_ok(format('select * from public.profile_by_friend_code(%L)', (select friend_code from public.profiles where id = :'ana')),
+  '42501', null, 'signed-out visitors cannot look up friend codes');
 select tests.sign_out();
+
+select tests.sign_in_as('out@example.com');
+select is_empty('select * from public.profile_by_friend_code(''not-a-code'')', 'a wrong friend code finds nobody');
+delete from public.friendships;
+select tests.sign_out();
+select is((select count(*)::int from public.friendships), 2, 'other players cannot delete a friendship');
+
+-- Either side can unfriend.
+select tests.sign_in_as('ben@example.com');
+delete from public.friendships where requester_id = :'ana' and addressee_id = :'ben';
+select tests.sign_out();
+select is_empty(format('select 1 from public.friendships where requester_id = %L and addressee_id = %L', :'ana', :'ben'),
+  'either friend can unfriend');
 
 select * from finish();
 rollback;
