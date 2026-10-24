@@ -6,10 +6,12 @@
  * Each run refreshes hero stats and lane roles, then reads recent public
  * matches page by page (100 per page) and adds their matchups and synergies
  * to the counts already in the snapshot. Old counts fade a little every day so
- * the data follows the current patch. Lane roles change slowly and cost one
- * request per hero, so they are refreshed once a week.
+ * the data follows the meta, and drop to a quarter when a new patch (7.42 after
+ * 7.41) comes out. Matches from before the current patch are not counted. Lane
+ * roles change slowly and cost one request per hero, so they are refreshed once
+ * a week.
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import type { GamesWins, HeroInfo, Snapshot } from "../engine/types";
 
@@ -20,7 +22,12 @@ const REQUEST_GAP_MS = 1500;
 /** How long to wait after a 429 when the API does not say. */
 const RATE_LIMIT_WAIT_MS = 60_000;
 /** Share of old matchup and synergy counts kept per day since the last run. */
-const DECAY_PER_DAY = 0.97;
+const DECAY_PER_DAY = 0.99;
+/**
+ * Share of the counts kept when a new patch comes out. Most matchups survive a
+ * patch, so the old data is a better start than nothing while new games come in.
+ */
+const PATCH_CARRYOVER = 0.25;
 const LANE_ROLES_MAX_AGE_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Ranked and unranked normal drafts: All Pick, Captains Mode, Random Draft, Single Draft, All Random, Captains Draft, Ranked All Pick. */
@@ -63,6 +70,11 @@ interface HeroStatsRow {
   [key: string]: unknown;
 }
 
+interface PatchRow {
+  name: string;
+  date: string;
+}
+
 interface LaneRoleRow {
   lane_role: number;
   games: string;
@@ -74,6 +86,8 @@ export interface PublicMatch {
   duration: number;
   lobby_type: number;
   game_mode: number;
+  /** Unix seconds. */
+  start_time: number;
   radiant_team: number[];
   dire_team: number[];
 }
@@ -93,17 +107,31 @@ function add(map: Record<string, GamesWins>, key: string, won: boolean) {
   if (won) gw.wins += 1;
 }
 
+function scaleCounts(snapshot: Snapshot, factor: number) {
+  const scale = (gw: GamesWins) => {
+    gw.games = Math.round(gw.games * factor * 10) / 10;
+    gw.wins = Math.round(gw.wins * factor * 10) / 10;
+  };
+  for (const row of Object.values(snapshot.matchups)) Object.values(row).forEach(scale);
+  Object.values(snapshot.synergy).forEach(scale);
+}
+
 /** Fades all matchup and synergy counts by DECAY_PER_DAY for each day since the last run. */
 export function decayCounts(snapshot: Snapshot, now: Date) {
   if (!snapshot.generatedAt) return;
   const days = Math.max(0, (now.getTime() - Date.parse(snapshot.generatedAt)) / DAY_MS);
-  const factor = DECAY_PER_DAY ** days;
-  const decay = (gw: GamesWins) => {
-    gw.games = Math.round(gw.games * factor * 10) / 10;
-    gw.wins = Math.round(gw.wins * factor * 10) / 10;
-  };
-  for (const row of Object.values(snapshot.matchups)) Object.values(row).forEach(decay);
-  Object.values(snapshot.synergy).forEach(decay);
+  scaleCounts(snapshot, DECAY_PER_DAY ** days);
+}
+
+/**
+ * Records the current patch. When it differs from the saved one, cuts the old
+ * counts to PATCH_CARRYOVER and returns true.
+ */
+export function applyPatch(snapshot: Snapshot, latest: PatchRow): boolean {
+  const changed = snapshot.patch !== undefined && snapshot.patch.name !== latest.name;
+  if (changed) scaleCounts(snapshot, PATCH_CARRYOVER);
+  snapshot.patch = { name: latest.name, startedAt: new Date(latest.date).toISOString() };
+  return changed;
 }
 
 export function laneRolesDue(snapshot: Snapshot, now: Date): boolean {
@@ -154,6 +182,16 @@ async function main() {
     snapshot.bracketStats[h.id] = { picks, wins };
   }
 
+  const patches = await get<PatchRow[]>("/constants/patch");
+  const latest = patches.reduce((a, b) => (Date.parse(b.date) > Date.parse(a.date) ? b : a));
+  if (applyPatch(snapshot, latest)) {
+    console.log(`New patch ${latest.name}: old matchups now count ${PATCH_CARRYOVER * 100}%.`);
+    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `new_patch=${latest.name}\n`);
+  } else {
+    console.log(`Patch ${latest.name}.`);
+  }
+  const patchStart = Date.parse(snapshot.patch!.startedAt) / 1000;
+
   if (laneRolesDue(snapshot, now)) {
     console.log(`Lane roles for ${stats.length} heroes...`);
     for (const h of stats) {
@@ -182,14 +220,15 @@ async function main() {
       const matches = await get<PublicMatch[]>(`/publicMatches${before ? `?less_than_match_id=${before}` : ""}`);
       if (matches.length === 0) break;
       for (const m of matches) {
-        if (m.match_id <= stopAt) continue;
+        if (m.match_id <= stopAt || m.start_time < patchStart) continue;
         if (countMatch(snapshot, m)) {
           counted++;
           newest = Math.max(newest, m.match_id);
         }
       }
       before = Math.min(...matches.map((m) => m.match_id));
-      if (before <= stopAt) break;
+      // Pages go back in time, so stop at the last run or the patch release.
+      if (before <= stopAt || matches.every((m) => m.start_time < patchStart)) break;
       if ((page + 1) % 25 === 0) console.log(`  ${page + 1} pages, ${counted} matches`);
     }
   } catch (err) {

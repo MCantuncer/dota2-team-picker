@@ -22,7 +22,7 @@ name and picture; Steam and rank fields are written only by the server.
 
 | Table             | Columns                                                                                           |
 | ----------------- | ------------------------------------------------------------------------------------------------- |
-| `profiles`        | `id`, `display_name`, `avatar_url`, `user_type` (user, captain, admin), `steam_id`, `steam_name`, `rank_tier`, `hero_stats`, `synced_at` |
+| `profiles`        | `id`, `display_name`, `avatar_url`, `user_type` (user, captain, admin), `friend_code` (the secret in the "add me" link), `steam_id`, `steam_name`, `rank_tier`, `hero_stats`, `synced_at` |
 | `favorite_heroes` | `user_id`, `position` (1–5, 0 = any position), `hero_id`                                     |
 | `favorite_positions` | `user_id`, `position`                                                                         |
 | `teams`           | `id`, `owner_id` (the captain), `name`                                                            |
@@ -30,10 +30,24 @@ name and picture; Steam and rank fields are written only by the server.
 | `team_invites`    | `id` (the secret in the join link), `team_id`, `email`, `sent_at` (expires 7 days later), `sent_by`, `accepted_at` |
 | `team_lineups`    | `team_id`, `slots` (member id per position, null = not in the team), `rank_bracket`             |
 | `steam_link_requests` | pending Steam links, used only by `steam-link`                                               |
+| `friendships`     | `requester_id`, `addressee_id`, `status` (pending, accepted): one row per pair, made only through `send_friend_request` |
 
 `rank_tier` is OpenDota's number: tens digit is the medal (1 Herald ... 8 Immortal), ones digit
 the star, so 54 is Legend 4. `rank_bracket(profiles)` returns just the medal, which is what the
 engine takes. With the Supabase client you can select it like a column: `select("*, rank_bracket")`.
+
+Friends are added on the site only (nothing is sent to Steam). Database functions, callable with
+`supabase.rpc(...)` by signed-in users:
+
+| Function | Does |
+| --- | --- |
+| `profile_by_friend_code(code)` | Name and avatar behind an "add me" link |
+| `send_friend_request(target)` | Sends a request, or accepts theirs if they already asked; at most 50 a day |
+| `accept_friend_request(requester)` | Accepts a request sent to you |
+| `my_friends()` | Your friends and pending requests, both ways |
+| `friend_suggestions()` | People from your teams who aren't friends yet |
+
+Declining, cancelling and unfriending delete the `friendships` row.
 
 ## Functions
 
