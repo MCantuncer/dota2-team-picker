@@ -6,6 +6,8 @@
   "description": "Hero data download and pick scoring engine.",
   "scripts": {
     "fetch-data": "tsx src/data/fetch.ts",
+    "pull-data": "tsx src/data/pull.ts",
+    "upload-data": "tsx src/data/upload.ts",
     "suggest": "tsx scripts/suggest.ts",
     "plan": "tsx scripts/plan.ts",
     "typecheck": "tsc --noEmit",
@@ -16,5 +18,8 @@
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",
     "vitest": "^2.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0"
   }
 }

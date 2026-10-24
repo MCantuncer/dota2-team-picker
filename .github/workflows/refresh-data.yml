@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency: refresh-data
 
@@ -14,6 +14,9 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      SUPABASE_URL: https://odigcdwsvajkbvcxeskj.supabase.co
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -21,13 +24,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Build on the last published data. The very first run starts from the
+      # copy in the repo instead.
+      - name: Download the latest data
+        working-directory: services/engine
+        run: npm run pull-data || echo "::warning::No published data yet, starting from the repo copy"
       - run: npm run fetch-data -w services/engine -- --pages 300
-      - name: Commit the new snapshot
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add services/engine/data/snapshot.json
-          git diff --cached --quiet && exit 0
-          git commit -m "Refresh hero data"
-          git pull --rebase origin main
-          git push
+      - run: npm run upload-data -w services/engine
