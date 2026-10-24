@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency: refresh-data
 
@@ -29,5 +30,19 @@ jobs:
       - name: Download the latest data
         working-directory: services/engine
         run: npm run pull-data || echo "::warning::No published data yet, starting from the repo copy"
-      - run: npm run fetch-data -w services/engine -- --pages 300
+      - id: fetch
+        run: npm run fetch-data -w services/engine -- --pages 300
       - run: npm run upload-data -w services/engine
+      - name: Open a review issue for the new patch
+        if: steps.fetch.outputs.new_patch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PATCH: ${{ steps.fetch.outputs.new_patch }}
+        run: |
+          gh issue create --title "Review the hand-kept hero lists for patch $PATCH" --body "Patch $PATCH is out. Old matchup and synergy counts now count 25%, and only $PATCH games are added from now on.
+
+          The hand-kept lists don't update themselves. Check them against the patch notes:
+
+          - [ ] Hard counters (dota2-team-picker-web \`src/lib/hard-counters.ts\`): re-check each pair once about a week of $PATCH games is in.
+          - [ ] Spell combos and team styles (\`services/engine/src/engine/gameplan.ts\`).
+          - [ ] Traits for new or reworked heroes (\`services/engine/src/engine/traits.ts\`)."

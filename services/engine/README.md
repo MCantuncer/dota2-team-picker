@@ -81,10 +81,27 @@ into `data/snapshot.json`:
 - hero list, roles and win rates per rank (`/heroStats`)
 - which lanes each hero is played in (`/scenarios/laneRoles`)
 - recent public matches (`/publicMatches`), counted into hero-vs-hero and same-team records
+- the patch list (`/constants/patch`)
 
-Each run adds new matches to the counts already saved and fades old ones by 3% per day since
-the last run, so the data follows the current patch. Lane roles take one request per hero and
-change slowly, so they are downloaded once a week.
+Each run adds new matches to the counts already saved and fades old ones by 1% per day since
+the last run, so the data follows the meta as players find new builds. Fading changes how much
+old games count, not the win rates they show. Lane roles take one request per hero and change
+slowly, so they are downloaded once a week.
+
+### Patches
+
+The snapshot records the patch its counts are for (`patch`). When OpenDota lists a new one
+(7.42 after 7.41; letter patches like 7.41f are not listed and are covered by the daily fade):
+
+- old matchup and synergy counts drop to 25%. Most matchups survive a patch, so they are a better
+  start than nothing while new games come in, and small samples are already pulled toward
+  neutral by the engine.
+- only games played since the patch came out are counted.
+- the Action opens a GitHub issue to review the hand-kept lists (hard counters, combos and
+  styles, hero traits) against the patch notes.
+
+New heroes show up through `/heroStats` on the next run. Until they have games, their matchups
+count as neutral.
 
 A GitHub Action ([`refresh-data.yml`](../../.github/workflows/refresh-data.yml)) refreshes the
 data every day and can also be started by hand from the Actions tab. The free API allows about
