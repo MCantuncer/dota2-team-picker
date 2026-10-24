@@ -5,8 +5,9 @@
  *
  * Each run refreshes hero stats and lane roles, then reads recent public
  * matches page by page (100 per page) and adds their matchups and synergies
- * to the counts already in the snapshot. Old counts fade a little each run so
- * the data follows the current patch.
+ * to the counts already in the snapshot. Old counts fade a little every day so
+ * the data follows the current patch. Lane roles change slowly and cost one
+ * request per hero, so they are refreshed once a week.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
@@ -14,10 +15,14 @@ import type { GamesWins, HeroInfo, Snapshot } from "../engine/types";
 
 const API = "https://api.opendota.com/api";
 const SNAPSHOT_PATH = "data/snapshot.json";
-/** The free API allows 60 requests a minute. */
-const REQUEST_GAP_MS = 1100;
-/** Share of old matchup and synergy counts kept on each run. */
-const DECAY = 0.97;
+/** The free API allows 60 requests a minute; stay well below it. */
+const REQUEST_GAP_MS = 1500;
+/** How long to wait after a 429 when the API does not say. */
+const RATE_LIMIT_WAIT_MS = 60_000;
+/** Share of old matchup and synergy counts kept per day since the last run. */
+const DECAY_PER_DAY = 0.97;
+const LANE_ROLES_MAX_AGE_DAYS = 7;
+const DAY_MS = 24 * 60 * 60 * 1000;
 /** Ranked and unranked normal drafts: All Pick, Captains Mode, Random Draft, Single Draft, All Random, Captains Draft, Ranked All Pick. */
 const GAME_MODES = new Set([1, 2, 3, 4, 5, 16, 22]);
 const MIN_DURATION_S = 15 * 60;
@@ -32,15 +37,22 @@ async function get<T>(path: string): Promise<T> {
     const res = await fetch(API + path).catch((err: unknown) => err as Error);
     if (!(res instanceof Error) && res.ok) return (await res.json()) as T;
     const status = res instanceof Error ? res.message : `HTTP ${res.status}`;
-    if (attempt >= 4 || (!(res instanceof Error) && res.status < 500 && res.status !== 429)) {
+    const limited = !(res instanceof Error) && res.status === 429;
+    if (attempt >= 4 || (!(res instanceof Error) && res.status < 500 && !limited)) {
       throw new Error(`GET ${path} failed: ${status}`);
     }
-    console.warn(`GET ${path} failed (${status}), retrying`);
-    await sleep(2000 * 2 ** attempt);
+    const backoff = limited ? retryAfterMs(res) : 2000 * 2 ** attempt;
+    console.warn(`GET ${path} failed (${status}), retrying in ${Math.round(backoff / 1000)}s`);
+    await sleep(backoff);
   }
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function retryAfterMs(res: Response): number {
+  const seconds = Number(res.headers.get("retry-after"));
+  return Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : RATE_LIMIT_WAIT_MS;
+}
 
 interface HeroStatsRow {
   id: number;
@@ -81,9 +93,22 @@ function add(map: Record<string, GamesWins>, key: string, won: boolean) {
   if (won) gw.wins += 1;
 }
 
-function decay(gw: GamesWins) {
-  gw.games = Math.round(gw.games * DECAY * 10) / 10;
-  gw.wins = Math.round(gw.wins * DECAY * 10) / 10;
+/** Fades all matchup and synergy counts by DECAY_PER_DAY for each day since the last run. */
+export function decayCounts(snapshot: Snapshot, now: Date) {
+  if (!snapshot.generatedAt) return;
+  const days = Math.max(0, (now.getTime() - Date.parse(snapshot.generatedAt)) / DAY_MS);
+  const factor = DECAY_PER_DAY ** days;
+  const decay = (gw: GamesWins) => {
+    gw.games = Math.round(gw.games * factor * 10) / 10;
+    gw.wins = Math.round(gw.wins * factor * 10) / 10;
+  };
+  for (const row of Object.values(snapshot.matchups)) Object.values(row).forEach(decay);
+  Object.values(snapshot.synergy).forEach(decay);
+}
+
+export function laneRolesDue(snapshot: Snapshot, now: Date): boolean {
+  if (!snapshot.laneRolesAt) return true;
+  return now.getTime() - Date.parse(snapshot.laneRolesAt) >= LANE_ROLES_MAX_AGE_DAYS * DAY_MS;
 }
 
 /** Adds one match to the counts. Returns false if the match is not a normal finished draft. */
@@ -108,6 +133,7 @@ async function main() {
   const pagesArg = process.argv.indexOf("--pages");
   const maxPages = pagesArg > 0 ? Number(process.argv[pagesArg + 1]) : 200;
   const snapshot = load();
+  const now = new Date();
 
   console.log("Hero stats...");
   const stats = await get<HeroStatsRow[]>("/heroStats");
@@ -128,43 +154,54 @@ async function main() {
     snapshot.bracketStats[h.id] = { picks, wins };
   }
 
-  console.log(`Lane roles for ${stats.length} heroes...`);
-  for (const h of stats) {
-    const rows = await get<LaneRoleRow[]>(`/scenarios/laneRoles?hero_id=${h.id}`);
-    const lanes: Snapshot["laneRoles"][string] = {};
-    for (const r of rows) {
-      const lane = String(r.lane_role) as "1" | "2" | "3" | "4";
-      lanes[lane] = (lanes[lane] ?? 0) + Number(r.games);
+  if (laneRolesDue(snapshot, now)) {
+    console.log(`Lane roles for ${stats.length} heroes...`);
+    for (const h of stats) {
+      const rows = await get<LaneRoleRow[]>(`/scenarios/laneRoles?hero_id=${h.id}`);
+      const lanes: Snapshot["laneRoles"][string] = {};
+      for (const r of rows) {
+        const lane = String(r.lane_role) as "1" | "2" | "3" | "4";
+        lanes[lane] = (lanes[lane] ?? 0) + Number(r.games);
+      }
+      snapshot.laneRoles[h.id] = lanes;
     }
-    snapshot.laneRoles[h.id] = lanes;
+    snapshot.laneRolesAt = now.toISOString();
+  } else {
+    console.log(`Lane roles are from ${snapshot.laneRolesAt}, keeping them.`);
   }
 
-  for (const row of Object.values(snapshot.matchups)) Object.values(row).forEach(decay);
-  Object.values(snapshot.synergy).forEach(decay);
+  decayCounts(snapshot, now);
 
   console.log(`Public matches (up to ${maxPages} pages)...`);
   const stopAt = snapshot.lastPublicMatchId ?? 0;
   let before: number | undefined;
   let newest = stopAt;
   let counted = 0;
-  for (let page = 0; page < maxPages; page++) {
-    const matches = await get<PublicMatch[]>(`/publicMatches${before ? `?less_than_match_id=${before}` : ""}`);
-    if (matches.length === 0) break;
-    for (const m of matches) {
-      if (m.match_id <= stopAt) continue;
-      if (countMatch(snapshot, m)) {
-        counted++;
-        newest = Math.max(newest, m.match_id);
+  try {
+    for (let page = 0; page < maxPages; page++) {
+      const matches = await get<PublicMatch[]>(`/publicMatches${before ? `?less_than_match_id=${before}` : ""}`);
+      if (matches.length === 0) break;
+      for (const m of matches) {
+        if (m.match_id <= stopAt) continue;
+        if (countMatch(snapshot, m)) {
+          counted++;
+          newest = Math.max(newest, m.match_id);
+        }
       }
+      before = Math.min(...matches.map((m) => m.match_id));
+      if (before <= stopAt) break;
+      if ((page + 1) % 25 === 0) console.log(`  ${page + 1} pages, ${counted} matches`);
     }
-    before = Math.min(...matches.map((m) => m.match_id));
-    if (before <= stopAt) break;
-    if ((page + 1) % 25 === 0) console.log(`  ${page + 1} pages, ${counted} matches`);
+  } catch (err) {
+    // Keep what was counted so far instead of losing the whole run. Public
+    // matches are a sample anyway, so the skipped pages are not missed.
+    if (counted === 0) throw err;
+    console.warn(`Stopped early: ${(err as Error).message}`);
   }
   console.log(`Counted ${counted} new matches.`);
 
   snapshot.lastPublicMatchId = newest;
-  snapshot.generatedAt = new Date().toISOString();
+  snapshot.generatedAt = now.toISOString();
   mkdirSync(dirname(SNAPSHOT_PATH), { recursive: true });
   writeFileSync(SNAPSHOT_PATH, JSON.stringify(snapshot));
   console.log(`Saved ${SNAPSHOT_PATH}`);

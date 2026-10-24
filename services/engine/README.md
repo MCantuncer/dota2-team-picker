@@ -82,9 +82,15 @@ into `data/snapshot.json`:
 - which lanes each hero is played in (`/scenarios/laneRoles`)
 - recent public matches (`/publicMatches`), counted into hero-vs-hero and same-team records
 
-Each run adds new matches to the counts already saved and fades old ones by 3%, so the data
-follows the current patch. A GitHub Action refreshes it every day. The free API allows about
-60 requests a minute, so a run takes around 8 minutes.
+Each run adds new matches to the counts already saved and fades old ones by 3% per day since
+the last run, so the data follows the current patch. Lane roles take one request per hero and
+change slowly, so they are downloaded once a week.
+
+A GitHub Action ([`refresh-data.yml`](../../.github/workflows/refresh-data.yml)) refreshes the
+data every day and can also be started by hand from the Actions tab. The free API allows about
+60 requests a minute, so requests are spaced 1.5 seconds apart and a rate-limit reply waits a
+minute before retrying. If the API still refuses partway through, the matches counted so far are
+saved instead of failing the whole run.
 
 ## Development
 
