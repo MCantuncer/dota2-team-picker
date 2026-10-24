@@ -1,0 +1,15 @@
+// Lint and format settings for the edge functions and email builder.
+{
+  "lint": {
+    "include": ["supabase/functions", "supabase/emails"],
+    "rules": {
+      "tags": ["recommended"],
+      // Supabase deploys each function on its own, so inline jsr: imports are the documented pattern.
+      "exclude": ["no-import-prefix"]
+    }
+  },
+  "fmt": {
+    "include": ["supabase/functions", "supabase/emails"],
+    "lineWidth": 120
+  }
+}

@@ -7,7 +7,12 @@ import { steamIdToAccountId } from "./steam.ts";
  * OpenDota into their profile. Needs a service role client, because users
  * cannot write these fields themselves.
  */
-export async function syncProfile(admin: SupabaseClient, userId: string, steamId: string, fetchFn: typeof fetch = fetch) {
+export async function syncProfile(
+  admin: SupabaseClient,
+  userId: string,
+  steamId: string,
+  fetchFn: typeof fetch = fetch,
+) {
   const player = await fetchPlayer(steamIdToAccountId(steamId), fetchFn);
 
   const { data: current, error: readError } = await admin

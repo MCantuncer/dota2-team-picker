@@ -26,8 +26,8 @@ name and picture; Steam and rank fields are written only by the server.
 | `favorite_heroes` | `user_id`, `position` (1–5, 0 = any position), `hero_id`                                     |
 | `favorite_positions` | `user_id`, `position`                                                                         |
 | `teams`           | `id`, `owner_id` (the captain), `name`                                                            |
-| `team_members`    | `team_id`, `user_id`: added only by accepting an invite (`accept_team_invite`)                  |
-| `team_invites`    | `id` (the secret in the join link), `team_id`, `email`, `sent_at` (expires 7 days later), `accepted_at` |
+| `team_members`    | `team_id`, `user_id`, `role` (`player` or `co_captain`, set by the owner): added only by accepting an invite (`accept_team_invite`) |
+| `team_invites`    | `id` (the secret in the join link), `team_id`, `email`, `sent_at` (expires 7 days later), `sent_by`, `accepted_at` |
 | `team_lineups`    | `team_id`, `slots` (member id per position, null = not in the team), `rank_bracket`             |
 | `steam_link_requests` | pending Steam links, used only by `steam-link`                                               |
 | `friendships`     | `requester_id`, `addressee_id`, `status` (pending, accepted): one row per pair, made only through `send_friend_request` |
@@ -71,7 +71,7 @@ function puts them in the user's metadata, which the templates read), and both l
 `get_team_invite(id)` returns what the join page shows; `accept_team_invite(id)` joins the team if
 the signed-in user's email is the invited one and the invite was sent in the last 7 days.
 
-Only captains can create teams and send invites, at most 30 a day each and one per address per
+Only captains can create teams. Owners and co-captains can send invites, at most 30 a day each and one per address per
 minute. See **Account types** below.
 
 **`steam-link`**: the profile page calls `supabase.functions.invoke("steam-link", {body: {next}})`
@@ -95,6 +95,10 @@ the dashboard's **SQL Editor**:
 update public.profiles set user_type = 'admin' where id = '<user id from Authentication > Users>';
 ```
 
+A team's owner can also make any member a **co-captain** (`team_members.role`). Co-captains don't
+need the captain type: they can run the draft, send and cancel invites, and remove players on that
+team. Only the owner can rename or delete the team, change roles, or remove a co-captain.
+
 ## Setup
 
 1. Create a free project at [supabase.com/dashboard](https://supabase.com/dashboard).
@@ -111,9 +115,19 @@ update public.profiles set user_type = 'admin' where id = '<user id from Authent
    website's address (for example `https://your-site.vercel.app`) and add
    `http://localhost:3000/**` to **Redirect URLs** for local development.
 4. Team invites send email, and Supabase's built-in sender only mails your own Supabase team and
-   a few per hour. Under **Authentication > Emails > SMTP Settings**, turn on custom SMTP. With a
-   Gmail account: host `smtp.gmail.com`, port `465`, user your Gmail address, password a
-   [Google app password](https://myaccount.google.com/apppasswords).
+   a few per hour. Send through [Resend](https://resend.com) from your own domain, so inboxes can
+   check the mail is genuine (SPF, DKIM, DMARC) and don't file it as spam:
+   - In Resend, add the domain and add the DNS records it lists (`resend._domainkey` TXT, `send`
+     MX and `send` TXT), plus a `_dmarc` TXT record such as `v=DMARC1; p=none; rua=mailto:you@example.com`.
+     Verify the domain.
+   - Create an API key with **Sending access** for that domain only.
+   - Under **Authentication > Emails > SMTP Settings**, turn on custom SMTP: sender email
+     `noreply@<your domain>`, sender name `Dota 2 Team Picker`, host `smtp.resend.com`, port `465`,
+     user `resend`, password the API key.
+
+   Resend's **Emails** page shows whether each email was delivered or bounced. A personal Gmail
+   account with an [app password](https://myaccount.google.com/apppasswords) (host
+   `smtp.gmail.com`, port `465`) also works for local testing, but its invites often land in spam.
 5. Under **Authentication > Emails > Templates**, set each template's **Subject** and paste its
    file as the body (open the file, copy everything, paste over the old body, **Save changes**):
 
@@ -157,3 +171,19 @@ Tests and type checks for the functions run with Deno, installed by `npm install
 npm test -w services/accounts
 npm run typecheck -w services/accounts
 ```
+
+### Database tests
+
+`supabase/tests/database/` holds [pgTAP](https://pgtap.org) tests for the schema and its row level security:
+who can read or change profiles, favorites, teams, members, invites and lineups. Each file signs in as
+test users (`tests.sign_in_as`) and rolls back at the end, so nothing is left behind. They need Docker:
+
+```sh
+npm run db:start -w services/accounts   # Postgres only, with every migration applied
+npm run db:lint -w services/accounts    # Supabase schema lint
+npm run test:db -w services/accounts
+npm run db:stop -w services/accounts
+```
+
+CI runs these on every pull request. A new table or policy should come with tests here; the first file
+fails if any table in `public` has row level security off.
