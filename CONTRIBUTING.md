@@ -80,6 +80,13 @@ review. The PR template has the checklist.
   write.
 - Prefer a database function (RPC) when several writes must succeed or fail together.
 
+## Writing
+
+These apply to code comments, docs, commit messages, PR descriptions and anything users read.
+
+- Write plain, short sentences in the product's words.
+- Never use the em dash character. Use a comma, colon, period or parentheses instead.
+
 ## Tests
 
 - New logic gets unit tests. Test behaviour through the public function, not private details.
