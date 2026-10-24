@@ -31,9 +31,9 @@ function callbackUrl(overrides: Record<string, string> = {}): URL {
 
 function steamSays(answer: string) {
   const calls: URLSearchParams[] = [];
-  const fetchFn = (async (_url: string, init?: RequestInit) => {
+  const fetchFn = ((_url: string, init?: RequestInit) => {
     calls.push(new URLSearchParams(init?.body as URLSearchParams));
-    return new Response(`ns:http://specs.openid.net/auth/2.0\nis_valid:${answer}\n`);
+    return Promise.resolve(new Response(`ns:http://specs.openid.net/auth/2.0\nis_valid:${answer}\n`));
   }) as typeof fetch;
   return { fetchFn, calls };
 }

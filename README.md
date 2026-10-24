@@ -21,4 +21,15 @@ Each service is its own folder under `services/`, set up as an npm workspace.
 npm install        # installs every service
 npm test           # tests every service
 npm run typecheck
+npm run lint       # Deno lint + format check for the edge functions
+npm run test:coverage
 ```
+
+CI runs on every pull request and on `main`:
+
+- **Engine**: type check, Vitest with a coverage floor (the run fails if coverage drops below it).
+- **Accounts**: Deno lint, format check, type check and tests for the edge functions and email builder.
+- **Dependency review**: fails a pull request that adds a package with a known high or critical vulnerability.
+- **CodeQL**: security scan of the TypeScript code and the workflows, also weekly.
+
+Dependabot opens grouped update PRs for npm packages and GitHub Actions every week.
