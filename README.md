@@ -33,3 +33,6 @@ CI runs on every pull request and on `main`:
 - **CodeQL**: security scan of the TypeScript code and the workflows, also weekly.
 
 Dependabot opens grouped update PRs for npm packages and GitHub Actions every week.
+
+Before opening a pull request, read [CONTRIBUTING.md](CONTRIBUTING.md): it holds the code standards and the checklist
+every change follows.
