@@ -111,7 +111,9 @@ New heroes show up through `/heroStats` on the next run. Until they have games, 
 count as neutral.
 
 A GitHub Action ([`refresh-data.yml`](../../.github/workflows/refresh-data.yml)) refreshes the
-data every day and can also be started by hand from the Actions tab. The free API allows about
+data four times a day (250 pages, about 15,000 matches each) and can also be started by hand
+from the Actions tab. The free API allows about 3,000 requests a day per IP, and GitHub's runners
+share IPs, so a run also stops reading pages when fewer than 300 requests are left for the day. The free API allows about
 60 requests a minute, so requests are spaced 1.5 seconds apart and a rate-limit reply waits a
 minute before retrying. If the API still refuses partway through, the matches counted so far are
 saved instead of failing the whole run.

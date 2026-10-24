@@ -1,8 +1,10 @@
 name: Refresh hero data
 
 on:
+  # Four runs a day, off the hour (GitHub delays jobs queued on the hour).
+  # 4 x 250 pages stays well inside OpenDota's free daily allowance.
   schedule:
-    - cron: "0 4 * * *"
+    - cron: "17 */6 * * *"
   workflow_dispatch:
 
 permissions:
@@ -31,7 +33,7 @@ jobs:
         working-directory: services/engine
         run: npm run pull-data || echo "::warning::No published data yet, starting from the repo copy"
       - id: fetch
-        run: npm run fetch-data -w services/engine -- --pages 300
+        run: npm run fetch-data -w services/engine -- --pages 250
       - run: npm run upload-data -w services/engine
       - name: Open a review issue for the new patch
         if: steps.fetch.outputs.new_patch
