@@ -1,0 +1,34 @@
+name: Database
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: database-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  database:
+    name: Database (migrations, lint, RLS tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: services/accounts
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+        working-directory: .
+      # Starts Postgres only and applies every migration from scratch.
+      - run: npm run db:start
+      - run: npm run db:lint
+      - run: npm run test:db

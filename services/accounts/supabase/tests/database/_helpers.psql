@@ -1,0 +1,61 @@
+-- Shared setup for the database tests, included at the top of each file.
+-- Each test file runs in one transaction and rolls back, so nothing here persists.
+
+set client_min_messages = warning;
+
+create extension if not exists pgtap with schema extensions;
+
+create schema if not exists tests;
+grant usage on schema tests to anon, authenticated;
+
+-- Creates an account (the profiles trigger runs as in production) and returns its id.
+create or replace function tests.create_user(email text, user_type text default 'user')
+returns uuid
+language plpgsql
+as $$
+declare
+  new_id uuid := gen_random_uuid();
+begin
+  insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data)
+  values (new_id, email, '{}'::jsonb, '{}'::jsonb);
+  update public.profiles set user_type = create_user.user_type where id = new_id;
+  return new_id;
+end;
+$$;
+
+-- Acts as a signed-in user, the way PostgREST does for a request with their token.
+create or replace function tests.sign_in_as(email text)
+returns void
+language plpgsql
+as $$
+declare
+  user_id uuid := (select id from auth.users u where u.email = sign_in_as.email);
+begin
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', user_id, 'email', email, 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+end;
+$$;
+
+create or replace function tests.sign_in_anon()
+returns void
+language plpgsql
+as $$
+begin
+  perform set_config('request.jwt.claims', '{"role": "anon"}', true);
+  execute 'set local role anon';
+end;
+$$;
+
+-- Back to the test runner's own role (bypasses row level security) for setup and checks.
+create or replace function tests.sign_out()
+returns void
+language plpgsql
+as $$
+begin
+  perform set_config('request.jwt.claims', '', true);
+  execute 'reset role';
+end;
+$$;
+
+grant execute on all functions in schema tests to anon, authenticated;

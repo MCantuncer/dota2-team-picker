@@ -153,3 +153,19 @@ Tests and type checks for the functions run with Deno, installed by `npm install
 npm test -w services/accounts
 npm run typecheck -w services/accounts
 ```
+
+### Database tests
+
+`supabase/tests/database/` holds [pgTAP](https://pgtap.org) tests for the schema and its row level security:
+who can read or change profiles, favorites, teams, members, invites and lineups. Each file signs in as
+test users (`tests.sign_in_as`) and rolls back at the end, so nothing is left behind. They need Docker:
+
+```sh
+npm run db:start -w services/accounts   # Postgres only, with every migration applied
+npm run db:lint -w services/accounts    # Supabase schema lint
+npm run test:db -w services/accounts
+npm run db:stop -w services/accounts
+```
+
+CI runs these on every pull request. A new table or policy should come with tests here; the first file
+fails if any table in `public` has row level security off.
