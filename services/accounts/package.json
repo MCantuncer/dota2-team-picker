@@ -6,9 +6,14 @@
   "scripts": {
     "typecheck": "deno check --node-modules-dir=none --no-lock supabase/functions supabase/emails",
     "test": "deno test --node-modules-dir=none --no-lock --allow-read supabase/functions supabase/emails",
+    "db:start": "supabase db start",
+    "db:stop": "supabase stop --no-backup",
+    "db:lint": "supabase db lint --local --level warning --fail-on warning",
+    "test:db": "supabase test db",
     "emails": "deno run --node-modules-dir=none --no-lock --allow-write=supabase/templates supabase/emails/build.ts"
   },
   "devDependencies": {
-    "deno": "^2.0.0"
+    "deno": "^2.0.0",
+    "supabase": "^2.122.0"
   }
 }
