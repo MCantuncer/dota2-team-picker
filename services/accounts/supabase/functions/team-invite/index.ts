@@ -90,7 +90,10 @@ Deno.serve(async (req) => {
     // details are set just for this email and removed after, so a later sign-in email stays plain.
     const { data: userId } = await admin.rpc("user_id_by_email", { address: email });
     if (userId) await setInviteDetails(userId, details);
-    const otp = await admin.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo, shouldCreateUser: false } });
+    const otp = await admin.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: redirectTo, shouldCreateUser: false },
+    });
     if (userId) await setInviteDetails(userId, { team_name: null, captain_name: null });
     if (otp.error) return failed(otp.error);
   } else if (sent.error) {

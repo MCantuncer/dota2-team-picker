@@ -85,5 +85,7 @@ function back(next: string, result: string): Response {
 
 /** Only allow paths on our own site. */
 function safeNext(next: unknown): string {
-  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : "/profile";
+  return typeof next === "string" && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\")
+    ? next
+    : "/profile";
 }

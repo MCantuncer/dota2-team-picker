@@ -59,7 +59,8 @@ export const strong = (html: string) => `<strong style="color:${color.fg};font-w
 export function panel(rows: [string, string][]): string {
   const cells = rows
     .map(
-      ([label, value], i) => `<tr>
+      ([label, value], i) =>
+        `<tr>
 <td style="padding:${i ? "12px" : "16px"} 20px ${i === rows.length - 1 ? "16px" : "0"};font-family:${text};">
 <div style="font-family:${display};font-size:11px;line-height:16px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:${color.subtle};">${label}</div>
 <div style="font-family:${display};font-size:20px;line-height:26px;font-weight:700;color:${color.fg};">${value}</div>
@@ -201,24 +202,29 @@ export const emails: Email[] = [
     file: "invite.html",
     dashboard: "Invite user",
     subject: "You're invited to a team on Dota 2 Team Picker",
-    preheader: `${hasTeam}${captain} wants you on ${team}. Join in about a minute.{{ else }}Join your team in about a minute.{{ end }}`,
+    preheader:
+      `${hasTeam}${captain} wants you on ${team}. Join in about a minute.{{ else }}Join your team in about a minute.{{ end }}`,
     eyebrow: "Team invite",
     heading: `${hasTeam}${captain} invited you to ${team}{{ else }}You've been invited to a team{{ end }}`,
     body: `${hasTeam}${teamPanel}{{ end }}
 ${p(`Join on Dota 2 Team Picker so ${captainLower} can call heroes for you that fit your positions and the heroes you play best.`)}`,
     button: { label: "Join the team", href: "{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=invite" },
     after: p(`It takes about a minute: pick a name and password, then your positions and favorite heroes.`),
-    note: `${expiry} If it has expired, ask ${captainLower} to send the invite again. Not expecting this? You can ignore this email.`,
+    note:
+      `${expiry} If it has expired, ask ${captainLower} to send the invite again. Not expecting this? You can ignore this email.`,
   },
   {
     file: "magic_link.html",
     dashboard: "Magic link",
     subject: "Your Dota 2 Team Picker link",
-    preheader: `${hasTeam}${captain} wants you on ${team}. Sign in to join.{{ else }}Your sign-in link for Dota 2 Team Picker.{{ end }}`,
+    preheader:
+      `${hasTeam}${captain} wants you on ${team}. Sign in to join.{{ else }}Your sign-in link for Dota 2 Team Picker.{{ end }}`,
     eyebrow: `${hasTeam}Team invite{{ else }}Sign in{{ end }}`,
     heading: `${hasTeam}${captain} invited you to ${team}{{ else }}Sign in to Dota 2 Team Picker{{ end }}`,
     body: `${hasTeam}${teamPanel}
-${p(`You already have an account, so just sign in to accept. The team will see your positions and favorite heroes.`)}{{ else }}${p(`Use the button below to sign in as ${strong("{{ .Email }}")}.`)}{{ end }}`,
+${p(`You already have an account, so just sign in to accept. The team will see your positions and favorite heroes.`)}{{ else }}${
+      p(`Use the button below to sign in as ${strong("{{ .Email }}")}.`)
+    }{{ end }}`,
     button: {
       label: `${hasTeam}Sign in and join{{ else }}Sign in{{ end }}`,
       href: "{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=magiclink",
@@ -232,7 +238,11 @@ ${p(`You already have an account, so just sign in to accept. The team will see y
     preheader: "One click to finish creating your account.",
     eyebrow: "Welcome",
     heading: "Confirm your email",
-    body: p(`Thanks for signing up. Confirm ${strong("{{ .Email }}")} to finish creating your account and start drafting with your team.`),
+    body: p(
+      `Thanks for signing up. Confirm ${
+        strong("{{ .Email }}")
+      } to finish creating your account and start drafting with your team.`,
+    ),
     button: { label: "Confirm email", href: "{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}&amp;type=email" },
     note: `${expiry} Didn't sign up? You can ignore this email and no account will be activated.`,
   },
@@ -243,7 +253,9 @@ ${p(`You already have an account, so just sign in to accept. The team will see y
     preheader: "Choose a new password for your account.",
     eyebrow: "Password reset",
     heading: "Reset your password",
-    body: p(`Someone asked to reset the password for ${strong("{{ .Email }}")}. If it was you, choose a new one below.`),
+    body: p(
+      `Someone asked to reset the password for ${strong("{{ .Email }}")}. If it was you, choose a new one below.`,
+    ),
     button: { label: "Choose a new password", href: "{{ .ConfirmationURL }}" },
     note: `${expiry} Didn't ask for this? Ignore this email and your password stays the same.`,
   },
@@ -254,10 +266,12 @@ ${p(`You already have an account, so just sign in to accept. The team will see y
     preheader: "Confirm the change to your account's email address.",
     eyebrow: "Email change",
     heading: "Confirm your new email",
-    body: `${panel([
-      ["From", "{{ .Email }}"],
-      ["To", "{{ .NewEmail }}"],
-    ])}
+    body: `${
+      panel([
+        ["From", "{{ .Email }}"],
+        ["To", "{{ .NewEmail }}"],
+      ])
+    }
 ${p("Confirm to start signing in with the new address.")}`,
     button: { label: "Confirm new email", href: "{{ .ConfirmationURL }}" },
     note: `${expiry} Didn't ask for this? Ignore this email and your email stays the same.`,
@@ -271,7 +285,8 @@ ${p("Confirm to start signing in with the new address.")}`,
     heading: "Confirm it's you",
     body: `${p("Enter this code to continue:")}
 ${code("{{ .Token }}")}`,
-    note: "The code expires in 1 hour. Didn't ask for this? Change your password, since someone else may be using your account.",
+    note:
+      "The code expires in 1 hour. Didn't ask for this? Change your password, since someone else may be using your account.",
   },
 ];
 

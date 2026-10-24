@@ -4,6 +4,8 @@
   "private": true,
   "description": "User accounts on Supabase: database schema, Steam login and profile sync.",
   "scripts": {
+    "lint": "deno lint && deno fmt --check",
+    "format": "deno fmt",
     "typecheck": "deno check --node-modules-dir=none --no-lock supabase/functions supabase/emails",
     "test": "deno test --node-modules-dir=none --no-lock --allow-read supabase/functions supabase/emails",
     "db:start": "supabase db start",

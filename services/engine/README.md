@@ -92,6 +92,24 @@ data every day and can also be started by hand from the Actions tab. The free AP
 minute before retrying. If the API still refuses partway through, the matches counted so far are
 saved instead of failing the whole run.
 
+### Where the data lives
+
+Each daily run downloads the last published data (`npm run pull-data`), adds the new matches
+(`npm run fetch-data`) and uploads the result (`npm run upload-data`) to the public `hero-data`
+bucket in Supabase Storage (created by a migration in `services/accounts`):
+
+| File                      | Use                                                            |
+| ------------------------- | -------------------------------------------------------------- |
+| `snapshot.json`           | The latest data. The website reads it, cached for 5 minutes.   |
+| `daily/<YYYY-MM-DD>.json` | A copy per day, to compare days or roll back a bad run.        |
+
+Public URL: `https://odigcdwsvajkbvcxeskj.supabase.co/storage/v1/object/public/hero-data/snapshot.json`.
+The upload needs the project's secret key in the repo's `SUPABASE_SECRET_KEY` Actions secret
+(Supabase dashboard > Project Settings > API Keys > Secret keys). Nothing else can write to the bucket.
+
+`data/snapshot.json` in the repo is not updated anymore. It is the starting point if the bucket
+is empty, and an offline copy for tests. Run `npm run pull-data` to get today's data locally.
+
 ## Development
 
 ```sh
