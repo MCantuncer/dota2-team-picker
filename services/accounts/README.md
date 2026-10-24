@@ -205,3 +205,15 @@ npm run db:stop -w services/accounts
 
 CI runs these on every pull request. A new table or policy should come with tests here; the first file
 fails if any table in `public` has row level security off.
+
+### Generated database types
+
+`supabase/database.types.ts` holds TypeScript types for every table, view and function, generated from the
+migrations. After changing a migration, regenerate and commit it (needs the local database running):
+
+```sh
+npm run db:types -w services/accounts
+```
+
+CI fails if the committed file no longer matches the migrations. The website keeps a copy and checks that it
+matches this file on `main`.

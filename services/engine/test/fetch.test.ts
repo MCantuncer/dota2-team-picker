@@ -25,6 +25,27 @@ describe("countMatch", () => {
     expect(data.synergy["6-7"]).toEqual({ games: 1, wins: 0 });
   });
 
+  it("also counts the match in its rank group", () => {
+    const data = empty();
+    const m = {
+      match_id: 1,
+      radiant_win: false,
+      duration: 2400,
+      lobby_type: 7,
+      game_mode: 22,
+      start_time: 1792800000,
+      avg_rank_tier: 54,
+      radiant_team: [1, 2, 3, 4, 5],
+      dire_team: [6, 7, 8, 9, 10],
+    };
+    countMatch(data, m);
+    expect(data.rankMatchups?.[3]?.[6]?.[1]).toEqual({ games: 1, wins: 1 });
+    expect(data.rankSynergy?.[3]?.["1-2"]).toEqual({ games: 1, wins: 0 });
+    countMatch(data, { ...m, match_id: 2, avg_rank_tier: null });
+    expect(data.matchups[6]![1]).toEqual({ games: 2, wins: 2 });
+    expect(data.rankMatchups?.[3]?.[6]?.[1]).toEqual({ games: 1, wins: 1 });
+  });
+
   it("skips turbo and early abandons", () => {
     const data = empty();
     const base = { match_id: 1, radiant_win: true, lobby_type: 0, start_time: 1792800000, radiant_team: [1, 2, 3, 4, 5], dire_team: [6, 7, 8, 9, 10] };
@@ -81,7 +102,9 @@ describe("applyPatch", () => {
     const data = { ...empty(), patch: { name: "7.41", startedAt: patch741.date } };
     data.matchups = { 1: { 2: { games: 100, wins: 60 } } };
     data.synergy = { "1-2": { games: 100, wins: 60 } };
+    data.rankSynergy = { 2: { "1-2": { games: 40, wins: 20 } } };
     expect(applyPatch(data, patch742)).toBe(true);
+    expect(data.rankSynergy[2]!["1-2"]).toEqual({ games: 10, wins: 5 });
     expect(data.matchups[1]![2]).toEqual({ games: 25, wins: 15 });
     expect(data.synergy["1-2"]).toEqual({ games: 25, wins: 15 });
     expect(data.patch).toEqual({ name: "7.42", startedAt: patch742.date });
