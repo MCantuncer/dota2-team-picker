@@ -5,8 +5,15 @@ updates:
     schedule:
       interval: weekly
     groups:
+      # Packages that only work at the same version land in one PR.
+      vitest:
+        patterns: ["vitest", "@vitest/*"]
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Types must match the Node version CI and the edge runtime use (22); bump by hand with Node.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 5
 
   - package-ecosystem: github-actions

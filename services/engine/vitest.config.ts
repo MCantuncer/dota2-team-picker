@@ -6,8 +6,8 @@ export default defineConfig({
       provider: "v8",
       include: ["src/**"],
       reporter: ["text-summary", "lcov"],
-      // A floor just under today's numbers, so coverage can only go up.
-      thresholds: { statements: 75, branches: 85, functions: 75, lines: 75 },
+      // A floor just under today's numbers (as Vitest 4+ counts them), so coverage can only go up.
+      thresholds: { statements: 70, branches: 60, functions: 75, lines: 70 },
     },
   },
 });
