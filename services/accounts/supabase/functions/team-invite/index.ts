@@ -19,13 +19,12 @@
  */
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders, json } from "../_shared/cors.ts";
+import { checkInviteLimits } from "../_shared/invite_limits.ts";
 
 const SITE_URL = (Deno.env.get("SITE_URL") ?? "http://localhost:3000").replace(/\/$/, "");
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CAPTAIN_TYPES = ["captain", "admin"];
-const DAILY_LIMIT = 30;
-const RESEND_AFTER_MS = 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
@@ -49,23 +48,16 @@ Deno.serve(async (req) => {
   if (!team) return json({ error: "Team not found" }, 404);
 
   const since = new Date(Date.now() - DAY_MS).toISOString();
-  const { count } = await admin
-    .from("team_invites")
-    .select("id", { count: "exact", head: true })
-    .eq("sent_by", auth.user.id)
-    .gte("sent_at", since);
-  if ((count ?? 0) >= DAILY_LIMIT) {
-    return json({ error: `You can send ${DAILY_LIMIT} invites a day. Try again tomorrow.` }, 429);
-  }
-  const { data: last } = await admin
-    .from("team_invites")
-    .select("sent_at")
-    .eq("team_id", team.id)
-    .eq("email", email)
-    .maybeSingle();
-  if (last && Date.now() - Date.parse(last.sent_at) < RESEND_AFTER_MS) {
-    return json({ error: "Invite just sent. Wait a minute before sending it again." }, 429);
-  }
+  const [sentToday, lastSent] = await Promise.all([
+    admin
+      .from("team_invites")
+      .select("id", { count: "exact", head: true })
+      .eq("sent_by", auth.user.id)
+      .gte("sent_at", since),
+    admin.from("team_invites").select("sent_at").eq("team_id", team.id).eq("email", email).maybeSingle(),
+  ]);
+  const limits = checkInviteLimits({ sentToday, lastSent });
+  if (!limits.ok) return json({ error: limits.message }, limits.status);
 
   const { data: invite, error } = await admin
     .from("team_invites")
