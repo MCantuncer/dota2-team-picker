@@ -14,15 +14,11 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { positionFit } from "../engine/positions";
+import { getOpenDota as get, requestsLeftToday } from "./opendota";
 import { fetchPositions } from "./stratz";
 import { rankGroup, type GamesWins, type HeroInfo, type RankBracket, type Snapshot } from "../engine/types";
 
-const API = "https://api.opendota.com/api";
 const SNAPSHOT_PATH = "data/snapshot.json";
-/** The free API allows 60 requests a minute; stay well below it. */
-const REQUEST_GAP_MS = 1500;
-/** How long to wait after a 429 when the API does not say. */
-const RATE_LIMIT_WAIT_MS = 60_000;
 /** Share of old matchup and synergy counts kept per day since the last run. */
 const DECAY_PER_DAY = 0.99;
 /**
@@ -41,37 +37,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /** Ranked and unranked normal drafts: All Pick, Captains Mode, Random Draft, Single Draft, All Random, Captains Draft, Ranked All Pick. */
 const GAME_MODES = new Set([1, 2, 3, 4, 5, 16, 22]);
 const MIN_DURATION_S = 15 * 60;
-
-let lastRequest = 0;
-/** Requests left today, from the API's x-rate-limit-remaining-day header. */
-let remainingToday = Infinity;
-
-async function get<T>(path: string): Promise<T> {
-  for (let attempt = 0; ; attempt++) {
-    const wait = lastRequest + REQUEST_GAP_MS - Date.now();
-    if (wait > 0) await sleep(wait);
-    lastRequest = Date.now();
-    const res = await fetch(API + path).catch((err: unknown) => err as Error);
-    const left = res instanceof Error ? null : res.headers.get("x-rate-limit-remaining-day");
-    if (left !== null && Number.isFinite(Number(left))) remainingToday = Number(left);
-    if (!(res instanceof Error) && res.ok) return (await res.json()) as T;
-    const status = res instanceof Error ? res.message : `HTTP ${res.status}`;
-    const limited = !(res instanceof Error) && res.status === 429;
-    if (attempt >= 4 || (!(res instanceof Error) && res.status < 500 && !limited)) {
-      throw new Error(`GET ${path} failed: ${status}`);
-    }
-    const backoff = limited ? retryAfterMs(res) : 2000 * 2 ** attempt;
-    console.warn(`GET ${path} failed (${status}), retrying in ${Math.round(backoff / 1000)}s`);
-    await sleep(backoff);
-  }
-}
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-function retryAfterMs(res: Response): number {
-  const seconds = Number(res.headers.get("retry-after"));
-  return Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : RATE_LIMIT_WAIT_MS;
-}
 
 interface HeroStatsRow {
   id: number;
@@ -274,8 +239,8 @@ async function main() {
   let counted = 0;
   try {
     for (let page = 0; page < maxPages; page++) {
-      if (remainingToday < DAILY_RESERVE) {
-        console.log(`Stopping: only ${remainingToday} API requests left today.`);
+      if (requestsLeftToday() < DAILY_RESERVE) {
+        console.log(`Stopping: only ${requestsLeftToday()} API requests left today.`);
         break;
       }
       const matches = await get<PublicMatch[]>(`/publicMatches${before ? `?less_than_match_id=${before}` : ""}`);
