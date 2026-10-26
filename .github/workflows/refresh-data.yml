@@ -58,6 +58,6 @@ jobs:
 
           The hand-kept lists don't update themselves. Check them against the patch notes:
 
-          - [ ] Hard counters (dota2-team-picker-web \`src/lib/hard-counters.ts\`): re-check each pair once about a week of $PATCH games is in.
+          - [ ] Hard counters (\`services/engine/src/engine/hard-counters.ts\`): re-check each pair once about a week of $PATCH games is in.
           - [ ] Spell combos and team styles (\`services/engine/src/engine/gameplan.ts\`).
           - [ ] Traits for new or reworked heroes (\`services/engine/src/engine/traits.ts\`)."

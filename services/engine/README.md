@@ -40,6 +40,12 @@ Every part of the score is in win-rate percentage points, so `+2.0` roughly mean
 - **Comfort**: your favorites, and your own record on the hero when known.
 - **Flex**: early in the draft, a hero that can play several positions hides your plan.
 - **Pick safety**: early in the draft, a hero with hard counters still available loses points.
+- **Hard counters**: a hand-checked list ([`src/engine/hard-counters.ts`](src/engine/hard-counters.ts)) of 17
+  pairs where one hero ruins another by a specific mechanic, such as Anti-Mage against Medusa. With the
+  counter on the enemy team, the matchup costs at least the listed gap ("Hard countered by Anti-Mage").
+  While the counter can still be picked, the hero loses the gap times the chance the enemy takes it
+  ("Gamble: Anti-Mage still available"). Once it is banned or on your team, there is no cost and the
+  reason says "Anti-Mage is out, safe to pick".
 
 Small samples are pulled toward the expected value, so a 3-0 matchup does not look like a sure win.
 

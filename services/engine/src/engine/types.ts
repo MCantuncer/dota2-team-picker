@@ -89,10 +89,22 @@ export interface ScoreBreakdown {
   pickSafety: number;
 }
 
+/** A hand-checked hard counter of a hero and where it stands in the draft, with a line to show. */
+export interface HardCounterNote {
+  counterId: number;
+  /** Win-rate points the hero loses with this counter on the enemy team. */
+  gap: number;
+  /** `enemy`: on the enemy team. `open`: the enemy can still pick it. `out`: banned or on your team. */
+  status: "enemy" | "open" | "out";
+  text: string;
+}
+
 export interface Suggestion {
   heroId: number;
   name: string;
   score: number;
   breakdown: ScoreBreakdown;
   reasons: string[];
+  /** The hero's hard counters, to show apart from the reasons. */
+  hardCounters: HardCounterNote[];
 }
