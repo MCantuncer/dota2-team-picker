@@ -20,6 +20,12 @@ import { isCandidate, mergeMatches, monthPath, toEvalMatch, type EvalMatch, type
 /** Leave this many OpenDota requests for the data refresh and other users of the runner's IP. */
 const DAILY_RESERVE = 300;
 const MAX_PAGES = 5;
+/**
+ * Games that ended just now are mostly short ones, which would skew the backtest. So the search
+ * starts this many match ids below the newest, about 3 hours back at roughly 50,000 ids an hour
+ * (Oct 2026), when nearly every game has ended.
+ */
+const MATCH_IDS_BACK = 150_000;
 /** Ask STRATZ again for games up to this old that still miss positions. */
 const POSITION_RETRY_S = 3 * 24 * 60 * 60;
 const FILE_MAX_AGE_S = 300;
@@ -53,13 +59,16 @@ export interface CollectResult {
   written: { path: string; games: number }[];
 }
 
-/** Newest finished ranked All Pick games from OpenDota's public match list. */
+/** Finished ranked All Pick games from OpenDota's public match list, starting MATCH_IDS_BACK below the newest. */
 async function findCandidates(deps: CollectDeps, skip: (id: number) => boolean): Promise<PublicMatch[]> {
+  if (deps.requestsLeft() < DAILY_RESERVE) return [];
+  const newest = await deps.openDota<PublicMatch[]>("/publicMatches");
+  if (newest.length === 0) return [];
   const found: PublicMatch[] = [];
-  let before: number | undefined;
+  let before = Math.max(...newest.map((m) => m.match_id)) - MATCH_IDS_BACK;
   for (let page = 0; page < MAX_PAGES && found.length < deps.max; page++) {
     if (deps.requestsLeft() < DAILY_RESERVE) break;
-    const matches = await deps.openDota<PublicMatch[]>(`/publicMatches${before ? `?less_than_match_id=${before}` : ""}`);
+    const matches = await deps.openDota<PublicMatch[]>(`/publicMatches?less_than_match_id=${before}`);
     if (matches.length === 0) break;
     found.push(...matches.filter((m) => isCandidate(m) && !skip(m.match_id)));
     before = Math.min(...matches.map((m) => m.match_id));

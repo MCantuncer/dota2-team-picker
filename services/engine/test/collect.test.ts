@@ -42,12 +42,17 @@ function memoryStore(files: Record<string, EvalMatch[]> = {}): MonthStore & { fi
   };
 }
 
-function deps(over: Partial<CollectDeps> & { pages?: PublicMatch[][] } = {}): CollectDeps {
+/** The newest public match, which only tells the collector where to start. */
+const NEWEST = [listed(1_000_000, { duration: 0, radiant_team: [0, 0, 0, 0, 0] })];
+
+function deps(over: Partial<CollectDeps> & { pages?: PublicMatch[][]; asked?: string[] } = {}): CollectDeps {
   const pages = over.pages ?? [[listed(3), listed(2, { game_mode: 1 }), listed(1)]];
   let page = 0;
   return {
     store: memoryStore(),
     openDota: (async (path: string) => {
+      over.asked?.push(path);
+      if (path === "/publicMatches") return NEWEST;
       if (path.startsWith("/publicMatches")) return pages[page++] ?? [];
       const id = Number(path.split("/")[2]);
       if (id === 404) throw new Error("GET failed: HTTP 404");
@@ -73,6 +78,12 @@ describe("collectMatches", () => {
     expect(saved[0]!.picks.every((p) => p.position !== null)).toBe(true);
     expect(saved[0]!.rankTier).toBe(54);
     expect(result.written).toEqual([{ path: MONTH, games: 2 }]);
+  });
+
+  it("starts the search about 3 hours of match ids below the newest game", async () => {
+    const asked: string[] = [];
+    await collectMatches(deps({ asked, pages: [[listed(3)], [listed(2)]], max: 2 }));
+    expect(asked.slice(0, 3)).toEqual(["/publicMatches", "/publicMatches?less_than_match_id=850000", "/publicMatches?less_than_match_id=3"]);
   });
 
   it("skips games already saved and stops at --max", async () => {

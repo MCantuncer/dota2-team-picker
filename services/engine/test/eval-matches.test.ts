@@ -94,7 +94,9 @@ describe("monthPath and mergeMatches", () => {
 
 describe("STRATZ match positions", () => {
   it("asks for players of up to MATCHES_PER_QUERY matches", () => {
-    expect(matchPositionsQuery([1, 2])).toBe("{ matches(ids: [1, 2]) { id players { heroId position } } }");
+    expect(matchPositionsQuery([1, 2])).toBe(
+      "{ m1: match(id: 1) { id players { heroId position } } m2: match(id: 2) { id players { heroId position } } }",
+    );
     expect(() => matchPositionsQuery([])).toThrow();
     expect(() => matchPositionsQuery(Array.from({ length: MATCHES_PER_QUERY + 1 }, (_, i) => i + 1))).toThrow();
     expect(() => matchPositionsQuery([1.5])).toThrow();
@@ -104,6 +106,7 @@ describe("STRATZ match positions", () => {
     const out = toMatchPositions([
       { id: 7, players: [{ heroId: 1, position: "POSITION_2" }, { heroId: 2, position: "UNKNOWN" }, { heroId: 3, position: null }] },
       { id: "bad", players: [] },
+      null,
       { id: 8, players: null },
     ]);
     expect([...out.keys()]).toEqual([7, 8]);
