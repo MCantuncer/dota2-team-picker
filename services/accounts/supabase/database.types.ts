@@ -259,6 +259,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"team_game_plans": {
+                  Row: {
+                    "bans": (number)[],"created_at": string,"enemies": (number)[],"id": string,"picks": (number)[],"rank_bracket": number | null,"sent_by": string,"team_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "bans"?: (number)[],"created_at"?: string,"enemies": (number)[],"id"?: string,"picks": (number)[],"rank_bracket"?: number | null,"sent_by": string,"team_id": string
+                  }
+                  Update: {
+                    "bans"?: (number)[],"created_at"?: string,"enemies"?: (number)[],"id"?: string,"picks"?: (number)[],"rank_bracket"?: number | null,"sent_by"?: string,"team_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "team_game_plans_sent_by_fkey"
+      columns: ["sent_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "team_game_plans_team_id_fkey"
+      columns: ["team_id"]
+isOneToOne: false
+      referencedRelation: "teams"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"team_invites": {
                   Row: {
                     "accepted_at": string | null,"created_at": string,"email": string,"id": string,"sent_at": string,"sent_by": string | null,"team_id": string
