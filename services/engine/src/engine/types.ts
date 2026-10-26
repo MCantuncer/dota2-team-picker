@@ -70,10 +70,35 @@ export interface Snapshot {
     games: number;
     byKnown: Record<string, { a: number; b: number }>;
   };
+  /** Shop items by item id, for item builds. Recipes and items with no cost are left out. */
+  items?: Record<string, ItemInfo>;
+  /** How often each item is bought on each hero, by game phase, from OpenDota. Keyed by hero id. */
+  itemBuilds?: Record<string, ItemPhases>;
+  /** When items and item builds were last downloaded; they are refreshed daily. */
+  itemsAt?: string;
   /** The patch the counts are for, from OpenDota's patch list. */
   patch?: { name: string; startedAt: string };
   /** Highest public match id already counted, so daily runs only add new matches. */
   lastPublicMatchId?: number;
+}
+
+export interface ItemInfo {
+  /** OpenDota's internal name, like `black_king_bar`. */
+  key: string;
+  name: string;
+  cost: number;
+  /** Image path on the Steam CDN, like `/apps/dota2/images/dota_react/items/black_king_bar.png`. */
+  img: string;
+  /** Item ids this item is built from; empty for basic items. */
+  components: number[];
+}
+
+/** Times each item (by item id) was bought in each phase of the game: before the horn, then up to 10, 25 and after. */
+export interface ItemPhases {
+  start: Record<string, number>;
+  early: Record<string, number>;
+  mid: Record<string, number>;
+  late: Record<string, number>;
 }
 
 export interface AllyPick {
