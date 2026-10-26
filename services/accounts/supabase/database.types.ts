@@ -23,7 +23,33 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "favorite_heroes": {
+            "draft_actions": {
+                  Row: {
+                    "actor_id": string,"created_at": string,"draft_id": string,"hero_id": number,"id": number,"kind": string,"position": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actor_id": string,"created_at"?: string,"draft_id": string,"hero_id": number,"id"?: never,"kind": string,"position"?: number | null
+                  }
+                  Update: {
+                    "actor_id"?: string,"created_at"?: string,"draft_id"?: string,"hero_id"?: number,"id"?: never,"kind"?: string,"position"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "draft_actions_actor_id_fkey"
+      columns: ["actor_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "draft_actions_draft_id_fkey"
+      columns: ["draft_id"]
+isOneToOne: false
+      referencedRelation: "party_drafts"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"favorite_heroes": {
                   Row: {
                     "created_at": string,"hero_id": number,"position": number,"user_id": string
                   }
@@ -112,6 +138,32 @@ isOneToOne: false
       columns: ["team_id"]
 isOneToOne: false
       referencedRelation: "teams"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"party_drafts": {
+                  Row: {
+                    "created_at": string,"ended_at": string | null,"id": string,"party_id": string,"started_by": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"party_id": string,"started_by": string
+                  }
+                  Update: {
+                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"party_id"?: string,"started_by"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "party_drafts_party_id_fkey"
+      columns: ["party_id"]
+isOneToOne: false
+      referencedRelation: "parties"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "party_drafts_started_by_fkey"
+      columns: ["started_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -311,11 +363,22 @@ isOneToOne: false
 "accept_team_invite":
 { Args: { "invite": string }; Returns: string
                            },
+"add_draft_action":
+{ Args: { "action": string,"draft": string,"hero": number,"pos"?: number }; Returns: undefined
+                           },
 "answer_party_invite":
 { Args: { "accept": boolean,"party": string }; Returns: undefined
                            },
 "can_invite":
 { Args: { "target": string }; Returns: boolean
+                           },
+"draft_state":
+{ Args: { "draft": string }; Returns: {
+              "hero_id": number,"kind": string,"position": number
+            }[]
+                           },
+"end_party_draft":
+{ Args: { "draft": string }; Returns: undefined
                            },
 "friend_suggestions":
 { Args: Record<PropertyKey, never>; Returns: {
@@ -326,6 +389,9 @@ isOneToOne: false
 { Args: { "invite": string }; Returns: {
               "accepted": boolean,"captain_name": string,"email": string,"expired": boolean,"team_name": string
             }[]
+                           },
+"in_draft_party":
+{ Args: { "draft": string }; Returns: boolean
                            },
 "in_party":
 { Args: { "party": string }; Returns: boolean
@@ -391,6 +457,9 @@ isOneToOne: false
                            },
 "start_party":
 { Args: { "team"?: string }; Returns: string
+                           },
+"start_party_draft":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "user_id_by_email":
 { Args: { "address": string }; Returns: string
