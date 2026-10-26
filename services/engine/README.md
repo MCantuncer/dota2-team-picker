@@ -137,6 +137,7 @@ bucket in Supabase Storage (created by a migration in `services/accounts`):
 | ------------------------- | -------------------------------------------------------------- |
 | `snapshot.json`           | The latest data. The website reads it, cached for 5 minutes.   |
 | `daily/<YYYY-MM-DD>.json` | A copy per day, to compare days or roll back a bad run.        |
+| `eval/matches-<YYYY-MM>.json` | Ranked games saved for the backtest (see below).          |
 
 Public URL: `https://odigcdwsvajkbvcxeskj.supabase.co/storage/v1/object/public/hero-data/snapshot.json`.
 The upload needs the project's secret key in the repo's `SUPABASE_SECRET_KEY` Actions secret
@@ -144,6 +145,17 @@ The upload needs the project's secret key in the repo's `SUPABASE_SECRET_KEY` Ac
 
 `data/snapshot.json` in the repo is not updated anymore. It is the starting point if the bucket
 is empty, and an offline copy for tests. Run `npm run pull-data` to get today's data locally.
+
+### Games for the backtest
+
+After the upload, each run also saves about 100 new ranked All Pick games
+(`npm run collect-matches -- --max 100`), one file per month under `eval/`. For each game it keeps
+the order the 10 heroes were picked in, the bans, the average rank, who won, and each player's
+position from STRATZ (OpenDota only knows positions for parsed replays). STRATZ may not have placed
+a game that just ended, so later runs ask again for games up to 3 days old that still miss
+positions. The backtest scores the engine on these games, so they are kept apart from the counts in
+the snapshot. Each game costs one OpenDota request, and the step stops when fewer than 300 requests
+are left for the day. If this step fails, the hero data above is already uploaded.
 
 ## Development
 

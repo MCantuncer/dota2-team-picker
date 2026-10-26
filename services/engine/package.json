@@ -8,6 +8,7 @@
     "fetch-data": "tsx src/data/fetch.ts",
     "pull-data": "tsx src/data/pull.ts",
     "upload-data": "tsx src/data/upload.ts",
+    "collect-matches": "tsx src/data/collect.ts",
     "suggest": "tsx scripts/suggest.ts",
     "plan": "tsx scripts/plan.ts",
     "typecheck": "tsc --noEmit",

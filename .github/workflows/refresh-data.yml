@@ -2,7 +2,8 @@ name: Refresh hero data
 
 on:
   # Four runs a day, off the hour (GitHub delays jobs queued on the hour).
-  # 4 x 250 pages stays well inside OpenDota's free daily allowance.
+  # 4 x 250 pages plus 4 x about 105 requests for backtest games stays well
+  # inside OpenDota's free daily allowance.
   schedule:
     - cron: "17 */6 * * *"
   workflow_dispatch:
@@ -42,6 +43,11 @@ jobs:
         run: npm run fetch-data -w services/engine -- --pages 250
       - if: ${{ !inputs.dry_run }}
         run: npm run upload-data -w services/engine
+      # Recent ranked games for the engine backtest, saved to eval/ in the same
+      # bucket. A failure here must not hold back the hero data uploaded above.
+      - name: Save ranked games for the backtest
+        continue-on-error: true
+        run: npm run collect-matches -w services/engine -- --max 100 ${{ inputs.dry_run && '--dry-run' || '' }}
       - name: Open a review issue for the new patch
         if: ${{ steps.fetch.outputs.new_patch && !inputs.dry_run }}
         env:
