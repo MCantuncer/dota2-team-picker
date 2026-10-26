@@ -126,6 +126,10 @@ position, so a roaming pos 4 (Riki, Earth Spirit) no longer looks like a mid the
 lane data makes it look. A hero with fewer than 200 STRATZ games falls back to lane data. If STRATZ
 is down, the run keeps the last positions and carries on.
 
+It also counts, from the saved ranked games of this patch (see "Games for the backtest"), how each
+hero does by when its team picked it: 1st or 2nd pick, 3rd, or 4th or 5th. A hero that wins much
+less as an early pick is easy to counter and safer to pick late. These counts go in `pickPhase`.
+
 The Action can be started by hand with **dry run** ticked to fetch and build the data without
 uploading it, for example to test a change on a branch.
 
