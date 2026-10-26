@@ -430,6 +430,11 @@ isOneToOne: false
 "owns_team":
 { Args: { "team": string }; Returns: boolean
                            },
+"party_hero_pool":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "hero_id": number,"position": number,"user_id": string
+            }[]
+                           },
 "party_view":
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_url": string,"display_name": string,"joined_at": string,"leader_id": string,"party_id": string,"position": number,"team_id": string,"user_id": string
