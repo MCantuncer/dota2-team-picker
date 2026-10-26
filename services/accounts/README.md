@@ -103,6 +103,14 @@ token). It removes the SteamID and everything copied from Steam and OpenDota (St
 hero record, and the picture if it came from Steam). Accounts made by "Sign in with Steam" have no
 other way to sign in, so they get `409` and keep their Steam account.
 
+**`draft-result`**: the draft screen's after-game card calls `supabase.functions.invoke("draft-result",
+{body: {draftId, matchId?}})` for a party draft. Without `matchId` it looks for a match that started
+after the draft in the recent OpenDota matches of the party's Steam players, played with one of the
+draft's heroes. With `matchId` (players without Steam, or with a hidden profile) it checks that every
+hero entered for the team played on one side of that match. It saves `match_id` and `won` on the
+draft, asks OpenDota to parse the replay (replays expire after one to two weeks), and looks at most
+once every 20 seconds per draft. Returns `{matchId, won}`, or `{matchId: null}` when nothing was found yet.
+
 ## Account types
 
 `profiles.user_type` is `user` (the default), `captain` (can run Captain mode: create teams and

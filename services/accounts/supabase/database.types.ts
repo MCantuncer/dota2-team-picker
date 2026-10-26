@@ -143,14 +143,14 @@ isOneToOne: false
                   ]
                 },"party_drafts": {
                   Row: {
-                    "created_at": string,"ended_at": string | null,"id": string,"party_id": string,"started_by": string
+                    "created_at": string,"ended_at": string | null,"id": string,"match_id": number | null,"party_id": string,"result_checked_at": string | null,"started_by": string,"won": boolean | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"party_id": string,"started_by": string
+                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"match_id"?: number | null,"party_id": string,"result_checked_at"?: string | null,"started_by": string,"won"?: boolean | null
                   }
                   Update: {
-                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"party_id"?: string,"started_by"?: string
+                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"match_id"?: number | null,"party_id"?: string,"result_checked_at"?: string | null,"started_by"?: string,"won"?: boolean | null
                   }
                   Relationships: [
                     {
