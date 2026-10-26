@@ -33,6 +33,58 @@ jobs:
           path: services/engine/coverage
           retention-days: 7
 
+  backtest:
+    name: Engine backtest
+    # Scores this PR's engine and main's on the same saved games and writes both to the job summary.
+    # It reports numbers only; a lower score does not fail the PR.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GAMES_URL: https://odigcdwsvajkbvcxeskj.supabase.co/storage/v1/object/public/hero-data/eval
+      LIMIT: 1500
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Download the saved games
+        run: |
+          for month in "$(date -u -d '-1 month' +%Y-%m)" "$(date -u +%Y-%m)"; do
+            curl -fsS -o "$RUNNER_TEMP/matches-$month.json" "$GAMES_URL/matches-$month.json" ||
+              echo "No saved games for $month"
+          done
+          ls "$RUNNER_TEMP"/matches-*.json > "$RUNNER_TEMP/games.txt" 2>/dev/null || true
+      - name: Score this PR and main
+        run: |
+          games=$(paste -sd, "$RUNNER_TEMP/games.txt")
+          tsx="$GITHUB_WORKSPACE/node_modules/.bin/tsx"
+          {
+            echo "## Engine backtest"
+            echo
+            if [ -z "$games" ]; then
+              echo "No saved games to score yet."
+              exit 0
+            fi
+            echo "### This PR"
+            (cd services/engine && "$tsx" scripts/backtest.ts --matches "$games" --limit "$LIMIT" 2>&1) || true
+            echo
+            echo "### main"
+            if [ -f base/services/engine/scripts/backtest.ts ]; then
+              (cd base/services/engine && "$tsx" scripts/backtest.ts --matches "$games" --limit "$LIMIT" 2>&1) || true
+            else
+              echo "main has no backtest yet."
+            fi
+            echo
+            echo "Each side uses its own data/snapshot.json and only games played after it was built."
+          } >> "$GITHUB_STEP_SUMMARY"
+
   accounts:
     name: Accounts (edge functions)
     runs-on: ubuntu-latest

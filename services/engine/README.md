@@ -77,6 +77,9 @@ npm run pull-data -w services/engine
 npm run backtest -w services/engine -- --limit 500
 ```
 
+On every pull request, CI scores the PR's engine and main's on the same saved games and puts both
+tables in the "Engine backtest" job summary, so an engine change shows its effect before it merges.
+
 ## WCST team plan
 
 WCST (Wombo-Combo Super Team) plans all five heroes for a Captain mode team at once, and
