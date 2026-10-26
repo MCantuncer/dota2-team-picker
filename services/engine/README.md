@@ -132,7 +132,24 @@ hero that is already picked. Positions left out are planned without a player.
 In code: `planTeam(engine, { slots, enemies, bans, rankBracket })` from
 [`src/engine/plan.ts`](src/engine/plan.ts).
 
-## Data
+## Game plan
+
+Once all ten heroes are in, `gamePlan` (in [`src/engine/game-plan.ts`](src/engine/game-plan.ts)) gives the
+captain's team:
+
+- **Lanes**: our heroes in each lane against the enemy heroes most likely there (guessed from where each
+  hero is usually played), and whether the lane is won, even or hard by matchup data.
+- **Win condition and roadmap**: each team's style from the WCST lists (teamfight, push, pick-off, late
+  game), whether they outscale us or want an early game, and what to do in laning, mid game and late game.
+- **Fears**: the enemy hero who beats the most of our heroes, enemy combos and hard counters to our heroes.
+- **Item builds**: `itemBuild` (in [`src/engine/item-build.ts`](src/engine/item-build.ts)) starts from the items
+  players really buy on the hero (`itemBuilds`), keeps one pair of boots and the finished items in buying
+  order, then moves a counter item up or adds it as situational when the enemy lineup calls for it: BKB
+  against three or more disablers, Monkey King Bar against evasion, Spirit Vessel against healing, Force Staff
+  or Ghost Scepter for supports against physical carries, and so on. A counter item only goes in when at
+  least 10% as many players buy it on that hero as buy its most common item, so a hero never gets an item
+  nobody builds on it. Each change says which enemy heroes it answers.
+
 
 `npm run fetch-data` downloads data from the free [OpenDota API](https://docs.opendota.com/)
 into `data/snapshot.json`:
@@ -142,6 +159,9 @@ into `data/snapshot.json`:
 - recent public matches (`/publicMatches`), counted into hero-vs-hero and same-team records,
   for all ranks and again for the match's rank group (`rankMatchups`, `rankSynergy`)
 - the patch list (`/constants/patch`)
+- the shop's items (`/constants/items`) and how often each hero buys each item before the horn,
+  up to 10 minutes, up to 25 and after (`/heroes/{id}/itemPopularity`), for the item builds in the
+  game plan (`items`, `itemBuilds`)
 
 and, when the `STRATZ_TOKEN` secret is set, games per position (pos 1-5) for every hero over the
 last week from the [STRATZ API](https://stratz.com/api). STRATZ detects each player's real
@@ -159,7 +179,8 @@ uploading it, for example to test a change on a branch.
 Each run adds new matches to the counts already saved and fades old ones by 1% per day since
 the last run, so the data follows the meta as players find new builds. Fading changes how much
 old games count, not the win rates they show. Lane roles take one request per hero and change
-slowly, so they are downloaded once a week.
+slowly, so they are downloaded once a week. Item builds also take one request per hero and are
+downloaded once a day.
 
 ### Patches
 
