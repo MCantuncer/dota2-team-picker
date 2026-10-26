@@ -75,6 +75,9 @@ jobs:
             echo "### This PR"
             (cd services/engine && "$tsx" scripts/backtest.ts --matches "$games" --limit "$LIMIT" 2>&1) || true
             echo
+            echo "### This PR with pick phase counts from the older half of the games"
+            (cd services/engine && "$tsx" scripts/backtest.ts --matches "$games" --limit "$LIMIT" --pick-phase 2>&1) || true
+            echo
             echo "### main"
             if [ -f base/services/engine/scripts/backtest.ts ]; then
               (cd base/services/engine && "$tsx" scripts/backtest.ts --matches "$games" --limit "$LIMIT" 2>&1) || true

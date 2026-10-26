@@ -2,6 +2,7 @@ import { hardCountersOf, type HardCounter } from "./hard-counters";
 import { guessEnemyPositions, LANE_OPPONENTS, positionFit, type PositionFit } from "./positions";
 import { NEED_LABELS, traitsOf, unmetNeeds } from "./traits";
 import {
+  phaseOf,
   POSITIONS,
   RANK_GROUP_BRACKETS,
   rankGroup,
@@ -10,6 +11,7 @@ import {
   type Position,
   type GamesWins,
   type HeroInfo,
+  type PickPhase,
   type RankBracket,
   type RankGroup,
   type ScoreBreakdown,
@@ -39,7 +41,14 @@ const WEIGHTS = {
 };
 
 /** Games of evidence a value is pulled toward its prior with (Bayesian shrinkage). */
-const PRIOR_GAMES = { heroWinRate: 300, matchup: 250, rankMatchup: 250, personal: 15 };
+const PRIOR_GAMES = { heroWinRate: 300, matchup: 250, rankMatchup: 250, personal: 15, pickPhase: 200 };
+
+/**
+ * Pick phase counts replace the matchup-based pick safety once the saved games behind them reach
+ * this many. Fewer games would shrink every hero to 0 and lose the signal.
+ */
+const MIN_PICK_PHASE_GAMES = 3000;
+const PHASE_NAMES = ["an early", "a 3rd", "a late"];
 
 /**
  * Players take a hard counter on purpose when they see its target, so the enemy is this many times
@@ -64,6 +73,8 @@ export class Engine {
   private overallWr = new Map<number, number>();
   private pickRates = new Map<number, number>();
   private hardCounters: Map<number, HardCounter[]>;
+  /** True when the snapshot's pick phase counts hold enough games to score with. */
+  private readonly usePickPhase: boolean;
 
   /** `hardCounters` replaces the hand-checked list, for tests. */
   constructor(
@@ -79,6 +90,8 @@ export class Engine {
     const picks = (id: number) => (data.bracketStats[id]?.picks ?? []).reduce((n, x) => n + x, 0);
     const games = this.heroes.reduce((n, h) => n + picks(h.id), 0) / 10;
     for (const h of this.heroes) this.pickRates.set(h.id, games > 0 ? picks(h.id) / games : 0);
+    const phaseGames = Object.values(data.pickPhase ?? {}).reduce((n, r) => n + sum(r.games), 0) / 10;
+    this.usePickPhase = phaseGames >= MIN_PICK_PHASE_GAMES;
   }
 
   hero(id: number): HeroInfo {
@@ -147,6 +160,20 @@ export class Engine {
     return (shrink(inGroup, groupExpected + edge, PRIOR_GAMES.rankMatchup) - groupExpected) * 100;
   }
 
+  /**
+   * How much better the hero does when its team picks it in this phase than over all its games,
+   * in percentage points, or undefined when the snapshot has too few pick phase games.
+   */
+  pickPhaseEdge(id: number, phase: PickPhase): number | undefined {
+    if (!this.usePickPhase) return undefined;
+    const row = this.data.pickPhase?.[id];
+    if (!row) return 0;
+    const all = { games: sum(row.games), wins: sum(row.wins) };
+    const overall = shrink(all, 0.5, PRIOR_GAMES.heroWinRate);
+    const inPhase = { games: row.games[phase] ?? 0, wins: row.wins[phase] ?? 0 };
+    return (shrink(inPhase, overall, PRIOR_GAMES.pickPhase) - overall) * 100;
+  }
+
   /** Chance (0-1) that each enemy is one you face in lane when playing `pos`. */
   laneChances(enemies: number[], pos: Position): number[] {
     return guessEnemyPositions(enemies.map((e) => this.fit(e))).map((fit) =>
@@ -201,7 +228,8 @@ export class Engine {
     // Heroes the enemy can still pick, for judging how safe an early pick is.
     const pool = this.heroes.filter((h) => !taken.has(h.id));
     const enemySlotsLeft = 5 - input.enemies.length;
-    const vulnerability = this.vulnerability(pool, input.rankBracket);
+    const phase = phaseOf(allyIds.length);
+    const vulnerability = this.usePickPhase ? new Map<number, number>() : this.vulnerability(pool, input.rankBracket);
     const avgVulnerability = mean([...vulnerability.values()]);
 
     const results: Suggestion[] = [];
@@ -269,9 +297,18 @@ export class Engine {
       const flex = otherPositions.length * WEIGHTS.flex * earliness;
       if (flex >= 0.3) reasons.push({ text: `Flexible pick: can also play pos ${otherPositions.join(" or ")}`, value: flex });
 
-      // Pick safety: early on, how hard the enemy can still counter this hero.
+      // Pick safety: how the hero does when picked at this point of the draft, from the saved games.
+      // Without enough of them, early on, how hard the enemy can still counter it from match data.
       let pickSafety = 0;
-      if (enemySlotsLeft > 0 && earliness > 0) {
+      const phaseEdge = this.pickPhaseEdge(hero.id, phase);
+      if (phaseEdge !== undefined) {
+        pickSafety = phaseEdge;
+        if (phaseEdge >= 1) reasons.push({ text: `Wins more as ${PHASE_NAMES[phase]} pick`, value: phaseEdge });
+        else if (phaseEdge <= -1) {
+          const text = phase === 0 ? "Easy to counter-pick later in the draft" : `Wins less as ${PHASE_NAMES[phase]} pick`;
+          warnings.push({ text, value: -phaseEdge });
+        }
+      } else if (enemySlotsLeft > 0 && earliness > 0) {
         const relative = vulnerability.get(hero.id)! - avgVulnerability;
         pickSafety = relative * WEIGHTS.pickSafety * earliness * (enemySlotsLeft / 5);
         if (pickSafety <= -1) warnings.push({ text: "Easy to counter-pick later in the draft", value: -pickSafety });
@@ -348,6 +385,7 @@ export class Engine {
 /** Points for the user's own record on a hero, after shrinking small samples. */
 export const personalScore = (mine: GamesWins) => (shrink(mine, 0.5, PRIOR_GAMES.personal) - 0.5) * 100 * WEIGHTS.personal;
 
+const sum = (xs: number[]) => xs.reduce((s, x) => s + x, 0);
 const mean = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0);
 const round = (x: number) => Math.round(x * 100) / 100;
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);

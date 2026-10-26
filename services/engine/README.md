@@ -39,7 +39,12 @@ Every part of the score is in win-rate percentage points, so `+2.0` roughly mean
   pushing, magic or physical damage). Counts more as your team fills up.
 - **Comfort**: your favorites, and your own record on the hero when known.
 - **Flex**: early in the draft, a hero that can play several positions hides your plan.
-- **Pick safety**: early in the draft, a hero with hard counters still available loses points.
+- **Pick safety**: how the hero does when its team picks it at this point of the draft (1st or 2nd
+  pick, 3rd, 4th or 5th) compared with all its games, from the saved ranked games of this patch
+  (`pickPhase`). A hero that wins less as an early pick is easy to counter, so it loses points early and
+  gains them late ("Easy to counter-pick later in the draft", "Wins more as a late pick"). Until the
+  counts hold 3,000 games, early in the draft a hero with bad matchups still in the pool loses points
+  instead.
 - **Hard counters**: a hand-checked list ([`src/engine/hard-counters.ts`](src/engine/hard-counters.ts)) of 17
   pairs where one hero ruins another by a specific mechanic, such as Anti-Mage against Medusa. With the
   counter on the enemy team, the matchup costs at least the listed gap ("Hard countered by Anti-Mage").
@@ -76,6 +81,9 @@ never sees a game it learned from.
 npm run pull-data -w services/engine
 npm run backtest -w services/engine -- --limit 500
 ```
+
+`--pick-phase` counts pick phases from the older half of the games and scores the newer half, with
+an "Engine with pick phase" row to compare. CI runs it too.
 
 On every pull request, CI scores the PR's engine and main's on the same saved games and puts both
 tables in the "Engine backtest" job summary, so an engine change shows its effect before it merges.
