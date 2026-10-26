@@ -1,3 +1,4 @@
+import { hardCountersOf, type HardCounter } from "./hard-counters";
 import { guessEnemyPositions, LANE_OPPONENTS, positionFit, type PositionFit } from "./positions";
 import { NEED_LABELS, traitsOf, unmetNeeds } from "./traits";
 import {
@@ -39,6 +40,14 @@ const WEIGHTS = {
 /** Games of evidence a value is pulled toward its prior with (Bayesian shrinkage). */
 const PRIOR_GAMES = { heroWinRate: 300, matchup: 250, rankMatchup: 250, personal: 15 };
 
+/** Sorts hard-counter warnings above every other warning. */
+const HARD_WARNING = 1000;
+/**
+ * Players take a hard counter on purpose when they see its target, so the enemy is this many times
+ * likelier to pick it than its usual pick rate says. A first guess, to be tuned with the backtest.
+ */
+const GAMBLE_PICK_BOOST = 2;
+
 /** Heroes played in a position less often than this are not suggested for it. */
 const MIN_POSITION_FIT = 0.15;
 /** A position counts toward flexibility when the hero plays it at least this often. */
@@ -54,13 +63,23 @@ export class Engine {
   readonly heroes: HeroInfo[];
   private fits = new Map<number, PositionFit>();
   private overallWr = new Map<number, number>();
+  private pickRates = new Map<number, number>();
+  private hardCounters: Map<number, HardCounter[]>;
 
-  constructor(readonly data: Snapshot) {
+  /** `hardCounters` replaces the hand-checked list, for tests. */
+  constructor(
+    readonly data: Snapshot,
+    options: { hardCounters?: readonly HardCounter[] } = {},
+  ) {
+    this.hardCounters = hardCountersOf(options.hardCounters);
     this.heroes = Object.values(data.heroes).sort((a, b) => a.id - b.id);
     for (const h of this.heroes) {
       this.fits.set(h.id, positionFit(h, data.laneRoles[h.id], data.positions?.[h.id]));
       this.overallWr.set(h.id, this.winRate(h.id));
     }
+    const picks = (id: number) => (data.bracketStats[id]?.picks ?? []).reduce((n, x) => n + x, 0);
+    const games = this.heroes.reduce((n, h) => n + picks(h.id), 0) / 10;
+    for (const h of this.heroes) this.pickRates.set(h.id, games > 0 ? picks(h.id) / games : 0);
   }
 
   hero(id: number): HeroInfo {
@@ -141,18 +160,28 @@ export class Engine {
     return WEIGHTS.positionFit * (Math.min(this.fit(id)[pos], 0.6) - 0.3);
   }
 
-  /** Counter points against each enemy; likely lane opponents (from `laneChances`) count extra. */
+  /** Share of games (0-1) the hero is picked in, by either team. */
+  pickRate(id: number): number {
+    return this.pickRates.get(id) ?? 0;
+  }
+
+  /**
+   * Counter points against each enemy; likely lane opponents (from `laneChances`) count extra.
+   * A hard counter on the enemy team costs at least its listed gap, so the match data and the
+   * hand-checked list are never added up twice.
+   */
   counterEdges(
     id: number,
     enemies: number[],
     laneChance: number[],
     bracket?: RankBracket,
-  ): { enemy: number; edge: number; lane: boolean }[] {
-    return enemies.map((enemy, i) => ({
-      enemy,
-      edge: this.matchupEdge(id, enemy, bracket) * (1 + WEIGHTS.laneOpponent * laneChance[i]!),
-      lane: laneChance[i]! > 0.5,
-    }));
+  ): { enemy: number; edge: number; lane: boolean; hard: boolean }[] {
+    const hard = this.hardCounters.get(id) ?? [];
+    return enemies.map((enemy, i) => {
+      const edge = this.matchupEdge(id, enemy, bracket) * (1 + WEIGHTS.laneOpponent * laneChance[i]!);
+      const gap = hard.find((hc) => hc.counter === enemy)?.gap;
+      return { enemy, edge: gap === undefined ? edge : Math.min(edge, -gap), lane: laneChance[i]! > 0.5, hard: gap !== undefined };
+    });
   }
 
   suggest(input: DraftInput): Suggestion[] {
@@ -182,7 +211,8 @@ export class Engine {
       if (fit[pos] < MIN_POSITION_FIT && !favorites.has(hero.id)) continue;
 
       const reasons: { text: string; value: number }[] = [];
-      const warnings: { text: string; value: number }[] = [];
+      /** `full` warnings are shown as written, the rest after "Watch out:". */
+      const warnings: { text: string; value: number; full?: boolean }[] = [];
 
       // Counters: how this hero does against the enemies already picked.
       const edges = this.counterEdges(hero.id, input.enemies, laneChance, input.rankBracket);
@@ -195,6 +225,11 @@ export class Engine {
       }
       if (bad.length) {
         warnings.push({ text: `Struggles against ${this.names(bad.map((x) => x.enemy))}`, value: -bad[0]!.edge });
+      }
+      // Hard counters rank above every other warning, the one already picked first.
+      const hardOnEnemy = edges.filter((x) => x.hard);
+      if (hardOnEnemy.length) {
+        warnings.push({ text: `Hard countered by ${this.names(hardOnEnemy.map((x) => x.enemy))}`, value: HARD_WARNING + 1, full: true });
       }
 
       // Synergy with the allies already picked.
@@ -249,6 +284,19 @@ export class Engine {
         if (pickSafety <= -1) warnings.push({ text: "Easy to counter-pick later in the draft", value: -pickSafety });
       }
 
+      // A hard counter still open is a gamble, costing its gap times the chance the enemy takes it.
+      // One that is banned or on your team makes the hero safe.
+      for (const hc of this.hardCounters.get(hero.id) ?? []) {
+        if (input.enemies.includes(hc.counter)) continue;
+        const name = this.hero(hc.counter).name;
+        if (taken.has(hc.counter)) {
+          reasons.push({ text: `${name} is out, safe to pick`, value: hc.gap });
+        } else if (enemySlotsLeft > 0) {
+          pickSafety -= hc.gap * Math.min(1, (this.pickRate(hc.counter) / 2) * (enemySlotsLeft / 5) * GAMBLE_PICK_BOOST);
+          warnings.push({ text: `Gamble: ${name} still available`, value: HARD_WARNING + hc.gap, full: true });
+        }
+      }
+
       const breakdown: ScoreBreakdown = {
         counter: round(counter),
         synergy: round(synergy),
@@ -261,7 +309,10 @@ export class Engine {
       };
       const score = round(Object.values(breakdown).reduce((s, x) => s + x, 0));
       const top = reasons.sort((a, b) => b.value - a.value).slice(0, 3).map((r) => r.text);
-      const warn = warnings.sort((a, b) => b.value - a.value).slice(0, 1).map((w) => `Watch out: ${w.text.charAt(0).toLowerCase()}${w.text.slice(1)}`);
+      const warn = warnings
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 1)
+        .map((w) => (w.full ? w.text : `Watch out: ${w.text.charAt(0).toLowerCase()}${w.text.slice(1)}`));
       results.push({ heroId: hero.id, name: hero.name, score, breakdown, reasons: [...top, ...warn] });
     }
 
