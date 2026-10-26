@@ -12,6 +12,7 @@
     "suggest": "tsx scripts/suggest.ts",
     "plan": "tsx scripts/plan.ts",
     "backtest": "tsx scripts/backtest.ts",
+    "fit-win-chance": "tsx scripts/fit-win-chance.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
