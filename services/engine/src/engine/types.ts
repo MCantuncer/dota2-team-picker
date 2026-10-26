@@ -16,6 +16,10 @@ export type RankGroup = 1 | 2 | 3 | 4;
 export const rankGroup = (bracket: RankBracket): RankGroup => Math.ceil(bracket / 2) as RankGroup;
 export const RANK_GROUP_BRACKETS: Record<RankGroup, RankBracket[]> = { 1: [1, 2], 2: [3, 4], 3: [5, 6], 4: [7, 8] };
 
+/** Pick phase of a team's pick (0-based index within the team): 0 early (1st or 2nd), 1 middle (3rd), 2 late (4th or 5th). */
+export type PickPhase = 0 | 1 | 2;
+export const phaseOf = (teamPickIndex: number): PickPhase => (teamPickIndex < 2 ? 0 : teamPickIndex === 2 ? 1 : 2);
+
 export interface GamesWins {
   games: number;
   wins: number;

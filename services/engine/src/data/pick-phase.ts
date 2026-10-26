@@ -4,14 +4,11 @@
  * is safer to pick later.
  */
 import type { EvalMatch } from "./eval-matches";
-import type { Snapshot } from "../engine/types";
+import { phaseOf, type Snapshot } from "../engine/types";
+
+export { phaseOf };
 
 export type PickPhaseCounts = NonNullable<Snapshot["pickPhase"]>;
-
-/** 0 early (the team's 1st or 2nd pick), 1 middle (3rd), 2 late (4th or 5th). */
-export function phaseOf(teamPickIndex: number): 0 | 1 | 2 {
-  return teamPickIndex < 2 ? 0 : teamPickIndex === 2 ? 1 : 2;
-}
 
 /** Games and wins per hero and phase over the given games. */
 export function countPickPhases(games: EvalMatch[]): PickPhaseCounts {
