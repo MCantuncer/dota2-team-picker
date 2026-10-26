@@ -56,6 +56,27 @@ toward zero, so a group with few games (Divine-Immortal is about 5% of public ma
 the all-ranks result, and the rank's own pattern takes over as its games add up.
 The weights live at the top of [`src/engine/score.ts`](src/engine/score.ts).
 
+## Backtest
+
+`npm run backtest` scores the engine on real ranked games saved by the refresh Action (see
+"Games for the backtest" below). At every pick it gives the engine only what that player saw
+(bans, earlier picks, allies' positions, rank) and asks for 8 heroes for the player's position.
+
+- **Hit top 8 / top 1**: how often the hero the player really took was suggested. This shows the
+  advice is realistic, not that it is good.
+- **Win lift**: win rate of players who took one of the top 3, minus the win rate of everyone
+  else. This is the number that says whether the advice wins games.
+
+Two simple rivals are scored the same way: "Most played" (most picked heroes in the position)
+and "Highest win rate" (best win rate at the rank among heroes that fit the position). The engine
+should beat both. Only games that started after the snapshot was built are scored, so the engine
+never sees a game it learned from.
+
+```sh
+npm run pull-data -w services/engine
+npm run backtest -w services/engine -- --limit 500
+```
+
 ## WCST team plan
 
 WCST (Wombo-Combo Super Team) plans all five heroes for a Captain mode team at once, and
