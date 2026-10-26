@@ -41,6 +41,13 @@ jobs:
         run: npm run pull-data || echo "::warning::No published data yet, starting from the repo copy"
       - id: fetch
         run: npm run fetch-data -w services/engine -- --pages 250
+      # Refit the draft win chance on the saved games and check it on the newest
+      # ones. Only a model that passes goes into the data. If this step fails,
+      # the data keeps the last checked model.
+      - name: Fit the draft win chance
+        continue-on-error: true
+        working-directory: services/engine
+        run: npm run fit-win-chance -- --out "$RUNNER_TEMP/win-chance.md" && cat "$RUNNER_TEMP/win-chance.md" >> "$GITHUB_STEP_SUMMARY"
       - if: ${{ !inputs.dry_run }}
         run: npm run upload-data -w services/engine
       # Recent ranked games for the engine backtest, saved to eval/ in the same
