@@ -77,6 +77,21 @@ npm run pull-data -w services/engine
 npm run backtest -w services/engine -- --limit 500
 ```
 
+## Win chance
+
+`draftEdge` (in `src/engine/win-chance.ts`) adds up how much better one side's draft is, in win-rate
+points: the heroes' win rates, their matchups against each other (a hard counter always counts its
+full gap) and the synergy inside each team. `winChance` turns that edge into a chance with one
+logistic curve per draft step (2, 4, 6, 8 or 10 heroes known), because a draft with 2 heroes says
+much less than one with 10.
+
+`npm run fit-win-chance` fits the curves on this patch's saved games and checks them on the newest
+quarter: games are grouped in 5-point bands of the shown chance, and every band with at least 100
+draft steps must win within 2 points of what it showed, with a log loss better than a coin flip.
+Only a model that passes is saved as `winModel` in the snapshot; without one, `winChance` returns
+null and nothing is shown. The refresh Action refits it on every run and puts the check table in
+its job summary.
+
 ## WCST team plan
 
 WCST (Wombo-Combo Super Team) plans all five heroes for a Captain mode team at once, and
