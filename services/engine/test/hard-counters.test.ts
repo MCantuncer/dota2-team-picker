@@ -22,41 +22,41 @@ describe("hard counter list", () => {
 });
 
 describe("hard counters in the score", () => {
-  it("costs at least the gap when the counter is on the enemy team, and says so first", () => {
+  const notes = (s: { hardCounters: { status: string; text: string }[] }) => s.hardCounters.map((n) => `${n.status}: ${n.text}`);
+
+  it("costs at least the gap when the counter is on the enemy team", () => {
     const withCounter = find(engine.suggest({ myPosition: 2, allies: [], enemies: [6] }), 3);
     const plain = find(new Engine(fixture(), { hardCounters: [] }).suggest({ myPosition: 2, allies: [], enemies: [6] }), 3);
     expect(withCounter.breakdown.counter).toBeLessThanOrEqual(-8);
     expect(plain.breakdown.counter).toBeGreaterThan(-1);
-    expect(withCounter.reasons.at(-1)).toBe("Hard countered by Support Six");
+    expect(notes(withCounter)).toEqual(["enemy: Hard countered: Support Six is on the enemy team"]);
   });
 
   it("does not add the list gap on top of a matchup the data already shows", () => {
-    const [edge] = engine.counterEdges(3, [6], [0]);
-    expect(edge!.edge).toBe(-8);
-    expect(edge!.hard).toBe(true);
+    expect(engine.counterEdges(3, [6], [0])[0]!.edge).toBe(-8);
   });
 
   it("calls an open counter a gamble and lowers pick safety", () => {
-    const list = engine.suggest({ myPosition: 2, allies: [], enemies: [] });
-    const risky = find(list, 3);
+    const risky = find(engine.suggest({ myPosition: 2, allies: [], enemies: [] }), 3);
     const plain = find(new Engine(fixture(), { hardCounters: [] }).suggest({ myPosition: 2, allies: [], enemies: [] }), 3);
-    expect(risky.reasons).toContain("Gamble: Support Six still available");
+    expect(notes(risky)).toEqual(["open: Gamble: Support Six still available"]);
     expect(risky.breakdown.pickSafety).toBeLessThan(plain.breakdown.pickSafety - 7);
+    expect(plain.hardCounters).toEqual([]);
   });
 
-  it("calls the hero safe once the counter is banned or on your team", () => {
+  it("calls the hero safe, at no cost, once the counter is banned or on your team", () => {
+    const plain = find(new Engine(fixture(), { hardCounters: [] }).suggest({ myPosition: 2, allies: [], enemies: [], bans: [6] }), 3);
     for (const input of [
       { myPosition: 2 as const, allies: [], enemies: [], bans: [6] },
       { myPosition: 2 as const, allies: [{ heroId: 6 }], enemies: [] },
     ]) {
       const hero = find(engine.suggest(input), 3);
-      expect(hero.reasons).toContain("Support Six is out, safe to pick");
-      expect(hero.reasons.some((r) => r.startsWith("Gamble"))).toBe(false);
+      expect(notes(hero)).toEqual(["out: Support Six is out, safe to pick"]);
     }
+    expect(find(engine.suggest({ myPosition: 2, allies: [], enemies: [], bans: [6] }), 3).score).toBe(plain.score);
   });
 
-  it("has no gamble once the enemy team is full", () => {
-    const hero = find(engine.suggest({ myPosition: 2, allies: [], enemies: [1, 2, 4, 5, 7] }), 3);
-    expect(hero.reasons.some((r) => r.startsWith("Gamble"))).toBe(false);
+  it("drops an open counter once the enemy team is full", () => {
+    expect(engine.hardCounterNotes(3, { allies: [], enemies: [1, 2, 4, 5, 7] })).toEqual([]);
   });
 });

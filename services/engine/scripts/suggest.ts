@@ -66,5 +66,6 @@ const suggestions = engine.suggest({
 suggestions.forEach((s, i) => {
   console.log(`${i + 1}. ${s.name}  ${s.score >= 0 ? "+" : ""}${s.score.toFixed(1)}`);
   for (const r of s.reasons) console.log(`     - ${r}`);
+  for (const n of s.hardCounters) console.log(`     ! ${n.text}`);
   if (values.details) console.log(`     ${JSON.stringify(s.breakdown)}`);
 });

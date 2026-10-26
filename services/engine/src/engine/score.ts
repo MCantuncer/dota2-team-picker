@@ -6,6 +6,7 @@ import {
   RANK_GROUP_BRACKETS,
   rankGroup,
   type DraftInput,
+  type HardCounterNote,
   type Position,
   type GamesWins,
   type HeroInfo,
@@ -40,8 +41,6 @@ const WEIGHTS = {
 /** Games of evidence a value is pulled toward its prior with (Bayesian shrinkage). */
 const PRIOR_GAMES = { heroWinRate: 300, matchup: 250, rankMatchup: 250, personal: 15 };
 
-/** Sorts hard-counter warnings above every other warning. */
-const HARD_WARNING = 1000;
 /**
  * Players take a hard counter on purpose when they see its target, so the enemy is this many times
  * likelier to pick it than its usual pick rate says. A first guess, to be tuned with the backtest.
@@ -175,12 +174,12 @@ export class Engine {
     enemies: number[],
     laneChance: number[],
     bracket?: RankBracket,
-  ): { enemy: number; edge: number; lane: boolean; hard: boolean }[] {
+  ): { enemy: number; edge: number; lane: boolean }[] {
     const hard = this.hardCounters.get(id) ?? [];
     return enemies.map((enemy, i) => {
       const edge = this.matchupEdge(id, enemy, bracket) * (1 + WEIGHTS.laneOpponent * laneChance[i]!);
       const gap = hard.find((hc) => hc.counter === enemy)?.gap;
-      return { enemy, edge: gap === undefined ? edge : Math.min(edge, -gap), lane: laneChance[i]! > 0.5, hard: gap !== undefined };
+      return { enemy, edge: gap === undefined ? edge : Math.min(edge, -gap), lane: laneChance[i]! > 0.5 };
     });
   }
 
@@ -211,8 +210,7 @@ export class Engine {
       if (fit[pos] < MIN_POSITION_FIT && !favorites.has(hero.id)) continue;
 
       const reasons: { text: string; value: number }[] = [];
-      /** `full` warnings are shown as written, the rest after "Watch out:". */
-      const warnings: { text: string; value: number; full?: boolean }[] = [];
+      const warnings: { text: string; value: number }[] = [];
 
       // Counters: how this hero does against the enemies already picked.
       const edges = this.counterEdges(hero.id, input.enemies, laneChance, input.rankBracket);
@@ -225,11 +223,6 @@ export class Engine {
       }
       if (bad.length) {
         warnings.push({ text: `Struggles against ${this.names(bad.map((x) => x.enemy))}`, value: -bad[0]!.edge });
-      }
-      // Hard counters rank above every other warning, the one already picked first.
-      const hardOnEnemy = edges.filter((x) => x.hard);
-      if (hardOnEnemy.length) {
-        warnings.push({ text: `Hard countered by ${this.names(hardOnEnemy.map((x) => x.enemy))}`, value: HARD_WARNING + 1, full: true });
       }
 
       // Synergy with the allies already picked.
@@ -285,16 +278,12 @@ export class Engine {
       }
 
       // A hard counter still open is a gamble, costing its gap times the chance the enemy takes it.
-      // One that is banned or on your team makes the hero safe.
-      for (const hc of this.hardCounters.get(hero.id) ?? []) {
-        if (input.enemies.includes(hc.counter)) continue;
-        const name = this.hero(hc.counter).name;
-        if (taken.has(hc.counter)) {
-          reasons.push({ text: `${name} is out, safe to pick`, value: hc.gap });
-        } else if (enemySlotsLeft > 0) {
-          pickSafety -= hc.gap * Math.min(1, (this.pickRate(hc.counter) / 2) * (enemySlotsLeft / 5) * GAMBLE_PICK_BOOST);
-          warnings.push({ text: `Gamble: ${name} still available`, value: HARD_WARNING + hc.gap, full: true });
-        }
+      // A counter on the enemy team is already in the counter part.
+      const hardCounters = this.hardCounterNotes(hero.id, input);
+      for (const note of hardCounters) {
+        if (note.status !== "open") continue;
+        const chance = Math.min(1, (this.pickRate(note.counterId) / 2) * (enemySlotsLeft / 5) * GAMBLE_PICK_BOOST);
+        pickSafety -= note.gap * chance;
       }
 
       const breakdown: ScoreBreakdown = {
@@ -312,11 +301,32 @@ export class Engine {
       const warn = warnings
         .sort((a, b) => b.value - a.value)
         .slice(0, 1)
-        .map((w) => (w.full ? w.text : `Watch out: ${w.text.charAt(0).toLowerCase()}${w.text.slice(1)}`));
-      results.push({ heroId: hero.id, name: hero.name, score, breakdown, reasons: [...top, ...warn] });
+        .map((w) => `Watch out: ${w.text.charAt(0).toLowerCase()}${w.text.slice(1)}`);
+      results.push({ heroId: hero.id, name: hero.name, score, breakdown, reasons: [...top, ...warn], hardCounters });
     }
 
     return results.sort((a, b) => b.score - a.score).slice(0, input.count ?? 8);
+  }
+
+  /**
+   * Where each hand-checked hard counter of a hero stands in the draft: on the enemy team, still
+   * open while the enemy has picks left, or out (banned or on your team). A counter that can no
+   * longer be picked by anyone is left out.
+   */
+  hardCounterNotes(heroId: number, draft: Pick<DraftInput, "allies" | "enemies" | "bans">): HardCounterNote[] {
+    const notes: HardCounterNote[] = [];
+    for (const hc of this.hardCounters.get(heroId) ?? []) {
+      const name = this.hero(hc.counter).name;
+      const out = (draft.bans ?? []).includes(hc.counter) || draft.allies.some((a) => a.heroId === hc.counter);
+      if (draft.enemies.includes(hc.counter)) {
+        notes.push({ counterId: hc.counter, gap: hc.gap, status: "enemy", text: `Hard countered: ${name} is on the enemy team` });
+      } else if (out) {
+        notes.push({ counterId: hc.counter, gap: hc.gap, status: "out", text: `${name} is out, safe to pick` });
+      } else if (draft.enemies.length < 5) {
+        notes.push({ counterId: hc.counter, gap: hc.gap, status: "open", text: `Gamble: ${name} still available` });
+      }
+    }
+    return notes;
   }
 
   /** Average edge of each hero against its 5 worst matchups still in the pool (negative = easy to counter). */
