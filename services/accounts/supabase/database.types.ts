@@ -49,6 +49,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"draft_suggestions": {
+                  Row: {
+                    "draft_id": string,"first_shown_at": string,"heroes": (number)[],"position": number,"scores": (number)[],"updated_at": string,"user_id": string,"win_chance": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "draft_id": string,"first_shown_at"?: string,"heroes": (number)[],"position": number,"scores": (number)[],"updated_at"?: string,"user_id": string,"win_chance"?: number | null
+                  }
+                  Update: {
+                    "draft_id"?: string,"first_shown_at"?: string,"heroes"?: (number)[],"position"?: number,"scores"?: (number)[],"updated_at"?: string,"user_id"?: string,"win_chance"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "draft_suggestions_draft_id_fkey"
+      columns: ["draft_id"]
+isOneToOne: false
+      referencedRelation: "party_drafts"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "draft_suggestions_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"favorite_heroes": {
                   Row: {
                     "created_at": string,"hero_id": number,"position": number,"user_id": string
@@ -143,14 +169,14 @@ isOneToOne: false
                   ]
                 },"party_drafts": {
                   Row: {
-                    "created_at": string,"ended_at": string | null,"id": string,"party_id": string,"started_by": string
+                    "created_at": string,"ended_at": string | null,"id": string,"match_id": number | null,"party_id": string,"result_checked_at": string | null,"started_by": string,"won": boolean | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"party_id": string,"started_by": string
+                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"match_id"?: number | null,"party_id": string,"result_checked_at"?: string | null,"started_by": string,"won"?: boolean | null
                   }
                   Update: {
-                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"party_id"?: string,"started_by"?: string
+                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"match_id"?: number | null,"party_id"?: string,"result_checked_at"?: string | null,"started_by"?: string,"won"?: boolean | null
                   }
                   Relationships: [
                     {
@@ -256,6 +282,32 @@ isOneToOne: false
       columns: ["user_id"]
 isOneToOne: false
       referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"team_game_plans": {
+                  Row: {
+                    "bans": (number)[],"created_at": string,"enemies": (number)[],"id": string,"picks": (number)[],"rank_bracket": number | null,"sent_by": string,"team_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "bans"?: (number)[],"created_at"?: string,"enemies": (number)[],"id"?: string,"picks": (number)[],"rank_bracket"?: number | null,"sent_by": string,"team_id": string
+                  }
+                  Update: {
+                    "bans"?: (number)[],"created_at"?: string,"enemies"?: (number)[],"id"?: string,"picks"?: (number)[],"rank_bracket"?: number | null,"sent_by"?: string,"team_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "team_game_plans_sent_by_fkey"
+      columns: ["sent_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "team_game_plans_team_id_fkey"
+      columns: ["team_id"]
+isOneToOne: false
+      referencedRelation: "teams"
       referencedColumns: ["id"]
     }
                   ]
@@ -453,6 +505,9 @@ isOneToOne: false
                            },
 "runs_team":
 { Args: { "team": string }; Returns: boolean
+                           },
+"save_draft_suggestions":
+{ Args: { "chance"?: number,"draft": string,"pos": number,"shown": (number)[],"shown_scores": (number)[] }; Returns: undefined
                            },
 "send_friend_request":
 { Args: { "target": string }; Returns: string
