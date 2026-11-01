@@ -123,9 +123,10 @@ describe("itemBuild with STRATZ item timings", () => {
     expect(build.core.find((i) => i.name === "Black King Bar")?.minute).toBe(20);
   });
 
-  it("keeps the slice's late minute when a counter item moves up", () => {
+  it("drops the usual late minute when a counter item moves up, since it no longer fits", () => {
     const build = itemBuild(timed(), 1, 1, [2, 3, 6, 4, 5])!;
-    expect(build.core[1]).toMatchObject({ name: "Black King Bar", minute: 12, lateMinute: 25 });
+    expect(build.core[1]).toMatchObject({ name: "Black King Bar", minute: 12 });
+    expect(build.core[1]!.lateMinute).toBeUndefined();
   });
 
   it("falls back to rough minutes without timings for the position", () => {
