@@ -5,6 +5,17 @@
  * Stored as `match_reports.facts` with `facts_version`. Change the shape only together with
  * FACTS_VERSION, and keep the website able to read every older version.
  */
+import {
+  type DamageSource,
+  damageTaken,
+  type DraftPickFact,
+  draftReview,
+  type EnemyBest,
+  enemyBest,
+  type FightFact,
+  keyFights,
+  type ShownList,
+} from "./fights.ts";
 import { isRadiantSlot, type Match, type MatchPlayer } from "./match.ts";
 
 export const FACTS_VERSION = 1;
@@ -93,13 +104,26 @@ export interface Facts {
   heroes: HeroCard[];
   /** The enemy heroes, in slot order. Nothing else about the enemy players is kept. */
   enemyHeroes: number[];
+  /** The fights that moved the most gold, in game order. Parsed only. */
+  fights: FightFact[] | null;
+  /** What hurt our heroes most. Parsed only. */
+  damageTaken: DamageSource[] | null;
+  enemyBest: EnemyBest | null;
+  /** Our picks against the lists their players were shown; null when the draft wasn't saved. */
+  draft: DraftPickFact[] | null;
 }
 
 /**
  * The report's facts for one side of a match. `items` maps an item's OpenDota key (like
- * `black_king_bar`) to its id and cost; without it, key items are left out.
+ * `black_king_bar`) to its id and cost; without it, key items are left out. `draftLists` holds
+ * each of our picks with the list its player saw, from the saved draft.
  */
-export function buildFacts(match: Match, isRadiant: boolean, items: Record<string, ItemCost> = {}): Facts {
+export function buildFacts(
+  match: Match,
+  isRadiant: boolean,
+  items: Record<string, ItemCost> = {},
+  draftLists: ShownList[] | null = null,
+): Facts {
   const ours = match.players.filter((p) => isRadiantSlot(p.playerSlot) === isRadiant);
   const theirs = match.players.filter((p) => isRadiantSlot(p.playerSlot) !== isRadiant);
   const goldLead = match.radiantGoldAdv?.map((g) => (isRadiant ? g : -g)) ?? null;
@@ -120,6 +144,10 @@ export function buildFacts(match: Match, isRadiant: boolean, items: Record<strin
     lanes: match.isParsed && match.durationS >= LANE_MINUTE * 60 ? laneResults(ours, theirs) : null,
     heroes: ours.map((p) => heroCard(p, items)),
     enemyHeroes: theirs.map((p) => p.heroId),
+    fights: keyFights(match, isRadiant),
+    damageTaken: match.isParsed ? damageTaken(ours) : null,
+    enemyBest: enemyBest(theirs),
+    draft: draftLists && draftReview(draftLists),
   };
 }
 
