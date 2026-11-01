@@ -1,3 +1,4 @@
+import { pickFallbacks, type Scaling } from "./fallbacks";
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
 import { itemBuild, listNames, type ItemBuild } from "./item-build";
 import { guessEnemyPositions } from "./positions";
@@ -46,6 +47,8 @@ export interface PlayerPlan {
   build: ItemBuild | null;
   /** What this player does to win, in a sentence or two. */
   job: string;
+  /** What to do if their lane or items go wrong, at most two lines. */
+  fallbacks: string[];
 }
 
 export interface GamePlan {
@@ -61,6 +64,8 @@ export interface GamePlan {
   fears: string[];
   roadmap: { phase: string; text: string }[];
   players: PlayerPlan[];
+  /** What the team does if it is behind or ahead at 20 minutes. */
+  teamFallbacks: string[];
 }
 
 export interface GamePlanInput {
@@ -201,8 +206,32 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       position: p.position,
       build,
       job: playerJob(p.position, name(p.heroId), isInitiator, keyItem(engine, build), combo && `${combo.text} with ${partner}`),
+      fallbacks: [],
     };
   });
+
+  const laneOf = (heroId: number) => lanes.find((l) => l.ours.includes(heroId))!; // Every position is in a lane.
+  const carry = players.find((p) => p.position === 1);
+  const carryItem = keyItem(engine, carry?.build ?? null);
+  const enemyAt = (p: Position) => (theirByPos.has(p) ? name(theirByPos.get(p)!) : undefined); // has() checked.
+  const picked = pickFallbacks({
+    players: players.map((p) => {
+      const item = keyItem(engine, p.build);
+      return {
+        position: p.position,
+        hero: name(p.heroId),
+        lane: laneOf(p.heroId).verdict,
+        ...(item ? { keyItem: { name: item.name, lateMinute: item.lateMinute } } : {}),
+      };
+    }),
+    offLaneHard: lanes[2]!.verdict === "hard", // LANES has three entries, the off lane last.
+    scaling: scaling(timing(ourStyle?.key), timing(theirStyle?.key)),
+    ourCarry: carry && name(carry.heroId),
+    ourKeyItem: carryItem?.name,
+    enemyCarry: enemyAt(1),
+    enemyOfflaner: enemyAt(3),
+  });
+  players.forEach((p, i) => (p.fallbacks = picked.players[i]!)); // Same order as players.
 
   const wonLane = lanes.find((l) => l.verdict === "win");
   const hardLane = lanes.find((l) => l.verdict === "hard");
@@ -247,7 +276,15 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     fears,
     roadmap,
     players,
+    teamFallbacks: picked.team,
   };
+}
+
+/** Which team gets stronger later, from each team's strongest time. */
+function scaling(ours: "early" | "late" | null, theirs: "early" | "late" | null): Scaling {
+  if (ours === "late" && theirs !== "late") return "ours";
+  if (theirs === "late" && ours !== "late") return "theirs";
+  return "even";
 }
 
 const round = (x: number) => Math.round(x * 10) / 10;

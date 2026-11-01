@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { FALLBACKS, JUNGLE_HEROES, fallbackFor, fillFallback, type FallbackSlots, type Scaling, type Situation } from "../src/engine/fallbacks";
+import { FALLBACKS, JUNGLE_HEROES, MAX_FALLBACKS, fallbackFor, fillFallback, pickFallbacks, type FallbackSlots, type Scaling, type Situation } from "../src/engine/fallbacks";
 import type { Position, Snapshot } from "../src/engine/types";
 
 /** Every slot filled, with the longest hero and item names in the data. */
@@ -73,5 +73,42 @@ describe("fallbackFor", () => {
 
   it("has a lane-lost line for every position", () => {
     for (const p of [1, 2, 3, 4, 5] as Position[]) expect(fallbackFor("laneLost", p, {}), `pos ${p}`).not.toBeNull();
+  });
+});
+
+describe("pickFallbacks", () => {
+  const player = (position: Position, lane: "win" | "even" | "hard", keyItem?: { name: string; lateMinute?: number }) => ({
+    position,
+    hero: position === 1 ? "Faceless Void" : "Lion",
+    lane,
+    ...(keyItem ? { keyItem } : {}),
+  });
+
+  it("orders lane lost, key item late, then their carry is free, two at most", () => {
+    const { players } = pickFallbacks({
+      players: [player(1, "hard", { name: "Maelstrom", lateMinute: 16 }), player(4, "hard"), player(2, "even", { name: "Black King Bar" })],
+      offLaneHard: true,
+      scaling: "even",
+      enemyCarry: "Medusa",
+    });
+    expect(players[0]).toEqual([
+      "Lane lost? Leave it at 5 to 6 min for the jungle and farm toward Maelstrom. Ask your supports to stack 2 camps.",
+      "No Maelstrom by 16 min? Don't show on the map without it. Farm behind your towers.",
+    ]);
+    expect(players[1]).toEqual([
+      "Lane lost? Leave it after 4 min. Gank mid, or stack camps for your carry.",
+      "Medusa is farming free? Pressure that lane before 10 min. After that, take towers on the other side.",
+    ]);
+    // No late minute yet, so no item line.
+    expect(players[2]).toEqual([]);
+  });
+
+  it("gives the team both lines, at most two", () => {
+    const { team } = pickFallbacks({ players: [], offLaneHard: false, scaling: "ours", ourCarry: "Medusa", ourKeyItem: "Manta Style" });
+    expect(team).toEqual([
+      "Behind at 20? Defend high ground until Medusa has Manta Style. Catch their pos 4 and 5 out of position.",
+      "Ahead at 20? Keep vision in their jungle, take safe towers, and let Medusa farm to full items.",
+    ]);
+    expect(team.length).toBeLessThanOrEqual(MAX_FALLBACKS);
   });
 });

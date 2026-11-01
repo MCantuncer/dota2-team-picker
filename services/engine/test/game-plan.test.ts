@@ -83,4 +83,28 @@ describe("gamePlan", () => {
     expect(plan.players[1]!.job).toContain("Set up Reverse Polarity into Sven's God's Strength cleave with Sven");
     expect(plan.players.every((p) => p.build === null)).toBe(true);
   });
+
+  it("adds fallbacks for a hard lane and for the team, shaped by who scales better", () => {
+    const hard = data();
+    // Their safe lane (Anti-Mage) crushes our offlaner Sven, so the off lane is hard.
+    hard.matchups[18] = { 1: { games: 2000, wins: 600 } };
+    hard.matchups[1] = { 18: { games: 2000, wins: 1400 } };
+    const plan = gamePlan(new Engine(hard), { ours, theirs });
+    expect(plan.lanes.find((l) => l.name === "Off lane")!.verdict).toBe("hard");
+    const lines = (pos: number) => plan.players.find((p) => p.position === pos)!.fallbacks;
+    expect(lines(3)).toEqual(["Lane lost? Stop contesting Anti-Mage. Farm the jungle and stay alive for the first fights."]);
+    expect(lines(4)).toEqual([
+      "Lane lost? Leave it after 4 min. Gank mid, or stack camps for Medusa.",
+      "Anti-Mage is farming free? Pressure that lane before 10 min. After that, take towers on the other side.",
+    ]);
+    expect(lines(5)[0]).toBe("Anti-Mage is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.");
+    // The won safe lane and the even mid get no lines, and no build means no item line.
+    expect(lines(1)).toEqual([]);
+    expect(lines(2)).toEqual([]);
+    // Their late-game style means they scale better.
+    expect(plan.teamFallbacks).toEqual([
+      "Behind at 20 against a late game team? Don't wait. Smoke together and catch one hero before each objective.",
+      "Ahead at 20? Take Roshan, then siege with the Aegis before their carry is ready.",
+    ]);
+  });
 });
