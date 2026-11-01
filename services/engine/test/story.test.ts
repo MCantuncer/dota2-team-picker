@@ -66,7 +66,7 @@ describe("gameStory", () => {
         const label = `${ourTiming} vs ${theirTiming}`;
         expect(wordCount(story.headline), label).toBeLessThanOrEqual(STORY_WORDS.headline);
         expect(story.chapters.reduce((n, c) => n + wordCount(c.text), 0), label).toBeLessThanOrEqual(STORY_WORDS.chapters);
-        for (const c of story.chapters) expect(c.text, label).not.toContain("—");
+        for (const c of story.chapters) expect(c.text, label).not.toContain("\u2014");
       }
     }
   });
