@@ -275,14 +275,14 @@ isOneToOne: true
                   ]
                 },"party_drafts": {
                   Row: {
-                    "created_at": string,"ended_at": string | null,"id": string,"match_id": number | null,"party_id": string,"result_checked_at": string | null,"started_by": string | null,"won": boolean | null
+                    "created_at": string,"ended_at": string | null,"find_tries": number,"id": string,"match_id": number | null,"party_id": string,"result_checked_at": string | null,"started_by": string | null,"won": boolean | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"match_id"?: number | null,"party_id": string,"result_checked_at"?: string | null,"started_by"?: string | null,"won"?: boolean | null
+                    "created_at"?: string,"ended_at"?: string | null,"find_tries"?: number,"id"?: string,"match_id"?: number | null,"party_id": string,"result_checked_at"?: string | null,"started_by"?: string | null,"won"?: boolean | null
                   }
                   Update: {
-                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"match_id"?: number | null,"party_id"?: string,"result_checked_at"?: string | null,"started_by"?: string | null,"won"?: boolean | null
+                    "created_at"?: string,"ended_at"?: string | null,"find_tries"?: number,"id"?: string,"match_id"?: number | null,"party_id"?: string,"result_checked_at"?: string | null,"started_by"?: string | null,"won"?: boolean | null
                   }
                   Relationships: [
                     {
@@ -602,6 +602,11 @@ isOneToOne: false
               "attempts": number,"created_at": string,"draft_id": string,"match_id": number,"parse_requested_at": string,"parse_requests": number,"won": boolean
             }[]
                            },
+"claim_unattached_drafts":
+{ Args: { "max_rows"?: number }; Returns: {
+              "account_ids": (number)[],"allies": (number)[],"created_at": string,"draft_id": string
+            }[]
+                           },
 "draft_state":
 { Args: { "draft": string }; Returns: {
               "hero_id": number,"kind": string,"position": number
@@ -721,6 +726,9 @@ isOneToOne: false
 { Args: { "draft": string }; Returns: {
               "hero_id": number,"shown": (number)[]
             }[]
+                           },
+"run_build_reports":
+{ Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "runs_team":
 { Args: { "team": string }; Returns: boolean
