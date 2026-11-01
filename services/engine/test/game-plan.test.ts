@@ -76,6 +76,11 @@ describe("gamePlan", () => {
     expect(plan.roadmap[1]!.text).toContain("This is your window");
   });
 
+  it("warns about their carry as a danger hero", () => {
+    const plan = gamePlan(new Engine(data()), { ours, theirs });
+    expect(plan.danger).toEqual(["Anti-Mage: farms fast. Take fights early."]);
+  });
+
   it("gives every player a job, and no build without item data", () => {
     const plan = gamePlan(new Engine(data()), { ours, theirs });
     expect(plan.players.map((p) => p.position)).toEqual([1, 2, 3, 4, 5]);
