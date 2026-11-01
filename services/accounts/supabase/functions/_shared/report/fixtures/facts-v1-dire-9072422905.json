@@ -319,5 +319,64 @@
     46,
     14,
     74
-  ]
+  ],
+  "fights": [
+    {
+      "startMinute": 23,
+      "ourDeaths": 0,
+      "theirDeaths": 4,
+      "goldSwing": 4340,
+      "missingHeroes": []
+    },
+    {
+      "startMinute": 29,
+      "ourDeaths": 0,
+      "theirDeaths": 3,
+      "goldSwing": 5633,
+      "missingHeroes": []
+    },
+    {
+      "startMinute": 30,
+      "ourDeaths": 1,
+      "theirDeaths": 2,
+      "goldSwing": 5631,
+      "missingHeroes": [
+        26
+      ]
+    },
+    {
+      "startMinute": 31,
+      "ourDeaths": 3,
+      "theirDeaths": 1,
+      "goldSwing": -4983,
+      "missingHeroes": [
+        84
+      ]
+    }
+  ],
+  "damageTaken": [
+    {
+      "source": "attacks",
+      "damage": 31127,
+      "share": 0.33
+    },
+    {
+      "source": "blade_mail",
+      "damage": 10402,
+      "share": 0.11
+    },
+    {
+      "source": "bloodseeker_blood_bath",
+      "damage": 6813,
+      "share": 0.07
+    }
+  ],
+  "enemyBest": {
+    "heroId": 4,
+    "kills": 8,
+    "deaths": 8,
+    "assists": 9,
+    "netWorth": 16356
+  },
+  "draft": null
 }
