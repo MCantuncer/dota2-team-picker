@@ -576,6 +576,9 @@ isOneToOne: false
 "answer_party_invite":
 { Args: { "accept": boolean,"party": string }; Returns: undefined
                            },
+"attach_draft_match":
+{ Args: { "did_win": boolean,"draft": string,"lobby": number,"match": number,"mode": number,"our_players": Json }; Returns: boolean
+                           },
 "become_captain":
 { Args: Record<PropertyKey, never>; Returns: string
                            },

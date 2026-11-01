@@ -6,20 +6,15 @@
  *
  * Without a match ID it looks through the recent matches of the party's Steam players on
  * OpenDota. With one (for players without Steam or with a hidden profile) it checks that the
- * draft's heroes played on one side of that match. Either way it also asks OpenDota to parse
- * the replay. Looks at most once every 20 seconds per draft. Returns { matchId, won } or
- * { matchId: null } when no match was found yet.
+ * draft's heroes played on one side of that match. A found match is confirmed the same way
+ * before it is saved, with who played which hero, and its post-game report is queued. Either
+ * way it also asks OpenDota to parse the replay. Looks at most once every 20 seconds per draft.
+ * Returns { matchId, won } or { matchId: null } when no match was found yet.
  */
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders, json } from "../_shared/cors.ts";
-import {
-  fetchMatch,
-  fetchRecentMatches,
-  type MatchResult,
-  pickRecentMatch,
-  readMatch,
-  requestParse,
-} from "../_shared/match.ts";
+import { attachMatch, findCalls, findDraftMatch, type FoundMatch } from "../_shared/attach.ts";
+import { fetchMatch, fetchRecentMatches, readMatch, requestParse } from "../_shared/match.ts";
 import { takeOpenDotaCalls } from "../_shared/opendota_budget.ts";
 import { steamIdToAccountId } from "../_shared/steam.ts";
 
@@ -81,7 +76,7 @@ Deno.serve(async (req) => {
     return json({ error: "Could not save the result, try again" }, 500);
   }
 
-  let result: MatchResult | null = null;
+  let found: FoundMatch | null = null;
   try {
     if (matchId !== undefined) {
       // The match, then the parse request.
@@ -89,48 +84,57 @@ Deno.serve(async (req) => {
       if (!budget.ok) return json({ error: budget.message }, budget.status);
       const match = await fetchMatch(matchId);
       if (!match) return json({ error: "OpenDota doesn't know that match yet. Try again in a few minutes." }, 404);
-      result = readMatch(match, allies);
-      if (!result) return json({ error: "Your team's heroes aren't in that match" }, 422);
+      const side = readMatch(match, allies);
+      if (!side) return json({ error: "Your team's heroes aren't in that match" }, 422);
+      found = { match, side };
     } else {
-      const { data: members, error } = await admin.from("party_members").select("user_id").eq(
-        "party_id",
-        draft.party_id,
-      );
-      if (error) throw error;
-      const { data: profiles, error: profileError } = await admin
-        .from("profiles")
-        .select("steam_id")
-        .in("id", (members ?? []).map((m) => m.user_id))
-        .not("steam_id", "is", null);
-      if (profileError) throw profileError;
-      const steamIds: string[] = (profiles ?? []).map((p) => p.steam_id);
-      if (!steamIds.length) return json({ matchId: null });
-      // Each player's recent matches, then the parse request.
-      const budget = await takeOpenDotaCalls(admin, steamIds.length + 1);
+      const accountIds = await draftAccountIds(draftId, draft.party_id);
+      if (!accountIds.length) return json({ matchId: null });
+      // Each player's recent matches and the match itself, then the parse request.
+      const budget = await takeOpenDotaCalls(admin, findCalls(accountIds.length) + 1);
       if (!budget.ok) return json({ error: budget.message }, budget.status);
-      for (const steamId of steamIds) {
-        result = pickRecentMatch(
-          await fetchRecentMatches(steamIdToAccountId(steamId)),
-          allies,
-          new Date(draft.created_at),
-        );
-        if (result) break;
-      }
+      found = await findDraftMatch({ fetchRecentMatches, fetchMatch }, accountIds, allies, new Date(draft.created_at));
     }
   } catch (err) {
     console.error("Match lookup failed", err);
     return json({ error: "Could not reach OpenDota, try again later" }, 502);
   }
-  if (!result) return json({ matchId: null });
+  if (!found) return json({ matchId: null });
 
-  await requestParse(result.matchId);
-  const { error } = await admin.from("party_drafts").update({ match_id: result.matchId, won: result.won }).eq(
-    "id",
-    draftId,
-  );
-  if (error) {
-    console.error("Draft update failed", error);
+  await requestParse(found.side.matchId);
+  try {
+    if (!(await attachMatch(admin, draftId, found))) {
+      // Someone else's lookup attached a match a moment ago: show that one.
+      const { data: now, error } = await admin.from("party_drafts").select("match_id, won").eq("id", draftId).single();
+      if (error) throw error;
+      return json({ matchId: now.match_id, won: now.won });
+    }
+  } catch (err) {
+    console.error("Saving the match failed", err);
     return json({ error: "Could not save the result, try again" }, 500);
   }
-  return json(result);
+  return json({ matchId: found.side.matchId, won: found.side.won });
 });
+
+/**
+ * The Dota accounts to search: the draft's saved players, or while it is open, the
+ * party's members with Steam linked.
+ */
+async function draftAccountIds(draftId: string, partyId: string): Promise<number[]> {
+  const { data: players, error } = await admin.from("draft_players").select("account_id").eq("draft_id", draftId)
+    .not("account_id", "is", null);
+  if (error) throw error;
+  if (players.length) return players.flatMap((p) => (p.account_id ? [p.account_id] : []));
+  const { data: members, error: memberError } = await admin.from("party_members").select("user_id").eq(
+    "party_id",
+    partyId,
+  );
+  if (memberError) throw memberError;
+  const { data: profiles, error: profileError } = await admin
+    .from("profiles")
+    .select("steam_id")
+    .in("id", members.map((m) => m.user_id))
+    .not("steam_id", "is", null);
+  if (profileError) throw profileError;
+  return profiles.flatMap((p) => (p.steam_id ? [steamIdToAccountId(p.steam_id)] : []));
+}
