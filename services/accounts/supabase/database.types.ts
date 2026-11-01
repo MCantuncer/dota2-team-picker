@@ -597,6 +597,11 @@ isOneToOne: false
 "captain_timing":
 { Args: { "what": string }; Returns: string
                            },
+"claim_match_reports":
+{ Args: { "lease"?: string,"max_rows"?: number }; Returns: {
+              "attempts": number,"created_at": string,"draft_id": string,"match_id": number,"parse_requested_at": string,"parse_requests": number,"won": boolean
+            }[]
+                           },
 "draft_state":
 { Args: { "draft": string }; Returns: {
               "hero_id": number,"kind": string,"position": number
@@ -711,6 +716,11 @@ isOneToOne: false
                            },
 "remove_from_party":
 { Args: { "target": string }; Returns: undefined
+                           },
+"report_draft_lists":
+{ Args: { "draft": string }; Returns: {
+              "hero_id": number,"shown": (number)[]
+            }[]
                            },
 "runs_team":
 { Args: { "team": string }; Returns: boolean
