@@ -29,7 +29,7 @@ describe("fallback templates", () => {
   });
 
   it("never use the em dash", () => {
-    for (const t of FALLBACKS) expect(t.text).not.toContain("—");
+    for (const t of FALLBACKS) expect(t.text).not.toContain("\u2014");
   });
 
   it("name real heroes in the jungle list", () => {
