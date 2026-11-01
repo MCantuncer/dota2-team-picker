@@ -677,12 +677,27 @@ isOneToOne: false
               "avatar_url": string,"display_name": string,"incoming": boolean,"since": string,"status": string,"steam_linked": boolean,"user_id": string
             }[]
                            },
+"my_pair_records":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "games": number,"my_position": number,"teammate_id": string,"teammate_name": string,"their_position": number,"wins": number
+            }[]
+                           },
 "my_party":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "my_party_invites":
 { Args: Record<PropertyKey, never>; Returns: {
               "created_at": string,"invited_by": string,"inviter_avatar_url": string,"inviter_name": string,"members": number,"party_id": string
+            }[]
+                           },
+"my_record_games":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "draft_id": string,"hero_id": number,"position": number,"won": boolean
+            }[]
+                           },
+"my_suggestion_record":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "bucket": string,"games": number,"wins": number
             }[]
                            },
 "owns_team":
