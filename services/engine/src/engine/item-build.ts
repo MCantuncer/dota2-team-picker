@@ -114,6 +114,8 @@ export interface BuildItem {
   img: string;
   /** About when it is bought, in minutes. */
   minute: number;
+  /** After this minute a player is slower than most with this item. Not known yet for every item. */
+  lateMinute?: number;
   /** Why it is in the build or moved up, naming the enemy heroes it answers. Empty for the usual build. */
   reason?: string;
 }

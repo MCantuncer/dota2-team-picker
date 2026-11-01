@@ -126,3 +126,61 @@ export function fallbackFor(
   }
   return null;
 }
+
+/** Fallback lines a player or the team can show; more than this and the card stops being a quick read. */
+export const MAX_FALLBACKS = 2;
+
+/** What the rules need to know about one of our players. */
+export interface PlayerFacts {
+  position: Position;
+  hero: string;
+  /** How their lane looks: "hard" means they will probably lose it. */
+  lane: "win" | "even" | "hard";
+  /** Their first big item, with the minute after which they are slower than most (when known). */
+  keyItem?: { name: string; lateMinute?: number };
+}
+
+/** What the rules need to know about the game. */
+export interface GameFacts {
+  players: PlayerFacts[];
+  /** Whether our off lane (pos 3 and 4) looks hard, which leaves their carry free. */
+  offLaneHard: boolean;
+  scaling: Scaling;
+  ourCarry?: string;
+  ourKeyItem?: string;
+  enemyCarry?: string;
+  enemyOfflaner?: string;
+}
+
+/**
+ * The fallback lines for each player (same order as `facts.players`) and for the team.
+ * A player's lines go in this order, at most MAX_FALLBACKS: lane lost (their lane is hard),
+ * key item late (cores, once the late minute is known), their carry is free (supports, when the
+ * off lane is hard; last because it repeats the lane problem). The team gets both the
+ * "behind at 20" and "ahead at 20" lines for whichever side scales better.
+ */
+export function pickFallbacks(facts: GameFacts): { players: string[][]; team: string[] } {
+  const shared: FallbackSlots = {
+    ourCarry: facts.ourCarry,
+    ourKeyItem: facts.ourKeyItem,
+    enemyCarry: facts.enemyCarry,
+    enemyOfflaner: facts.enemyOfflaner,
+  };
+  const players = facts.players.map((p) => {
+    const slots: FallbackSlots = { ...shared, hero: p.hero, item: p.keyItem?.name, minute: p.keyItem?.lateMinute };
+    const situations: Situation[] = [
+      ...(p.lane === "hard" ? (["laneLost"] as const) : []),
+      ...(p.position <= 3 && p.keyItem?.lateMinute !== undefined ? (["keyItemLate"] as const) : []),
+      ...(p.position >= 4 && facts.offLaneHard ? (["carryFree"] as const) : []),
+    ];
+    return situations
+      .map((s) => fallbackFor(s, p.position, slots))
+      .filter((line): line is string => line !== null)
+      .slice(0, MAX_FALLBACKS);
+  });
+  const team = (["behindAt20", "aheadAt20"] as const)
+    .map((s) => fallbackFor(s, "team", shared, facts.scaling))
+    .filter((line): line is string => line !== null)
+    .slice(0, MAX_FALLBACKS);
+  return { players, team };
+}
