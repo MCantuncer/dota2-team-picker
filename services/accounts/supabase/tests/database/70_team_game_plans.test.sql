@@ -1,6 +1,6 @@
 begin;
 \ir _helpers.psql
-select plan(8);
+select plan(9);
 
 select tests.create_user('own@example.com', 'captain') as own \gset
 select tests.create_user('co@example.com') as co \gset
@@ -43,6 +43,11 @@ select is((select count(*)::int from public.team_game_plans where picks = '{1,1,
 select tests.sign_in_as('out@example.com');
 select is_empty('select * from public.team_game_plans', 'people outside the team see no plans');
 select tests.sign_out();
+
+select ok(
+  exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'team_game_plans'),
+  'new plans are sent to open Party pages'
+);
 
 select * from finish();
 rollback;
