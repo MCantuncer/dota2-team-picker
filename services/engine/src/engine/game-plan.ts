@@ -211,7 +211,8 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   const danger = chooseDangerHeroes(threats, theirCarry).map(({ id, kind }) => {
     const i = input.theirs.indexOf(id);
     const position = [...theirByPos].find(([, h]) => h === id)?.[0] ?? 1;
-    const build = itemBuild(engine.data, id, position, ourIds, bracket);
+    // Their usual build: counter items moved up against our heroes would give a too-early minute.
+    const build = itemBuild(engine.data, id, position, [], bracket);
     const bkb = build?.core.find((c) => engine.data.items?.[c.itemId]?.key === "black_king_bar");
     const item = bkb ?? keyItem(engine, build);
     return dangerLine({

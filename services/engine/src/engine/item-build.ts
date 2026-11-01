@@ -231,7 +231,10 @@ export function itemBuild(
     if (inCore > 1) {
       // Already in the build: buy it right after the first core item (usually boots).
       const [item] = core.splice(inCore, 1) as [BuildItem]; // inCore is a valid index.
-      core.splice(1, 0, { ...item, minute: core[1]?.minute ?? item.minute, reason: `${reason}: buy it early` });
+      const early: BuildItem = { ...item, minute: core[1]?.minute ?? item.minute, reason: `${reason}: buy it early` };
+      // Its usual slower-than-most minute no longer fits an item bought this early.
+      delete early.lateMinute;
+      core.splice(1, 0, early);
     } else if (inCore >= 0) {
       core[inCore] = { ...core[inCore]!, reason }; // inCore is a valid index.
     } else if (situational.length < SITUATIONAL_ITEMS && !situational.some((s) => s.itemId === Number(id))) {
