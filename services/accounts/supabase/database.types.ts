@@ -143,17 +143,29 @@ isOneToOne: false
                   ]
                 },"parties": {
                   Row: {
-                    "closed_at": string | null,"created_at": string,"id": string,"leader_id": string,"team_id": string | null
+                    "captain_id": string | null,"captain_request_at": string | null,"captain_request_by": string | null,"closed_at": string | null,"created_at": string,"id": string,"leader_id": string,"team_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "closed_at"?: string | null,"created_at"?: string,"id"?: string,"leader_id": string,"team_id"?: string | null
+                    "captain_id"?: string | null,"captain_request_at"?: string | null,"captain_request_by"?: string | null,"closed_at"?: string | null,"created_at"?: string,"id"?: string,"leader_id": string,"team_id"?: string | null
                   }
                   Update: {
-                    "closed_at"?: string | null,"created_at"?: string,"id"?: string,"leader_id"?: string,"team_id"?: string | null
+                    "captain_id"?: string | null,"captain_request_at"?: string | null,"captain_request_by"?: string | null,"closed_at"?: string | null,"created_at"?: string,"id"?: string,"leader_id"?: string,"team_id"?: string | null
                   }
                   Relationships: [
                     {
+      foreignKeyName: "parties_captain_id_fkey"
+      columns: ["captain_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "parties_captain_request_by_fkey"
+      columns: ["captain_request_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "parties_leader_id_fkey"
       columns: ["leader_id"]
 isOneToOne: false
@@ -164,6 +176,26 @@ isOneToOne: false
       columns: ["team_id"]
 isOneToOne: false
       referencedRelation: "teams"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"party_captain_seen": {
+                  Row: {
+                    "party_id": string,"seen_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "party_id": string,"seen_at"?: string
+                  }
+                  Update: {
+                    "party_id"?: string,"seen_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "party_captain_seen_party_id_fkey"
+      columns: ["party_id"]
+isOneToOne: true
+      referencedRelation: "parties"
       referencedColumns: ["id"]
     }
                   ]
@@ -273,14 +305,14 @@ isOneToOne: true
                   ]
                 },"party_members": {
                   Row: {
-                    "joined_at": string,"party_id": string,"position": number | null,"user_id": string
+                    "captain_asked_at": string | null,"joined_at": string,"party_id": string,"position": number | null,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "joined_at"?: string,"party_id": string,"position"?: number | null,"user_id": string
+                    "captain_asked_at"?: string | null,"joined_at"?: string,"party_id": string,"position"?: number | null,"user_id": string
                   }
                   Update: {
-                    "joined_at"?: string,"party_id"?: string,"position"?: number | null,"user_id"?: string
+                    "captain_asked_at"?: string | null,"joined_at"?: string,"party_id"?: string,"position"?: number | null,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -464,11 +496,26 @@ isOneToOne: false
 "add_draft_action":
 { Args: { "action": string,"draft": string,"hero": number,"pos"?: number }; Returns: undefined
                            },
+"answer_captain_request":
+{ Args: { "accept": boolean }; Returns: undefined
+                           },
 "answer_party_invite":
 { Args: { "accept": boolean,"party": string }; Returns: undefined
                            },
+"become_captain":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
 "can_invite":
 { Args: { "target": string }; Returns: boolean
+                           },
+"captain_heartbeat":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"captain_online":
+{ Args: { "party": string }; Returns: boolean
+                           },
+"captain_timing":
+{ Args: { "what": string }; Returns: string
                            },
 "draft_state":
 { Args: { "draft": string }; Returns: {
@@ -515,6 +562,23 @@ isOneToOne: false
 "leave_party":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"lock_my_party":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "captain_id": string | null,
+"captain_request_at": string | null,
+"captain_request_by": string | null,
+"closed_at": string | null,
+"created_at": string,
+"id": string,
+"leader_id": string,
+"team_id": string | null
+            }
+                          SetofOptions: {
+        from: "*"
+        to: "parties"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "my_friends":
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_url": string,"display_name": string,"incoming": boolean,"since": string,"status": string,"steam_linked": boolean,"user_id": string
@@ -548,7 +612,7 @@ isOneToOne: false
                            },
 "party_view":
 { Args: Record<PropertyKey, never>; Returns: {
-              "avatar_url": string,"display_name": string,"joined_at": string,"leader_id": string,"party_id": string,"position": number,"team_id": string,"user_id": string
+              "avatar_url": string,"captain_asked_at": string,"captain_id": string,"captain_online": boolean,"captain_request_by": string,"captain_request_expires_at": string,"display_name": string,"joined_at": string,"leader_id": string,"party_id": string,"position": number,"server_now": string,"team_id": string,"user_id": string
             }[]
                            },
 "profile_by_friend_code":
@@ -571,6 +635,9 @@ isOneToOne: false
 "send_friend_request":
 { Args: { "target": string }; Returns: string
                            },
+"set_party_captain":
+{ Args: { "party": string,"who": string }; Returns: undefined
+                           },
 "set_party_position":
 { Args: { "want": number }; Returns: undefined
                            },
@@ -579,6 +646,9 @@ isOneToOne: false
                            },
 "start_party_draft":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"step_down_captain":
+{ Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "user_id_by_email":
 { Args: { "address": string }; Returns: string
