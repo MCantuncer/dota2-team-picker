@@ -201,6 +201,20 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"opendota_calls": {
+                  Row: {
+                    "calls": number,"day": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "calls": number,"day": string
+                  }
+                  Update: {
+                    "calls"?: number,"day"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"parties": {
                   Row: {
                     "captain_id": string | null,"captain_request_at": string | null,"captain_request_by": string | null,"closed_at": string | null,"created_at": string,"id": string,"leader_id": string,"team_id": string | null
@@ -718,6 +732,9 @@ isOneToOne: false
                            },
 "step_down_captain":
 { Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"take_opendota_calls":
+{ Args: { "daily_cap"?: number,"wanted": number }; Returns: boolean
                            },
 "user_id_by_email":
 { Args: { "address": string }; Returns: string
