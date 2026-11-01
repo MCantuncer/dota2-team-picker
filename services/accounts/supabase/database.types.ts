@@ -167,6 +167,40 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"match_files": {
+                  Row: {
+                    "match_id": number,"saved_at": string,"size_bytes": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "match_id": number,"saved_at"?: string,"size_bytes": number
+                  }
+                  Update: {
+                    "match_id"?: number,"saved_at"?: string,"size_bytes"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"match_reports": {
+                  Row: {
+                    "attempts": number,"created_at": string,"draft_id": string,"error": string | null,"facts": Json | null,"facts_version": number | null,"game_mode": number | null,"lease_until": string | null,"lobby_type": number | null,"match_id": number,"next_try_at": string,"parse_requested_at": string | null,"parse_requests": number,"status": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "attempts"?: number,"created_at"?: string,"draft_id": string,"error"?: string | null,"facts"?: Json | null,"facts_version"?: number | null,"game_mode"?: number | null,"lease_until"?: string | null,"lobby_type"?: number | null,"match_id": number,"next_try_at"?: string,"parse_requested_at"?: string | null,"parse_requests"?: number,"status"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "attempts"?: number,"created_at"?: string,"draft_id"?: string,"error"?: string | null,"facts"?: Json | null,"facts_version"?: number | null,"game_mode"?: number | null,"lease_until"?: string | null,"lobby_type"?: number | null,"match_id"?: number,"next_try_at"?: string,"parse_requested_at"?: string | null,"parse_requests"?: number,"status"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "match_reports_draft_id_fkey"
+      columns: ["draft_id"]
+isOneToOne: true
+      referencedRelation: "party_drafts"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"parties": {
                   Row: {
                     "closed_at": string | null,"created_at": string,"id": string,"leader_id": string,"team_id": string | null
