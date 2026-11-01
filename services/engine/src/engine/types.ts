@@ -16,6 +16,10 @@ export type RankGroup = 1 | 2 | 3 | 4;
 export const rankGroup = (bracket: RankBracket): RankGroup => Math.ceil(bracket / 2) as RankGroup;
 export const RANK_GROUP_BRACKETS: Record<RankGroup, RankBracket[]> = { 1: [1, 2], 2: [3, 4], 3: [5, 6], 4: [7, 8] };
 
+/** Pick phase of a team's pick (0-based index within the team): 0 early (1st or 2nd), 1 middle (3rd), 2 late (4th or 5th). */
+export type PickPhase = 0 | 1 | 2;
+export const phaseOf = (teamPickIndex: number): PickPhase => (teamPickIndex < 2 ? 0 : teamPickIndex === 2 ? 1 : 2);
+
 export interface GamesWins {
   games: number;
   wins: number;
@@ -52,10 +56,49 @@ export interface Snapshot {
   /** Games per position [pos 1, ..., pos 5] in the last week, from STRATZ. */
   positions?: Record<string, number[]>;
   positionsAt?: string;
+  /**
+   * Games and wins per hero by when its team picked it: [1st or 2nd pick, 3rd, 4th or 5th].
+   * Counted from the saved ranked games of this patch.
+   */
+  pickPhase?: Record<string, { games: number[]; wins: number[] }>;
+  /**
+   * Turns a draft edge into a win chance: chance = 1 / (1 + e^-(a + b * edge)), fitted on saved
+   * ranked games for each number of heroes known. Only present when its calibration check passed.
+   */
+  winModel?: {
+    fittedAt: string;
+    games: number;
+    byKnown: Record<string, { a: number; b: number }>;
+  };
+  /** Shop items by item id, for item builds. Recipes and items with no cost are left out. */
+  items?: Record<string, ItemInfo>;
+  /** How often each item is bought on each hero, by game phase, from OpenDota. Keyed by hero id. */
+  itemBuilds?: Record<string, ItemPhases>;
+  /** When items and item builds were last downloaded; they are refreshed daily. */
+  itemsAt?: string;
   /** The patch the counts are for, from OpenDota's patch list. */
   patch?: { name: string; startedAt: string };
   /** Highest public match id already counted, so daily runs only add new matches. */
   lastPublicMatchId?: number;
+}
+
+export interface ItemInfo {
+  /** OpenDota's internal name, like `black_king_bar`. */
+  key: string;
+  name: string;
+  cost: number;
+  /** Image path on the Steam CDN, like `/apps/dota2/images/dota_react/items/black_king_bar.png`. */
+  img: string;
+  /** Item ids this item is built from; empty for basic items. */
+  components: number[];
+}
+
+/** Times each item (by item id) was bought in each phase of the game: before the horn, then up to 10, 25 and after. */
+export interface ItemPhases {
+  start: Record<string, number>;
+  early: Record<string, number>;
+  mid: Record<string, number>;
+  late: Record<string, number>;
 }
 
 export interface AllyPick {
@@ -89,10 +132,22 @@ export interface ScoreBreakdown {
   pickSafety: number;
 }
 
+/** A hand-checked hard counter of a hero and where it stands in the draft, with a line to show. */
+export interface HardCounterNote {
+  counterId: number;
+  /** Win-rate points the hero loses with this counter on the enemy team. */
+  gap: number;
+  /** `enemy`: on the enemy team. `open`: the enemy can still pick it. `out`: banned or on your team. */
+  status: "enemy" | "open" | "out";
+  text: string;
+}
+
 export interface Suggestion {
   heroId: number;
   name: string;
   score: number;
   breakdown: ScoreBreakdown;
   reasons: string[];
+  /** The hero's hard counters, to show apart from the reasons. */
+  hardCounters: HardCounterNote[];
 }

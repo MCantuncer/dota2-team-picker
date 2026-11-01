@@ -69,6 +69,32 @@ export function toEvalMatch(
   return { id: detail.match_id, startTime: detail.start_time, rankTier, radiantWin: detail.radiant_win, picks, bans };
 }
 
+/** True when `x` has the shape of a saved game, for files read back from storage. */
+export function isEvalMatch(x: unknown): x is EvalMatch {
+  if (typeof x !== "object" || x === null) return false;
+  const m = x as Record<string, unknown>;
+  const pick = (p: unknown) => {
+    const q = p as Record<string, unknown> | null;
+    return (
+      typeof q === "object" &&
+      q !== null &&
+      Number.isInteger(q.heroId) &&
+      typeof q.radiant === "boolean" &&
+      (q.position === null || [1, 2, 3, 4, 5].includes(q.position as number))
+    );
+  };
+  return (
+    Number.isInteger(m.id) &&
+    Number.isFinite(m.startTime) &&
+    (m.rankTier === null || Number.isFinite(m.rankTier)) &&
+    typeof m.radiantWin === "boolean" &&
+    Array.isArray(m.picks) &&
+    m.picks.every(pick) &&
+    Array.isArray(m.bans) &&
+    m.bans.every(Number.isInteger)
+  );
+}
+
 /** Storage path for the month a match started in, such as `eval/matches-2026-10.json`. */
 export function monthPath(startTime: number): string {
   return `eval/matches-${new Date(startTime * 1000).toISOString().slice(0, 7)}.json`;

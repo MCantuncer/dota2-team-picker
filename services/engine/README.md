@@ -39,7 +39,18 @@ Every part of the score is in win-rate percentage points, so `+2.0` roughly mean
   pushing, magic or physical damage). Counts more as your team fills up.
 - **Comfort**: your favorites, and your own record on the hero when known.
 - **Flex**: early in the draft, a hero that can play several positions hides your plan.
-- **Pick safety**: early in the draft, a hero with hard counters still available loses points.
+- **Pick safety**: how the hero does when its team picks it at this point of the draft (1st or 2nd
+  pick, 3rd, 4th or 5th) compared with all its games, from the saved ranked games of this patch
+  (`pickPhase`). A hero that wins less as an early pick is easy to counter, so it loses points early and
+  gains them late ("Easy to counter-pick later in the draft", "Wins more as a late pick"). Until the
+  counts hold 3,000 games, early in the draft a hero with bad matchups still in the pool loses points
+  instead.
+- **Hard counters**: a hand-checked list ([`src/engine/hard-counters.ts`](src/engine/hard-counters.ts)) of 17
+  pairs where one hero ruins another by a specific mechanic, such as Anti-Mage against Medusa. With the
+  counter on the enemy team, the matchup costs at least the listed gap ("Hard countered by Anti-Mage").
+  While the counter can still be picked, the hero loses the gap times the chance the enemy takes it
+  ("Gamble: Anti-Mage still available"). Once it is banned or on your team, there is no cost and the
+  reason says "Anti-Mage is out, safe to pick".
 
 Small samples are pulled toward the expected value, so a 3-0 matchup does not look like a sure win.
 
@@ -49,6 +60,48 @@ Herald and at Divine. The rank group's games are pulled toward the all-ranks num
 toward zero, so a group with few games (Divine-Immortal is about 5% of public matches) still gets
 the all-ranks result, and the rank's own pattern takes over as its games add up.
 The weights live at the top of [`src/engine/score.ts`](src/engine/score.ts).
+
+## Backtest
+
+`npm run backtest` scores the engine on real ranked games saved by the refresh Action (see
+"Games for the backtest" below). At every pick it gives the engine only what that player saw
+(bans, earlier picks, allies' positions, rank) and asks for 8 heroes for the player's position.
+
+- **Hit top 8 / top 1**: how often the hero the player really took was suggested. This shows the
+  advice is realistic, not that it is good.
+- **Win lift**: win rate of players who took one of the top 3, minus the win rate of everyone
+  else. This is the number that says whether the advice wins games.
+
+Two simple rivals are scored the same way: "Most played" (most picked heroes in the position)
+and "Highest win rate" (best win rate at the rank among heroes that fit the position). The engine
+should beat both. Only games that started after the snapshot was built are scored, so the engine
+never sees a game it learned from.
+
+```sh
+npm run pull-data -w services/engine
+npm run backtest -w services/engine -- --limit 500
+```
+
+`--pick-phase` counts pick phases from the older half of the games and scores the newer half, with
+an "Engine with pick phase" row to compare. CI runs it too.
+
+On every pull request, CI scores the PR's engine and main's on the same saved games and puts both
+tables in the "Engine backtest" job summary, so an engine change shows its effect before it merges.
+
+## Win chance
+
+`draftEdge` (in `src/engine/win-chance.ts`) adds up how much better one side's draft is, in win-rate
+points: the heroes' win rates, their matchups against each other (a hard counter always counts its
+full gap) and the synergy inside each team. `winChance` turns that edge into a chance with one
+logistic curve per draft step (2, 4, 6, 8 or 10 heroes known), because a draft with 2 heroes says
+much less than one with 10.
+
+`npm run fit-win-chance` fits the curves on this patch's saved games and checks them on the newest
+quarter: games are grouped in 5-point bands of the shown chance, and every band with at least 100
+draft steps must win within 2 points of what it showed, with a log loss better than a coin flip.
+Only a model that passes is saved as `winModel` in the snapshot; without one, `winChance` returns
+null and nothing is shown. The refresh Action refits it on every run and puts the check table in
+its job summary.
 
 ## WCST team plan
 
@@ -79,7 +132,24 @@ hero that is already picked. Positions left out are planned without a player.
 In code: `planTeam(engine, { slots, enemies, bans, rankBracket })` from
 [`src/engine/plan.ts`](src/engine/plan.ts).
 
-## Data
+## Game plan
+
+Once all ten heroes are in, `gamePlan` (in [`src/engine/game-plan.ts`](src/engine/game-plan.ts)) gives the
+captain's team:
+
+- **Lanes**: our heroes in each lane against the enemy heroes most likely there (guessed from where each
+  hero is usually played), and whether the lane is won, even or hard by matchup data.
+- **Win condition and roadmap**: each team's style from the WCST lists (teamfight, push, pick-off, late
+  game), whether they outscale us or want an early game, and what to do in laning, mid game and late game.
+- **Fears**: the enemy hero who beats the most of our heroes, enemy combos and hard counters to our heroes.
+- **Item builds**: `itemBuild` (in [`src/engine/item-build.ts`](src/engine/item-build.ts)) starts from the items
+  players really buy on the hero (`itemBuilds`), keeps one pair of boots and the finished items in buying
+  order, then moves a counter item up or adds it as situational when the enemy lineup calls for it: BKB
+  against three or more disablers, Monkey King Bar against evasion, Spirit Vessel against healing, Force Staff
+  or Ghost Scepter for supports against physical carries, and so on. A counter item only goes in when at
+  least 10% as many players buy it on that hero as buy its most common item, so a hero never gets an item
+  nobody builds on it. Each change says which enemy heroes it answers.
+
 
 `npm run fetch-data` downloads data from the free [OpenDota API](https://docs.opendota.com/)
 into `data/snapshot.json`:
@@ -89,6 +159,9 @@ into `data/snapshot.json`:
 - recent public matches (`/publicMatches`), counted into hero-vs-hero and same-team records,
   for all ranks and again for the match's rank group (`rankMatchups`, `rankSynergy`)
 - the patch list (`/constants/patch`)
+- the shop's items (`/constants/items`) and how often each hero buys each item before the horn,
+  up to 10 minutes, up to 25 and after (`/heroes/{id}/itemPopularity`), for the item builds in the
+  game plan (`items`, `itemBuilds`)
 
 and, when the `STRATZ_TOKEN` secret is set, games per position (pos 1-5) for every hero over the
 last week from the [STRATZ API](https://stratz.com/api). STRATZ detects each player's real
@@ -96,13 +169,18 @@ position, so a roaming pos 4 (Riki, Earth Spirit) no longer looks like a mid the
 lane data makes it look. A hero with fewer than 200 STRATZ games falls back to lane data. If STRATZ
 is down, the run keeps the last positions and carries on.
 
+It also counts, from the saved ranked games of this patch (see "Games for the backtest"), how each
+hero does by when its team picked it: 1st or 2nd pick, 3rd, or 4th or 5th. A hero that wins much
+less as an early pick is easy to counter and safer to pick late. These counts go in `pickPhase`.
+
 The Action can be started by hand with **dry run** ticked to fetch and build the data without
 uploading it, for example to test a change on a branch.
 
 Each run adds new matches to the counts already saved and fades old ones by 1% per day since
 the last run, so the data follows the meta as players find new builds. Fading changes how much
 old games count, not the win rates they show. Lane roles take one request per hero and change
-slowly, so they are downloaded once a week.
+slowly, so they are downloaded once a week. Item builds also take one request per hero and are
+downloaded once a day.
 
 ### Patches
 

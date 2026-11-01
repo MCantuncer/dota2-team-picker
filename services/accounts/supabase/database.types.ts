@@ -23,7 +23,59 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "favorite_heroes": {
+            "draft_actions": {
+                  Row: {
+                    "actor_id": string,"created_at": string,"draft_id": string,"hero_id": number,"id": number,"kind": string,"position": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actor_id": string,"created_at"?: string,"draft_id": string,"hero_id": number,"id"?: never,"kind": string,"position"?: number | null
+                  }
+                  Update: {
+                    "actor_id"?: string,"created_at"?: string,"draft_id"?: string,"hero_id"?: number,"id"?: never,"kind"?: string,"position"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "draft_actions_actor_id_fkey"
+      columns: ["actor_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "draft_actions_draft_id_fkey"
+      columns: ["draft_id"]
+isOneToOne: false
+      referencedRelation: "party_drafts"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"draft_suggestions": {
+                  Row: {
+                    "draft_id": string,"first_shown_at": string,"heroes": (number)[],"position": number,"scores": (number)[],"updated_at": string,"user_id": string,"win_chance": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "draft_id": string,"first_shown_at"?: string,"heroes": (number)[],"position": number,"scores": (number)[],"updated_at"?: string,"user_id": string,"win_chance"?: number | null
+                  }
+                  Update: {
+                    "draft_id"?: string,"first_shown_at"?: string,"heroes"?: (number)[],"position"?: number,"scores"?: (number)[],"updated_at"?: string,"user_id"?: string,"win_chance"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "draft_suggestions_draft_id_fkey"
+      columns: ["draft_id"]
+isOneToOne: false
+      referencedRelation: "party_drafts"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "draft_suggestions_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"favorite_heroes": {
                   Row: {
                     "created_at": string,"hero_id": number,"position": number,"user_id": string
                   }
@@ -112,6 +164,32 @@ isOneToOne: false
       columns: ["team_id"]
 isOneToOne: false
       referencedRelation: "teams"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"party_drafts": {
+                  Row: {
+                    "created_at": string,"ended_at": string | null,"id": string,"match_id": number | null,"party_id": string,"result_checked_at": string | null,"started_by": string,"won": boolean | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"match_id"?: number | null,"party_id": string,"result_checked_at"?: string | null,"started_by": string,"won"?: boolean | null
+                  }
+                  Update: {
+                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"match_id"?: number | null,"party_id"?: string,"result_checked_at"?: string | null,"started_by"?: string,"won"?: boolean | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "party_drafts_party_id_fkey"
+      columns: ["party_id"]
+isOneToOne: false
+      referencedRelation: "parties"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "party_drafts_started_by_fkey"
+      columns: ["started_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -204,6 +282,32 @@ isOneToOne: false
       columns: ["user_id"]
 isOneToOne: false
       referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"team_game_plans": {
+                  Row: {
+                    "bans": (number)[],"created_at": string,"enemies": (number)[],"id": string,"picks": (number)[],"rank_bracket": number | null,"sent_by": string,"team_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "bans"?: (number)[],"created_at"?: string,"enemies": (number)[],"id"?: string,"picks": (number)[],"rank_bracket"?: number | null,"sent_by": string,"team_id": string
+                  }
+                  Update: {
+                    "bans"?: (number)[],"created_at"?: string,"enemies"?: (number)[],"id"?: string,"picks"?: (number)[],"rank_bracket"?: number | null,"sent_by"?: string,"team_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "team_game_plans_sent_by_fkey"
+      columns: ["sent_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "team_game_plans_team_id_fkey"
+      columns: ["team_id"]
+isOneToOne: false
+      referencedRelation: "teams"
       referencedColumns: ["id"]
     }
                   ]
@@ -311,11 +415,22 @@ isOneToOne: false
 "accept_team_invite":
 { Args: { "invite": string }; Returns: string
                            },
+"add_draft_action":
+{ Args: { "action": string,"draft": string,"hero": number,"pos"?: number }; Returns: undefined
+                           },
 "answer_party_invite":
 { Args: { "accept": boolean,"party": string }; Returns: undefined
                            },
 "can_invite":
 { Args: { "target": string }; Returns: boolean
+                           },
+"draft_state":
+{ Args: { "draft": string }; Returns: {
+              "hero_id": number,"kind": string,"position": number
+            }[]
+                           },
+"end_party_draft":
+{ Args: { "draft": string }; Returns: undefined
                            },
 "friend_suggestions":
 { Args: Record<PropertyKey, never>; Returns: {
@@ -326,6 +441,9 @@ isOneToOne: false
 { Args: { "invite": string }; Returns: {
               "accepted": boolean,"captain_name": string,"email": string,"expired": boolean,"team_name": string
             }[]
+                           },
+"in_draft_party":
+{ Args: { "draft": string }; Returns: boolean
                            },
 "in_party":
 { Args: { "party": string }; Returns: boolean
@@ -364,6 +482,11 @@ isOneToOne: false
 "owns_team":
 { Args: { "team": string }; Returns: boolean
                            },
+"party_hero_pool":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "hero_id": number,"position": number,"user_id": string
+            }[]
+                           },
 "party_view":
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_url": string,"display_name": string,"joined_at": string,"leader_id": string,"party_id": string,"position": number,"team_id": string,"user_id": string
@@ -383,6 +506,9 @@ isOneToOne: false
 "runs_team":
 { Args: { "team": string }; Returns: boolean
                            },
+"save_draft_suggestions":
+{ Args: { "chance"?: number,"draft": string,"pos": number,"shown": (number)[],"shown_scores": (number)[] }; Returns: undefined
+                           },
 "send_friend_request":
 { Args: { "target": string }; Returns: string
                            },
@@ -391,6 +517,9 @@ isOneToOne: false
                            },
 "start_party":
 { Args: { "team"?: string }; Returns: string
+                           },
+"start_party_draft":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "user_id_by_email":
 { Args: { "address": string }; Returns: string

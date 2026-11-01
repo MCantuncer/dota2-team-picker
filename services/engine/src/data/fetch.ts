@@ -10,11 +10,17 @@
  * 7.41) comes out. Matches from before the current patch are not counted. Lane
  * roles change slowly and cost one request per hero, so they are refreshed once
  * a week.
+ * Pick-phase counts are rebuilt each run from the saved ranked games (see
+ * collect.ts). Item builds cost one request per hero too and are refreshed
+ * once a day (see items.ts).
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { positionFit } from "../engine/positions";
 import { getOpenDota as get, requestsLeftToday } from "./opendota";
+import { loadEvalGames, monthPaths } from "./eval-store";
+import { fetchItems, itemsDue } from "./items";
+import { countPickPhases } from "./pick-phase";
 import { fetchPositions } from "./stratz";
 import { rankGroup, type GamesWins, type HeroInfo, type RankBracket, type Snapshot } from "../engine/types";
 
@@ -228,6 +234,31 @@ async function main() {
     }
   } else {
     console.log("No STRATZ_TOKEN, positions come from lane roles.");
+  }
+
+  if (itemsDue(snapshot, now)) {
+    console.log("Item builds...");
+    try {
+      await fetchItems(snapshot, get, now);
+      console.log(`Item builds for ${Object.keys(snapshot.itemBuilds ?? {}).length} heroes.`);
+    } catch (err) {
+      // Item builds are an extra; keep the last ones and go on.
+      console.warn(`::warning::${(err as Error).message}`);
+    }
+  } else {
+    console.log(`Item builds are from ${snapshot.itemsAt}, keeping them.`);
+  }
+
+  console.log("Pick phases from the saved ranked games...");
+  try {
+    const nowS = Math.floor(now.getTime() / 1000);
+    const games = (await Promise.all(monthPaths(patchStart, nowS).map(loadEvalGames))).flat();
+    const thisPatch = games.filter((g) => g.startTime >= patchStart);
+    snapshot.pickPhase = countPickPhases(thisPatch);
+    console.log(`Pick phases from ${thisPatch.length} games.`);
+  } catch (err) {
+    // Pick phases are an extra; keep the last ones and go on.
+    console.warn(`::warning::${(err as Error).message}`);
   }
 
   decayCounts(snapshot, now);

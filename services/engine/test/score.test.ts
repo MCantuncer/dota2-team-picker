@@ -82,3 +82,34 @@ describe("rank group matchups", () => {
     expect(engine.matchupEdge(3, 5, 1)).toBeCloseTo(engine.matchupEdge(3, 5));
   });
 });
+
+describe("pick phase", () => {
+  /** Mid Three wins 40% as an early pick and 60% as a late one; every other hero is even. */
+  const withPickPhase = (games: number) => {
+    const data = fixture();
+    data.pickPhase = {};
+    for (const id of Object.keys(data.heroes)) data.pickPhase[id] = { games: [games, 0, games], wins: [games / 2, 0, games / 2] };
+    data.pickPhase[3] = { games: [games, 0, games], wins: [games * 0.4, 0, games * 0.6] };
+    return data;
+  };
+
+  it("scores a hero by how it does when picked at this point of the draft", () => {
+    const engine = new Engine(withPickPhase(10000));
+    const early = engine.suggest({ myPosition: 2, allies: [], enemies: [] }).find((s) => s.heroId === 3)!;
+    const late = engine
+      .suggest({ myPosition: 2, allies: [{ heroId: 1 }, { heroId: 4 }, { heroId: 5 }], enemies: [] })
+      .find((s) => s.heroId === 3)!;
+    expect(early.breakdown.pickSafety).toBeLessThan(-5);
+    expect(early.reasons).not.toContain("Wins more as a late pick");
+    expect(late.breakdown.pickSafety).toBeGreaterThan(5);
+    expect(late.reasons).toContain("Wins more as a late pick");
+    expect(engine.pickPhaseEdge(2, 0)).toBeCloseTo(0);
+  });
+
+  it("keeps the matchup-based pick safety while the counts are too small", () => {
+    const engine = new Engine(withPickPhase(10));
+    expect(engine.pickPhaseEdge(3, 0)).toBeUndefined();
+    const plain = new Engine(fixture()).suggest({ myPosition: 2, allies: [], enemies: [] });
+    expect(engine.suggest({ myPosition: 2, allies: [], enemies: [] })).toEqual(plain);
+  });
+});
