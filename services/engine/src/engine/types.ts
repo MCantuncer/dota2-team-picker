@@ -76,10 +76,31 @@ export interface Snapshot {
   itemBuilds?: Record<string, ItemPhases>;
   /** When items and item builds were last downloaded; they are refreshed daily. */
   itemsAt?: string;
+  /**
+   * When players buy their core items, from STRATZ: itemTimings[heroId][position][slice], where the
+   * slice is a RankGroup ("1" to "4") or "all" for every rank. Only each hero's two most played
+   * positions, and only slices STRATZ had data for.
+   */
+  itemTimings?: Record<string, Record<string, Partial<Record<ItemTimingSliceKey, ItemTimingSlice>>>>;
+  /** When item timings were last downloaded; they are refreshed daily. */
+  itemTimingsAt?: string;
   /** The patch the counts are for, from OpenDota's patch list. */
   patch?: { name: string; startedAt: string };
   /** Highest public match id already counted, so daily runs only add new matches. */
   lastPublicMatchId?: number;
+}
+
+/** A rank group ("1" to "4") or "all" ranks. */
+export type ItemTimingSliceKey = `${RankGroup}` | "all";
+
+/**
+ * Item timings for one hero, position and rank slice. `games` is the slice's sample size: the
+ * purchase count of its most bought item, since STRATZ gives no game total for item data.
+ */
+export interface ItemTimingSlice {
+  games: number;
+  /** Most bought core items first: [item id, average minute bought, minute after which a player is slower than most]. */
+  items: [itemId: number, minute: number, lateMinute: number][];
 }
 
 export interface ItemInfo {

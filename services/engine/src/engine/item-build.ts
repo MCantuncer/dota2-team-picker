@@ -96,6 +96,13 @@ const CONSUMABLES = new Set([
 /** Items under this cost are lane items (Bracer, Wand), not part of the core build, except boots. */
 const CORE_MIN_COST = 1500;
 const BOOTS = new Set(["phase_boots", "power_treads", "arcane_boots", "tranquil_boots", "boots", "travel_boots", "guardian_greaves", "boots_of_bearing"]);
+
+/** Whether an item can be part of a core build: boots, Aghanim's Shard, or any non-consumable from CORE_MIN_COST up. */
+export function isCoreItem(item: ItemInfo | undefined): boolean {
+  if (!item || CONSUMABLES.has(item.key)) return false;
+  return BOOTS.has(item.key) || item.key === "aghanims_shard" || item.cost >= CORE_MIN_COST;
+}
+
 /** Enemy heroes named in one reason, those with the most matching threats first. */
 const REASON_NAMES = 3;
 
@@ -171,8 +178,7 @@ export function itemBuild(data: Snapshot, heroId: number, position: Position, en
     .filter(([id, b]) => !parts.has(id) && !CONSUMABLES.has(items[id]?.key ?? "") && b.count >= top * MIN_POPULARITY)
     .sort((a, b) => b[1].count - a[1].count);
   const isBoots = (id: string) => BOOTS.has(items[id]?.key ?? "");
-  const isBig = (id: string) =>
-    isBoots(id) || items[id]?.key === "aghanims_shard" || (items[id]?.cost ?? 0) >= CORE_MIN_COST;
+  const isBig = (id: string) => isCoreItem(items[id]);
   // One pair of boots: the most bought.
   const boots = candidates.find(([id]) => isBoots(id))?.[0];
   const core = candidates
