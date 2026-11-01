@@ -200,7 +200,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   ].filter((line, i, all) => all.indexOf(line) === i);
 
   const players = input.ours.map((p): PlayerPlan => {
-    const build = itemBuild(engine.data, p.heroId, p.position, input.theirs);
+    const build = itemBuild(engine.data, p.heroId, p.position, input.theirs, bracket);
     const combo = ourCombos.find((c) => c.a === p.heroId || c.b === p.heroId);
     const partner = combo && name(combo.a === p.heroId ? combo.b : combo.a);
     const isInitiator = traitsOf(engine.hero(p.heroId)).has("initiation");
