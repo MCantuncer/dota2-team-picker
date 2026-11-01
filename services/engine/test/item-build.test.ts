@@ -85,6 +85,56 @@ describe("itemBuild", () => {
   });
 });
 
+describe("itemBuild with STRATZ item timings", () => {
+  /** Wraith King data plus timings for pos 1: a rank group 3 slice and an every-rank slice. */
+  function timed(): Snapshot {
+    const d = data();
+    d.items![200] = item("desolator", "Desolator", 3500);
+    d.items![201] = item("blink", "Blink Dagger", 2250);
+    d.items![202] = item("assault", "Assault Cuirass", 5125);
+    d.items![203] = item("ogre_axe", "Ogre Axe", 1000);
+    d.items![116] = item("black_king_bar", "Black King Bar", 4050, [203]);
+    const slice = (bkbMinute: number) => ({
+      games: 5000,
+      items: [
+        [151, 12, 14], [137, 17, 19], [116, bkbMinute, bkbMinute + 3], [200, 24, 27], [201, 26, 30], [202, 31, 35], [145, 34, 38],
+      ] as [number, number, number][],
+    });
+    d.itemTimings = { 1: { 1: { 3: slice(20), all: slice(22) } } };
+    return d;
+  }
+
+  it("takes the core and its minutes from the slice, keeping OpenDota's boots", () => {
+    const build = itemBuild(timed(), 1, 1, [4])!;
+    expect(build.timings).toBe("all");
+    expect(build.core.map((i) => [i.name, i.minute, i.lateMinute])).toEqual([
+      ["Phase Boots", 8, undefined],
+      ["Armlet of Mordiggian", 12, 14],
+      ["Radiance", 17, 19],
+      ["Black King Bar", 22, 25],
+      ["Desolator", 24, 27],
+      ["Blink Dagger", 26, 30],
+    ]);
+  });
+
+  it("uses the player's rank group when it has enough data", () => {
+    const build = itemBuild(timed(), 1, 1, [4], 5)!;
+    expect(build.timings).toBe("rank");
+    expect(build.core.find((i) => i.name === "Black King Bar")?.minute).toBe(20);
+  });
+
+  it("keeps the slice's late minute when a counter item moves up", () => {
+    const build = itemBuild(timed(), 1, 1, [2, 3, 6, 4, 5])!;
+    expect(build.core[1]).toMatchObject({ name: "Black King Bar", minute: 12, lateMinute: 25 });
+  });
+
+  it("falls back to rough minutes without timings for the position", () => {
+    const build = itemBuild(timed(), 1, 3, [4])!;
+    expect(build.timings).toBe("around");
+    expect(build.core.every((i) => i.lateMinute === undefined)).toBe(true);
+  });
+});
+
 describe("threatsOf", () => {
   it("reads disables and nukes from roles and the rest from the hand-kept lists", () => {
     expect([...threatsOf(hero(5, "Lifestealer", ["Carry", "Durable"]))].sort()).toEqual(["heal", "passives", "physicalCarry"]);
