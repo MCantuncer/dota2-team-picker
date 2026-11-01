@@ -225,6 +225,52 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"party_kicks": {
+                  Row: {
+                    "party_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "party_id": string,"user_id": string
+                  }
+                  Update: {
+                    "party_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "party_kicks_party_id_fkey"
+      columns: ["party_id"]
+isOneToOne: false
+      referencedRelation: "parties"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "party_kicks_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"party_links": {
+                  Row: {
+                    "code": string,"expires_at": string,"party_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "code": string,"expires_at": string,"party_id": string
+                  }
+                  Update: {
+                    "code"?: string,"expires_at"?: string,"party_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "party_links_party_id_fkey"
+      columns: ["party_id"]
+isOneToOne: true
+      referencedRelation: "parties"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"party_members": {
                   Row: {
                     "joined_at": string,"party_id": string,"position": number | null,"user_id": string
@@ -463,6 +509,9 @@ isOneToOne: false
 "is_team_member":
 { Args: { "team": string }; Returns: boolean
                            },
+"join_party_by_link":
+{ Args: { "code": string }; Returns: string
+                           },
 "leave_party":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
@@ -482,9 +531,19 @@ isOneToOne: false
 "owns_team":
 { Args: { "team": string }; Returns: boolean
                            },
+"party_by_link":
+{ Args: { "code": string }; Returns: {
+              "is_kicked": boolean,"is_member": boolean,"leader_avatar_url": string,"leader_id": string,"leader_name": string,"members": number,"party_id": string
+            }[]
+                           },
 "party_hero_pool":
 { Args: Record<PropertyKey, never>; Returns: {
               "hero_id": number,"position": number,"user_id": string
+            }[]
+                           },
+"party_link":
+{ Args: { "fresh"?: boolean }; Returns: {
+              "code": string,"expires_at": string
             }[]
                            },
 "party_view":
