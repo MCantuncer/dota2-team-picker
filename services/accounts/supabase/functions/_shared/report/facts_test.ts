@@ -100,3 +100,50 @@ Deno.test("matches the saved version 1 facts the website reads", () => {
   const saved = fixture("facts-v1-dire-9072422905.json");
   assertEquals(buildFacts(allPick(), false, ITEMS), saved);
 });
+
+Deno.test("finds the fights that moved the most gold", () => {
+  const fights = buildFacts(allPick(), false, ITEMS).fights!; // Parsed match.
+  assertEquals(fights.length, 4);
+  assertEquals(fights.map((f) => f.startMinute), [...fights.map((f) => f.startMinute)].sort((a, b) => a - b));
+  const radiant = buildFacts(allPick(), true, ITEMS).fights!; // Parsed match.
+  assertEquals(
+    radiant.map((f) => f.goldSwing),
+    fights.map((f) => -f.goldSwing),
+    "the same fights, seen from the other side",
+  );
+  assertEquals(radiant.map((f) => f.ourDeaths), fights.map((f) => f.theirDeaths));
+});
+
+Deno.test("names what hurt us most and the enemy's best hero", () => {
+  const facts = buildFacts(allPick(), true, ITEMS);
+  assertEquals(facts.damageTaken?.length, 3);
+  assertEquals(facts.damageTaken![0]!.damage >= facts.damageTaken![1]!.damage, true); // Three sources, checked above.
+  assertEquals(facts.enemyBest, { heroId: 145, kills: 35, deaths: 1, assists: 6, netWorth: facts.enemyBest!.netWorth });
+  assertEquals(buildFacts(allPick(), false, ITEMS).enemyBest?.heroId !== 145, true);
+});
+
+Deno.test("places each pick in the list its player saw", () => {
+  const facts = buildFacts(allPick(), false, ITEMS, [
+    { heroId: 145, shown: [12, 145, 8] },
+    { heroId: 25, shown: [1, 2, 3, 4, 5, 6, 7, 8] },
+    { heroId: 70, shown: [] },
+  ]);
+  assertEquals(facts.draft, [
+    { heroId: 145, suggestionRank: 2, listSize: 3 },
+    { heroId: 25, suggestionRank: null, listSize: 8 },
+    { heroId: 70, suggestionRank: null, listSize: 0 },
+  ]);
+  assertEquals(buildFacts(allPick(), false, ITEMS).draft, null, "no saved draft");
+});
+
+Deno.test("leaves fights and damage out of a basic report", () => {
+  const raw = fixture("all-pick-9072422905.json") as Record<string, unknown>;
+  delete raw.version;
+  const facts = buildFacts(readOpenDotaMatch(raw), false, ITEMS);
+  assertEquals([facts.fights, facts.damageTaken], [null, null]);
+  assertEquals(
+    facts.enemyBest,
+    buildFacts(allPick(), false, ITEMS).enemyBest,
+    "the scoreboard still shows who did best",
+  );
+});

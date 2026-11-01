@@ -46,6 +46,22 @@ export interface MatchPlayer {
   wardsDestroyed: number | null;
   /** Benchmark percentiles (0 to 1) against everyone playing the hero. */
   benchmarks: { goldPerMin: number; xpPerMin: number; lastHitsPerMin: number; heroDamagePerMin: number } | null;
+  /** Damage this player took, by the enemy ability or item key that dealt it ("null" is attacks). Parsed only. */
+  damageReceived: Record<string, number> | null;
+}
+
+/** One player's part in a teamfight, in the same order as `Match.players`. */
+export interface FightPlayer {
+  deaths: number;
+  goldDelta: number;
+  damage: number;
+  healing: number;
+}
+
+export interface Teamfight {
+  startS: number;
+  endS: number;
+  players: FightPlayer[];
 }
 
 export interface Match {
@@ -60,6 +76,8 @@ export interface Match {
   /** Radiant's gold lead at each minute (negative when Dire leads). Parsed only. */
   radiantGoldAdv: number[] | null;
   players: MatchPlayer[];
+  /** Parsed only. */
+  teamfights: Teamfight[] | null;
 }
 
 type Obj = Record<string, unknown>;
@@ -97,6 +115,7 @@ export function readOpenDotaMatch(raw: unknown): Match {
     direScore: num(raw, "dire_score"),
     radiantGoldAdv: isParsed ? numArray(raw.radiant_gold_adv) : null,
     players,
+    teamfights: isParsed ? readTeamfights(raw.teamfights) : null,
   };
 }
 
@@ -133,6 +152,7 @@ function readPlayer(p: unknown, isParsed: boolean): MatchPlayer {
     sentriesPlaced: parsed(numOrNull(p, "sen_placed")),
     wardsDestroyed: parsed(isNum(p.observer_kills) && isNum(p.sentry_kills) ? p.observer_kills + p.sentry_kills : null),
     benchmarks: readBenchmarks(p.benchmarks),
+    damageReceived: parsed(readNumberMap(p.damage_inflictor_received)),
   };
 }
 
@@ -161,4 +181,28 @@ function readBenchmarks(v: unknown): MatchPlayer["benchmarks"] {
   const [gpm, xpm, lh, dmg] = ["gold_per_min", "xp_per_min", "last_hits_per_min", "hero_damage_per_min"].map(pct);
   if (gpm === null || xpm === null || lh === null || dmg === null) return null;
   return { goldPerMin: gpm, xpPerMin: xpm, lastHitsPerMin: lh, heroDamagePerMin: dmg };
+}
+
+function readNumberMap(v: unknown): Record<string, number> | null {
+  if (!isObj(v)) return null;
+  return Object.fromEntries(Object.entries(v).filter((e): e is [string, number] => isNum(e[1])));
+}
+
+/** Teamfights with a player entry for each of the ten players; others are dropped. */
+function readTeamfights(v: unknown): Teamfight[] | null {
+  if (!Array.isArray(v)) return null;
+  return v.filter(isObj).flatMap((t) => {
+    if (!isNum(t.start) || !isNum(t.end) || !Array.isArray(t.players) || t.players.length !== 10) return [];
+    const players = t.players.map((p) =>
+      isObj(p)
+        ? {
+          deaths: num(p, "deaths"),
+          goldDelta: num(p, "gold_delta"),
+          damage: num(p, "damage"),
+          healing: num(p, "healing"),
+        }
+        : { deaths: 0, goldDelta: 0, damage: 0, healing: 0 }
+    );
+    return [{ startS: t.start, endS: t.end, players }];
+  });
 }
