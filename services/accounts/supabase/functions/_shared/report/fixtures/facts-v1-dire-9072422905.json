@@ -1,0 +1,323 @@
+{
+  "version": 1,
+  "isBasic": false,
+  "matchId": 9072422905,
+  "durationS": 2066,
+  "gameMode": 22,
+  "lobbyType": 0,
+  "side": "dire",
+  "won": true,
+  "score": {
+    "ours": 57,
+    "theirs": 32
+  },
+  "goldLead": [
+    388,
+    726,
+    669,
+    612,
+    692,
+    598,
+    1775,
+    2938,
+    2844,
+    2440,
+    2967,
+    3806,
+    4313,
+    5185,
+    5557,
+    3011,
+    3633,
+    3203,
+    4398,
+    6406,
+    8745,
+    10343,
+    11375,
+    10549,
+    15226,
+    14588,
+    15858,
+    19374,
+    21266,
+    22459,
+    25578,
+    33779,
+    31369,
+    31716,
+    32369
+  ],
+  "swings": [
+    {
+      "fromMinute": 28,
+      "toMinute": 31,
+      "change": 12513
+    },
+    {
+      "fromMinute": 25,
+      "toMinute": 28,
+      "change": 6678
+    },
+    {
+      "fromMinute": 18,
+      "toMinute": 21,
+      "change": 5945
+    }
+  ],
+  "lanes": [
+    {
+      "lane": "bottom",
+      "ourHeroes": [
+        70,
+        26
+      ],
+      "theirHeroes": [
+        46,
+        14
+      ],
+      "netWorthDiff": 777
+    },
+    {
+      "lane": "mid",
+      "ourHeroes": [
+        25
+      ],
+      "theirHeroes": [
+        4
+      ],
+      "netWorthDiff": 118
+    },
+    {
+      "lane": "top",
+      "ourHeroes": [
+        84,
+        145
+      ],
+      "theirHeroes": [
+        38,
+        74
+      ],
+      "netWorthDiff": 2620
+    }
+  ],
+  "heroes": [
+    {
+      "heroId": 25,
+      "kills": 5,
+      "deaths": 10,
+      "assists": 5,
+      "goldPerMin": 551,
+      "xpPerMin": 641,
+      "lastHits": 242,
+      "denies": 15,
+      "netWorth": 17115,
+      "heroDamage": 14551,
+      "towerDamage": 10607,
+      "heroHealing": 98,
+      "level": 20,
+      "abandoned": false,
+      "lane": "mid",
+      "isRoaming": false,
+      "benchmarks": {
+        "goldPerMin": 50,
+        "xpPerMin": 27,
+        "lastHitsPerMin": 61,
+        "heroDamagePerMin": 11
+      },
+      "teamfightShare": 0.18,
+      "stunSeconds": 24,
+      "deathsBefore10": 2,
+      "goldLostToDeaths": 2295,
+      "secondsDead": 392,
+      "keyItems": [
+        {
+          "itemId": 170,
+          "minute": 29
+        }
+      ],
+      "wards": {
+        "observers": 2,
+        "sentries": 2,
+        "destroyed": 2
+      }
+    },
+    {
+      "heroId": 70,
+      "kills": 4,
+      "deaths": 4,
+      "assists": 10,
+      "goldPerMin": 603,
+      "xpPerMin": 724,
+      "lastHits": 258,
+      "denies": 12,
+      "netWorth": 21178,
+      "heroDamage": 16004,
+      "towerDamage": 4121,
+      "heroHealing": 0,
+      "level": 21,
+      "abandoned": false,
+      "lane": "bottom",
+      "isRoaming": false,
+      "benchmarks": {
+        "goldPerMin": 48,
+        "xpPerMin": 32,
+        "lastHitsPerMin": 51,
+        "heroDamagePerMin": 21
+      },
+      "teamfightShare": 0.25,
+      "stunSeconds": 5,
+      "deathsBefore10": 1,
+      "goldLostToDeaths": 806,
+      "secondsDead": 164,
+      "keyItems": [
+        {
+          "itemId": 139,
+          "minute": 31
+        }
+      ],
+      "wards": {
+        "observers": 0,
+        "sentries": 2,
+        "destroyed": 2
+      }
+    },
+    {
+      "heroId": 84,
+      "kills": 4,
+      "deaths": 7,
+      "assists": 31,
+      "goldPerMin": 545,
+      "xpPerMin": 750,
+      "lastHits": 81,
+      "denies": 7,
+      "netWorth": 16142,
+      "heroDamage": 19443,
+      "towerDamage": 2051,
+      "heroHealing": 257,
+      "level": 21,
+      "abandoned": false,
+      "lane": "top",
+      "isRoaming": false,
+      "benchmarks": {
+        "goldPerMin": 71,
+        "xpPerMin": 72,
+        "lastHitsPerMin": 38,
+        "heroDamagePerMin": 57
+      },
+      "teamfightShare": 0.61,
+      "stunSeconds": 66.2,
+      "deathsBefore10": 1,
+      "goldLostToDeaths": 1509,
+      "secondsDead": 305,
+      "keyItems": [],
+      "wards": {
+        "observers": 6,
+        "sentries": 14,
+        "destroyed": 11
+      }
+    },
+    {
+      "heroId": 26,
+      "kills": 8,
+      "deaths": 10,
+      "assists": 27,
+      "goldPerMin": 404,
+      "xpPerMin": 827,
+      "lastHits": 35,
+      "denies": 2,
+      "netWorth": 11628,
+      "heroDamage": 15143,
+      "towerDamage": 330,
+      "heroHealing": 0,
+      "level": 22,
+      "abandoned": false,
+      "lane": "bottom",
+      "isRoaming": false,
+      "benchmarks": {
+        "goldPerMin": 77,
+        "xpPerMin": 87,
+        "lastHitsPerMin": 39,
+        "heroDamagePerMin": 73
+      },
+      "teamfightShare": 0.6,
+      "stunSeconds": 175.2,
+      "deathsBefore10": 2,
+      "goldLostToDeaths": 1389,
+      "secondsDead": 372,
+      "keyItems": [],
+      "wards": {
+        "observers": 6,
+        "sentries": 13,
+        "destroyed": 11
+      }
+    },
+    {
+      "heroId": 145,
+      "kills": 35,
+      "deaths": 1,
+      "assists": 6,
+      "goldPerMin": 970,
+      "xpPerMin": 1557,
+      "lastHits": 386,
+      "denies": 23,
+      "netWorth": 31573,
+      "heroDamage": 59705,
+      "towerDamage": 9263,
+      "heroHealing": 0,
+      "level": 28,
+      "abandoned": false,
+      "lane": "top",
+      "isRoaming": false,
+      "benchmarks": {
+        "goldPerMin": 100,
+        "xpPerMin": 100,
+        "lastHitsPerMin": 98,
+        "heroDamagePerMin": 99
+      },
+      "teamfightShare": 0.72,
+      "stunSeconds": 14.4,
+      "deathsBefore10": 0,
+      "goldLostToDeaths": 809,
+      "secondsDead": 0,
+      "keyItems": [
+        {
+          "itemId": 168,
+          "minute": 12
+        },
+        {
+          "itemId": 170,
+          "minute": 15
+        },
+        {
+          "itemId": 147,
+          "minute": 19
+        },
+        {
+          "itemId": 123,
+          "minute": 23
+        },
+        {
+          "itemId": 139,
+          "minute": 28
+        },
+        {
+          "itemId": 603,
+          "minute": 31
+        }
+      ],
+      "wards": {
+        "observers": 0,
+        "sentries": 0,
+        "destroyed": 1
+      }
+    }
+  ],
+  "enemyHeroes": [
+    4,
+    38,
+    46,
+    14,
+    74
+  ]
+}
