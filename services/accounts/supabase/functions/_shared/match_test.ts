@@ -33,8 +33,8 @@ Deno.test("reads a pasted match when our heroes are on one side", () => {
       { hero_id: 6, player_slot: 129 },
     ],
   };
-  assertEquals(readMatch(match, [1, 2]), { matchId: 9, won: true });
-  assertEquals(readMatch(match, [5, 6]), { matchId: 9, won: false });
+  assertEquals(readMatch(match, [1, 2]), { matchId: 9, won: true, isRadiant: true });
+  assertEquals(readMatch(match, [5, 6]), { matchId: 9, won: false, isRadiant: false });
   assertEquals(readMatch(match, [1, 5]), null, "heroes split across both teams");
   assertEquals(readMatch(match, []), null, "a draft with no heroes for our team");
   assertEquals(readMatch({ match_id: 9, players: match.players }, [1]), null, "no result yet");
