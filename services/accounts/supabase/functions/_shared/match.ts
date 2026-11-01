@@ -13,6 +13,11 @@ export interface MatchResult {
   won: boolean;
 }
 
+/** A pasted or found match checked against the draft: which side was ours. */
+export interface SideResult extends MatchResult {
+  isRadiant: boolean;
+}
+
 interface RecentMatch {
   match_id: number;
   hero_id: number;
@@ -21,10 +26,12 @@ interface RecentMatch {
   radiant_win: boolean | null;
 }
 
-interface MatchDetails {
+export interface MatchDetails {
   match_id: number;
   radiant_win?: boolean | null;
-  players?: { hero_id: number; player_slot: number }[];
+  game_mode?: number | null;
+  lobby_type?: number | null;
+  players?: { hero_id: number; player_slot: number; account_id?: number | null }[];
 }
 
 /** Slots 0-127 are Radiant, 128 and up Dire. */
@@ -46,16 +53,23 @@ export function pickRecentMatch(recent: RecentMatch[], allies: number[], draftOp
  * The result of a pasted match, if every hero entered for our team played on the same side of
  * it. Null when the heroes don't fit, so a wrong ID never records a result.
  */
-export function readMatch(match: MatchDetails, allies: number[]): MatchResult | null {
+export function readMatch(match: MatchDetails, allies: number[]): SideResult | null {
   if (!allies.length || typeof match.radiant_win !== "boolean" || !match.players) return null;
   const side = (radiant: boolean) =>
     match.players!.filter((p) => isRadiant(p.player_slot) === radiant).map((p) => p.hero_id);
   for (const radiant of [true, false]) {
     if (allies.every((h) => side(radiant).includes(h))) {
-      return { matchId: match.match_id, won: radiant === match.radiant_win };
+      return { matchId: match.match_id, won: radiant === match.radiant_win, isRadiant: radiant };
     }
   }
   return null;
+}
+
+/** Our side's players in a match: their Dota account (null when hidden) and hero. */
+export function sidePlayers(match: MatchDetails, radiant: boolean): { account_id: number | null; hero_id: number }[] {
+  return (match.players ?? [])
+    .filter((p) => isRadiant(p.player_slot) === radiant)
+    .map((p) => ({ account_id: p.account_id && p.account_id > 0 ? p.account_id : null, hero_id: p.hero_id }));
 }
 
 export async function fetchRecentMatches(accountId: number, fetchFn: typeof fetch = fetch): Promise<RecentMatch[]> {
