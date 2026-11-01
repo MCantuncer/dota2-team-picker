@@ -287,14 +287,14 @@ isOneToOne: false
                   ]
                 },"team_game_plans": {
                   Row: {
-                    "bans": (number)[],"created_at": string,"enemies": (number)[],"id": string,"picks": (number)[],"rank_bracket": number | null,"sent_by": string,"team_id": string
+                    "bans": (number)[],"created_at": string,"enemies": (number)[],"id": string,"picks": (number)[],"players": (string)[],"rank_bracket": number | null,"sent_by": string,"team_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "bans"?: (number)[],"created_at"?: string,"enemies": (number)[],"id"?: string,"picks": (number)[],"rank_bracket"?: number | null,"sent_by": string,"team_id": string
+                    "bans"?: (number)[],"created_at"?: string,"enemies": (number)[],"id"?: string,"picks": (number)[],"players"?: (string)[],"rank_bracket"?: number | null,"sent_by": string,"team_id": string
                   }
                   Update: {
-                    "bans"?: (number)[],"created_at"?: string,"enemies"?: (number)[],"id"?: string,"picks"?: (number)[],"rank_bracket"?: number | null,"sent_by"?: string,"team_id"?: string
+                    "bans"?: (number)[],"created_at"?: string,"enemies"?: (number)[],"id"?: string,"picks"?: (number)[],"players"?: (string)[],"rank_bracket"?: number | null,"sent_by"?: string,"team_id"?: string
                   }
                   Relationships: [
                     {

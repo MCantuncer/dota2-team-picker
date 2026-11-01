@@ -1,6 +1,6 @@
 begin;
 \ir _helpers.psql
-select plan(8);
+select plan(11);
 
 select tests.create_user('own@example.com', 'captain') as own \gset
 select tests.create_user('co@example.com') as co \gset
@@ -13,12 +13,16 @@ insert into public.team_members (team_id, user_id, role) values (:'team', :'co',
 -- The owner and a co-captain send plans in their own name.
 select tests.sign_in_as('own@example.com');
 select lives_ok(
-  format($$insert into public.team_game_plans (team_id, sent_by, picks, enemies, bans, rank_bracket)
-    values (%L, %L, '{42,13,49,30,100}', '{26,72,137,31,54}', '{1,67}', 5)$$, :'team', :'own'),
+  format($$insert into public.team_game_plans (team_id, sent_by, picks, enemies, bans, rank_bracket, players)
+    values (%L, %L, '{42,13,49,30,100}', '{26,72,137,31,54}', '{1,67}', 5, array[%L, null, %L, null, null]::uuid[])$$,
+    :'team', :'own', :'own', :'pl'),
   'the owner sends a game plan');
 select throws_ok(
   format($$insert into public.team_game_plans (team_id, sent_by, picks, enemies) values (%L, %L, '{1,2,3,4}', '{5,6,7,8,9}')$$, :'team', :'own'),
   '23514', null, 'a plan needs five heroes on each side');
+select throws_ok(
+  format($$insert into public.team_game_plans (team_id, sent_by, picks, enemies, players) values (%L, %L, '{1,2,3,4,5}', '{6,7,8,9,10}', array[%L]::uuid[])$$, :'team', :'own', :'own'),
+  '23514', null, 'a plan names a player slot for every position');
 select tests.sign_out();
 
 select tests.sign_in_as('co@example.com');
@@ -33,6 +37,9 @@ select tests.sign_out();
 -- Players read their team's plans but can't send one.
 select tests.sign_in_as('pl@example.com');
 select is((select count(*)::int from public.team_game_plans), 2, 'a player reads the team''s plans');
+select is(
+  (select array_position(players, :'pl'::uuid) from public.team_game_plans where rank_bracket = 5), 3,
+  'a player finds their own position in a sent plan');
 select throws_ok(
   format($$insert into public.team_game_plans (team_id, sent_by, picks, enemies) values (%L, %L, '{1,2,3,4,5}', '{6,7,8,9,10}')$$, :'team', :'pl'),
   '42501', null, 'a player cannot send a plan');
@@ -43,6 +50,11 @@ select is((select count(*)::int from public.team_game_plans where picks = '{1,1,
 select tests.sign_in_as('out@example.com');
 select is_empty('select * from public.team_game_plans', 'people outside the team see no plans');
 select tests.sign_out();
+
+select ok(
+  exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'team_game_plans'),
+  'new plans are sent to open Party pages'
+);
 
 select * from finish();
 rollback;
