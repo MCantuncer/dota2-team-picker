@@ -20,6 +20,7 @@ import {
   readMatch,
   requestParse,
 } from "../_shared/match.ts";
+import { takeOpenDotaCalls } from "../_shared/opendota_budget.ts";
 import { steamIdToAccountId } from "../_shared/steam.ts";
 
 const MIN_INTERVAL_MS = 20 * 1000;
@@ -83,6 +84,9 @@ Deno.serve(async (req) => {
   let result: MatchResult | null = null;
   try {
     if (matchId !== undefined) {
+      // The match, then the parse request.
+      const budget = await takeOpenDotaCalls(admin, 2);
+      if (!budget.ok) return json({ error: budget.message }, budget.status);
       const match = await fetchMatch(matchId);
       if (!match) return json({ error: "OpenDota doesn't know that match yet. Try again in a few minutes." }, 404);
       result = readMatch(match, allies);
@@ -100,6 +104,10 @@ Deno.serve(async (req) => {
         .not("steam_id", "is", null);
       if (profileError) throw profileError;
       const steamIds: string[] = (profiles ?? []).map((p) => p.steam_id);
+      if (!steamIds.length) return json({ matchId: null });
+      // Each player's recent matches, then the parse request.
+      const budget = await takeOpenDotaCalls(admin, steamIds.length + 1);
+      if (!budget.ok) return json({ error: budget.message }, budget.status);
       for (const steamId of steamIds) {
         result = pickRecentMatch(
           await fetchRecentMatches(steamIdToAccountId(steamId)),
