@@ -615,6 +615,9 @@ isOneToOne: false
 "end_party_draft":
 { Args: { "draft": string }; Returns: undefined
                            },
+"forget_match_files":
+{ Args: { "matches": (number)[] }; Returns: number
+                           },
 "friend_suggestions":
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_url": string,"display_name": string,"team_name": string,"user_id": string
@@ -744,6 +747,11 @@ isOneToOne: false
                            },
 "set_party_position":
 { Args: { "want": number }; Returns: undefined
+                           },
+"stale_match_files":
+{ Args: { "max_rows"?: number }; Returns: {
+              "match_id": number
+            }[]
                            },
 "start_party":
 { Args: { "team"?: string }; Returns: string
