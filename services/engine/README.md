@@ -132,7 +132,24 @@ hero that is already picked. Positions left out are planned without a player.
 In code: `planTeam(engine, { slots, enemies, bans, rankBracket })` from
 [`src/engine/plan.ts`](src/engine/plan.ts).
 
-## Data
+## Game plan
+
+Once all ten heroes are in, `gamePlan` (in [`src/engine/game-plan.ts`](src/engine/game-plan.ts)) gives the
+captain's team:
+
+- **Lanes**: our heroes in each lane against the enemy heroes most likely there (guessed from where each
+  hero is usually played), and whether the lane is won, even or hard by matchup data.
+- **Win condition and roadmap**: each team's style from the WCST lists (teamfight, push, pick-off, late
+  game), whether they outscale us or want an early game, and what to do in laning, mid game and late game.
+- **Fears**: the enemy hero who beats the most of our heroes, enemy combos and hard counters to our heroes.
+- **Item builds**: `itemBuild` (in [`src/engine/item-build.ts`](src/engine/item-build.ts)) starts from the items
+  players really buy on the hero (`itemBuilds`), keeps one pair of boots and the finished items in buying
+  order, then moves a counter item up or adds it as situational when the enemy lineup calls for it: BKB
+  against three or more disablers, Monkey King Bar against evasion, Spirit Vessel against healing, Force Staff
+  or Ghost Scepter for supports against physical carries, and so on. A counter item only goes in when at
+  least 10% as many players buy it on that hero as buy its most common item, so a hero never gets an item
+  nobody builds on it. Each change says which enemy heroes it answers.
+
 
 `npm run fetch-data` downloads data from the free [OpenDota API](https://docs.opendota.com/)
 into `data/snapshot.json`:
