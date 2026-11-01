@@ -86,7 +86,7 @@ export async function fetchMatchPositions(token: string, ids: number[]): Promise
 }
 
 /** POSTs a GraphQL query and returns its `data`. Throws on HTTP or GraphQL errors. */
-async function postStratz<T>(token: string, query: string, what: string): Promise<T> {
+export async function postStratz<T>(token: string, query: string, what: string): Promise<T> {
   const res = await fetch(URL, {
     method: "POST",
     headers: {
