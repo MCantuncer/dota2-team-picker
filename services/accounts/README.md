@@ -34,6 +34,8 @@ name and picture; Steam and rank fields are written only by the server.
 | `parties`         | `id`, `leader_id`, `team_id` (optional), `created_at`, `closed_at` (set when the last player leaves) |
 | `party_members`   | `party_id`, `user_id`, `position` (1–5 this game, null = any), `joined_at`: 5 at most, one open party per player |
 | `party_invites`   | `party_id`, `user_id`, `invited_by`, `status` (pending, accepted, declined), `created_at` |
+| `party_links`     | `party_id`, `code` (the secret in the invite link), `expires_at`: closed to users, read through `party_link()` |
+| `party_kicks`     | `party_id`, `user_id`: players the leader removed, who can't rejoin by link; closed to users |
 
 `rank_tier` is OpenDota's number: tens digit is the medal (1 Herald ... 8 Immortal), ones digit
 the star, so 54 is Legend 4. `rank_bracket(profiles)` returns just the medal, which is what the
@@ -66,6 +68,9 @@ join. The three party tables are read-only to users, are in the `supabase_realti
 | `set_party_position(want)` | The position you want this game (null = any) |
 | `party_view()` | Your party's players with names and positions, leader first |
 | `my_party_invites()` | Open invites to you, with who sent them and how full the party is |
+| `party_link(fresh)` | Leader only: the party's invite link code, made if needed; each call keeps it working 24 more hours; `fresh` makes a new one and the old one stops working |
+| `party_by_link(code)` | Whose party a live link opens, how full it is, and whether you're in it or were removed from it |
+| `join_party_by_link(code)` | Joins by link, no friendship needed (if fewer than 5 and you weren't removed); leaves your old one |
 
 ## Functions
 
