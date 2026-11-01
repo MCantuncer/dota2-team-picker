@@ -12,16 +12,18 @@
  * a week.
  * Pick-phase counts are rebuilt each run from the saved ranked games (see
  * collect.ts). Item builds cost one request per hero too and are refreshed
- * once a day (see items.ts).
+ * once a day (see items.ts), and so are item timings from STRATZ (see item-timings.ts).
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { gzipSync } from "node:zlib";
 import { positionFit } from "../engine/positions";
 import { getOpenDota as get, requestsLeftToday } from "./opendota";
 import { loadEvalGames, monthPaths } from "./eval-store";
+import { fetchItemTimings, itemTimingsDue } from "./item-timings";
 import { fetchItems, itemsDue } from "./items";
 import { countPickPhases } from "./pick-phase";
-import { fetchPositions } from "./stratz";
+import { fetchPositions, postStratz } from "./stratz";
 import { rankGroup, type GamesWins, type HeroInfo, type RankBracket, type Snapshot } from "../engine/types";
 
 const SNAPSHOT_PATH = "data/snapshot.json";
@@ -247,6 +249,20 @@ async function main() {
     }
   } else {
     console.log(`Item builds are from ${snapshot.itemsAt}, keeping them.`);
+  }
+
+  if (stratzToken && itemTimingsDue(snapshot, now)) {
+    console.log("Item timings from STRATZ...");
+    try {
+      await fetchItemTimings(snapshot, (query) => postStratz(stratzToken, query, "item timings"), now);
+      const kb = (gzipSync(JSON.stringify(snapshot.itemTimings)).length / 1024).toFixed(1);
+      console.log(`Item timings for ${Object.keys(snapshot.itemTimings ?? {}).length} heroes, ${kb} KB gzipped.`);
+    } catch (err) {
+      // Item timings are an extra; keep the last ones and go on.
+      console.warn(`::warning::${(err as Error).message}`);
+    }
+  } else if (stratzToken) {
+    console.log(`Item timings are from ${snapshot.itemTimingsAt}, keeping them.`);
   }
 
   console.log("Pick phases from the saved ranked games...");
