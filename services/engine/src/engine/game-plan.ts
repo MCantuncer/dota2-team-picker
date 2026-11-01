@@ -1,8 +1,9 @@
+import { SURE_POSITION_ODDS, chooseDangerHeroes, dangerLine } from "./danger";
 import { pickFallbacks, type Scaling } from "./fallbacks";
 import { gameStory, type Story } from "./story";
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
 import { itemBuild, listNames, type ItemBuild } from "./item-build";
-import { guessEnemyPositions } from "./positions";
+import { guessEnemyPositions, type PositionFit } from "./positions";
 import type { Engine } from "./score";
 import { traitsOf } from "./traits";
 import { POSITIONS, type AllyPick, type Position, type RankBracket } from "./types";
@@ -63,6 +64,8 @@ export interface GamePlan {
   ourCombos: string[];
   /** Enemy combos and hard counters to our heroes. */
   fears: string[];
+  /** The one or two enemies who decide the game, with when they come online and our answer. */
+  danger: string[];
   roadmap: { phase: string; text: string }[];
   players: PlayerPlan[];
   /** What the team does if it is behind or ahead at 20 minutes. */
@@ -89,9 +92,8 @@ function teamStyle(ids: number[], styles: Record<Style, Set<number>>) {
   return best && { key: best.key, label: STYLES[best.key].label };
 }
 
-/** Each enemy's most likely position, giving every position to one hero. */
-function enemyPositions(engine: Engine, theirs: number[]): Map<Position, number> {
-  const odds = guessEnemyPositions(theirs.map((id) => engine.fit(id)));
+/** Each enemy's most likely position, giving every position to one hero, from their position odds. */
+function enemyPositions(theirs: number[], odds: PositionFit[]): Map<Position, number> {
   const out = new Map<Position, number>();
   const pairs = theirs.flatMap((id, i) => POSITIONS.map((p) => ({ id, p, odds: odds[i]![p] })));
   for (const { id, p } of pairs.sort((a, b) => b.odds - a.odds)) {
@@ -172,7 +174,8 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   const ourCombos = pairCombos(ourIds);
   const theirCombos = pairCombos(input.theirs);
 
-  const theirByPos = enemyPositions(engine, input.theirs);
+  const theirOdds = guessEnemyPositions(input.theirs.map((id) => engine.fit(id)));
+  const theirByPos = enemyPositions(input.theirs, theirOdds);
   const lanes = LANES.map((lane): LanePlan => {
     const ours = input.ours.filter((p) => lane.ours.includes(p.position)).map((p) => p.heroId);
     const theirs = lane.theirs.flatMap((p) => (theirByPos.has(p) ? [theirByPos.get(p)!] : [])); // has() checked.
@@ -199,8 +202,28 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     }),
   ].filter((line, i, all) => all.indexOf(line) === i);
 
+  const threats = input.theirs
+    .map((t) => ({ t, edge: ourIds.reduce((s, o) => s + engine.matchupEdge(t, o, bracket), 0) }))
+    .filter((e) => e.edge >= THREAT_TOTAL_EDGE)
+    .sort((a, b) => b.edge - a.edge)
+    .map((e) => e.t);
+  const theirCarry = theirByPos.get(1);
+  const danger = chooseDangerHeroes(threats, theirCarry).map(({ id, kind }) => {
+    const i = input.theirs.indexOf(id);
+    const position = [...theirByPos].find(([, h]) => h === id)?.[0] ?? 1;
+    const build = itemBuild(engine.data, id, position, ourIds, bracket);
+    const bkb = build?.core.find((c) => engine.data.items?.[c.itemId]?.key === "black_king_bar");
+    const item = bkb ?? keyItem(engine, build);
+    return dangerLine({
+      hero: name(id),
+      kind,
+      ...(item ? { item: { name: item.name, minute: item.minute } } : {}),
+      isSure: (theirOdds[i]?.[position] ?? 0) >= SURE_POSITION_ODDS && build?.timings !== "around",
+    });
+  });
+
   const players = input.ours.map((p): PlayerPlan => {
-    const build = itemBuild(engine.data, p.heroId, p.position, input.theirs);
+    const build = itemBuild(engine.data, p.heroId, p.position, input.theirs, bracket);
     const combo = ourCombos.find((c) => c.a === p.heroId || c.b === p.heroId);
     const partner = combo && name(combo.a === p.heroId ? combo.b : combo.a);
     const isInitiator = traitsOf(engine.hero(p.heroId)).has("initiation");
@@ -277,6 +300,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     lanes,
     ourCombos: ourCombos.map((c) => `${name(c.a)} + ${name(c.b)}: ${c.text}`),
     fears,
+    danger,
     roadmap,
     players,
     teamFallbacks: picked.team,

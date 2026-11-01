@@ -10,6 +10,8 @@
   },
   "fmt": {
     "include": ["supabase/functions", "supabase/emails"],
+    // Saved OpenDota matches, kept byte for byte as downloaded (minus player names).
+    "exclude": ["supabase/functions/_shared/report/fixtures"],
     "lineWidth": 120
   }
 }
