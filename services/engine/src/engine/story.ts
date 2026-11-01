@@ -35,7 +35,7 @@ export interface Story {
 }
 
 /** Word caps, so the story stays a one-minute read with each player's card (Game Story plan). */
-export const STORY_WORDS = { headline: 15, chapters: 80 } as const;
+export const STORY_WORDS = { headline: 15, chapters: 80, danger: 30 } as const;
 
 /** Spikes named in one chapter; more would crowd it. */
 const SPIKES_PER_CHAPTER = 2;
