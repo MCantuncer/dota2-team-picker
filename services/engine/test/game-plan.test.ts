@@ -101,6 +101,9 @@ describe("gamePlan", () => {
     // The won safe lane and the even mid get no lines, and no build means no item line.
     expect(lines(1)).toEqual([]);
     expect(lines(2)).toEqual([]);
+    // The story says when to fight: before their late-game carries are ready.
+    expect(plan.story.headline).toBe("Win before 30 minutes: their Anti-Mage outscales us.");
+    expect(plan.story.chapters[0]!.text).toBe("Press the safe lane. Rotate to help the off lane.");
     // Their late-game style means they scale better.
     expect(plan.teamFallbacks).toEqual([
       "Behind at 20 against a late game team? Don't wait. Smoke together and catch one hero before each objective.",

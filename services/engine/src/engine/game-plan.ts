@@ -1,4 +1,5 @@
 import { pickFallbacks, type Scaling } from "./fallbacks";
+import { gameStory, type Story } from "./story";
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
 import { itemBuild, listNames, type ItemBuild } from "./item-build";
 import { guessEnemyPositions } from "./positions";
@@ -66,6 +67,8 @@ export interface GamePlan {
   players: PlayerPlan[];
   /** What the team does if it is behind or ahead at 20 minutes. */
   teamFallbacks: string[];
+  /** The game in four timed chapters with a one-line headline. */
+  story: Story;
 }
 
 export interface GamePlanInput {
@@ -277,6 +280,19 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     roadmap,
     players,
     teamFallbacks: picked.team,
+    story: gameStory({
+      ourTiming,
+      theirTiming,
+      wonLane: wonLane?.name.toLowerCase(),
+      hardLane: hardLane?.name.toLowerCase(),
+      spikes: players.flatMap((p) => {
+        const item = keyItem(engine, p.build);
+        return item ? [{ hero: name(p.heroId), item: item.name, minute: item.minute }] : [];
+      }),
+      combo: firstCombo?.text,
+      ourCarry: carry && name(carry.heroId),
+      enemyCarry: enemyAt(1),
+    }),
   };
 }
 
