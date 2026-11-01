@@ -442,3 +442,7 @@ verify_jwt = false
 # Steam's callback carries no user token; the function checks the token itself on POST.
 [functions.steam-link]
 verify_jwt = false
+
+# Called by pg_cron, which has no user token; the function checks a shared secret instead.
+[functions.build-reports]
+verify_jwt = false
