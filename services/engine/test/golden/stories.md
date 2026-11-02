@@ -2,12 +2,12 @@
 
 ## Legend teamfight mirror
 
-Headline: Win the fights around your item timings.
+Headline: Both teams are ready at 15 min: fight once your items are in, not before.
 
-- 0 to 10 min: Farm and trade evenly. Rotate to help the safe lane.
-- 10 to 20 min: Juggernaut has Battle Fury, Mars has Blink Dagger. Fight around these items.
-- 20 to 30 min: Crystal Maiden has Blink Dagger. Take Roshan when their carry is dead or far away.
-- 30 min on: Catch one hero before each objective.
+- 0 to 10 min: The safe lane is hard against Axe and Witch Doctor: Puck brings the 6 min rune there.
+- 10 to 20 min: Juggernaut: Battle Fury at 14, Mars: Blink Dagger at 15. Their Phantom Assassin: Battle Fury at 15.
+- 20 to 30 min: Crystal Maiden: Blink Dagger at 23. Roshan from 20 min, once three key items are in.
+- 30 min on: Fight when Phantom Assassin is dead or far from the fight.
 
 Danger heroes:
 - Phantom Assassin: Battle Fury at 15 min. Take fights and towers before then.
@@ -58,9 +58,9 @@ If it goes wrong: Phantom Assassin is farming free? Ward their jungle so your co
 
 Headline: Survive their early pushes: we are stronger after 25 minutes.
 
-- 0 to 10 min: Farm and trade evenly. Rotate to help the off lane.
-- 10 to 20 min: Medusa has Manta Style, Tidehunter has Blink Dagger. Their strongest time: defend towers together.
-- 20 to 30 min: Storm Spirit has Orchid Malevolence, Dazzle has Holy Locket. Your items are in: take back the map with smoke ganks.
+- 0 to 10 min: The off lane is hard against Lycan and Shadow Shaman: Storm Spirit brings the 6 min rune there.
+- 10 to 20 min: Medusa: Manta Style at 18, Tidehunter: Blink Dagger at 19. Their Lycan: Helm of the Overlord at 18. Their strongest time: defend towers together while Medusa farms.
+- 20 to 30 min: Storm Spirit: Orchid Malevolence at 20, Dazzle: Holy Locket at 20. Their Underlord: Aghanim's Scepter at 23. Roshan from 25 min, once three key items are in.
 - 30 min on: You are stronger now: take Roshan, then end with the Aegis.
 
 Danger heroes:
@@ -111,12 +111,12 @@ If it goes wrong: Lycan is farming free? Ward their jungle so your cores can cat
 
 ## Crusader teamfight against a late carry
 
-Headline: Win the fights around your item timings.
+Headline: Fight from 13 min, before Spectre has Radiance at 18.
 
-- 0 to 10 min: Press the mid. Rotate to help the safe lane.
-- 10 to 20 min: Invoker has Meteor Hammer, Magnus has Blink Dagger. Fight around these items, opening with Chronosphere into Sun Strike and Chaos Meteor.
-- 20 to 30 min: Oracle has Blink Dagger. Take Roshan when their carry is dead or far away.
-- 30 min on: Catch one hero before each objective.
+- 0 to 10 min: Press the mid. The safe lane is hard against Bristleback and Nyx Assassin: Invoker brings the 6 min rune there.
+- 10 to 20 min: Invoker: Meteor Hammer at 12, Magnus: Blink Dagger at 13. Their Spectre: Radiance at 18. Open fights with Chronosphere into Sun Strike and Chaos Meteor.
+- 20 to 30 min: Oracle: Blink Dagger at 24. Roshan from 20 min, once three key items are in.
+- 30 min on: Fight when Spectre is dead or far from the fight.
 
 Danger heroes:
 - Bristleback: Consecrated Wraps at 16 min. Don't focus them: kill their damage dealers first.
@@ -169,9 +169,9 @@ If it goes wrong: Spectre is farming free? Ward their jungle so your cores can c
 
 Headline: Survive their early pushes: we are stronger after 25 minutes.
 
-- 0 to 10 min: Farm and trade evenly. Rotate to help the mid.
-- 10 to 20 min: Axe has Blink Dagger, Wraith King has Radiance. Their strongest time: defend towers together.
-- 20 to 30 min: Ogre Magi has Blink Dagger, Sniper has Hurricane Pike. Your items are in: take back the map with smoke ganks.
+- 0 to 10 min: The mid is hard against Pudge.
+- 10 to 20 min: Axe: Blink Dagger at 15, Wraith King: Radiance at 17. Their Legion Commander: Blink Dagger at 15. Their strongest time: defend towers together while Wraith King farms.
+- 20 to 30 min: Ogre Magi: Blink Dagger at 25, Sniper: Hurricane Pike at 26. Their Drow Ranger: Manta Style at 24. Roshan from 25 min, once three key items are in.
 - 30 min on: You are stronger now: take Roshan, then end with the Aegis.
 
 Danger heroes:
@@ -220,12 +220,12 @@ Job: Keep your carry alive in lane and place vision; save your key spell for the
 
 ## Immortal illusion carries
 
-Headline: Win the fights around your item timings.
+Headline: Both teams are ready at 18 min: fight once your items are in, not before.
 
-- 0 to 10 min: Farm and trade evenly. Rotate to help the safe lane.
-- 10 to 20 min: Mars has Blink Dagger, Terrorblade has Manta Style. Fight around these items.
-- 20 to 30 min: Disruptor has Blink Dagger. Take Roshan when their carry is dead or far away.
-- 30 min on: Catch one hero before each objective.
+- 0 to 10 min: The safe lane is hard against Primal Beast and Hoodwink: Templar Assassin brings the 6 min rune there.
+- 10 to 20 min: Mars: Blink Dagger at 15, Terrorblade: Manta Style at 18. Their Naga Siren: Manta Style at 18.
+- 20 to 30 min: Disruptor: Blink Dagger at 24. Their Pangolier: Blink Dagger at 20. Roshan from 20 min, once three key items are in.
+- 30 min on: Fight when Naga Siren is dead or far from the fight.
 
 Danger heroes:
 - Naga Siren: Manta Style around 18 min. Take fights and towers before then.
@@ -273,12 +273,12 @@ If it goes wrong: Naga Siren is farming free? Ward their jungle so your cores ca
 
 ## Archon farm carry against early fights
 
-Headline: Win the fights around your item timings.
+Headline: Both teams are ready at 15 min: fight once your items are in, not before.
 
 - 0 to 10 min: Press the safe lane.
-- 10 to 20 min: Anti-Mage has Battle Fury, Lina has Maelstrom. Fight around these items.
-- 20 to 30 min: Take Roshan when their carry is dead or far away.
-- 30 min on: Catch one hero before each objective.
+- 10 to 20 min: Anti-Mage: Battle Fury at 15, Lina: Maelstrom at 15. Their Troll Warlord: Battle Fury at 15.
+- 20 to 30 min: Their Dark Seer: Blink Dagger at 21. Roshan from 20 min, once three key items are in.
+- 30 min on: Fight when Troll Warlord is dead or far from the fight.
 
 Danger heroes:
 - Huskar: Blink Dagger at 14 min. Lock them down first in every fight.
