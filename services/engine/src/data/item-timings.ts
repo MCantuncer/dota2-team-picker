@@ -58,7 +58,8 @@ export interface PurchaseRow {
 }
 
 export function itemTimingsDue(snapshot: Snapshot, now: Date): boolean {
-  if (!snapshot.itemTimingsAt || !snapshot.itemTimings) return true;
+  // Start items are fetched with the timings, so a snapshot without them is due too.
+  if (!snapshot.itemTimingsAt || !snapshot.itemTimings || !snapshot.itemStarts) return true;
   return now.getTime() - Date.parse(snapshot.itemTimingsAt) >= ITEM_TIMINGS_MAX_AGE_DAYS * DAY_MS;
 }
 

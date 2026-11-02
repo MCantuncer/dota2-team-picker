@@ -23,9 +23,10 @@ export function storyText(title: string, plan: GamePlan, heroName: (id: number) 
     lines.push("", `### Pos ${p.position} ${heroName(p.heroId)}`);
     if (p.build) {
       lines.push(`Timings: ${p.build.timings}`);
-      if (p.build.start.length) lines.push(`Start: ${p.build.start.map((i) => i.name).join(", ")}`);
+      if (p.build.start.length) lines.push(`Start: ${p.build.start.map((i) => (i.count ? `${i.count} ${i.name}` : i.name)).join(", ")}`);
       if (p.build.lane.length) lines.push(`Lane: ${p.build.lane.map(itemText).join(", ")}`);
       lines.push(`Core: ${p.build.core.map(itemText).join(", ")}`);
+      if (p.build.bootsOr) lines.push(`Boots or: ${itemText(p.build.bootsOr)}`);
       if (p.build.situational.length) lines.push(`If needed: ${p.build.situational.map(itemText).join(", ")}`);
     }
     lines.push(`Job: ${p.job}`);

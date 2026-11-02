@@ -118,6 +118,25 @@ describe("itemBuild with STRATZ item timings", () => {
     ]);
   });
 
+  it("takes the start, its copies and the boots with their minute from STRATZ", () => {
+    const d = timed();
+    d.itemStarts = { 1: { 1: { games: 1000, start: [[44, 1], [16, 2]], boots: [[63, 7, 0.6], [50, 8, 0.25]] } } };
+    const build = itemBuild(d, 1, 1, [4])!;
+    expect(build.start.map((i) => [i.name, i.count])).toEqual([
+      ["Tango", undefined],
+      ["Iron Branch", 2],
+    ]);
+    // Power Treads replaces OpenDota's Phase Boots, at STRATZ's minute; Phase Boots is the "or".
+    expect(build.core[0]).toMatchObject({ name: "Power Treads", minute: 7 });
+    expect(build.core.filter((i) => i.name === "Phase Boots")).toEqual([]);
+    expect(build.bootsOr).toMatchObject({ name: "Phase Boots", minute: 8 });
+    // A lane item already in the start is not bought twice.
+    d.itemStarts[1]![1]!.start.push([36, 1]);
+    expect(itemBuild(d, 1, 1, [4])!.lane.map((i) => i.name)).toEqual([]);
+    // Another position has no STRATZ start: OpenDota's is kept.
+    expect(itemBuild(d, 1, 2, [4])!.bootsOr).toBeUndefined();
+  });
+
   it("takes the lane items and their minutes from the slice, in buy order", () => {
     const d = timed();
     d.items![181] = item("orb_of_venom", "Orb of Venom", 275);

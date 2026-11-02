@@ -33,6 +33,7 @@ const fixture: Snapshot = {
   rankSynergy: full.rankSynergy && Object.fromEntries(Object.entries(full.rankSynergy).map(([g, s]) => [g, pickSynergy(s) ?? {}])),
   itemBuilds: pick(full.itemBuilds),
   itemTimings: pick(full.itemTimings),
+  itemStarts: pick(full.itemStarts),
 };
 writeFileSync(new URL("../test/fixtures/golden-snapshot.json", import.meta.url), `${JSON.stringify(fixture)}\n`);
 console.log(`Wrote the golden snapshot for ${ids.size} heroes.`);
