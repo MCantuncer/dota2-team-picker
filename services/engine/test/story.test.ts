@@ -7,10 +7,8 @@ describe("gameStory", () => {
   it("tells four chapters and names our item spikes in their window", () => {
     const story = gameStory(
       facts({
-        wonLane: "safe lane",
-        hardLane: "off lane",
-        hardLaneEnemies: ["Axe", "Witch Doctor"],
-        ourMid: "Puck",
+        wonLane: { name: "safe lane", ours: ["Juggernaut", "Crystal Maiden"], theirs: ["Mars"] },
+        hardLane: { name: "off lane", ours: ["Magnus", "Lion"], theirs: ["Axe", "Witch Doctor"] },
         spikes: [
           { hero: "Magnus", item: "Blink Dagger", minute: 14 },
           { hero: "Juggernaut", item: "Battle Fury", minute: 16 },
@@ -26,7 +24,7 @@ describe("gameStory", () => {
       }),
     );
     expect(story.chapters.map((c) => c.phase)).toEqual(["0 to 10 min", "10 to 20 min", "20 to 30 min", "30 min on"]);
-    expect(story.chapters[0]!.text).toBe("Press the safe lane. The off lane is hard against Axe and Witch Doctor: Puck brings the 6 min rune there.");
+    expect(story.chapters[0]!.text).toBe("Juggernaut and Crystal Maiden win the safe lane against Mars: take their tower. Survive the off lane against Axe and Witch Doctor: just get levels.");
     // Our first two items are one moment, then one more item; theirs is their carry's.
     expect(story.chapters[1]!.text).toBe(
       "Puck's Witch Blade at 12 and Magnus's Blink Dagger at 14: ready to fight at 14. Juggernaut's Battle Fury at 16. Their Phantom Assassin has Battle Fury at 17. Open fights with Reverse Polarity into Sven's God's Strength cleave.",
@@ -51,9 +49,9 @@ describe("gameStory", () => {
     expect(gameStory(facts({ spikes })).headline).toBe("Win the fights around your item timings.");
   });
 
-  it("names the hard lane's enemies and sends the mid there, unless the mid is the hard lane", () => {
-    expect(gameStory(facts({ hardLane: "mid", hardLaneEnemies: ["Pudge"], ourMid: "Puck" })).chapters[0]!.text).toBe(
-      "The mid is hard against Pudge.",
+  it("tells each lane what to do from its verdict, never sending the mid on a template rotation", () => {
+    expect(gameStory(facts({ hardLane: { name: "mid", ours: ["Puck"], theirs: ["Pudge"] } })).chapters[0]!.text).toBe(
+      "Survive the mid against Pudge: just get levels.",
     );
     expect(gameStory(facts()).chapters[0]!.text).toBe("Every lane is even: the better last hits win.");
   });
@@ -91,10 +89,8 @@ describe("gameStory", () => {
         const story = gameStory({
           ourTiming,
           theirTiming,
-          wonLane: "safe lane",
-          hardLane: "off lane",
-          hardLaneEnemies: [long, long],
-          ourMid: long,
+          wonLane: { name: "safe lane", ours: [long, long], theirs: [long, long] },
+          hardLane: { name: "off lane", ours: [long, long], theirs: [long, long] },
           spikes,
           theirSpikes: spikes,
           combo: "Reverse Polarity into Sven's God's Strength cleave",
