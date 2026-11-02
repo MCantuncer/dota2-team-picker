@@ -669,6 +669,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"may_change_draft":
+{ Args: { "draft": string }; Returns: boolean
+                           },
 "my_friends":
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_url": string,"display_name": string,"incoming": boolean,"since": string,"status": string,"steam_linked": boolean,"user_id": string
