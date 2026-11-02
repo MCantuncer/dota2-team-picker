@@ -22,7 +22,7 @@ Lane Off lane: Mars + Lion vs Phantom Assassin + Lich, hard
 
 ### Pos 1 Juggernaut
 Timings: rank
-Start: Quelling Blade, Tango, 2 Iron Branch, Magic Stick, Faerie Fire, Circlet
+Start: Quelling Blade, 2 Tango [Hard lane against Axe and Witch Doctor: more sustain], 2 Iron Branch, Magic Stick, Healing Salve [Hard lane against Axe and Witch Doctor: more sustain]
 Lane: Wraith Band 2, Magic Wand 3, Perseverance 10
 Core: Power Treads 7, Battle Fury 14/16, Manta Style 23/24, Butterfly 29/30, Monkey King Bar 33/37 [Against Phantom Assassin: don't skip it], Swift Blink 40/43
 Boots or: Phase Boots 8
@@ -40,8 +40,8 @@ If it goes wrong: No Blink Dagger by 20 min? Stop rotating and farm mid and the 
 
 ### Pos 3 Mars
 Timings: all
-Start: 2 Gauntlets of Strength, 2 Iron Branch, Tango, Quelling Blade, Circlet
-Lane: Bracer 2, Magic Wand 4, Soul Ring 5
+Start: Gauntlets of Strength, 2 Iron Branch, 2 Tango [Hard lane against Phantom Assassin and Lich: more sustain], Quelling Blade, Healing Salve [Hard lane against Phantom Assassin and Lich: more sustain]
+Lane: Bracer 2, Magic Wand 4, Infused Raindrops 4 [Against Lich's magic burst], Soul Ring 5
 Core: Phase Boots 10, Blink Dagger 15/17, Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24, Black King Bar 29/31
 Job: Make their carry's lane hard, then start the team's fights as Mars. Your timing is Blink Dagger around minute 15.
 If it goes wrong: Lane lost? Stop contesting Phantom Assassin. Farm the jungle and stay alive for the first fights.
@@ -49,8 +49,8 @@ If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay
 
 ### Pos 4 Lion
 Timings: rank
-Start: Tango, Blood Grenade, 2 Iron Branch, Magic Stick, Wind Lace, Sentry Ward
-Lane: Magic Wand 4
+Start: 2 Tango [Hard lane against Phantom Assassin and Lich: more sustain], Blood Grenade, 2 Iron Branch, Magic Stick, Wind Lace, Sentry Ward, Healing Salve [Hard lane against Phantom Assassin and Lich: more sustain]
+Lane: Magic Wand 4, Infused Raindrops 4 [Against Lich's magic burst]
 Core: Tranquil Boots 7, Blink Dagger 17/20, Glimmer Cape 26/27 [Against Shadow Fiend, Witch Doctor and Lich: don't skip it], Force Staff 28/31 [Against Phantom Assassin, Shadow Fiend and Axe: don't skip it], Aether Lens 29/35, Aghanim's Scepter 34/38
 Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Blink Dagger around minute 17.
 If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Juggernaut.
@@ -58,8 +58,8 @@ If it goes wrong: Phantom Assassin is farming free? Pressure that lane before 10
 
 ### Pos 5 Crystal Maiden
 Timings: rank
-Start: Tango, Blood Grenade, Magic Stick, Iron Branch, Enchanted Mango, Observer and Sentry Wards
-Lane: Magic Wand 5
+Start: 2 Tango [Hard lane against Axe and Witch Doctor: more sustain], Blood Grenade, Magic Stick, Iron Branch, Observer and Sentry Wards, Healing Salve [Hard lane against Axe and Witch Doctor: more sustain]
+Lane: Magic Wand 3 [Against Witch Doctor's spells: get it early]
 Core: Tranquil Boots 8, Blink Dagger 23/26, Glimmer Cape 24/31 [Against Shadow Fiend, Witch Doctor and Lich: don't skip it], Force Staff 25/31 [Against Phantom Assassin, Shadow Fiend and Axe: don't skip it], Black King Bar 35/42, Aghanim's Scepter 37/42
 Job: Keep your carry alive in lane and place vision; save your key spell for their dive. Your timing is Blink Dagger around minute 23.
 If it goes wrong: Lane lost? Let Juggernaut take every last hit. Pull the near camp and keep a ward on the rune.
@@ -98,14 +98,14 @@ If it goes wrong: No Manta Style by 19 min? Don't show on the map without it. Fa
 ### Pos 2 Storm Spirit
 Timings: all
 Start: Tango, 3 Iron Branch, Faerie Fire
-Lane: Magic Wand 4, Soul Ring 7
+Lane: Magic Wand 3 [Against Leshrac's spells: get it early], Soul Ring 7
 Core: Power Treads 9, Orchid Malevolence 20/24, Kaya and Sange 26/28, Black King Bar 29/32 [Against Leshrac, Underlord and Shadow Shaman: don't skip it], Parasma 35/39, Aghanim's Scepter 40/45
 Job: Win your lane, then use runes to help the side lanes. Your timing is Orchid Malevolence around minute 20.
 If it goes wrong: No Orchid Malevolence by 24 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Tidehunter
 Timings: rank
-Start: Tango, Gauntlets of Strength, 2 Iron Branch, Quelling Blade, Circlet, Magic Stick
+Start: 2 Tango [Hard lane against Lycan and Shadow Shaman: more sustain], 2 Iron Branch, Quelling Blade, Magic Stick, Healing Salve [Hard lane against Lycan and Shadow Shaman: more sustain]
 Lane: Bracer 2, Magic Wand 4, Soul Ring 6, Ring of Basilius 11
 Core: Phase Boots 9, Vladmir's Offering 13/15, Mage Slayer 15/16, Blink Dagger 19/25, Aghanim's Scepter 26/33, Shiva's Guard 34/37
 If needed: Black King Bar 32 [Against Leshrac, Underlord and Shadow Shaman]
@@ -115,7 +115,7 @@ If it goes wrong: No Blink Dagger by 25 min? Don't start fights without it. Stay
 
 ### Pos 4 Rubick
 Timings: rank
-Start: Tango, Blood Grenade, 2 Iron Branch, Magic Stick, Sentry Ward, Faerie Fire
+Start: 2 Tango [Hard lane against Lycan and Shadow Shaman: more sustain], Blood Grenade, 2 Iron Branch, Magic Stick, Sentry Ward, Healing Salve [Hard lane against Lycan and Shadow Shaman: more sustain]
 Lane: Magic Wand 5, Ring of Basilius 7, Urn of Shadows 8
 Core: Arcane Boots 11, Essence Distiller 14/15, Aether Lens 21/24, Blink Dagger 22/27, Glimmer Cape 24/26, Aghanim's Scepter 34/38
 Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Aether Lens around minute 21.
@@ -153,8 +153,8 @@ Lane Off lane: Magnus + Earthshaker vs Spectre + Disruptor, hard
 
 ### Pos 1 Faceless Void
 Timings: rank
-Start: Quelling Blade, Tango, 2 Iron Branch, Magic Stick, Circlet, Slippers of Agility
-Lane: Wraith Band 2, Magic Wand 3
+Start: Quelling Blade, 2 Tango [Hard lane against Bristleback and Nyx Assassin: more sustain], 2 Iron Branch, Magic Stick, Healing Salve [Hard lane against Bristleback and Nyx Assassin: more sustain]
+Lane: Wraith Band 2, Magic Wand 3, Infused Raindrops 4 [Against Nyx Assassin's magic burst]
 Core: Power Treads 8, Mask of Madness 14/15, Battle Fury 16/18, Mjollnir 24/25, Manta Style 26/27, Black King Bar 32/35 [Against Ember Spirit, Nyx Assassin and Disruptor: don't skip it]
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Battle Fury around minute 16. Set up Chronosphere into Sun Strike and Chaos Meteor with Invoker.
 If it goes wrong: Lane lost? Leave it at 5 to 6 min for the jungle and farm toward Battle Fury. Ask your supports to stack 2 camps.
@@ -170,7 +170,7 @@ If it goes wrong: No Meteor Hammer by 14 min? Stop rotating and farm mid and the
 
 ### Pos 3 Magnus
 Timings: all
-Start: Tango, 2 Iron Branch, Circlet, Quelling Blade, Gauntlets of Strength, Magic Stick
+Start: 2 Tango [Hard lane against Spectre and Disruptor: more sustain], 2 Iron Branch, Quelling Blade, Magic Stick, Healing Salve [Hard lane against Spectre and Disruptor: more sustain]
 Lane: Bracer 2, Magic Wand 4
 Core: Power Treads 9, Blink Dagger 13/16, Harpoon 25/26, Aghanim's Scepter 29/34, Black King Bar 31/39 [Against Ember Spirit, Nyx Assassin and Disruptor: don't skip it], Refresher Orb 43/47
 Job: Make their carry's lane hard, then start the team's fights as Magnus. Your timing is Blink Dagger around minute 13.
@@ -179,7 +179,7 @@ If it goes wrong: No Blink Dagger by 16 min? Don't start fights without it. Stay
 
 ### Pos 4 Earthshaker
 Timings: all
-Start: Tango, Blood Grenade, Boots of Speed, Sentry Ward, Iron Branch, Magic Stick
+Start: 2 Tango [Hard lane against Spectre and Disruptor: more sustain], Blood Grenade, Boots of Speed, Sentry Ward, Iron Branch, Magic Stick, Healing Salve [Hard lane against Spectre and Disruptor: more sustain]
 Lane: Magic Wand 6, Ring of Basilius 7
 Core: Arcane Boots 11, Blink Dagger 17/19, Aghanim's Shard 23/25, Eul's Scepter of Divinity 31/37, Yasha and Kaya 33/34, Refresher Orb 40/44
 Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Blink Dagger around minute 17.
@@ -188,8 +188,8 @@ If it goes wrong: Spectre is farming free? Pressure that lane before 10 min. Aft
 
 ### Pos 5 Oracle
 Timings: all
-Start: Tango, Magic Stick, Blood Grenade, Iron Branch, Sentry Ward, Faerie Fire
-Lane: Magic Wand 5, Ring of Basilius 6
+Start: 2 Tango [Hard lane against Bristleback and Nyx Assassin: more sustain], Magic Stick, Blood Grenade, Iron Branch, Sentry Ward, Healing Salve [Hard lane against Bristleback and Nyx Assassin: more sustain]
+Lane: Magic Wand 3 [Against Bristleback's spells: get it early], Infused Raindrops 4 [Against Nyx Assassin's magic burst], Ring of Basilius 6
 Core: Arcane Boots 11, Blink Dagger 24/31, Mekansm 25/29, Aether Lens 26/30, Glimmer Cape 27/30 [Against Ember Spirit, Bristleback and Nyx Assassin: don't skip it], Aghanim's Shard 32/34
 If needed: Ghost Scepter 18 [Against Spectre, Ember Spirit and Bristleback], Force Staff 28 [Against Spectre, Ember Spirit and Bristleback]
 Job: Keep your carry alive in lane and place vision; save your key spell for their dive. Your timing is Blink Dagger around minute 24.
@@ -227,7 +227,7 @@ If it goes wrong: No Radiance by 18 min? Don't show on the map without it. Farm 
 
 ### Pos 2 Sniper
 Timings: all
-Start: Tango, Slippers of Agility, Circlet, Iron Branch, Faerie Fire
+Start: 2 Tango [Hard lane against Pudge: more sustain], Slippers of Agility, Iron Branch, Healing Salve [Hard lane against Pudge: more sustain]
 Lane: Wraith Band 2, Magic Wand 4
 Core: Power Treads 8, Hurricane Pike 26/31, Specialist's Array 27/32, Mjollnir 28/33, Shadow Blade 29/33, Daedalus 36/41
 If needed: Black King Bar 32 [Against Drow Ranger, Pudge and Legion Commander]
@@ -281,7 +281,7 @@ Lane Off lane: Mars + Tusk vs Naga Siren + Treant Protector, hard
 
 ### Pos 1 Terrorblade
 Timings: all
-Start: 2 Iron Branch, Tango, Quelling Blade, Magic Stick, Faerie Fire, Circlet
+Start: 2 Iron Branch, 2 Tango [Hard lane against Primal Beast and Hoodwink: more sustain], Quelling Blade, Magic Stick, Healing Salve [Hard lane against Primal Beast and Hoodwink: more sustain]
 Lane: Magic Wand 3, Falcon Blade 7
 Core: Power Treads 7, Manta Style 19/20, Eye of Skadi 30/31, Hurricane Pike 32/41, Butterfly 33/41, Black King Bar 35/39 [Against Naga Siren, Pangolier and Primal Beast: don't skip it]
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Manta Style around minute 19.
@@ -298,7 +298,7 @@ If it goes wrong: No Desolator by 22 min? Stop rotating and farm mid and the nea
 
 ### Pos 3 Mars
 Timings: all
-Start: 2 Gauntlets of Strength, 2 Iron Branch, Tango, Quelling Blade, Circlet
+Start: Gauntlets of Strength, 2 Iron Branch, 2 Tango [Hard lane against Naga Siren and Treant Protector: more sustain], Quelling Blade, Healing Salve [Hard lane against Naga Siren and Treant Protector: more sustain]
 Lane: Bracer 2, Magic Wand 4, Soul Ring 5
 Core: Phase Boots 10, Blink Dagger 15/17, Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24, Black King Bar 29/31 [Against Naga Siren, Pangolier and Primal Beast: don't skip it]
 Job: Make their carry's lane hard, then start the team's fights as Mars. Your timing is Blink Dagger around minute 15.
@@ -307,7 +307,7 @@ If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay
 
 ### Pos 4 Tusk
 Timings: around
-Start: Tango, Blood Grenade, Iron Branch, Magic Stick, Sentry Ward
+Start: 2 Tango [Hard lane against Naga Siren and Treant Protector: more sustain], Blood Grenade, Iron Branch, Magic Stick, Sentry Ward, Healing Salve [Hard lane against Naga Siren and Treant Protector: more sustain]
 Core: Tranquil Boots 8, Blink Dagger 19, Eul's Scepter of Divinity 31, Black King Bar 32, Force Staff 33 [Against Naga Siren and Pangolier: don't skip it], Aghanim's Scepter 34
 Boots or: Arcane Boots 12
 Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Blink Dagger around minute 19.
@@ -316,7 +316,7 @@ If it goes wrong: Naga Siren is farming free? Pressure that lane before 10 min. 
 
 ### Pos 5 Disruptor
 Timings: all
-Start: Tango, Blood Grenade, Magic Stick, Iron Branch, Sentry Ward, Observer and Sentry Wards
+Start: 2 Tango [Hard lane against Primal Beast and Hoodwink: more sustain], Blood Grenade, Magic Stick, Iron Branch, Sentry Ward, Observer and Sentry Wards, Healing Salve [Hard lane against Primal Beast and Hoodwink: more sustain]
 Lane: Magic Wand 5, Ring of Basilius 6
 Core: Arcane Boots 11, Glimmer Cape 24/30 [Against Pangolier and Hoodwink], Aether Lens 25/28, Blink Dagger 26/28, Force Staff 27/31, Aghanim's Scepter 36/41
 Job: Keep your carry alive in lane and place vision; save your key spell for their dive. Your timing is Blink Dagger around minute 26.
@@ -356,7 +356,7 @@ If it goes wrong: No Battle Fury by 17 min? Don't show on the map without it. Fa
 ### Pos 2 Lina
 Timings: rank
 Start: Tango, 3 Iron Branch, Faerie Fire
-Lane: Null Talisman 3, Magic Wand 4
+Lane: Null Talisman 3, Magic Wand 3 [Against Huskar's spells: get it early]
 Core: Boots of Travel 15, Maelstrom 16/18, Yasha and Kaya 24/31, Aghanim's Scepter 25, Shadow Blade 26/29, Black King Bar 32/36 [Against Troll Warlord, Dark Seer and Snapfire: don't skip it]
 Job: Win your lane, then use runes to help the side lanes. Your timing is Boots of Travel around minute 15.
 
@@ -372,7 +372,7 @@ If it goes wrong: No Blink Dagger by 22 min? Don't start fights without it. Stay
 ### Pos 4 Mirana
 Timings: all
 Start: Tango, Blood Grenade, Iron Branch, Circlet, Magic Stick, Sentry Ward
-Lane: Magic Wand 5, Urn of Shadows 7, Ring of Basilius 8
+Lane: Magic Wand 3 [Against Jakiro's spells: get it early], Urn of Shadows 7, Ring of Basilius 8
 Core: Arcane Boots 12, Essence Distiller 14/17, Rod of Atos 20/21, Eul's Scepter of Divinity 24/28, Mekansm 28/34, Aghanim's Scepter 30/35
 If needed: Force Staff 28 [Against Troll Warlord and Huskar]
 Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Rod of Atos around minute 20.
