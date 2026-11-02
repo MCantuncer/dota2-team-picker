@@ -25,4 +25,7 @@ export const GOLDEN_DRAFTS: GoldenDraft[] = [
   { name: "Immortal illusion carries", ours: [109, 46, 129, 100, 87], theirs: [89, 120, 137, 123, 83], rankBracket: 8 },
   // Anti-Mage, Lina, Centaur Warrunner, Mirana, Warlock vs Troll Warlord, Huskar, Dark Seer, Snapfire, Jakiro.
   { name: "Archon farm carry against early fights", ours: [1, 25, 96, 9, 37], theirs: [95, 59, 55, 128, 64], rankBracket: 4 },
+  // Can's draft (2026-11-02), whose story was "so bad": an enemy lineup with no real carry.
+  // Ursa, Ember Spirit, Mars, Shadow Shaman, Silencer vs Vengeful Spirit, Witch Doctor, Tidehunter, Pudge, Storm Spirit.
+  { name: "Ancient against a lineup with no carry", ours: [70, 106, 129, 27, 75], theirs: [20, 30, 29, 14, 17], rankBracket: 6 },
 ];

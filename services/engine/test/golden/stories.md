@@ -323,7 +323,6 @@ Headline: Survive their early pushes: we are stronger after 25 minutes.
 - 30 min on: You are stronger now: take Roshan, then end with the Aegis.
 
 Danger heroes:
-- Pudge: Blink Dagger around 21 min. Don't focus them: kill their damage dealers first.
 - Drow Ranger: Manta Style at 24 min. Take fights and towers before then.
 
 If the game goes wrong:
@@ -616,3 +615,84 @@ Vs Snapfire (lane, guessed): Magic burst. buy Glimmer Cape.
 Vs Troll Warlord: Evasion: right clicks miss. buy Force Staff.
 Vs Huskar: Heals their team through fights. buy Force Staff.
 Vs Jakiro: Magic burst. buy Glimmer Cape.
+
+## Ancient against a lineup with no carry
+
+Headline: End early: take towers before their carries are ready.
+
+- 0 to 10 min: Every lane is even: the better last hits win.
+- 10 to 20 min: Ember Spirit: Spirit Vessel at 14, Mars: Blink Dagger at 15. Their Storm Spirit: Orchid Malevolence at 18. Group up and take towers before their carries are ready.
+- 20 to 30 min: Shadow Shaman: Blink Dagger at 20. Take Roshan and end with the Aegis before 30 minutes.
+
+Danger heroes:
+
+If the game goes wrong:
+- Behind at 20? Defend towers together and only fight with your key spells ready.
+- Ahead at 20? Take Roshan and push one lane together with the Aegis.
+
+Lane Safe lane: Ursa + Silencer vs Tidehunter + Pudge, even
+Lane Mid: Ember Spirit vs Storm Spirit, even
+Lane Off lane: Mars + Shadow Shaman vs Vengeful Spirit + Witch Doctor, even
+
+### Pos 1 Ursa
+Job: Farm and carry the late game; join fights once your items are in.
+Vs Tidehunter (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Pudge (lane, guessed): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Vengeful Spirit: Magic burst. Stay spread so one combo can't catch two.
+Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
+Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
+
+### Pos 2 Ember Spirit
+Timings: rank
+Start: Tango, 3 Iron Branch, Faerie Fire, Quelling Blade
+Lane: Magic Wand 3 [Against Storm Spirit's spells: get it early], Urn of Shadows 7
+Boots: Phase Boots 10
+First: Spirit Vessel 14/15
+Next: Mage Slayer 18/22
+Late: Black King Bar 30/34 [Against Vengeful Spirit, Witch Doctor and Tidehunter: don't skip it], Kaya and Sange 31/35, Aghanim's Scepter 32/35
+Job: Win your lane, then use runes to help the side lanes. Your timing is Spirit Vessel around minute 14.
+Vs Storm Spirit (lane): Magic burst. buy Magic Wand.
+Vs Vengeful Spirit: Magic burst. buy Black King Bar.
+Vs Witch Doctor: Heals their team through fights. buy Black King Bar.
+Vs Tidehunter: Starts fights and soaks your damage. buy Black King Bar.
+Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+If it goes wrong: No Spirit Vessel by 15 min? Stop rotating and farm mid and the near camps until it is done.
+
+### Pos 3 Mars
+Timings: all
+Start: 2 Gauntlets of Strength, 2 Iron Branch, Tango, Quelling Blade, Circlet
+Lane: Bracer 2, Magic Wand 3 [Against Witch Doctor's spells: get it early], Soul Ring 5
+Boots: Phase Boots 10
+First: Blink Dagger 15/17
+Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24, Black King Bar 29/31 [Against Vengeful Spirit, Witch Doctor and Tidehunter: don't skip it]
+Job: Make their carry's lane hard, then start the team's fights as Mars. Your timing is Blink Dagger around minute 15.
+Vs Vengeful Spirit (lane): Magic burst. buy Black King Bar.
+Vs Witch Doctor (lane): Heals their team through fights. buy Magic Wand, Black King Bar.
+Vs Tidehunter: Starts fights and soaks your damage. buy Black King Bar.
+Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
+If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay behind your cores and soak damage.
+
+### Pos 4 Shadow Shaman
+Timings: all
+Start: Tango, Blood Grenade, Magic Stick, Iron Branch, Sentry Ward, Observer and Sentry Wards
+Lane: Magic Wand 3 [Against Witch Doctor's spells: get it early], Ring of Basilius 6
+Boots: Arcane Boots 11
+First: Blink Dagger 20/22
+Next: Aether Lens 25/31, Glimmer Cape 28/35 [Against Vengeful Spirit, Witch Doctor and Tidehunter: don't skip it], Aghanim's Shard 29/36
+Late: Aghanim's Scepter 36/42
+If needed: Force Staff 31/34 [Against Tidehunter] instead of Aghanim's Shard
+Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Blink Dagger around minute 20.
+Vs Vengeful Spirit (lane): Magic burst. buy Glimmer Cape.
+Vs Witch Doctor (lane): Heals their team through fights. buy Magic Wand, Glimmer Cape.
+Vs Tidehunter: Starts fights and soaks your damage. buy Glimmer Cape, Force Staff.
+Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
+
+### Pos 5 Silencer
+Job: Keep your carry alive in lane and place vision; save your key spell for their dive.
+Vs Tidehunter (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Pudge (lane, guessed): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Vengeful Spirit: Magic burst. Stay spread so one combo can't catch two.
+Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
+Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.

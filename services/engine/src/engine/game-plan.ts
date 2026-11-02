@@ -31,6 +31,12 @@ const THREAT_EDGE = 1;
 const THREAT_TOTAL_EDGE = 2;
 /** Heroes in a style before a team counts as playing it. */
 const STYLE_MIN = 2;
+/**
+ * An enemy counts as a core (and, in the pos 1 slot, as their carry) only when players put the
+ * hero in pos 1 to 3 at least this often. The position guess always fills pos 1, so a lineup with
+ * no real carry would otherwise make a support like Vengeful Spirit "their carry".
+ */
+const CORE_SHARE = 0.5;
 
 export type LaneVerdict = "win" | "even" | "hard";
 
@@ -213,14 +219,19 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     }),
   ].filter((line, i, all) => all.indexOf(line) === i);
 
-  const isCore = (id: number) => [...theirByPos].some(([pos, h]) => h === id && pos <= 3);
+  const playsCore = (id: number) => {
+    const fit = engine.fit(id);
+    return fit[1] + fit[2] + fit[3] >= CORE_SHARE;
+  };
+  const isCore = (id: number) => playsCore(id) && [...theirByPos].some(([pos, h]) => h === id && pos <= 3);
   const threats = input.theirs
     .filter(isCore)
     .map((t) => ({ t, edge: ourIds.reduce((s, o) => s + engine.matchupEdge(t, o, bracket), 0) }))
     .filter((e) => e.edge >= THREAT_TOTAL_EDGE)
     .sort((a, b) => b.edge - a.edge)
     .map((e) => e.t);
-  const theirCarry = theirByPos.get(1);
+  const guessedCarry = theirByPos.get(1);
+  const theirCarry = guessedCarry !== undefined && playsCore(guessedCarry) ? guessedCarry : undefined;
   const danger = chooseDangerHeroes(threats, theirCarry).map(({ id, kind }) => {
     const i = input.theirs.indexOf(id);
     const position = [...theirByPos].find(([, h]) => h === id)?.[0] ?? 1;
@@ -269,6 +280,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   const carry = players.find((p) => p.position === 1);
   const carryItem = keyItem(engine, carry?.build ?? null, carry?.heroId, 1);
   const enemyAt = (p: Position) => (theirByPos.has(p) ? name(theirByPos.get(p)!) : undefined); // has() checked.
+  const enemyCarry = theirCarry !== undefined ? name(theirCarry) : undefined;
   const picked = pickFallbacks({
     players: players.map((p) => {
       const item = keyItem(engine, p.build, p.heroId, p.position);
@@ -283,7 +295,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     scaling: scaling(timing(ourStyle?.key), timing(theirStyle?.key)),
     ourCarry: carry && name(carry.heroId),
     ourKeyItem: carryItem?.name,
-    enemyCarry: enemyAt(1),
+    enemyCarry,
     enemyOfflaner: enemyAt(3),
   });
   players.forEach((p, i) => (p.fallbacks = picked.players[i]!)); // Same order as players.
@@ -342,7 +354,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       ...(hardLane?.theirs.length ? { hardLaneEnemies: hardLane.theirs.map(name) } : {}),
       ourMid: ourMid && name(ourMid.heroId),
       theirSpikes: [...theirByPos]
-        .filter(([pos]) => pos <= 3)
+        .filter(([pos, id]) => pos <= 3 && playsCore(id))
         .flatMap(([pos, id]) => {
           const item = keyItem(engine, itemBuild(engine.data, id, pos, [], bracket), id, pos);
           return item ? [{ hero: name(id), item: item.name, minute: item.minute }] : [];
@@ -353,7 +365,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       }),
       combo: firstCombo?.text,
       ourCarry: carry && name(carry.heroId),
-      enemyCarry: enemyAt(1),
+      enemyCarry,
     }),
   };
 }
