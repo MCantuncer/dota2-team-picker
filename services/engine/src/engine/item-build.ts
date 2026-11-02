@@ -210,6 +210,7 @@ export function itemBuild(
         .slice(0, CORE_ITEMS)
         .map(([id, b]) => toItem(id, b.minute))
         .sort((a, b) => a.minute - b.minute);
+  oneAfterAnother(core);
   const lane = candidates
     .filter(([id]) => !isBig(id))
     .slice(0, LANE_ITEMS)
@@ -228,15 +229,11 @@ export function itemBuild(
     if (answered.length < rule.minEnemies) continue;
     const reason = `Against ${listNames(answered.slice(0, REASON_NAMES).map((h) => h.name))}`;
     const inCore = core.findIndex((c) => c.itemId === Number(id));
-    if (inCore > 1) {
-      // Already in the build: buy it right after the first core item (usually boots).
-      const [item] = core.splice(inCore, 1) as [BuildItem]; // inCore is a valid index.
-      const early: BuildItem = { ...item, minute: core[1]?.minute ?? item.minute, reason: `${reason}: buy it early` };
-      // Its usual slower-than-most minute no longer fits an item bought this early.
-      delete early.lateMinute;
-      core.splice(1, 0, early);
-    } else if (inCore >= 0) {
-      core[inCore] = { ...core[inCore]!, reason }; // inCore is a valid index.
+    if (inCore >= 0) {
+      // Already in the build: it keeps the minute players really buy it at. Moving it earlier would
+      // promise a minute nobody reaches (Monkey King Bar at 14 on Juggernaut, when players buy it at 34).
+      const item = core[inCore]!; // inCore is a valid index.
+      core[inCore] = { ...item, reason: inCore > 1 ? `${reason}: don't skip it` : reason };
     } else if (situational.length < SITUATIONAL_ITEMS && !situational.some((s) => s.itemId === Number(id))) {
       const timing = timed.get(id);
       situational.push(
@@ -247,6 +244,22 @@ export function itemBuild(
     }
   }
   return { timings: chosen?.source ?? "around", start, lane, core, situational };
+}
+
+/**
+ * Items are bought one after another, so no two share a minute: a later item with the same rounded
+ * minute as the one before it moves one minute on. `core` is sorted by minute.
+ */
+function oneAfterAnother(core: BuildItem[]): void {
+  for (let i = 1; i < core.length; i++) {
+    const before = core[i - 1]!.minute; // i - 1 is a valid index.
+    const item = core[i]!; // i is a valid index.
+    if (item.minute > before) continue;
+    const moved: BuildItem = { ...item, minute: before + 1 };
+    // A slower-than-most minute the item no longer comes before means nothing.
+    if (moved.lateMinute !== undefined && moved.lateMinute <= moved.minute) delete moved.lateMinute;
+    core[i] = moved;
+  }
 }
 
 /** "A", "A and B", "A, B and C". */

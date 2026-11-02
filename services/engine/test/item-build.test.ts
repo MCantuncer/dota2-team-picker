@@ -59,10 +59,10 @@ describe("itemBuild", () => {
     expect(build.core.every((i) => i.reason === undefined)).toBe(true);
   });
 
-  it("moves BKB up against three stunners and names them", () => {
+  it("names the stunners BKB answers and keeps it where players buy it", () => {
     const build = itemBuild(data(), 1, 1, [2, 3, 6, 4, 5])!;
-    expect(build.core.map((i) => i.name)).toEqual(["Phase Boots", "Black King Bar", "Armlet of Mordiggian", "Radiance"]);
-    expect(build.core[1]!.reason).toBe("Against Lion, Primal Beast and Crystal Maiden: buy it early");
+    expect(build.core.map((i) => i.name)).toEqual(["Phase Boots", "Armlet of Mordiggian", "Radiance", "Black King Bar"]);
+    expect(build.core[3]!.reason).toBe("Against Lion, Primal Beast and Crystal Maiden: don't skip it");
   });
 
   it("never adds an item players do not buy on the hero", () => {
@@ -123,10 +123,20 @@ describe("itemBuild with STRATZ item timings", () => {
     expect(build.core.find((i) => i.name === "Black King Bar")?.minute).toBe(20);
   });
 
-  it("drops the usual late minute when a counter item moves up, since it no longer fits", () => {
+  it("keeps a counter item's real minutes instead of moving it earlier", () => {
     const build = itemBuild(timed(), 1, 1, [2, 3, 6, 4, 5])!;
-    expect(build.core[1]).toMatchObject({ name: "Black King Bar", minute: 12 });
-    expect(build.core[1]!.lateMinute).toBeUndefined();
+    expect(build.core[3]).toMatchObject({ name: "Black King Bar", minute: 22, lateMinute: 25 });
+    expect(build.core[3]!.reason).toContain("don't skip it");
+  });
+
+  it("buys items one after another, so two items never share a minute", () => {
+    const d = timed();
+    d.itemTimings![1]![1]!.all!.items[1] = [137, 12, 13];
+    const build = itemBuild(d, 1, 1, [4])!;
+    expect(build.core.slice(1, 3).map((i) => [i.name, i.minute, i.lateMinute])).toEqual([
+      ["Armlet of Mordiggian", 12, 14],
+      ["Radiance", 13, undefined],
+    ]);
   });
 
   it("falls back to rough minutes without timings for the position", () => {
