@@ -4,7 +4,6 @@ import { NEED_LABELS, traitsOf, unmetNeeds } from "./traits";
 import {
   phaseOf,
   POSITIONS,
-  RANK_GROUP_BRACKETS,
   rankGroup,
   type DraftInput,
   type HardCounterNote,
@@ -70,7 +69,13 @@ const RANK_NAMES = ["Herald", "Guardian", "Crusader", "Archon", "Legend", "Ancie
 export class Engine {
   readonly heroes: HeroInfo[];
   private fits = new Map<number, PositionFit>();
-  private overallWr = new Map<number, number>();
+  /**
+   * Each hero's record over its matchup row: all the public matches the matchup and synergy counts
+   * come from, all ranks (key 0) and per rank group. Matchups are judged against this win rate and
+   * not the heroStats one (a different, ranked-only and more recent sample), or a hero that wins
+   * more in one sample than the other would look like it counters every enemy.
+   */
+  private rowTotals = new Map<RankGroup | 0, Map<number, GamesWins>>();
   private pickRates = new Map<number, number>();
   private hardCounters: Map<number, HardCounter[]>;
   /** True when the snapshot's pick phase counts hold enough games to score with. */
@@ -85,7 +90,10 @@ export class Engine {
     this.heroes = Object.values(data.heroes).sort((a, b) => a.id - b.id);
     for (const h of this.heroes) {
       this.fits.set(h.id, positionFit(h, data.laneRoles[h.id], data.positions?.[h.id]));
-      this.overallWr.set(h.id, this.winRate(h.id));
+    }
+    for (const group of [0, 1, 2, 3, 4] as const) {
+      const rows = group ? data.rankMatchups?.[group] : data.matchups;
+      this.rowTotals.set(group, new Map(this.heroes.map((h) => [h.id, totalOf(rows?.[h.id])])));
     }
     const picks = (id: number) => (data.bracketStats[id]?.picks ?? []).reduce((n, x) => n + x, 0);
     const games = this.heroes.reduce((n, h) => n + picks(h.id), 0) / 10;
@@ -139,7 +147,7 @@ export class Engine {
   }
 
   /**
-   * Shrinks the all-ranks record toward what the heroes' win rates predict.
+   * Shrinks the all-ranks record toward what the heroes' win rates in the same matches predict.
    * With a rank group, that group's record is then shrunk toward the
    * all-ranks edge, so a group with few games falls back to the all-ranks
    * number instead of to zero.
@@ -152,12 +160,30 @@ export class Engine {
     inGroup: GamesWins | undefined,
     group: RankGroup | undefined,
   ): number {
-    const expected = 0.5 + (this.overallWr.get(a)! - 0.5) + sign * (this.overallWr.get(b)! - 0.5);
+    // Against each other, each hero's win rate leaves out the games between them, so the matchup
+    // itself does not move the number it is compared with.
+    const other = (id: number) => (sign === -1 ? (id === a ? b : a) : undefined);
+    const wr = (id: number) => this.sampleWinRate(id, other(id), 0, 0.5);
+    const expected = 0.5 + (wr(a) - 0.5) + sign * (wr(b) - 0.5);
     const edge = shrink(all, expected, PRIOR_GAMES.matchup) - expected;
     if (!group) return edge * 100;
-    const idx = RANK_GROUP_BRACKETS[group].map((r) => r - 1);
-    const groupExpected = 0.5 + (this.winRateIn(a, idx) - 0.5) + sign * (this.winRateIn(b, idx) - 0.5);
+    const gwr = (id: number) => this.sampleWinRate(id, other(id), group, wr(id));
+    const groupExpected = 0.5 + (gwr(a) - 0.5) + sign * (gwr(b) - 0.5);
     return (shrink(inGroup, groupExpected + edge, PRIOR_GAMES.rankMatchup) - groupExpected) * 100;
+  }
+
+  /**
+   * A hero's win rate over its matchup row (all ranks, or one rank group), leaving out the games
+   * against `without`, shrunk toward `prior`. Every game is in the row once per enemy, so the
+   * games are divided by 5 to weigh the record by real games.
+   */
+  private sampleWinRate(id: number, without: number | undefined, group: RankGroup | 0, prior: number): number {
+    const total = this.rowTotals.get(group)?.get(id) ?? { games: 0, wins: 0 };
+    const rows = group ? this.data.rankMatchups?.[group] : this.data.matchups;
+    const left = without === undefined ? undefined : rows?.[id]?.[without];
+    const games = (total.games - (left?.games ?? 0)) / 5;
+    const wins = (total.wins - (left?.wins ?? 0)) / 5;
+    return shrink(games > 0 ? { games, wins } : undefined, prior, PRIOR_GAMES.heroWinRate);
   }
 
   /**
@@ -384,6 +410,17 @@ export class Engine {
 
 /** Points for the user's own record on a hero, after shrinking small samples. */
 export const personalScore = (mine: GamesWins) => (shrink(mine, 0.5, PRIOR_GAMES.personal) - 0.5) * 100 * WEIGHTS.personal;
+
+/** Games and wins summed over a matchup row. */
+function totalOf(row: Record<string, GamesWins> | undefined): GamesWins {
+  let games = 0;
+  let wins = 0;
+  for (const r of Object.values(row ?? {})) {
+    games += r.games;
+    wins += r.wins;
+  }
+  return { games, wins };
+}
 
 const sum = (xs: number[]) => xs.reduce((s, x) => s + x, 0);
 const mean = (xs: number[]) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0);
