@@ -17,6 +17,17 @@ describe("chooseDangerHeroes", () => {
     ]);
   });
 
+  it("fills up with the cores who start their fights, after threats and carry", () => {
+    expect(chooseDangerHeroes([], undefined, [29, 2])).toEqual([
+      { id: 29, kind: "initiator" },
+      { id: 2, kind: "initiator" },
+    ]);
+    expect(chooseDangerHeroes([67], 1, [29])).toEqual([
+      { id: 67, kind: "threat" },
+      { id: 1, kind: "carry" },
+    ]);
+  });
+
   it("warns about their carry alone when nobody beats our team", () => {
     expect(chooseDangerHeroes([], 1)).toEqual([{ id: 1, kind: "carry" }]);
     expect(chooseDangerHeroes([], undefined)).toEqual([]);
@@ -33,6 +44,12 @@ describe("dangerLine", () => {
   it("says around when the enemy's position is a close guess", () => {
     expect(dangerLine({ hero: "Lion", kind: "threat", item: { name: "Blink Dagger", minute: 14 }, isSure: false })).toBe(
       "Lion: Blink Dagger around 14 min. Lock them down first in every fight.",
+    );
+  });
+
+  it("tells the team to spread out once an initiator has their item", () => {
+    expect(dangerLine({ hero: "Tidehunter", kind: "initiator", item: { name: "Blink Dagger", minute: 19 }, isSure: true })).toBe(
+      "Tidehunter: Blink Dagger at 19 min. From then, spread out and watch the fog.",
     );
   });
 
