@@ -29,6 +29,7 @@ function fakes(over: Partial<JobDeps> = {}) {
       seen.saved.push(id);
       return Promise.resolve();
     },
+    cleanFiles: () => Promise.resolve(0),
     log: (message) => seen.logged.push(message),
     ...over,
   };
@@ -37,7 +38,7 @@ function fakes(over: Partial<JobDeps> = {}) {
 
 Deno.test("a run finds matches, then builds and saves the due reports", async () => {
   const { deps, seen } = fakes();
-  assertEquals(await runJob(deps), { attached: 1, built: 2, calls: 10, stopped: null });
+  assertEquals(await runJob(deps), { attached: 1, built: 2, removedFiles: 0, calls: 10, stopped: null });
   assertEquals(seen.taken, [3, 3, 2, 2], "each search takes one call per player plus the match");
   assertEquals(seen.saved, ["r1", "r2"]);
 });
@@ -49,13 +50,13 @@ Deno.test("a match someone else attached first is not counted", async () => {
 
 Deno.test("the run stops at its own call cap", async () => {
   const { deps, seen } = fakes();
-  assertEquals(await runJob(deps, 7), { attached: 1, built: 0, calls: 6, stopped: "run cap" });
+  assertEquals(await runJob(deps, 7), { attached: 1, built: 0, removedFiles: 0, calls: 6, stopped: "run cap" });
   assertEquals(seen.saved, []);
 });
 
 Deno.test("the run stops when the daily budget refuses", async () => {
   const { deps, seen } = fakes({ takeCalls: (n) => Promise.resolve(n === 3) });
-  assertEquals(await runJob(deps), { attached: 1, built: 0, calls: 6, stopped: "daily budget" });
+  assertEquals(await runJob(deps), { attached: 1, built: 0, removedFiles: 0, calls: 6, stopped: "daily budget" });
   assertEquals(seen.saved, []);
 });
 
@@ -63,7 +64,13 @@ Deno.test("OpenDota rate limiting stops the run at once", async () => {
   const { deps } = fakes({ findMatch: () => Promise.reject(new OpenDotaBusy()) });
   assertEquals((await runJob(deps)).stopped, "rate limit");
   const building = fakes({ build: () => Promise.reject(new OpenDotaBusy()) });
-  assertEquals(await runJob(building.deps), { attached: 1, built: 0, calls: 8, stopped: "rate limit" });
+  assertEquals(await runJob(building.deps), {
+    attached: 1,
+    built: 0,
+    removedFiles: 0,
+    calls: 8,
+    stopped: "rate limit",
+  });
 });
 
 Deno.test("one draft's or report's error is logged and the run goes on", async () => {
@@ -71,6 +78,14 @@ Deno.test("one draft's or report's error is logged and the run goes on", async (
     attach: () => Promise.reject(new Error("db down")),
     save: (id) => (id === "r1" ? Promise.reject(new Error("db down")) : Promise.resolve()),
   });
-  assertEquals(await runJob(deps), { attached: 0, built: 1, calls: 10, stopped: null });
+  assertEquals(await runJob(deps), { attached: 0, built: 1, removedFiles: 0, calls: 10, stopped: null });
   assertEquals(seen.logged, ["Finding the match of draft a failed", "Saving the report of draft r1 failed"]);
+});
+
+Deno.test("old saved matches are deleted every run, even one stopped early", async () => {
+  const { deps } = fakes({ cleanFiles: () => Promise.resolve(3), findMatch: () => Promise.reject(new OpenDotaBusy()) });
+  assertEquals(await runJob(deps), { attached: 0, built: 0, removedFiles: 3, calls: 3, stopped: "rate limit" });
+  const failing = fakes({ cleanFiles: () => Promise.reject(new Error("storage down")) });
+  assertEquals((await runJob(failing.deps)).built, 2);
+  assertEquals(failing.seen.logged, ["Deleting old saved matches failed"]);
 });

@@ -1,6 +1,7 @@
 /**
  * One run of the build-reports job: first look for the matches of drafts nobody looked up,
- * then build the reports that are due. Every OpenDota call is taken from the daily budget
+ * then build the reports that are due, then delete saved matches older than 90 days or
+ * without a report. Every OpenDota call is taken from the daily budget
  * first, and a run makes at most MAX_RUN_CALLS of them. The run stops when the budget is
  * used up or OpenDota rate limits; what was left is picked up next run.
  */
@@ -29,19 +30,33 @@ export interface JobDeps {
   claimReports: () => Promise<ClaimedReport[]>;
   build: (report: ClaimedReport) => Promise<ReportUpdate>;
   save: (draftId: string, update: ReportUpdate) => Promise<void>;
+  /** Deletes stale saved matches; returns how many. */
+  cleanFiles: () => Promise<number>;
   log: (message: string, err?: unknown) => void;
 }
 
 export interface RunResult {
   attached: number;
   built: number;
+  removedFiles: number;
   calls: number;
   /** Why the run ended early, if it did. */
   stopped: "run cap" | "daily budget" | "rate limit" | null;
 }
 
 export async function runJob(deps: JobDeps, maxCalls = MAX_RUN_CALLS): Promise<RunResult> {
-  const result: RunResult = { attached: 0, built: 0, calls: 0, stopped: null };
+  const result = await findAndBuild(deps, maxCalls);
+  // No OpenDota calls, so this runs even when the budget or a rate limit stopped the rest.
+  try {
+    result.removedFiles = await deps.cleanFiles();
+  } catch (err) {
+    deps.log("Deleting old saved matches failed", err);
+  }
+  return result;
+}
+
+async function findAndBuild(deps: JobDeps, maxCalls: number): Promise<RunResult> {
+  const result: RunResult = { attached: 0, built: 0, removedFiles: 0, calls: 0, stopped: null };
   const take = async (n: number) => {
     if (result.calls + n > maxCalls) {
       result.stopped = "run cap";
