@@ -29,8 +29,9 @@ const THREAT_HEROES: Record<Exclude<Threat, "disable" | "magicBurst" | "physical
   ],
   evasion: ["Phantom Assassin", "Troll Warlord", "Windranger", "Brewmaster", "Arc Warden"],
   illusions: [
-    "Phantom Lancer", "Naga Siren", "Terrorblade", "Chaos Knight", "Spectre", "Monkey King",
-    "Shadow Demon", "Meepo", "Arc Warden",
+    // Heroes who fight with illusions all game. Spectre's Haunt and Monkey King's ult are short
+    // bursts that Battle Fury or Mjollnir do not answer.
+    "Phantom Lancer", "Naga Siren", "Terrorblade", "Chaos Knight", "Meepo", "Arc Warden",
   ],
   invisible: [
     "Riki", "Clinkz", "Bounty Hunter", "Nyx Assassin", "Weaver", "Mirana", "Invoker", "Templar Assassin",
@@ -124,8 +125,10 @@ export interface BuildItem {
   minute: number;
   /** After this minute a player is slower than most with this item. Not known yet for every item. */
   lateMinute?: number;
-  /** Why it is in the build or moved up, naming the enemy heroes it answers. Empty for the usual build. */
+  /** Why it is in the build, naming the enemy heroes it answers. Empty for the usual build. */
   reason?: string;
+  /** The enemy hero ids the item answers, most matching threats first. Set with `reason`. */
+  against?: number[];
 }
 
 export interface ItemBuild {
@@ -227,20 +230,23 @@ export function itemBuild(
     const matches = (h: HeroInfo) => rule.answers.filter((t) => threatsOf(h).has(t)).length;
     const answered = enemyHeroes.filter((h) => matches(h) > 0).sort((a, b) => matches(b) - matches(a));
     if (answered.length < rule.minEnemies) continue;
-    const reason = `Against ${listNames(answered.slice(0, REASON_NAMES).map((h) => h.name))}`;
+    const named = answered.slice(0, REASON_NAMES);
+    const reason = `Against ${listNames(named.map((h) => h.name))}`;
+    const against = named.map((h) => h.id);
     const inCore = core.findIndex((c) => c.itemId === Number(id));
     if (inCore >= 0) {
       // Already in the build: it keeps the minute players really buy it at. Moving it earlier would
       // promise a minute nobody reaches (Monkey King Bar at 14 on Juggernaut, when players buy it at 34).
       const item = core[inCore]!; // inCore is a valid index.
-      core[inCore] = { ...item, reason: inCore > 1 ? `${reason}: don't skip it` : reason };
+      core[inCore] = { ...item, reason: inCore > 1 ? `${reason}: don't skip it` : reason, against };
     } else if (situational.length < SITUATIONAL_ITEMS && !situational.some((s) => s.itemId === Number(id))) {
       const timing = timed.get(id);
-      situational.push(
-        timing
+      situational.push({
+        ...(timing
           ? { ...toItem(id, timing.minute, reason), lateMinute: timing.lateMinute }
-          : toItem(id, bought.get(id)?.minute ?? PHASE_MINUTE.mid, reason),
-      );
+          : toItem(id, bought.get(id)?.minute ?? PHASE_MINUTE.mid, reason)),
+        against,
+      });
     }
   }
   return { timings: chosen?.source ?? "around", start, lane, core, situational };

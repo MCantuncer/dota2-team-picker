@@ -60,7 +60,7 @@ If it goes wrong: Phantom Assassin is farming free? Ward their jungle so your co
 Headline: Survive their early pushes: we are stronger after 25 minutes.
 
 - 0 to 10 min: Farm and trade evenly. Rotate to help the off lane.
-- 10 to 20 min: Tidehunter has Vladmir's Offering, Medusa has Manta Style. Their strongest time: defend towers together.
+- 10 to 20 min: Medusa has Manta Style, Tidehunter has Blink Dagger. Their strongest time: defend towers together.
 - 20 to 30 min: Storm Spirit has Orchid Malevolence, Dazzle has Holy Locket. Your items are in: take back the map with smoke ganks.
 - 30 min on: You are stronger now: take Roshan, then end with the Aegis.
 
@@ -93,9 +93,9 @@ If it goes wrong: No Orchid Malevolence by 24 min? Stop rotating and farm mid an
 Timings: rank
 Core: Phase Boots 9, Vladmir's Offering 13/15, Mage Slayer 15/17, Blink Dagger 19/25, Aghanim's Scepter 26/33, Shiva's Guard 34/37
 If needed: Black King Bar 32 [Against Leshrac, Underlord and Shadow Shaman]
-Job: Make their carry's lane hard, then start the team's fights as Tidehunter. Your timing is Vladmir's Offering around minute 13.
+Job: Make their carry's lane hard, then start the team's fights as Tidehunter. Your timing is Blink Dagger around minute 19.
 If it goes wrong: Lane lost? Stop contesting Lycan. Farm the jungle and stay alive for the first fights.
-If it goes wrong: No Vladmir's Offering by 15 min? Don't start fights without it. Stay behind your cores and soak damage.
+If it goes wrong: No Blink Dagger by 25 min? Don't start fights without it. Stay behind your cores and soak damage.
 
 ### Pos 4 Rubick
 Timings: rank
@@ -133,7 +133,7 @@ Lane Off lane: Magnus + Earthshaker vs Spectre + Disruptor, hard
 
 ### Pos 1 Faceless Void
 Timings: rank
-Core: Power Treads 8, Mask of Madness 14/15, Battle Fury 16/18 [Against Spectre: don't skip it], Mjollnir 24/25, Manta Style 26/27, Black King Bar 32/35 [Against Ember Spirit, Nyx Assassin and Disruptor: don't skip it]
+Core: Power Treads 8, Mask of Madness 14/15, Battle Fury 16/18, Mjollnir 24/25, Manta Style 26/27, Black King Bar 32/35 [Against Ember Spirit, Nyx Assassin and Disruptor: don't skip it]
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Battle Fury around minute 16. Set up Chronosphere into Sun Strike and Chaos Meteor with Invoker.
 If it goes wrong: Lane lost? Leave it at 5 to 6 min for the jungle and farm toward Battle Fury. Ask your supports to stack 2 camps.
 If it goes wrong: No Battle Fury by 18 min? Don't show on the map without it. Farm the side Bristleback is not on.
@@ -172,7 +172,7 @@ Headline: Survive their early pushes: we are stronger after 25 minutes.
 
 - 0 to 10 min: Farm and trade evenly. Rotate to help the mid.
 - 10 to 20 min: Axe has Blink Dagger, Wraith King has Radiance. Their strongest time: defend towers together.
-- 20 to 30 min: Sniper has Hurricane Pike. Your items are in: take back the map with smoke ganks.
+- 20 to 30 min: Ogre Magi has Blink Dagger, Sniper has Hurricane Pike. Your items are in: take back the map with smoke ganks.
 - 30 min on: You are stronger now: take Roshan, then end with the Aegis.
 
 Danger heroes:
@@ -212,7 +212,7 @@ If it goes wrong: No Blink Dagger by 18 min? Don't start fights without it. Stay
 Timings: all
 Core: Arcane Boots 16, Hand of Midas 18/21, Blink Dagger 25/31, Aether Lens 26/29, Aghanim's Scepter 31/34, Scythe of Vyse 38/43
 If needed: Glimmer Cape 25/26 [Against Pudge, Legion Commander and Shadow Shaman], Force Staff 32 [Against Drow Ranger and Legion Commander]
-Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Hand of Midas around minute 18.
+Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Blink Dagger around minute 25.
 
 ### Pos 5 Lion
 Timings: all
@@ -278,7 +278,7 @@ If it goes wrong: Naga Siren is farming free? Ward their jungle so your cores ca
 Headline: Win the fights around your item timings.
 
 - 0 to 10 min: Press the safe lane.
-- 10 to 20 min: Centaur Warrunner has Helm of the Dominator, Anti-Mage has Battle Fury. Fight around these items.
+- 10 to 20 min: Anti-Mage has Battle Fury, Lina has Maelstrom. Fight around these items.
 - 20 to 30 min: Take Roshan when their carry is dead or far away.
 - 30 min on: Catch one hero before each objective.
 
@@ -311,7 +311,8 @@ If it goes wrong: No Maelstrom by 18 min? Stop rotating and farm mid and the nea
 Timings: rank
 Core: Vanguard 9/11, Helm of the Dominator 10, Blink Dagger 18/26, Blade Mail 19/24, Heart of Tarrasque 27/32, Pipe of Insight 28/32
 If needed: Black King Bar 31 [Against Troll Warlord, Dark Seer and Snapfire], Lotus Orb 23 [Against Troll Warlord, Dark Seer and Snapfire]
-Job: Make their carry's lane hard, then start the team's fights as Centaur Warrunner. Your timing is Helm of the Dominator around minute 10.
+Job: Make their carry's lane hard, then start the team's fights as Centaur Warrunner. Your timing is Blink Dagger around minute 18.
+If it goes wrong: No Blink Dagger by 26 min? Don't start fights without it. Stay behind your cores and soak damage.
 
 ### Pos 4 Mirana
 Timings: all

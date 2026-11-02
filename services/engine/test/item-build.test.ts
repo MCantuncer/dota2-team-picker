@@ -63,6 +63,7 @@ describe("itemBuild", () => {
     const build = itemBuild(data(), 1, 1, [2, 3, 6, 4, 5])!;
     expect(build.core.map((i) => i.name)).toEqual(["Phase Boots", "Armlet of Mordiggian", "Radiance", "Black King Bar"]);
     expect(build.core[3]!.reason).toBe("Against Lion, Primal Beast and Crystal Maiden: don't skip it");
+    expect(build.core[3]!.against?.map((id) => data().heroes[id]?.name)).toEqual(["Lion", "Primal Beast", "Crystal Maiden"]);
   });
 
   it("never adds an item players do not buy on the hero", () => {
@@ -80,7 +81,7 @@ describe("itemBuild", () => {
     d.heroes[7] = hero(7, "Phantom Assassin", ["Carry", "Escape"]);
     const build = itemBuild(d, 1, 1, [7])!;
     expect(build.core).toHaveLength(6);
-    expect(build.situational.map((i) => [i.name, i.reason])).toEqual([["Monkey King Bar", "Against Phantom Assassin"]]);
+    expect(build.situational.map((i) => [i.name, i.reason, i.against])).toEqual([["Monkey King Bar", "Against Phantom Assassin", [7]]]);
     expect(itemBuild(d, 1, 5, [7])!.situational).toEqual([]);
   });
 });
