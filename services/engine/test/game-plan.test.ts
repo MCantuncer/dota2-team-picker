@@ -139,7 +139,7 @@ describe("gamePlan", () => {
     expect(lines(2)).toEqual([]);
     // The story says when to fight: before their late-game carries are ready.
     expect(plan.story.headline).toBe("Win before 30 minutes: their Anti-Mage outscales us.");
-    expect(plan.story.chapters[0]!.text).toBe("Press the safe lane. The off lane is hard against Anti-Mage and Lich: Magnus brings the 6 min rune there.");
+    expect(plan.story.chapters[0]!.text).toBe("Medusa and Crystal Maiden win the safe lane against Terrorblade and Witch Doctor: take their tower. Survive the off lane against Anti-Mage and Lich: just get levels.");
     // Their late-game style means they scale better.
     expect(plan.teamFallbacks).toEqual([
       "Behind at 20? Don't wait for the late game. Smoke together and catch one hero before each objective.",

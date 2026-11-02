@@ -6,6 +6,8 @@
  * about a minute to read it (see STORY_WORDS).
  */
 
+import { listNames } from "./item-build";
+
 /** When a team is strongest, from its style (see game-plan.ts). */
 export type Timing = "early" | "late" | null;
 
@@ -19,13 +21,9 @@ export interface Spike {
 export interface StoryFacts {
   ourTiming: Timing;
   theirTiming: Timing;
-  /** Lowercase lane names, like "safe lane" or "mid". */
-  wonLane?: string;
-  hardLane?: string;
-  /** The enemy heroes in the hard lane, by name. */
-  hardLaneEnemies?: string[];
-  /** Our mid, who brings a power rune to the hard lane. */
-  ourMid?: string;
+  /** The lane we win and the one that is hard, if any. */
+  wonLane?: LaneFact;
+  hardLane?: LaneFact;
   /** Our cores' key items (see game-plan.ts keyItem): the team is ready once two are in. */
   spikes: Spike[];
   /** The enemy cores' key items, from their usual builds. */
@@ -34,6 +32,13 @@ export interface StoryFacts {
   combo?: string;
   ourCarry?: string;
   enemyCarry?: string;
+}
+
+/** A lane by its lowercase name ("safe lane", "mid") and its heroes on each side, by name. */
+export interface LaneFact {
+  name: string;
+  ours: string[];
+  theirs: string[];
 }
 
 export interface Story {
@@ -115,13 +120,24 @@ function theirSpikeText(spikes: Spike[], from: number, to: number): string {
   return first ? `Their ${first.hero} has ${first.item} at ${first.minute}.` : "";
 }
 
+/** "Juggernaut and Crystal Maiden" or "the safe lane". */
+const who = (lane: LaneFact) => (lane.ours.length ? listNames(lane.ours) : `the ${lane.name}`);
+const against = (lane: LaneFact) => (lane.theirs.length ? ` against ${listNames(lane.theirs)}` : "");
+
+/**
+ * What each lane does, from the lane verdicts: the won lane takes the tower, a hard off lane plays
+ * for experience and a hard core lane for safe farm. A rotation plan would need to know where their supports go, which a draft can't.
+ */
 function laneText(f: StoryFacts): string {
+  const verb = (lane: LaneFact, one: string, many: string) => (lane.ours.length === 1 ? one : many);
+  const won = f.wonLane && `${who(f.wonLane)} ${verb(f.wonLane, "wins", "win")} the ${f.wonLane.name}${against(f.wonLane)}: take their tower.`;
+  // An offlaner needs levels; a carry or mid in a hard lane still needs farm.
   const hard =
     f.hardLane &&
-    `The ${f.hardLane} is hard${f.hardLaneEnemies?.length ? ` against ${f.hardLaneEnemies.join(" and ")}` : ""}${
-      f.ourMid && f.hardLane !== "mid" ? `: ${f.ourMid} brings the 6 min rune there.` : "."
-    }`;
-  return [f.wonLane ? `Press the ${f.wonLane}.` : "", hard ?? ""].filter(Boolean).join(" ") || "Every lane is even: the better last hits win.";
+    (f.hardLane.name === "off lane"
+      ? `Survive the off lane${against(f.hardLane)}: just get levels.`
+      : `${f.hardLane.ours[0] ?? "Our core"} farms safely in the ${f.hardLane.name}${against(f.hardLane)}: skip trades.`);
+  return [won, hard].filter(Boolean).join(" ") || "Every lane is even: the better last hits win.";
 }
 
 /**
