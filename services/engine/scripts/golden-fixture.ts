@@ -4,7 +4,7 @@
  *
  *   npx tsx scripts/golden-fixture.ts <path to a full snapshot.json with item timings>
  *
- * Rerun it when the golden drafts change, then review the new test/golden/stories.md.
+ * Rerun it when the golden drafts change, then review the changed files in test/golden/stories/.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import type { Snapshot } from "../src/engine/types";
