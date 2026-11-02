@@ -232,18 +232,24 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     .map((e) => e.t);
   const guessedCarry = theirByPos.get(1);
   const theirCarry = guessedCarry !== undefined && playsCore(guessedCarry) ? guessedCarry : undefined;
-  const danger = chooseDangerHeroes(threats, theirCarry).map(({ id, kind }) => {
-    const i = input.theirs.indexOf(id);
-    const position = [...theirByPos].find(([, h]) => h === id)?.[0] ?? 1;
-    // Their usual build, with the item their power comes from.
+  /**
+   * An enemy's key item, the one their power comes from, only when its minute can be trusted: the
+   * hero's position is a sure guess, and the build is for that position. STRATZ timings are; a rough
+   * OpenDota build ("around") mixes every position, so it only counts for a hero who mostly plays
+   * this one. A support's Manta Style "around 28" from carry games is worse than no minute.
+   */
+  const sureKeyItem = (id: number, position: Position) => {
+    if ((theirOdds[input.theirs.indexOf(id)]?.[position] ?? 0) < SURE_POSITION_ODDS) return undefined;
     const build = itemBuild(engine.data, id, position, [], bracket);
+    const exact = build?.timings !== "around";
+    if (!exact && engine.fit(id)[position] < SURE_POSITION_ODDS) return undefined;
     const item = keyItem(engine, build, id, position);
-    return dangerLine({
-      hero: name(id),
-      kind,
-      ...(item ? { item: { name: item.name, minute: item.minute } } : {}),
-      isSure: (theirOdds[i]?.[position] ?? 0) >= SURE_POSITION_ODDS && build?.timings !== "around",
-    });
+    return item && { name: item.name, minute: item.minute, exact };
+  };
+  const danger = chooseDangerHeroes(threats, theirCarry).map(({ id, kind }) => {
+    const position = [...theirByPos].find(([, h]) => h === id)?.[0] ?? 1;
+    const item = sureKeyItem(id, position);
+    return dangerLine({ hero: name(id), kind, ...(item ? { item: { name: item.name, minute: item.minute } } : {}), isSure: item?.exact ?? false });
   });
 
   const players = input.ours.map((p): PlayerPlan => {
@@ -356,7 +362,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       theirSpikes: [...theirByPos]
         .filter(([pos, id]) => pos <= 3 && playsCore(id))
         .flatMap(([pos, id]) => {
-          const item = keyItem(engine, itemBuild(engine.data, id, pos, [], bracket), id, pos);
+          const item = sureKeyItem(id, pos);
           return item ? [{ hero: name(id), item: item.name, minute: item.minute }] : [];
         }),
       spikes: players.flatMap((p) => {

@@ -25,7 +25,7 @@ export interface DangerFacts {
   /** "threat" beats several of our heroes; "carry" is their likely pos 1 who outscales over time. */
   kind: "threat" | "carry";
   item?: { name: string; minute: number };
-  /** False when the enemy's position is a close guess, so its minute is only "around". */
+  /** False when the minute comes from a build mixed over the hero's positions, so it is only "around". */
   isSure: boolean;
 }
 
