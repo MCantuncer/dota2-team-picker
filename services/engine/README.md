@@ -92,6 +92,21 @@ an "Engine with pick phase" row to compare. CI runs it too.
 On every pull request, CI scores the PR's engine and main's on the same saved games and puts both
 tables in the "Engine backtest" job summary, so an engine change shows its effect before it merges.
 
+## Fixed drafts
+
+`npm run compare-drafts` prints the top 8 suggestions, with their reasons, for a fixed set of drafts
+(an empty board, bans only, then 1 v 1 up to 4 v 4 across positions; listed in
+[`src/backtest/compare-drafts.ts`](src/backtest/compare-drafts.ts)). To see how a change moves them,
+save the old engine's run and pass it to the new one:
+
+```sh
+npm run compare-drafts -w services/engine -- --json before.json   # on main
+npm run compare-drafts -w services/engine -- --before before.json # on your branch
+```
+
+On every pull request, CI runs both on the live hero data and puts main's list beside the PR's in
+the "Engine backtest" job summary, with how many heroes changed in each draft.
+
 ## Win chance
 
 `draftEdge` (in `src/engine/win-chance.ts`) adds up how much better one side's draft is, in win-rate

@@ -22,31 +22,47 @@ export const SURE_POSITION_ODDS = 0.6;
 
 export interface DangerFacts {
   hero: string;
-  /** "threat" beats several of our heroes; "carry" is their likely pos 1 who outscales over time. */
-  kind: "threat" | "carry";
+  /**
+   * "threat" beats several of our heroes; "carry" is their likely pos 1 who outscales over time;
+   * "initiator" is a core who starts their fights from a sure item minute (Tidehunter's Blink Dagger).
+   */
+  kind: "threat" | "carry" | "initiator";
   item?: { name: string; minute: number };
+  /** When the game is ours to win (see story.ts ourWindow): a late window means we don't race their carry. */
+  window?: "early" | "late" | null;
   /** False when the minute comes from a build mixed over the hero's positions, so it is only "around". */
   isSure: boolean;
 }
 
 /**
- * Which enemies to warn about: the biggest threat, then their carry, then the next threat.
- * `threats` are enemy hero ids that beat our team, biggest first; `carry` is their likely pos 1.
+ * Which enemies to warn about: the biggest threat, then their carry, then the next threat, then
+ * the cores who start their fights. `threats` are enemy hero ids that beat our team, biggest first;
+ * `carry` is their sure pos 1; `initiators` start fights from a sure item minute, earliest first.
  */
-export function chooseDangerHeroes(threats: number[], carry: number | undefined): { id: number; kind: DangerFacts["kind"] }[] {
-  const ids = [...threats.slice(0, 1), ...(carry !== undefined ? [carry] : []), ...threats];
+export function chooseDangerHeroes(
+  threats: number[],
+  carry: number | undefined,
+  initiators: number[] = [],
+): { id: number; kind: DangerFacts["kind"] }[] {
+  const ids = [...threats.slice(0, 1), ...(carry !== undefined ? [carry] : []), ...threats, ...initiators];
+  const kind = (id: number): DangerFacts["kind"] =>
+    id === carry && id !== threats[0] ? "carry" : threats.includes(id) ? "threat" : "initiator";
   return ids
     .filter((id, i) => ids.indexOf(id) === i)
     .slice(0, DANGER_HEROES)
-    .map((id) => ({ id, kind: id === carry && id !== threats[0] ? "carry" : "threat" }));
+    .map((id) => ({ id, kind: kind(id) }));
 }
 
 /** "Faceless Void: Black King Bar at 21 min. Take fights and towers before then." */
 export function dangerLine(f: DangerFacts): string {
   const answer =
     f.kind === "carry"
-      ? "Take fights and towers before then."
-      : DONT_FOCUS.has(f.hero)
+      ? f.window === "late"
+        ? "Defend until your core items are in, then fight."
+        : "Take fights and towers before then."
+      : f.kind === "initiator"
+        ? "From then, spread out and watch the fog."
+        : DONT_FOCUS.has(f.hero)
         ? "Don't focus them: kill their damage dealers first."
         : "Lock them down first in every fight.";
   if (!f.item) return `${f.hero}: ${f.kind === "carry" ? "farms fast. Take fights early." : answer}`;

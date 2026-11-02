@@ -25,9 +25,9 @@ describe("gameStory", () => {
     );
     expect(story.chapters.map((c) => c.phase)).toEqual(["0 to 10 min", "10 to 20 min", "20 to 30 min", "30 min on"]);
     expect(story.chapters[0]!.text).toBe("Juggernaut and Crystal Maiden win the safe lane against Mars: take their tower. Survive the off lane against Axe and Witch Doctor: just get levels.");
-    // Our first two items are one moment, then one more item; theirs is their carry's.
+    // Our first two items are one moment, and the only one in their chapter; theirs is their carry's.
     expect(story.chapters[1]!.text).toBe(
-      "Puck's Witch Blade at 12 and Magnus's Blink Dagger at 14: ready to fight at 14. Juggernaut's Battle Fury at 16. Their Phantom Assassin has Battle Fury at 17. Open fights with Reverse Polarity into Sven's God's Strength cleave.",
+      "Puck's Witch Blade at 12 and Magnus's Blink Dagger at 14: ready to fight at 14. Their Phantom Assassin has Battle Fury at 17. Open fights with Reverse Polarity into Sven's God's Strength cleave.",
     );
     expect(story.chapters[2]!.text).toBe("Sven's Black King Bar at 24. Roshan from 20 min, once three key items are in.");
     expect(story.chapters[3]!.text).toBe("Fight when Phantom Assassin is dead or far from the fight.");
@@ -71,6 +71,25 @@ describe("gameStory", () => {
       "Lion's Blink Dagger at 21. Roshan from 25 min, once three key items are in.",
     );
     expect(late.chapters[3]!.text).toBe("You are stronger now: take Roshan, then end with the Aegis.");
+  });
+
+  it("ends an early game by our ready minute, and never names carries they don't have", () => {
+    const spikes = [14, 15].map((minute) => ({ hero: "Ursa", item: "Battle Fury", minute }));
+    const tide = [{ hero: "Tidehunter", item: "Blink Dagger", minute: 19 }];
+    expect(gameStory(facts({ ourTiming: "early", spikes, theirSpikes: tide })).headline).toBe(
+      "End early: ready at 15, push before Tidehunter's Blink Dagger at 19.",
+    );
+    expect(gameStory(facts({ ourTiming: "early", spikes })).headline).toBe("End early: ready at 15, take towers before 30 minutes.");
+    expect(JSON.stringify(gameStory(facts({ ourTiming: "early" })))).not.toContain("carries");
+  });
+
+  it("holds in their strongest time, and says around for a rough enemy minute everywhere", () => {
+    const spikes = [16, 17].map((minute) => ({ hero: "Medusa", item: "Manta Style", minute }));
+    const spectre = [{ hero: "Spectre", item: "Radiance", minute: 18, around: true }];
+    expect(gameStory(facts({ theirTiming: "early", spikes })).chapters[1]!.text).toMatch(/: fight back from 17\./);
+    const story = gameStory(facts({ spikes, theirSpikes: spectre, enemyCarry: "Spectre" }));
+    expect(story.headline).toBe("Both teams are ready at 17 min: fight once your items are in, not before.");
+    expect(story.chapters[1]!.text).toContain("Their Spectre has Radiance around 18.");
   });
 
   it("never calls us stronger late when both teams are late game teams", () => {

@@ -78,9 +78,7 @@ export const FALLBACKS: readonly FallbackTemplate[] = [
   { situation: "laneLost", for: [5], text: "Lane lost? Let {ourCarry} take every last hit. Pull the near camp and keep a ward on the rune." },
   { situation: "laneLost", for: [5], text: "Lane lost? Let your carry take every last hit. Pull the near camp and keep a ward on the rune." },
   { situation: "carryFree", for: [4], text: "{enemyCarry} is farming free? Pressure that lane before 10 min. After that, take towers on the other side." },
-  { situation: "carryFree", for: [4], text: "Their carry is farming free? Pressure that lane before 10 min. After that, take towers on the other side." },
   { situation: "carryFree", for: [5], text: "{enemyCarry} is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items." },
-  { situation: "carryFree", for: [5], text: "Their carry is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items." },
   // Team
   { situation: "behindAt20", for: "team", scaling: "ours", text: "Behind at 20? Defend high ground until {ourCarry} has {ourKeyItem}. Catch their pos 4 and 5 out of position." },
   { situation: "behindAt20", for: "team", scaling: "ours", text: "Behind at 20? Defend high ground until your carry's items are in. Catch their pos 4 and 5 out of position." },
@@ -172,7 +170,8 @@ export function pickFallbacks(facts: GameFacts): { players: string[][]; team: st
     const situations: Situation[] = [
       ...(p.lane === "hard" ? (["laneLost"] as const) : []),
       ...(p.position <= 3 && p.keyItem?.lateMinute !== undefined ? (["keyItemLate"] as const) : []),
-      ...(p.position >= 4 && facts.offLaneHard ? (["carryFree"] as const) : []),
+      // Only with a carry to name: a lineup without one has nobody farming free.
+      ...(p.position >= 4 && facts.offLaneHard && facts.enemyCarry ? (["carryFree"] as const) : []),
     ];
     return situations
       .map((s) => fallbackFor(s, p.position, slots))
