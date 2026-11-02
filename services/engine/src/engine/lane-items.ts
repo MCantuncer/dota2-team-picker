@@ -46,7 +46,7 @@ export function laneAdjusted(build: ItemBuild, lane: LaneFacts, items: Record<st
   const make = (key: string, minute: number): BuildItem | null => {
     const id = idOf(key);
     const item = id ? items[id] : undefined;
-    return id && item ? { itemId: Number(id), name: item.name, img: item.img, minute } : null;
+    return id && item ? { itemId: Number(id), name: item.name, img: item.img, minute, phase: minute === 0 ? "start" : "lane" } : null;
   };
   const keyOf = (i: BuildItem) => items[i.itemId]?.key;
   const mark = (item: BuildItem, reason: string, heroes: HeroInfo[]): BuildItem => ({

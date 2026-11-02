@@ -84,6 +84,34 @@ describe("itemBuild", () => {
     expect(build.situational.map((i) => [i.name, i.reason, i.against])).toEqual([["Monkey King Bar", "Against Phantom Assassin", [7]]]);
     expect(itemBuild(d, 1, 5, [7])!.situational).toEqual([]);
   });
+
+  it("buys a counter item instead of the nearest usual item that answers nothing", () => {
+    const d = data();
+    d.items![200] = item("desolator", "Desolator", 3500);
+    d.items![201] = item("blink", "Blink Dagger", 2250);
+    d.itemBuilds![1]!.late = { 116: 30, 200: 30, 201: 30, 145: 20 };
+    d.heroes[7] = hero(7, "Phantom Assassin", ["Carry", "Escape"]);
+    const mkb = itemBuild(d, 1, 1, [7])!.situational[0]!;
+    // Not the boots, the first big item (Armlet) or a Blink Dagger: one of the later usual items.
+    const usual = itemBuild(d, 1, 1, [7])!.core;
+    const swapped = usual.find((c) => c.itemId === mkb.replaces)!;
+    expect(["Radiance", "Black King Bar", "Desolator"]).toContain(swapped.name);
+    expect(mkb).toMatchObject({ draft: true, phase: "late" });
+  });
+
+  it("puts every item on a step of the path", () => {
+    const build = itemBuild(data(), 1, 1, [4])!;
+    expect(build.start.every((i) => i.phase === "start")).toBe(true);
+    expect(build.lane.every((i) => i.phase === "lane")).toBe(true);
+    // Boots go with the lane, then the first big item, then the rest by minute.
+    expect(build.core.map((i) => [i.name, i.phase])).toEqual([
+      ["Phase Boots", "lane"],
+      ["Armlet of Mordiggian", "first"],
+      ["Radiance", "next"],
+      ["Black King Bar", "late"],
+    ]);
+    expect(build.core.every((i) => !i.draft)).toBe(true);
+  });
 });
 
 describe("itemBuild with STRATZ item timings", () => {

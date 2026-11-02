@@ -25,9 +25,20 @@ export function storyText(title: string, plan: GamePlan, heroName: (id: number) 
       lines.push(`Timings: ${p.build.timings}`);
       if (p.build.start.length) lines.push(`Start: ${p.build.start.map((i) => `${i.count ? `${i.count} ` : ""}${i.name}${i.draft ? ` [${i.reason}]` : ""}`).join(", ")}`);
       if (p.build.lane.length) lines.push(`Lane: ${p.build.lane.map(itemText).join(", ")}`);
-      lines.push(`Core: ${p.build.core.map(itemText).join(", ")}`);
-      if (p.build.bootsOr) lines.push(`Boots or: ${itemText(p.build.bootsOr)}`);
-      if (p.build.situational.length) lines.push(`If needed: ${p.build.situational.map(itemText).join(", ")}`);
+      // The core by phase, as the roadmap board shows it.
+      const inPhase = (phase: string) => p.build!.core.filter((i) => i.phase === phase).map(itemText).join(", ");
+      const boots = inPhase("lane");
+      if (boots) lines.push(`Boots: ${boots}${p.build.bootsOr ? `, or ${itemText(p.build.bootsOr)}` : ""}`);
+      for (const [label, phase] of [["First", "first"], ["Next", "next"], ["Late", "late"]] as const) {
+        const text = inPhase(phase);
+        if (text) lines.push(`${label}: ${text}`);
+      }
+      const usual = (id: number | undefined) => p.build!.core.find((c) => c.itemId === id)?.name;
+      if (p.build.situational.length) {
+        lines.push(
+          `If needed: ${p.build.situational.map((i) => `${itemText(i)}${i.replaces ? ` instead of ${usual(i.replaces)}` : ""}`).join(", ")}`,
+        );
+      }
     }
     lines.push(`Job: ${p.job}`);
     for (const f of p.fallbacks) lines.push(`If it goes wrong: ${f}`);
