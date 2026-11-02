@@ -74,6 +74,8 @@ describe("gamePlan", () => {
     expect(plan.theirStyle?.key).toBe("lategame");
     expect(plan.winCondition).toContain("take fights and towers before 30 minutes");
     expect(plan.roadmap[1]!.text).toContain("This is your window");
+    // The same window shapes our carry's job: no "carry the late game" against a late-game team.
+    expect(plan.players[0]!.job).toMatch(/^Farm fast, then join every push/);
   });
 
   it("warns about their carry as a danger hero", () => {
@@ -133,8 +135,8 @@ describe("gamePlan", () => {
     expect(plan.story.chapters[0]!.text).toBe("Press the safe lane. The off lane is hard against Anti-Mage and Lich: Magnus brings the 6 min rune there.");
     // Their late-game style means they scale better.
     expect(plan.teamFallbacks).toEqual([
-      "Behind at 20 against a late game team? Don't wait. Smoke together and catch one hero before each objective.",
-      "Ahead at 20? Take Roshan, then siege with the Aegis before their carry is ready.",
+      "Behind at 20? Don't wait for the late game. Smoke together and catch one hero before each objective.",
+      "Ahead at 20? Take Roshan, then siege with the Aegis before Anti-Mage is ready.",
     ]);
   });
 });

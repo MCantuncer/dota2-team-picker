@@ -2,7 +2,7 @@ import { SURE_POSITION_ODDS, chooseDangerHeroes, dangerLine } from "./danger";
 import { pickFallbacks, type Scaling } from "./fallbacks";
 import { enemyList, type EnemyNote } from "./enemy-list";
 import { laneAdjusted } from "./lane-items";
-import { gameStory, type Story } from "./story";
+import { gameStory, ourWindow, type Story, type Timing } from "./story";
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
 import { itemBuild, listNames, type BuildItem, type ItemBuild } from "./item-build";
 import { guessEnemyPositions, type PositionFit } from "./positions";
@@ -151,12 +151,21 @@ function keyItem(engine: Engine, build: ItemBuild | null, heroId: number | undef
   return blink ?? build?.core.find((i) => (engine.data.items?.[i.itemId]?.cost ?? 0) >= KEY_ITEM_MIN_COST);
 }
 
-function playerJob(position: Position, name: string, isInitiator: boolean, item: ItemBuild["core"][number] | undefined, combo?: string): string {
+function playerJob(
+  position: Position,
+  name: string,
+  isInitiator: boolean,
+  item: ItemBuild["core"][number] | undefined,
+  window: Timing,
+  combo?: string,
+): string {
   const timingText = item ? ` Your timing is ${item.name} around minute ${item.minute}.` : "";
   const comboText = combo ? ` Set up ${combo}.` : "";
   switch (position) {
     case 1:
-      return `Farm and carry the late game; join fights once your items are in.${timingText}${comboText}`;
+      return window === "early"
+        ? `Farm fast, then join every push: this game should end before 30 minutes.${timingText}${comboText}`
+        : `Farm and carry the late game; join fights once your items are in.${timingText}${comboText}`;
     case 2:
       return `Win your lane, then use runes to help the side lanes.${timingText}${comboText}`;
     case 3:
@@ -266,7 +275,14 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       heroId: p.heroId,
       position: p.position,
       build,
-      job: playerJob(p.position, name(p.heroId), isInitiator, keyItem(engine, build, p.heroId, p.position), combo && `${combo.text} with ${partner}`),
+      job: playerJob(
+        p.position,
+        name(p.heroId),
+        isInitiator,
+        keyItem(engine, build, p.heroId, p.position),
+        ourWindow(timing(ourStyle?.key), timing(theirStyle?.key)),
+        combo && `${combo.text} with ${partner}`,
+      ),
       fallbacks: [],
       enemies: enemyList(
         build,
@@ -377,11 +393,10 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   };
 }
 
-/** Which team gets stronger later, from each team's strongest time. */
-function scaling(ours: "early" | "late" | null, theirs: "early" | "late" | null): Scaling {
-  if (ours === "late" && theirs !== "late") return "ours";
-  if (theirs === "late" && ours !== "late") return "theirs";
-  return "even";
+/** Which team gets stronger later, from the same decision as the story (see ourWindow). */
+function scaling(ours: Timing, theirs: Timing): Scaling {
+  const window = ourWindow(ours, theirs);
+  return window === "late" ? "ours" : window === "early" ? "theirs" : "even";
 }
 
 const round = (x: number) => Math.round(x * 10) / 10;

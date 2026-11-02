@@ -66,8 +66,9 @@ describe("fallbackFor", () => {
   it("picks the team line by who scales better", () => {
     const team = (situation: Situation, scaling: Scaling) => fallbackFor(situation, "team", { ourCarry: "Juggernaut", ourKeyItem: "Black King Bar" }, scaling);
     expect(team("behindAt20", "ours")).toBe("Behind at 20? Defend high ground until Juggernaut has Black King Bar. Catch their pos 4 and 5 out of position.");
-    expect(team("behindAt20", "theirs")).toMatch(/^Behind at 20 against a late game team\?/);
-    expect(team("aheadAt20", "theirs")).toBe("Ahead at 20? Take Roshan, then siege with the Aegis before their carry is ready.");
+    expect(team("behindAt20", "theirs")).toMatch(/^Behind at 20\? Don't wait for the late game/);
+    // With no sure enemy carry, the window itself is the deadline.
+    expect(team("aheadAt20", "theirs")).toBe("Ahead at 20? Take Roshan, then siege high ground with the Aegis before 30 min.");
     expect(team("aheadAt20", "even")).toBe("Ahead at 20? Take Roshan and push one lane together with the Aegis.");
   });
 

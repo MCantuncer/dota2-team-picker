@@ -124,10 +124,22 @@ function laneText(f: StoryFacts): string {
   return [f.wonLane ? `Press the ${f.wonLane}.` : "", hard ?? ""].filter(Boolean).join(" ") || "Every lane is even: the better last hits win.";
 }
 
-function action(chapter: number, f: StoryFacts): string {
+/**
+ * When the game is ours to win: "early" (we want it over before 30 minutes), "late" (we want it
+ * long) or null. The one decision behind the headline, the chapters, the carry's job and the team
+ * fallbacks, so they never disagree.
+ */
+export function ourWindow(ourTiming: Timing, theirTiming: Timing): Timing {
   // Who is stronger early and who late; when both teams want the same, neither side counts.
-  const earlyIsOurs = (f.ourTiming === "early" || f.theirTiming === "late") && f.ourTiming !== "late";
-  const lateIsOurs = (f.ourTiming === "late" || f.theirTiming === "early") && f.theirTiming !== "late";
+  if ((ourTiming === "early" || theirTiming === "late") && ourTiming !== "late") return "early";
+  if ((ourTiming === "late" || theirTiming === "early") && theirTiming !== "late") return "late";
+  return null;
+}
+
+function action(chapter: number, f: StoryFacts): string {
+  const window = ourWindow(f.ourTiming, f.theirTiming);
+  const earlyIsOurs = window === "early";
+  const lateIsOurs = window === "late";
   const theirs = carrySpike(f);
   const roshan = nthMinute(f.spikes, ROSHAN_SPIKES);
   switch (chapter) {
