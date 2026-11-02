@@ -81,6 +81,16 @@ describe("gamePlan", () => {
     expect(plan.danger).toEqual(["Anti-Mage: farms fast. Take fights early."]);
   });
 
+  it("names no enemy carry when their pos 1 is a support filling the slot", () => {
+    const d = data();
+    // Anti-Mage becomes a support: pos 1 is still filled by him, but he isn't a carry.
+    d.positions![1] = [200, 0, 0, 400, 400];
+    const plan = gamePlan(new Engine(d), { ours, theirs });
+    expect(plan.danger.join(" ")).not.toContain("Anti-Mage");
+    expect(plan.players.flatMap((p) => p.fallbacks).join(" ")).not.toContain("Anti-Mage");
+    expect(JSON.stringify(plan.story)).not.toContain("Anti-Mage");
+  });
+
   it("gives every player a job, and no build without item data", () => {
     const plan = gamePlan(new Engine(data()), { ours, theirs });
     expect(plan.players.map((p) => p.position)).toEqual([1, 2, 3, 4, 5]);
