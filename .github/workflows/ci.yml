@@ -87,6 +87,31 @@ jobs:
             echo
             echo "Each side uses its own data/snapshot.json and only games played after it was built."
           } >> "$GITHUB_STEP_SUMMARY"
+      # The same fixed drafts on the live hero data, main's suggestions beside this PR's, so a
+      # change shows which heroes and reasons it moves.
+      - name: Compare suggestions on fixed drafts
+        run: |
+          tsx="$GITHUB_WORKSPACE/node_modules/.bin/tsx"
+          snapshot="$RUNNER_TEMP/live-snapshot.json"
+          {
+            echo "## Suggestions on fixed drafts (live hero data)"
+            echo
+            if ! curl -fsS -o "$snapshot" "$SNAPSHOT_URL"; then
+              echo "Could not download the live hero data."
+              exit 0
+            fi
+            before=()
+            if [ -f base/services/engine/scripts/compare-drafts.ts ]; then
+              (cd base/services/engine && "$tsx" scripts/compare-drafts.ts --snapshot "$snapshot" --json "$RUNNER_TEMP/main-drafts.json" > /dev/null) &&
+                before=(--before "$RUNNER_TEMP/main-drafts.json")
+            else
+              echo "main has no compare-drafts yet, so this shows the PR only."
+              echo
+            fi
+            (cd services/engine && "$tsx" scripts/compare-drafts.ts --snapshot "$snapshot" "${before[@]}" 2>&1) || true
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          SNAPSHOT_URL: https://odigcdwsvajkbvcxeskj.supabase.co/storage/v1/object/public/hero-data/snapshot.json
 
   accounts:
     name: Accounts (edge functions)
