@@ -41,6 +41,12 @@ describe("timingRequests", () => {
     expect(requests.filter((r) => r.heroId === 1 && r.position === 1).map((r) => r.slice)).toEqual(["all", "1", "2", "3", "4"]);
   });
 
+  it("adds a third position played in at least 15% of games, for flex picks like carry Vengeful Spirit", () => {
+    const positions = (games: number[]) => [...new Set(timingRequests({ 20: games }).map((r) => r.position))];
+    expect(positions([200, 50, 50, 300, 400])).toEqual([5, 4, 1]);
+    expect(positions([100, 50, 50, 400, 400])).toEqual([4, 5]);
+  });
+
   it("skips positions nobody plays", () => {
     expect(timingRequests({ 1: [900, 0, 0, 0, 0] }).map((r) => r.position)).toEqual([1, 1, 1, 1, 1]);
   });

@@ -85,12 +85,19 @@ describe("gamePlan", () => {
 
   it("names no enemy carry when their pos 1 is a support filling the slot", () => {
     const d = data();
-    // Anti-Mage becomes a support: pos 1 is still filled by him, but he isn't a carry.
-    d.positions![1] = [200, 0, 0, 400, 400];
+    // Anti-Mage becomes a support: pos 1 is still filled by him, but he is rarely played there.
+    d.positions![1] = [100, 0, 0, 450, 450];
     const plan = gamePlan(new Engine(d), { ours, theirs });
     expect(plan.danger.join(" ")).not.toContain("Anti-Mage");
     expect(plan.players.flatMap((p) => p.fallbacks).join(" ")).not.toContain("Anti-Mage");
     expect(JSON.stringify(plan.story)).not.toContain("Anti-Mage");
+  });
+
+  it("names a flex carry who is clearly their pos 1, like carry Vengeful Spirit", () => {
+    const d = data();
+    // Pos 1 in 1 game of 5, and nobody else in their lineup plays it.
+    d.positions![1] = [200, 0, 0, 400, 400];
+    expect(gamePlan(new Engine(d), { ours, theirs }).danger).toEqual(["Anti-Mage: farms fast. Take fights early."]);
   });
 
   it("gives an enemy's item minute only when it comes from their position", () => {
