@@ -86,6 +86,13 @@ export interface Snapshot {
   itemTimingsAt?: string;
   /** What players start with and which boots they buy, from STRATZ: itemStarts[heroId][position], every rank. */
   itemStarts?: Record<string, Record<string, ItemStart>>;
+  /** Each hero's learnable abilities and talents, from STRATZ, for skill builds. Keyed by hero id. */
+  heroAbilities?: Record<string, HeroAbilities>;
+  /**
+   * The skill build high-rank players used, from STRATZ guide matches of this patch, for every facet
+   * together: skillBuilds[heroId][position]. Refreshed weekly, a few heroes per run.
+   */
+  skillBuilds?: Record<string, Partial<Record<string, SkillBuildSlice>>>;
   /** The patch the counts are for, from OpenDota's patch list. */
   patch?: { name: string; startedAt: string };
   /** Highest public match id already counted, so daily runs only add new matches. */
@@ -116,6 +123,53 @@ export interface ItemStart {
   start: [itemId: number, count: number][];
   /** Upgraded boots, most bought first: [item id, average minute, share of boot buyers]. */
   boots: [itemId: number, minute: number, share: number][];
+}
+
+export interface HeroAbility {
+  id: number;
+  /** STRATZ's internal name, like `sven_storm_bolt`, for the icon. */
+  key: string;
+  name: string;
+  /** STRATZ's ability slot: 1 to 3 for Q, W, E, 4 and 5 for D and F, 6 for R. */
+  slot: number;
+  /** 0 when STRATZ doesn't say; the skill build fetch then counts it from real games. */
+  maxLevel: number;
+  ultimate: boolean;
+}
+
+export interface HeroAbilities {
+  /** Learnable abilities in hotkey order (Q, W, E, ..., R last). */
+  abilities: HeroAbility[];
+  /** Talents per tier (levels 10, 15, 20, 25): [left, right] ability ids and names. */
+  talents: { id: number; name: string }[][];
+}
+
+/** One skill build: the ability or talent id taken at each hero level from 1, 0 for a level with no point. */
+export interface SkillBuild {
+  levels: number[];
+  /** Matches whose order matched this build's group (max order and first points), and its share of all matches. */
+  groupMatches: number;
+  share: number;
+  /** Matches that took exactly these levels; few means the exact order is less certain than the group. */
+  exactMatches: number;
+}
+
+export interface SkillBuildSlice {
+  at: string;
+  /** STRATZ game version of the patch the matches came from. */
+  gameVersionId: number;
+  /** Guide matches with a usable skill build. */
+  matches: number;
+  build?: SkillBuild;
+  /** A second common build, shown as an alternative when the STRATZ totals agree it is common. */
+  alternative?: SkillBuild;
+  /** Why there is no build: too few matches this patch, or no build most players agree on. */
+  none?: "few-matches" | "no-agreement";
+  /**
+   * Per talent tier: the talent picked in more games, its share of the games that took a talent in
+   * that tier, how many games that is (few games at level 20 and 25), and the level players usually took it.
+   */
+  talents: { tier: number; id: number; share: number; games: number; level: number }[];
 }
 
 export interface ItemInfo {
