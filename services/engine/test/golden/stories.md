@@ -4,8 +4,8 @@
 
 Headline: Both teams are ready at 15 min: fight once your items are in, not before.
 
-- 0 to 10 min: Survive the safe lane against Axe and Witch Doctor: just get levels.
-- 10 to 20 min: Juggernaut's Battle Fury at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Puck's Blink Dagger at 19. Their Phantom Assassin has Battle Fury at 15.
+- 0 to 10 min: Juggernaut farms safely in the safe lane against Axe and Witch Doctor: skip trades.
+- 10 to 20 min: Juggernaut's Battle Fury at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Their Phantom Assassin has Battle Fury at 15.
 - 20 to 30 min: Roshan from 20 min, once three key items are in.
 - 30 min on: Fight when Phantom Assassin is dead or far from the fight.
 
@@ -109,13 +109,12 @@ If it goes wrong: Phantom Assassin is farming free? Ward their jungle so your co
 Headline: Survive their early pushes: we are stronger after 25 minutes.
 
 - 0 to 10 min: Survive the off lane against Lycan and Shadow Shaman: just get levels.
-- 10 to 20 min: Medusa's Manta Style at 18 and Tidehunter's Blink Dagger at 19: ready to fight at 19. Their Leshrac has Blink Dagger at 14. Their strongest time: defend towers together while Medusa farms.
+- 10 to 20 min: Medusa's Manta Style at 18 and Tidehunter's Blink Dagger at 19: fight back from 19. Their Leshrac has Blink Dagger at 14. Their strongest time: defend towers together while Medusa farms.
 - 20 to 30 min: Storm Spirit's Orchid Malevolence at 20. Their Underlord has Aghanim's Scepter at 23. Roshan from 25 min, once three key items are in.
 - 30 min on: You are stronger now: take Roshan, then end with the Aegis.
 
 Danger heroes:
 - Leshrac: Blink Dagger at 14 min. Lock them down first in every fight.
-- Lycan: farms fast. Take fights early.
 
 If the game goes wrong:
 - Behind at 20? Defend high ground until Medusa has Manta Style. Catch their pos 4 and 5 out of position.
@@ -210,10 +209,10 @@ If it goes wrong: Lycan is farming free? Ward their jungle so your cores can cat
 
 ## Crusader teamfight against a late carry
 
-Headline: Fight from 13 min, before Spectre has Radiance at 18.
+Headline: Fight from 13 min, before Spectre has Radiance around 18.
 
-- 0 to 10 min: Invoker wins the mid against Ember Spirit: take their tower. Survive the safe lane against Bristleback and Nyx Assassin: just get levels.
-- 10 to 20 min: Invoker's Meteor Hammer at 12 and Magnus's Blink Dagger at 13: ready to fight at 13. Faceless Void's Battle Fury at 16. Their Spectre has Radiance at 18. Open fights with Chronosphere into Sun Strike and Chaos Meteor.
+- 0 to 10 min: Invoker wins the mid against Ember Spirit: take their tower. Faceless Void farms safely in the safe lane against Bristleback and Nyx Assassin: skip trades.
+- 10 to 20 min: Invoker's Meteor Hammer at 12 and Magnus's Blink Dagger at 13: ready to fight at 13. Their Spectre has Radiance around 18. Open fights with Chronosphere into Sun Strike and Chaos Meteor.
 - 20 to 30 min: Roshan from 20 min, once three key items are in.
 - 30 min on: Fight when Spectre is dead or far from the fight.
 
@@ -318,8 +317,8 @@ If it goes wrong: Spectre is farming free? Ward their jungle so your cores can c
 
 Headline: Survive their early pushes: we are stronger after 25 minutes.
 
-- 0 to 10 min: Survive the mid against Pudge: just get levels.
-- 10 to 20 min: Axe's Blink Dagger at 16 and Wraith King's Radiance at 17: ready to fight at 17. Their Legion Commander has Blink Dagger at 15. Their strongest time: defend towers together while Wraith King farms.
+- 0 to 10 min: Sniper farms safely in the mid against Pudge: skip trades.
+- 10 to 20 min: Axe's Blink Dagger at 16 and Wraith King's Radiance at 17: fight back from 17. Their Legion Commander has Blink Dagger at 15. Their strongest time: defend towers together while Wraith King farms.
 - 20 to 30 min: Sniper's Hurricane Pike at 26. Their Drow Ranger has Manta Style at 24. Roshan from 26 min, once three key items are in.
 - 30 min on: You are stronger now: take Roshan, then end with the Aegis.
 
@@ -421,8 +420,8 @@ Vs Crystal Maiden: Magic burst. Stay spread so one combo can't catch two.
 
 Headline: Both teams are ready at 17 min: fight once your items are in, not before.
 
-- 0 to 10 min: Survive the safe lane against Primal Beast and Hoodwink: just get levels.
-- 10 to 20 min: Mars's Blink Dagger at 15 and Templar Assassin's Desolator at 17: ready to fight at 17. Terrorblade's Manta Style at 19. Their Naga Siren has Manta Style at 18.
+- 0 to 10 min: Terrorblade farms safely in the safe lane against Primal Beast and Hoodwink: skip trades.
+- 10 to 20 min: Mars's Blink Dagger at 15 and Templar Assassin's Desolator at 17: ready to fight at 17. Their Naga Siren has Manta Style around 18.
 - 20 to 30 min: Their Pangolier has Blink Dagger at 20. Roshan from 20 min, once three key items are in.
 - 30 min on: Fight when Naga Siren is dead or far from the fight.
 
@@ -520,10 +519,10 @@ If it goes wrong: Naga Siren is farming free? Ward their jungle so your cores ca
 
 ## Archon farm carry against early fights
 
-Headline: Both teams are ready at 15 min: fight once your items are in, not before.
+Headline: Both teams are ready at 16 min: fight once your items are in, not before.
 
 - 0 to 10 min: Anti-Mage and Warlock win the safe lane against Dark Seer and Snapfire: take their tower.
-- 10 to 20 min: Anti-Mage's Battle Fury at 15 and Lina's Boots of Travel at 15: ready to fight at 15. Centaur Warrunner's Blink Dagger at 18. Their Troll Warlord has Battle Fury at 15.
+- 10 to 20 min: Anti-Mage's Battle Fury at 15 and Lina's Maelstrom at 16: ready to fight at 16. Their Troll Warlord has Battle Fury at 15.
 - 20 to 30 min: Their Dark Seer has Blink Dagger at 21. Roshan from 20 min, once three key items are in.
 - 30 min on: Fight when Troll Warlord is dead or far from the fight.
 
@@ -564,12 +563,13 @@ Boots: Boots of Travel 15
 First: Maelstrom 16/18
 Next: Yasha and Kaya 24/31, Aghanim's Scepter 25, Shadow Blade 26/29
 Late: Black King Bar 32/36 [Against Troll Warlord, Dark Seer and Snapfire: don't skip it]
-Job: Win your lane, then use runes to help the side lanes. Your timing is Boots of Travel around minute 15.
+Job: Win your lane, then use runes to help the side lanes. Your timing is Maelstrom around minute 16.
 Vs Huskar (lane): Heals their team through fights. buy Magic Wand.
 Vs Troll Warlord: Evasion: right clicks miss. buy Black King Bar.
 Vs Dark Seer: Locks you down. buy Black King Bar.
 Vs Snapfire: Magic burst. buy Black King Bar.
 Vs Jakiro: Magic burst. Stay spread so one combo can't catch two.
+If it goes wrong: No Maelstrom by 18 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Centaur Warrunner
 Timings: rank
@@ -669,7 +669,7 @@ Lane: Bracer 2, Magic Wand 3 [Against Witch Doctor's spells: get it early], Soul
 Boots: Phase Boots 10
 First: Blink Dagger 15/17
 Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24, Black King Bar 29/31 [Against Vengeful Spirit, Witch Doctor and Tidehunter: don't skip it]
-Job: Make their carry's lane hard, then start the team's fights as Mars. Your timing is Blink Dagger around minute 15.
+Job: Make their safe lane hard, then start the team's fights as Mars. Your timing is Blink Dagger around minute 15.
 Vs Vengeful Spirit (lane): Magic burst. buy Black King Bar.
 Vs Witch Doctor (lane): Heals their team through fights. buy Magic Wand, Black King Bar.
 Vs Tidehunter: Starts fights and soaks your damage. buy Black King Bar.
