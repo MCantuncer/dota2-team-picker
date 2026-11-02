@@ -323,7 +323,7 @@ Headline: Survive their early pushes: we are stronger after 25 minutes.
 - 30 min on: You are stronger now: take Roshan, then end with the Aegis.
 
 Danger heroes:
-- Drow Ranger: Manta Style at 24 min. Take fights and towers before then.
+- Drow Ranger: Manta Style at 24 min. Defend until your core items are in, then fight.
 - Legion Commander: Blink Dagger at 15 min. From then, spread out and watch the fog.
 
 If the game goes wrong:

@@ -47,6 +47,12 @@ describe("dangerLine", () => {
     );
   });
 
+  it("doesn't race their carry when the late game is ours", () => {
+    expect(dangerLine({ hero: "Drow Ranger", kind: "carry", item: { name: "Manta Style", minute: 24 }, isSure: true, window: "late" })).toBe(
+      "Drow Ranger: Manta Style at 24 min. Defend until your core items are in, then fight.",
+    );
+  });
+
   it("tells the team to spread out once an initiator has their item", () => {
     expect(dangerLine({ hero: "Tidehunter", kind: "initiator", item: { name: "Blink Dagger", minute: 19 }, isSure: true })).toBe(
       "Tidehunter: Blink Dagger at 19 min. From then, spread out and watch the fog.",

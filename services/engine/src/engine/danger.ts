@@ -28,6 +28,8 @@ export interface DangerFacts {
    */
   kind: "threat" | "carry" | "initiator";
   item?: { name: string; minute: number };
+  /** When the game is ours to win (see story.ts ourWindow): a late window means we don't race their carry. */
+  window?: "early" | "late" | null;
   /** False when the minute comes from a build mixed over the hero's positions, so it is only "around". */
   isSure: boolean;
 }
@@ -55,7 +57,9 @@ export function chooseDangerHeroes(
 export function dangerLine(f: DangerFacts): string {
   const answer =
     f.kind === "carry"
-      ? "Take fights and towers before then."
+      ? f.window === "late"
+        ? "Defend until your core items are in, then fight."
+        : "Take fights and towers before then."
       : f.kind === "initiator"
         ? "From then, spread out and watch the fog."
         : DONT_FOCUS.has(f.hero)
