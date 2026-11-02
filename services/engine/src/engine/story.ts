@@ -26,7 +26,7 @@ export interface StoryFacts {
   hardLaneEnemies?: string[];
   /** Our mid, who brings a power rune to the hard lane. */
   ourMid?: string;
-  /** Our players' key items (see game-plan.ts keyItem). */
+  /** Our cores' key items (see game-plan.ts keyItem): the team is ready once two are in. */
   spikes: Spike[];
   /** The enemy cores' key items, from their usual builds. */
   theirSpikes?: Spike[];
@@ -47,10 +47,6 @@ export interface Story {
  * The chapters name heroes, items and minutes now, so they get 100 words (about 30 seconds).
  */
 export const STORY_WORDS = { headline: 15, chapters: 100, danger: 30 } as const;
-
-/** Our spikes named in one chapter, and theirs; more would crowd it. */
-const SPIKES_PER_CHAPTER = 2;
-const THEIR_SPIKES_PER_CHAPTER = 1;
 
 const CHAPTERS = [
   { phase: "0 to 10 min", from: 0, to: 10 },
@@ -94,16 +90,29 @@ function headline(f: StoryFacts): string {
   return "Win the fights around your item timings.";
 }
 
+const itemAt = (s: Spike) => `${s.hero}'s ${s.item} at ${s.minute}`;
+
 /**
- * "Juggernaut: Battle Fury at 14, Mars: Blink Dagger at 15." for the first `max` spikes in a
- * window, taken in the given order and told by minute.
+ * Our cores' items in one window, told as one moment: "Juggernaut's Battle Fury at 14 and Mars's
+ * Blink Dagger at 15: ready to fight at 15." in the window of the second item, then one later item
+ * per window ("Juggernaut's Black King Bar at 24.").
  */
-function spikeText(spikes: Spike[], from: number, to: number, max: number): string {
-  const inWindow = spikes
-    .filter((s) => s.minute >= from && s.minute < to)
-    .slice(0, max)
-    .sort((a, b) => a.minute - b.minute);
-  return inWindow.length ? `${inWindow.map((s) => `${s.hero}: ${s.item} at ${s.minute}`).join(", ")}.` : "";
+function ourSpikeText(spikes: Spike[], from: number, to: number): string {
+  const sorted = byMinute(spikes);
+  const ready = sorted[READY_SPIKES - 1]?.minute;
+  const inWindow = (m: number) => m >= from && m < to;
+  // Before the ready moment the items wait for it; a single core's item still shows.
+  const later = ready === undefined ? sorted : sorted.slice(READY_SPIKES);
+  const next = later.find((s) => inWindow(s.minute));
+  const readyText =
+    ready !== undefined && inWindow(ready) ? `${sorted.slice(0, READY_SPIKES).map(itemAt).join(" and ")}: ready to fight at ${ready}.` : "";
+  return [readyText, next ? `${itemAt(next)}.` : ""].filter(Boolean).join(" ");
+}
+
+/** "Their Phantom Assassin has Battle Fury at 17." for the first of their spikes in a window. */
+function theirSpikeText(spikes: Spike[], from: number, to: number): string {
+  const first = spikes.find((s) => s.minute >= from && s.minute < to);
+  return first ? `Their ${first.hero} has ${first.item} at ${first.minute}.` : "";
 }
 
 function laneText(f: StoryFacts): string {
@@ -149,12 +158,11 @@ export function gameStory(facts: StoryFacts): Story {
       const carryFirst = [...(facts.theirSpikes ?? [])].sort((a, b) => Number(b.hero === facts.enemyCarry) - Number(a.hero === facts.enemyCarry));
       // The lane chapter is about lanes: items under 10 min show on the player cards and danger list.
       const isLane = i === 0;
-      const theirs = isLane ? "" : spikeText(carryFirst, c.from, c.to, THEIR_SPIKES_PER_CHAPTER);
       return {
         phase: c.phase,
         text: [
-          isLane ? "" : spikeText(byMinute(facts.spikes), c.from, c.to, SPIKES_PER_CHAPTER),
-          theirs && `Their ${theirs}`,
+          isLane ? "" : ourSpikeText(facts.spikes, c.from, c.to),
+          isLane ? "" : theirSpikeText(carryFirst, c.from, c.to),
           action(i, facts),
         ]
           .filter(Boolean)

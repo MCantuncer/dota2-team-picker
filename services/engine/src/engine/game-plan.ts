@@ -373,7 +373,8 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
           const item = sureKeyItem(id, pos);
           return item ? [{ hero: name(id), item: item.name, minute: item.minute }] : [];
         }),
-      spikes: players.flatMap((p) => {
+      // Cores only: a support's Glimmer Cape isn't a team timing.
+      spikes: players.filter((p) => p.position <= 3).flatMap((p) => {
         const item = keyItem(engine, p.build, p.heroId, p.position);
         return item ? [{ hero: name(p.heroId), item: item.name, minute: item.minute }] : [];
       }),
