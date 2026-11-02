@@ -4,7 +4,8 @@
  *   POST /build-reports   (X-Job-Secret: <the shared secret in Vault and BUILD_REPORTS_SECRET>)
  *
  * Finds the matches of ended drafts nobody looked up, then builds the reports that are due
- * (see _shared/report/job.ts and build.ts). Returns what the run did.
+ * (see _shared/report/job.ts and build.ts), and deletes saved matches older than 90 days or
+ * without a report. Returns what the run did.
  */
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { json } from "../_shared/cors.ts";
@@ -64,6 +65,7 @@ Deno.serve(async (req) => {
       const { error } = await admin.from("match_reports").update(update).eq("draft_id", draftId);
       if (error) throw error;
     },
+    cleanFiles,
     log: (message, err) => console.error(message, err),
   }).catch((err) => {
     console.error("The report run failed", err);
@@ -97,6 +99,19 @@ async function saveRawMatch(matchId: number, raw: unknown): Promise<void> {
     saved_at: new Date().toISOString(),
   });
   if (listError) throw listError;
+}
+
+/** Deletes saved matches older than 90 days or without a report, then drops them from the list. */
+async function cleanFiles(): Promise<number> {
+  const { data, error } = await admin.rpc("stale_match_files");
+  if (error) throw error;
+  const ids = (data as { match_id: number }[]).map((row) => row.match_id);
+  if (!ids.length) return 0;
+  const { error: removeError } = await admin.storage.from("match-data").remove(ids.map((id) => `${id}.json.gz`));
+  if (removeError) throw removeError;
+  const { data: forgotten, error: forgetError } = await admin.rpc("forget_match_files", { matches: ids });
+  if (forgetError) throw forgetError;
+  return forgotten as number;
 }
 
 async function draftLists(draftId: string) {
