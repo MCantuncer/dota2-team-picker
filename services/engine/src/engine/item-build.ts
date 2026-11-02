@@ -99,6 +99,9 @@ const CONSUMABLES = new Set([
 const CORE_MIN_COST = 1500;
 const BOOTS = new Set(["phase_boots", "power_treads", "arcane_boots", "tranquil_boots", "boots", "travel_boots", "guardian_greaves", "boots_of_bearing"]);
 
+/** Whether an item is used up, like Tango or a ward, so it is no step of a build. */
+export const isConsumable = (item: ItemInfo | undefined) => item !== undefined && CONSUMABLES.has(item.key);
+
 /** Whether an item can be part of a core build: boots, Aghanim's Shard, or any non-consumable from CORE_MIN_COST up. */
 export function isCoreItem(item: ItemInfo | undefined): boolean {
   if (!item || CONSUMABLES.has(item.key)) return false;
@@ -138,7 +141,7 @@ export interface ItemBuild {
    */
   timings: "rank" | "all" | "around";
   start: BuildItem[];
-  /** Small items bought in lane before the core, like Bracer or Magic Wand. */
+  /** Small items bought in lane, like Wraith Band, Magic Wand or Perseverance, in buy order. */
   lane: BuildItem[];
   core: BuildItem[];
   situational: BuildItem[];
@@ -214,10 +217,13 @@ export function itemBuild(
         .map(([id, b]) => toItem(id, b.minute))
         .sort((a, b) => a.minute - b.minute);
   oneAfterAnother(core);
-  const lane = candidates
-    .filter(([id]) => !isBig(id))
-    .slice(0, LANE_ITEMS)
-    .map(([id, b]) => toItem(id, b.minute));
+  // STRATZ lane items in buy order when the slice has them, else OpenDota's most bought small items.
+  const lane = chosen?.slice.lane?.length
+    ? chosen.slice.lane.filter(([id]) => items[id]).map(([id, minute]) => toItem(String(id), minute))
+    : candidates
+        .filter(([id]) => !isBig(id))
+        .slice(0, LANE_ITEMS)
+        .map(([id, b]) => toItem(id, b.minute));
 
   const isCore = position <= 3;
   const enemyHeroes = enemies.flatMap((id) => (data.heroes[id] ? [data.heroes[id]] : []));
