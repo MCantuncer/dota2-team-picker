@@ -233,12 +233,16 @@ export function itemBuild(
       ].sort((a, b) => a.minute - b.minute);
   oneAfterAnother(core);
   // STRATZ lane items in buy order when the slice has them, else OpenDota's most bought small items.
-  const lane = chosen?.slice.lane?.length
-    ? chosen.slice.lane.filter(([id]) => items[id]).map(([id, minute]) => toItem(String(id), minute))
-    : candidates
-        .filter(([id]) => !isBig(id))
-        .slice(0, LANE_ITEMS)
-        .map(([id, b]) => toItem(id, b.minute));
+  // An item already in the start (Medusa's Magic Wand) is not bought again in lane.
+  const inStart = new Set(start.map((i) => i.itemId));
+  const lane = (
+    chosen?.slice.lane?.length
+      ? chosen.slice.lane.filter(([id]) => items[id]).map(([id, minute]) => toItem(String(id), minute))
+      : candidates
+          .filter(([id]) => !isBig(id))
+          .slice(0, LANE_ITEMS)
+          .map(([id, b]) => toItem(id, b.minute))
+  ).filter((i) => !inStart.has(i.itemId));
 
   const isCore = position <= 3;
   const enemyHeroes = enemies.flatMap((id) => (data.heroes[id] ? [data.heroes[id]] : []));

@@ -130,6 +130,9 @@ describe("itemBuild with STRATZ item timings", () => {
     expect(build.core[0]).toMatchObject({ name: "Power Treads", minute: 7 });
     expect(build.core.filter((i) => i.name === "Phase Boots")).toEqual([]);
     expect(build.bootsOr).toMatchObject({ name: "Phase Boots", minute: 8 });
+    // A lane item already in the start is not bought twice.
+    d.itemStarts[1]![1]!.start.push([36, 1]);
+    expect(itemBuild(d, 1, 1, [4])!.lane.map((i) => i.name)).toEqual([]);
     // Another position has no STRATZ start: OpenDota's is kept.
     expect(itemBuild(d, 1, 2, [4])!.bootsOr).toBeUndefined();
   });
