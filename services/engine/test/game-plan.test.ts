@@ -91,6 +91,18 @@ describe("gamePlan", () => {
     expect(JSON.stringify(plan.story)).not.toContain("Anti-Mage");
   });
 
+  it("gives an enemy's item minute only when it comes from their position", () => {
+    const d = data();
+    d.items = { 145: { key: "bfury", name: "Battle Fury", cost: 4100, img: "", components: [] } };
+    // OpenDota's build mixes every position the hero is played in.
+    d.itemBuilds = { 1: { start: {}, early: {}, mid: { 145: 90 }, late: {} } };
+    const line = () => gamePlan(new Engine(d), { ours, theirs }).danger[0];
+    expect(line()).toMatch(/^Anti-Mage: Battle Fury around \d+ min/);
+    // Played as a pos 1 only half the time: his usual build isn't a pos 1 build.
+    d.positions![1] = [500, 0, 0, 500, 0];
+    expect(line()).toBe("Anti-Mage: farms fast. Take fights early.");
+  });
+
   it("gives every player a job, and no build without item data", () => {
     const plan = gamePlan(new Engine(data()), { ours, theirs });
     expect(plan.players.map((p) => p.position)).toEqual([1, 2, 3, 4, 5]);

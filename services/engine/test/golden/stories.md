@@ -108,13 +108,13 @@ If it goes wrong: Phantom Assassin is farming free? Ward their jungle so your co
 Headline: Survive their early pushes: we are stronger after 25 minutes.
 
 - 0 to 10 min: The off lane is hard against Lycan and Shadow Shaman: Storm Spirit brings the 6 min rune there.
-- 10 to 20 min: Medusa: Manta Style at 18, Tidehunter: Blink Dagger at 19. Their Lycan: Helm of the Overlord at 18. Their strongest time: defend towers together while Medusa farms.
+- 10 to 20 min: Medusa: Manta Style at 18, Tidehunter: Blink Dagger at 19. Their Leshrac: Blink Dagger at 14. Their strongest time: defend towers together while Medusa farms.
 - 20 to 30 min: Storm Spirit: Orchid Malevolence at 20, Dazzle: Holy Locket at 20. Their Underlord: Aghanim's Scepter at 23. Roshan from 25 min, once three key items are in.
 - 30 min on: You are stronger now: take Roshan, then end with the Aegis.
 
 Danger heroes:
 - Leshrac: Blink Dagger at 14 min. Lock them down first in every fight.
-- Lycan: Helm of the Overlord around 18 min. Take fights and towers before then.
+- Lycan: farms fast. Take fights early.
 
 If the game goes wrong:
 - Behind at 20? Defend towers together and only fight with your key spells ready.
