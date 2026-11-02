@@ -272,7 +272,13 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   const danger = chooseDangerHeroes(threats, dangerCarry, initiators).map(({ id, kind }) => {
     const position = [...theirByPos].find(([, h]) => h === id)?.[0] ?? 1;
     const item = sureKeyItem(id, position);
-    return dangerLine({ hero: name(id), kind, ...(item ? { item: { name: item.name, minute: item.minute } } : {}), isSure: item?.exact ?? false });
+    return dangerLine({
+      hero: name(id),
+      kind,
+      ...(item ? { item: { name: item.name, minute: item.minute } } : {}),
+      isSure: item?.exact ?? false,
+      window: ourWindow(timing(ourStyle?.key), timing(theirStyle?.key)),
+    });
   });
 
   const players = input.ours.map((p): PlayerPlan => {
