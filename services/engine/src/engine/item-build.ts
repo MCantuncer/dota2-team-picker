@@ -133,6 +133,8 @@ export interface BuildItem {
   lateMinute?: number;
   /** Copies bought, when more than one (two Iron Branches at the start). */
   count?: number;
+  /** Set when this draft changed the item from the hero's usual build (see lane-items.ts). */
+  draft?: true;
   /** Why it is in the build, naming the enemy heroes it answers. Empty for the usual build. */
   reason?: string;
   /** The enemy hero ids the item answers, most matching threats first. Set with `reason`. */

@@ -1,5 +1,6 @@
 import { SURE_POSITION_ODDS, chooseDangerHeroes, dangerLine } from "./danger";
 import { pickFallbacks, type Scaling } from "./fallbacks";
+import { laneAdjusted } from "./lane-items";
 import { gameStory, type Story } from "./story";
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
 import { itemBuild, listNames, type BuildItem, type ItemBuild } from "./item-build";
@@ -232,7 +233,12 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   });
 
   const players = input.ours.map((p): PlayerPlan => {
-    const build = itemBuild(engine.data, p.heroId, p.position, input.theirs, bracket);
+    const usual = itemBuild(engine.data, p.heroId, p.position, input.theirs, bracket);
+    const lane = lanes.find((l) => l.ours.includes(p.heroId))!; // Every position is in a lane.
+    const build =
+      usual && engine.data.items
+        ? laneAdjusted(usual, { verdict: lane.verdict, enemies: lane.theirs.map((id) => engine.hero(id)) }, engine.data.items)
+        : usual;
     const combo = ourCombos.find((c) => c.a === p.heroId || c.b === p.heroId);
     const partner = combo && name(combo.a === p.heroId ? combo.b : combo.a);
     const isInitiator = traitsOf(engine.hero(p.heroId)).has("initiation");
