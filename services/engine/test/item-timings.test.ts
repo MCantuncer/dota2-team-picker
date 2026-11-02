@@ -93,6 +93,21 @@ describe("toTimingSlice", () => {
     expect(slice.games).toBe(72934);
   });
 
+  it("keeps the small items most players buy in lane, in buy order", () => {
+    // Magic Wand is bought early by most Anti-Mages; Perseverance costs 1,400 in today's patch.
+    const cheapPers = { ...ITEMS, 69: item("pers", "Perseverance", 1400) };
+    const lane = toTimingSlice(ANTI_MAGE, cheapPers)!.lane!; // The fixture has wand and Perseverance rows.
+    expect(lane.map(([id]) => id)).toEqual([36, 69]);
+    expect(lane[0]![1]).toBeLessThan(lane[1]![1]);
+  });
+
+  it("leaves out items bought by few players or after the lane", () => {
+    const rows = [row(2, 1000, 500, 145), row(3, 100, 50, 36), row(14, 900, 450, 69)];
+    const cheapPers = { ...ITEMS, 69: item("pers", "Perseverance", 1400) };
+    // Wand: 10% of games. Perseverance: at 14 min, after the lane.
+    expect(toTimingSlice(rows, cheapPers)!.lane).toBeUndefined();
+  });
+
   it("is null for a slice STRATZ has no data for", () => {
     expect(toTimingSlice([], ITEMS)).toBeNull();
   });
