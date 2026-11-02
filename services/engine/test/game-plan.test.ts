@@ -96,7 +96,10 @@ describe("gamePlan", () => {
     const d = data();
     // Pos 1 in 1 game of 5, and nobody else in their lineup plays it.
     d.positions![1] = [200, 0, 0, 400, 400];
-    expect(gamePlan(new Engine(d), { ours, theirs }).danger).toEqual(["Anti-Mage: farms fast. Take fights early."]);
+    const plan = gamePlan(new Engine(d), { ours, theirs });
+    // Named as their carry; with no sure minute to race, not as a danger hero.
+    expect(JSON.stringify([plan.story, plan.teamFallbacks])).toContain("Anti-Mage");
+    expect(plan.danger).toEqual([]);
   });
 
   it("gives an enemy's item minute only when it comes from their position", () => {
