@@ -4,7 +4,7 @@ import { enemyList, type EnemyNote } from "./enemy-list";
 import { laneAdjusted } from "./lane-items";
 import { gameStory, ourWindow, type Story, type Timing } from "./story";
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
-import { itemBuild, listNames, type BuildItem, type ItemBuild } from "./item-build";
+import { isUpgradedBoots, itemBuild, listNames, type BuildItem, type ItemBuild } from "./item-build";
 import { guessEnemyPositions, type PositionFit } from "./positions";
 import type { Engine } from "./score";
 import { traitsOf } from "./traits";
@@ -153,7 +153,8 @@ function keyItem(engine: Engine, build: ItemBuild | null, heroId: number | undef
   const isBlink = (i: BuildItem) => engine.data.items?.[i.itemId]?.key === "blink";
   const startsFights = position !== 1 && heroId !== undefined && traitsOf(engine.hero(heroId)).has("initiation");
   const blink = startsFights ? build?.core.find(isBlink) : undefined;
-  return blink ?? build?.core.find((i) => (engine.data.items?.[i.itemId]?.cost ?? 0) >= KEY_ITEM_MIN_COST);
+  // Boots of Travel costs enough, but it moves a hero; it doesn't win fights.
+  return blink ?? build?.core.find((i) => (engine.data.items?.[i.itemId]?.cost ?? 0) >= KEY_ITEM_MIN_COST && !isUpgradedBoots(engine.data.items?.[i.itemId]));
 }
 
 function playerJob(
@@ -162,8 +163,10 @@ function playerJob(
   isInitiator: boolean,
   item: ItemBuild["core"][number] | undefined,
   window: Timing,
+  hasCarry: boolean,
   combo?: string,
 ): string {
+  const theirLane = hasCarry ? "their carry's lane" : "their safe lane";
   const timingText = item ? ` Your timing is ${item.name} around minute ${item.minute}.` : "";
   const comboText = combo ? ` Set up ${combo}.` : "";
   switch (position) {
@@ -175,8 +178,8 @@ function playerJob(
       return `Win your lane, then use runes to help the side lanes.${timingText}${comboText}`;
     case 3:
       return isInitiator
-        ? `Make their carry's lane hard, then start the team's fights as ${name}.${timingText}${comboText}`
-        : `Make their carry's lane hard and soak damage at the front in fights.${timingText}${comboText}`;
+        ? `Make ${theirLane} hard, then start the team's fights as ${name}.${timingText}${comboText}`
+        : `Make ${theirLane} hard and soak damage at the front in fights.${timingText}${comboText}`;
     case 4:
       return `Help win the off lane, then look for kills around the map with your mid.${timingText}${comboText}`;
     case 5:
@@ -261,12 +264,29 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     const exact = build?.timings !== "around";
     if (!exact && engine.fit(id)[position] < SURE_POSITION_ODDS) return undefined;
     const item = keyItem(engine, build, id, position);
-    return item && { name: item.name, minute: item.minute, exact };
+    return item && { itemId: item.itemId, name: item.name, minute: item.minute, exact };
   };
-  const danger = chooseDangerHeroes(threats, theirCarry).map(({ id, kind }) => {
+  // Their cores who start fights with a Blink Dagger, from a sure minute, earliest first.
+  const initiators = [...theirByPos]
+    .filter(([, id]) => isCore(id) && traitsOf(engine.hero(id)).has("initiation"))
+    .flatMap(([pos, id]) => {
+      const item = sureKeyItem(id, pos);
+      return item && engine.data.items?.[item.itemId]?.key === "blink" ? [{ id, minute: item.minute }] : [];
+    })
+    .sort((a, b) => a.minute - b.minute)
+    .map((i) => i.id);
+  // Their carry is a danger hero only with a sure minute: "farms fast" adds nothing to the plan.
+  const dangerCarry = theirCarry !== undefined && sureKeyItem(theirCarry, 1) ? theirCarry : undefined;
+  const danger = chooseDangerHeroes(threats, dangerCarry, initiators).map(({ id, kind }) => {
     const position = [...theirByPos].find(([, h]) => h === id)?.[0] ?? 1;
     const item = sureKeyItem(id, position);
-    return dangerLine({ hero: name(id), kind, ...(item ? { item: { name: item.name, minute: item.minute } } : {}), isSure: item?.exact ?? false });
+    return dangerLine({
+      hero: name(id),
+      kind,
+      ...(item ? { item: { name: item.name, minute: item.minute } } : {}),
+      isSure: item?.exact ?? false,
+      window: ourWindow(timing(ourStyle?.key), timing(theirStyle?.key)),
+    });
   });
 
   const players = input.ours.map((p): PlayerPlan => {
@@ -289,6 +309,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
         isInitiator,
         keyItem(engine, build, p.heroId, p.position),
         ourWindow(timing(ourStyle?.key), timing(theirStyle?.key)),
+        theirCarry !== undefined,
         combo && `${combo.text} with ${partner}`,
       ),
       fallbacks: [],
@@ -385,12 +406,12 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
         .filter(([pos, id]) => playsCore(id, pos))
         .flatMap(([pos, id]) => {
           const item = sureKeyItem(id, pos);
-          return item ? [{ hero: name(id), item: item.name, minute: item.minute }] : [];
+          return item ? [{ hero: name(id), item: item.name, minute: item.minute, ...(item.exact ? {} : { around: true }) }] : [];
         }),
       // Cores only: a support's Glimmer Cape isn't a team timing.
       spikes: players.filter((p) => p.position <= 3).flatMap((p) => {
         const item = keyItem(engine, p.build, p.heroId, p.position);
-        return item ? [{ hero: name(p.heroId), item: item.name, minute: item.minute }] : [];
+        return item ? [{ hero: name(p.heroId), item: item.name, minute: item.minute, ...(p.build?.timings === "around" ? { around: true } : {}) }] : [];
       }),
       combo: firstCombo?.text,
       ourCarry: carry && name(carry.heroId),

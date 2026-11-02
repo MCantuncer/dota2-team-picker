@@ -78,9 +78,8 @@ describe("gamePlan", () => {
     expect(plan.players[0]!.job).toMatch(/^Farm fast, then join every push/);
   });
 
-  it("warns about their carry as a danger hero", () => {
-    const plan = gamePlan(new Engine(data()), { ours, theirs });
-    expect(plan.danger).toEqual(["Anti-Mage: farms fast. Take fights early."]);
+  it("leaves their carry out of the danger heroes without a minute to race", () => {
+    expect(gamePlan(new Engine(data()), { ours, theirs }).danger).toEqual([]);
   });
 
   it("names no enemy carry when their pos 1 is a support filling the slot", () => {
@@ -97,7 +96,10 @@ describe("gamePlan", () => {
     const d = data();
     // Pos 1 in 1 game of 5, and nobody else in their lineup plays it.
     d.positions![1] = [200, 0, 0, 400, 400];
-    expect(gamePlan(new Engine(d), { ours, theirs }).danger).toEqual(["Anti-Mage: farms fast. Take fights early."]);
+    const plan = gamePlan(new Engine(d), { ours, theirs });
+    // Named as their carry; with no sure minute to race, not as a danger hero.
+    expect(JSON.stringify([plan.story, plan.teamFallbacks])).toContain("Anti-Mage");
+    expect(plan.danger).toEqual([]);
   });
 
   it("gives an enemy's item minute only when it comes from their position", () => {
@@ -109,7 +111,7 @@ describe("gamePlan", () => {
     expect(line()).toMatch(/^Anti-Mage: Battle Fury around \d+ min/);
     // Played as a pos 1 only half the time: his usual build isn't a pos 1 build.
     d.positions![1] = [500, 0, 0, 500, 0];
-    expect(line()).toBe("Anti-Mage: farms fast. Take fights early.");
+    expect(line()).toBeUndefined();
   });
 
   it("gives every player a job, and no build without item data", () => {
