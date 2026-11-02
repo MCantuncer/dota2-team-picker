@@ -3,8 +3,8 @@
  * minutes in the Game Story. STRATZ counts every purchase by the minute it happened, with wins, so
  * each item gets its average minute and the minute after which buying it is slower than most.
  *
- * About 1,300 slices (each hero's two main positions, four rank groups and all ranks) fit in about
- * 22 batched queries, so they are refreshed once a day like the item builds.
+ * About 1,500 slices (each hero's main positions, four rank groups and all ranks) fit in about
+ * 25 batched queries, so they are refreshed once a day like the item builds.
  */
 import { isConsumable, isCoreItem } from "../engine/item-build";
 import type { ItemInfo, ItemTimingSlice, ItemTimingSliceKey, Position, RankGroup, Snapshot } from "../engine/types";
@@ -13,8 +13,14 @@ const ITEM_TIMINGS_MAX_AGE_DAYS = 1;
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** STRATZ answered 60 aliases in one query in about 0.6 seconds (Nov 2026 test). */
 export const SLICES_PER_QUERY = 60;
-/** Positions per hero to fetch, most played first. Off positions rarely have data. */
+/**
+ * Positions per hero to fetch: the two most played, plus a third played in at least
+ * FLEX_POSITION_SHARE of games, so a flex pick like carry Vengeful Spirit (1 game in 5) gets real
+ * pos 1 minutes. Rarer positions rarely have data.
+ */
 const POSITIONS_PER_HERO = 2;
+const MAX_POSITIONS_PER_HERO = 3;
+export const FLEX_POSITION_SHARE = 0.15;
 /** Core items kept per slice; more than a build shows, so the engine can drop components. */
 const ITEMS_PER_SLICE = 10;
 /** A small item is a lane item when this share of the slice's games buy it... */
@@ -65,14 +71,16 @@ export function itemTimingsDue(snapshot: Snapshot, now: Date): boolean {
 
 /** Each hero's most played positions with games, from the STRATZ positions in the snapshot. */
 export function timingRequests(positions: NonNullable<Snapshot["positions"]>): TimingRequest[] {
-  return Object.entries(positions).flatMap(([id, games]) =>
-    games
+  return Object.entries(positions).flatMap(([id, games]) => {
+    const total = games.reduce((a, b) => a + b, 0);
+    return games
       .map((g, i) => ({ position: (i + 1) as Position, games: g })) // Index 0 to 4 is pos 1 to 5.
       .filter((p) => p.games > 0)
       .sort((a, b) => b.games - a.games)
-      .slice(0, POSITIONS_PER_HERO)
-      .flatMap(({ position }) => SLICE_KEYS.map((slice) => ({ heroId: Number(id), position, slice }))),
-  );
+      .filter((p, rank) => rank < POSITIONS_PER_HERO || p.games >= total * FLEX_POSITION_SHARE)
+      .slice(0, MAX_POSITIONS_PER_HERO)
+      .flatMap(({ position }) => SLICE_KEYS.map((slice) => ({ heroId: Number(id), position, slice })));
+  });
 }
 
 /** One query with an alias (s0, s1, ...) per request. */

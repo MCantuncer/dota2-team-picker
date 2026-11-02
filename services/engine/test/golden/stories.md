@@ -623,8 +623,10 @@ Headline: End early: take towers before their carries are ready.
 - 0 to 10 min: Every lane is even: the better last hits win.
 - 10 to 20 min: Ember Spirit's Spirit Vessel at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Their Storm Spirit has Orchid Malevolence at 18. Group up and take towers before their carries are ready.
 - 20 to 30 min: Take Roshan and end with the Aegis before 30 minutes.
+- 30 min on: Fight when Vengeful Spirit is dead or far from the fight.
 
 Danger heroes:
+- Vengeful Spirit: farms fast. Take fights early.
 
 If the game goes wrong:
 - Behind at 20? Defend towers together and only fight with your key spells ready.
