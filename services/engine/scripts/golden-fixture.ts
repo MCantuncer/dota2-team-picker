@@ -18,9 +18,12 @@ const ids = new Set(GOLDEN_DRAFTS.flatMap((d) => [...d.ours, ...d.theirs]).map(S
 /** Keeps only the entries whose key is one of the golden heroes. */
 const pick = <T>(rec: Record<string, T> | undefined): Record<string, T> | undefined =>
   rec && Object.fromEntries(Object.entries(rec).filter(([id]) => ids.has(id)));
-/** Matchups keyed hero, then enemy: keeps golden pairs only. */
+/**
+ * Matchups keyed hero, then enemy: keeps the golden heroes' whole rows, because the engine reads
+ * each hero's win rate in the matchup sample from its whole row.
+ */
 const pickPairs = <T>(rec: Record<string, Record<string, T>> | undefined) =>
-  rec && Object.fromEntries(Object.entries(rec).filter(([id]) => ids.has(id)).map(([id, row]) => [id, pick(row) ?? {}]));
+  rec && Object.fromEntries(Object.entries(rec).filter(([id]) => ids.has(id)));
 /** Synergy keyed "a-b": keeps pairs of golden heroes. */
 const pickSynergy = <T>(rec: Record<string, T> | undefined) =>
   rec && Object.fromEntries(Object.entries(rec).filter(([key]) => key.split("-").every((id) => ids.has(id))));

@@ -4,7 +4,7 @@
 
 Headline: Both teams are ready at 15 min: fight once your items are in, not before.
 
-- 0 to 10 min: Juggernaut farms safely in the safe lane against Axe and Witch Doctor: skip trades.
+- 0 to 10 min: Survive the off lane against Phantom Assassin and Lich: just get levels.
 - 10 to 20 min: Juggernaut's Battle Fury at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Puck's Blink Dagger at 19. Their Phantom Assassin has Battle Fury at 15.
 - 20 to 30 min: Roshan from 20 min, once three key items are in.
 - 30 min on: Fight when Phantom Assassin is dead or far from the fight.
@@ -16,13 +16,13 @@ If the game goes wrong:
 - Behind at 20? Defend towers together and only fight with your key spells ready.
 - Ahead at 20? Take Roshan and push one lane together with the Aegis.
 
-Lane Safe lane: Juggernaut + Crystal Maiden vs Axe + Witch Doctor, hard
+Lane Safe lane: Juggernaut + Crystal Maiden vs Axe + Witch Doctor, even
 Lane Mid: Puck vs Shadow Fiend, even
 Lane Off lane: Mars + Lion vs Phantom Assassin + Lich, hard
 
 ### Pos 1 Juggernaut
 Timings: rank
-Start: Quelling Blade, 2 Tango [Hard lane against Axe and Witch Doctor: more sustain], 2 Iron Branch, Magic Stick, Healing Salve [Hard lane against Axe and Witch Doctor: more sustain]
+Start: Quelling Blade, Tango, 2 Iron Branch, Magic Stick, Faerie Fire, Circlet
 Lane: Wraith Band 2, Magic Wand 3, Perseverance 10
 Boots: Power Treads 7, or Phase Boots 8
 First: Battle Fury 14/16
@@ -34,7 +34,6 @@ Vs Witch Doctor (lane, guessed): Heals their team through fights. Kill them firs
 Vs Phantom Assassin: Evasion: right clicks miss. buy Monkey King Bar.
 Vs Shadow Fiend: Magic burst. Stay spread so one combo can't catch two.
 Vs Lich: Magic burst. Stay spread so one combo can't catch two.
-If it goes wrong: Lane lost? Leave it at 5 to 6 min for the jungle and farm toward Battle Fury. Ask your supports to stack 2 camps.
 If it goes wrong: No Battle Fury by 16 min? Don't show on the map without it. Farm the side Axe is not on.
 
 ### Pos 2 Puck
@@ -88,7 +87,7 @@ If it goes wrong: Phantom Assassin is farming free? Pressure that lane before 10
 
 ### Pos 5 Crystal Maiden
 Timings: rank
-Start: 2 Tango [Hard lane against Axe and Witch Doctor: more sustain], Blood Grenade, Magic Stick, Iron Branch, Observer and Sentry Wards, Healing Salve [Hard lane against Axe and Witch Doctor: more sustain]
+Start: Tango, Blood Grenade, Magic Stick, Iron Branch, Enchanted Mango, Observer and Sentry Wards
 Lane: Magic Wand 3 [Against Witch Doctor's spells: get it early]
 Boots: Tranquil Boots 8
 First: Blink Dagger 23/26
@@ -100,7 +99,6 @@ Vs Witch Doctor (lane, guessed): Heals their team through fights. buy Magic Wand
 Vs Phantom Assassin: Evasion: right clicks miss. buy Force Staff.
 Vs Shadow Fiend: Magic burst. buy Glimmer Cape, Force Staff.
 Vs Lich: Magic burst. buy Glimmer Cape.
-If it goes wrong: Lane lost? Let Juggernaut take every last hit. Pull the near camp and keep a ward on the rune.
 If it goes wrong: Phantom Assassin is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.
 
 ## Divine late game against a push draft
@@ -317,7 +315,7 @@ If it goes wrong: Spectre is farming free? Ward their jungle so your cores can c
 
 Headline: Survive their early pushes: we are stronger after 25 minutes.
 
-- 0 to 10 min: Sniper farms safely in the mid against Pudge: skip trades.
+- 0 to 10 min: Wraith King and Lion win the safe lane against Legion Commander and Shadow Shaman: take their tower. Sniper farms safely in the mid against Pudge: skip trades.
 - 10 to 20 min: Axe's Blink Dagger at 16 and Wraith King's Radiance at 17: ready to fight at 17. Their Legion Commander has Blink Dagger at 15. Their strongest time: defend towers together while Wraith King farms.
 - 20 to 30 min: Sniper's Hurricane Pike at 26. Their Drow Ranger has Manta Style at 24. Roshan from 26 min, once three key items are in.
 - 30 min on: You are stronger now: take Roshan, then end with the Aegis.
@@ -329,7 +327,7 @@ If the game goes wrong:
 - Behind at 20? Defend high ground until Wraith King has Radiance. Catch their pos 4 and 5 out of position.
 - Ahead at 20? Keep vision in their jungle, take safe towers, and let Wraith King farm to full items.
 
-Lane Safe lane: Wraith King + Lion vs Legion Commander + Shadow Shaman, even
+Lane Safe lane: Wraith King + Lion vs Legion Commander + Shadow Shaman, win
 Lane Mid: Sniper vs Pudge, hard
 Lane Off lane: Axe + Ogre Magi vs Drow Ranger + Crystal Maiden, even
 
@@ -620,13 +618,13 @@ Vs Jakiro: Magic burst. buy Glimmer Cape.
 
 Headline: End early: take towers before their carries are ready.
 
-- 0 to 10 min: Every lane is even: the better last hits win.
+- 0 to 10 min: Survive the off lane against Vengeful Spirit and Witch Doctor: just get levels.
 - 10 to 20 min: Ember Spirit's Spirit Vessel at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Their Storm Spirit has Orchid Malevolence at 18. Group up and take towers before their carries are ready.
 - 20 to 30 min: Take Roshan and end with the Aegis before 30 minutes.
 - 30 min on: Fight when Vengeful Spirit is dead or far from the fight.
 
 Danger heroes:
-- Vengeful Spirit: farms fast. Take fights early.
+- Vengeful Spirit: Lock them down first in every fight.
 
 If the game goes wrong:
 - Behind at 20? Don't wait for the late game. Smoke together and catch one hero before each objective.
@@ -634,7 +632,7 @@ If the game goes wrong:
 
 Lane Safe lane: Ursa + Silencer vs Tidehunter + Pudge, even
 Lane Mid: Ember Spirit vs Storm Spirit, even
-Lane Off lane: Mars + Shadow Shaman vs Vengeful Spirit + Witch Doctor, even
+Lane Off lane: Mars + Shadow Shaman vs Vengeful Spirit + Witch Doctor, hard
 
 ### Pos 1 Ursa
 Job: Farm fast, then join every push: this game should end before 30 minutes.
@@ -662,7 +660,7 @@ If it goes wrong: No Spirit Vessel by 15 min? Stop rotating and farm mid and the
 
 ### Pos 3 Mars
 Timings: all
-Start: 2 Gauntlets of Strength, 2 Iron Branch, Tango, Quelling Blade, Circlet
+Start: Gauntlets of Strength, 2 Iron Branch, 2 Tango [Hard lane against Vengeful Spirit and Witch Doctor: more sustain], Quelling Blade, Healing Salve [Hard lane against Vengeful Spirit and Witch Doctor: more sustain]
 Lane: Bracer 2, Magic Wand 3 [Against Witch Doctor's spells: get it early], Soul Ring 5
 Boots: Phase Boots 10
 First: Blink Dagger 15/17
@@ -673,11 +671,12 @@ Vs Witch Doctor (lane): Heals their team through fights. buy Magic Wand, Black K
 Vs Tidehunter: Starts fights and soaks your damage. buy Black King Bar.
 Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
+If it goes wrong: Lane lost? Stop contesting Vengeful Spirit. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay behind your cores and soak damage.
 
 ### Pos 4 Shadow Shaman
 Timings: all
-Start: Tango, Blood Grenade, Magic Stick, Iron Branch, Sentry Ward, Observer and Sentry Wards
+Start: 2 Tango [Hard lane against Vengeful Spirit and Witch Doctor: more sustain], Blood Grenade, Magic Stick, Iron Branch, Sentry Ward, Observer and Sentry Wards, Healing Salve [Hard lane against Vengeful Spirit and Witch Doctor: more sustain]
 Lane: Magic Wand 3 [Against Witch Doctor's spells: get it early], Ring of Basilius 6
 Boots: Arcane Boots 11
 First: Blink Dagger 20/22
@@ -690,6 +689,8 @@ Vs Witch Doctor (lane): Heals their team through fights. buy Magic Wand, Glimmer
 Vs Tidehunter: Starts fights and soaks your damage. buy Glimmer Cape, Force Staff.
 Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
+If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Ursa.
+If it goes wrong: Vengeful Spirit is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 
 ### Pos 5 Silencer
 Job: Keep your carry alive in lane and place vision; save your key spell for their dive.
@@ -698,3 +699,4 @@ Vs Pudge (lane, guessed): Starts fights and soaks your damage. Don't focus them:
 Vs Vengeful Spirit: Magic burst. Stay spread so one combo can't catch two.
 Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
 Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
+If it goes wrong: Vengeful Spirit is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.
