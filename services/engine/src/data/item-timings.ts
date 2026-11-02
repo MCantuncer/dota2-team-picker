@@ -6,7 +6,7 @@
  * About 1,300 slices (each hero's two main positions, four rank groups and all ranks) fit in about
  * 22 batched queries, so they are refreshed once a day like the item builds.
  */
-import { isCoreItem } from "../engine/item-build";
+import { isConsumable, isCoreItem } from "../engine/item-build";
 import type { ItemInfo, ItemTimingSlice, ItemTimingSliceKey, Position, RankGroup, Snapshot } from "../engine/types";
 
 const ITEM_TIMINGS_MAX_AGE_DAYS = 1;
@@ -17,6 +17,12 @@ export const SLICES_PER_QUERY = 60;
 const POSITIONS_PER_HERO = 2;
 /** Core items kept per slice; more than a build shows, so the engine can drop components. */
 const ITEMS_PER_SLICE = 10;
+/** A small item is a lane item when this share of the slice's games buy it... */
+const LANE_SHARE = 0.25;
+/** ...by this minute on average. */
+const LANE_LAST_MINUTE = 12;
+/** Lane items kept per slice. */
+const LANE_ITEMS_PER_SLICE = 4;
 /** A minute counts as slower than most when its win rate is this far under the item's own. */
 const WIN_DROP = 0.05;
 /** Ignore minutes with less than this share of the item's purchases: too few games to trust. */
@@ -114,7 +120,7 @@ export function lateMinute(rows: PurchaseRow[], minute: number): number {
   return Math.max(drop?.time ?? p75, minute + 1);
 }
 
-/** Turns one slice's purchase rows into its most bought core items with their minutes, or null when empty. */
+/** Turns one slice's purchase rows into its most bought core and lane items with their minutes, or null when empty. */
 export function toTimingSlice(rows: PurchaseRow[], items: Record<string, ItemInfo>): ItemTimingSlice | null {
   const byItem = new Map<number, PurchaseRow[]>();
   for (const r of rows) {
@@ -124,15 +130,26 @@ export function toTimingSlice(rows: PurchaseRow[], items: Record<string, ItemInf
   }
   const counted = [...byItem].map(([id, list]) => ({ id, list, games: list.reduce((n, r) => n + r.matchCount, 0) }));
   if (counted.length === 0) return null;
+  const games = Math.max(...counted.map((c) => c.games));
+  const averageMinute = (list: PurchaseRow[], n: number) => list.reduce((sum, r) => sum + r.time * r.matchCount, 0) / n;
   const top = counted
     .filter((c) => isCoreItem(items[c.id]))
     .sort((a, b) => b.games - a.games)
     .slice(0, ITEMS_PER_SLICE)
-    .map(({ id, list, games }): ItemTimingSlice["items"][number] => {
-      const minute = Math.round(list.reduce((n, r) => n + r.time * r.matchCount, 0) / games);
+    .map(({ id, list, games: bought }): ItemTimingSlice["items"][number] => {
+      const minute = Math.round(averageMinute(list, bought));
       return [id, minute, lateMinute(list, minute)];
     });
-  return { games: Math.max(...counted.map((c) => c.games)), items: top };
+  const lane = counted
+    .filter((c) => items[c.id] && !isCoreItem(items[c.id]) && !isConsumable(items[c.id]) && c.games >= games * LANE_SHARE)
+    .map((c) => ({ id: c.id, games: c.games, minute: averageMinute(c.list, c.games) }))
+    .filter((c) => c.minute <= LANE_LAST_MINUTE)
+    // The most bought, told in buy order.
+    .sort((a, b) => b.games - a.games)
+    .slice(0, LANE_ITEMS_PER_SLICE)
+    .sort((a, b) => a.minute - b.minute)
+    .map((c): [number, number] => [c.id, Math.round(c.minute)]);
+  return { games, items: top, ...(lane.length ? { lane } : {}) };
 }
 
 /** Downloads item timings for every hero's main positions into the snapshot. */

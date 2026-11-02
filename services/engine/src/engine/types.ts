@@ -103,6 +103,11 @@ export interface ItemTimingSlice {
   games: number;
   /** Most bought core items first: [item id, average minute bought, minute after which a player is slower than most]. */
   items: [itemId: number, minute: number, lateMinute: number][];
+  /**
+   * Small items most players buy in lane, like Wraith Band, Magic Wand or Perseverance, in buy order:
+   * [item id, average minute bought]. Missing in snapshots from before Nov 2026.
+   */
+  lane?: [itemId: number, minute: number][];
 }
 
 export interface ItemStart {

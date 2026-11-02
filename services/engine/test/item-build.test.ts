@@ -134,6 +134,18 @@ describe("itemBuild with STRATZ item timings", () => {
     expect(itemBuild(d, 1, 2, [4])!.bootsOr).toBeUndefined();
   });
 
+  it("takes the lane items and their minutes from the slice, in buy order", () => {
+    const d = timed();
+    d.items![181] = item("orb_of_venom", "Orb of Venom", 275);
+    d.itemTimings![1]![1]!.all!.lane = [[181, 2], [36, 4]];
+    expect(itemBuild(d, 1, 1, [4])!.lane.map((i) => [i.name, i.minute])).toEqual([
+      ["Orb of Venom", 2],
+      ["Magic Wand", 4],
+    ]);
+    // A slice without lane items (an older snapshot) keeps OpenDota's.
+    expect(itemBuild(timed(), 1, 1, [4])!.lane.map((i) => i.name)).toEqual(["Magic Wand"]);
+  });
+
   it("uses the player's rank group when it has enough data", () => {
     const build = itemBuild(timed(), 1, 1, [4], 5)!;
     expect(build.timings).toBe("rank");
