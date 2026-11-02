@@ -253,9 +253,18 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     const exact = build?.timings !== "around";
     if (!exact && engine.fit(id)[position] < SURE_POSITION_ODDS) return undefined;
     const item = keyItem(engine, build, id, position);
-    return item && { name: item.name, minute: item.minute, exact };
+    return item && { itemId: item.itemId, name: item.name, minute: item.minute, exact };
   };
-  const danger = chooseDangerHeroes(threats, theirCarry).map(({ id, kind }) => {
+  // Their cores who start fights with a Blink Dagger, from a sure minute, earliest first.
+  const initiators = [...theirByPos]
+    .filter(([, id]) => isCore(id) && traitsOf(engine.hero(id)).has("initiation"))
+    .flatMap(([pos, id]) => {
+      const item = sureKeyItem(id, pos);
+      return item && engine.data.items?.[item.itemId]?.key === "blink" ? [{ id, minute: item.minute }] : [];
+    })
+    .sort((a, b) => a.minute - b.minute)
+    .map((i) => i.id);
+  const danger = chooseDangerHeroes(threats, theirCarry, initiators).map(({ id, kind }) => {
     const position = [...theirByPos].find(([, h]) => h === id)?.[0] ?? 1;
     const item = sureKeyItem(id, position);
     return dangerLine({ hero: name(id), kind, ...(item ? { item: { name: item.name, minute: item.minute } } : {}), isSure: item?.exact ?? false });

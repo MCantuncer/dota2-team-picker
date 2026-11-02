@@ -82,7 +82,14 @@ function headline(f: StoryFacts): string {
   if (f.ourTiming === "late" && f.theirTiming !== "late") {
     return f.ourCarry ? `Survive to 30 minutes: our ${f.ourCarry} outscales them.` : "Survive to 30 minutes: we outscale them.";
   }
-  if (f.ourTiming === "early") return "End early: take towers before their carries are ready.";
+  if (f.ourTiming === "early") {
+    const ready = nthMinute(f.spikes, READY_SPIKES);
+    const theirs = carrySpike(f) ?? byMinute(f.theirSpikes ?? [])[0];
+    if (ready !== undefined && theirs && ready + EVEN_MINUTES <= theirs.minute) {
+      return `End early: ready at ${ready}, push before ${theirs.hero}'s ${theirs.item} at ${theirs.minute}.`;
+    }
+    return ready !== undefined ? `End early: ready at ${ready}, take towers before 30 minutes.` : "End early: take towers before 30 minutes.";
+  }
   if (f.theirTiming === "early") return "Survive their early pushes: we are stronger after 25 minutes.";
   // No clear style: race our first two items against their carry's.
   const ready = nthMinute(f.spikes, READY_SPIKES);
@@ -157,7 +164,7 @@ function action(chapter: number, f: StoryFacts): string {
     case 0:
       return laneText(f);
     case 1:
-      if (earlyIsOurs) return theirs ? `Take towers before ${theirs.hero}'s ${theirs.item} at ${theirs.minute}.` : "Group up and take towers before their carries are ready.";
+      if (earlyIsOurs) return theirs ? `Take towers before ${theirs.hero}'s ${theirs.item} at ${theirs.minute}.` : "Group up and take towers.";
       if (f.theirTiming === "early") return f.ourCarry ? `Their strongest time: defend towers together while ${f.ourCarry} farms.` : "Their strongest time: defend towers together.";
       return f.combo ? `Open fights with ${f.combo}.` : "";
     case 2:

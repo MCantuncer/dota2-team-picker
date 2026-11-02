@@ -73,6 +73,16 @@ describe("gameStory", () => {
     expect(late.chapters[3]!.text).toBe("You are stronger now: take Roshan, then end with the Aegis.");
   });
 
+  it("ends an early game by our ready minute, and never names carries they don't have", () => {
+    const spikes = [14, 15].map((minute) => ({ hero: "Ursa", item: "Battle Fury", minute }));
+    const tide = [{ hero: "Tidehunter", item: "Blink Dagger", minute: 19 }];
+    expect(gameStory(facts({ ourTiming: "early", spikes, theirSpikes: tide })).headline).toBe(
+      "End early: ready at 15, push before Tidehunter's Blink Dagger at 19.",
+    );
+    expect(gameStory(facts({ ourTiming: "early", spikes })).headline).toBe("End early: ready at 15, take towers before 30 minutes.");
+    expect(JSON.stringify(gameStory(facts({ ourTiming: "early" })))).not.toContain("carries");
+  });
+
   it("never calls us stronger late when both teams are late game teams", () => {
     const story = gameStory(facts({ ourTiming: "late", theirTiming: "late" }));
     expect(story.chapters.at(-1)!.text).toBe("They are stronger: fight only with buyback and a big opening spell.");
