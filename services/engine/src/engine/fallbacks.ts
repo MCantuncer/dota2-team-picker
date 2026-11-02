@@ -84,10 +84,11 @@ export const FALLBACKS: readonly FallbackTemplate[] = [
   // Team
   { situation: "behindAt20", for: "team", scaling: "ours", text: "Behind at 20? Defend high ground until {ourCarry} has {ourKeyItem}. Catch their pos 4 and 5 out of position." },
   { situation: "behindAt20", for: "team", scaling: "ours", text: "Behind at 20? Defend high ground until your carry's items are in. Catch their pos 4 and 5 out of position." },
-  { situation: "behindAt20", for: "team", scaling: "theirs", text: "Behind at 20 against a late game team? Don't wait. Smoke together and catch one hero before each objective." },
+  { situation: "behindAt20", for: "team", scaling: "theirs", text: "Behind at 20? Don't wait for the late game. Smoke together and catch one hero before each objective." },
   { situation: "behindAt20", for: "team", scaling: "even", text: "Behind at 20? Defend towers together and only fight with your key spells ready." },
   { situation: "aheadAt20", for: "team", scaling: "theirs", text: "Ahead at 20? Take Roshan, then siege with the Aegis before {enemyCarry} has {enemyKeyItem} around {enemyMinute} min." },
-  { situation: "aheadAt20", for: "team", scaling: "theirs", text: "Ahead at 20? Take Roshan, then siege with the Aegis before their carry is ready." },
+  { situation: "aheadAt20", for: "team", scaling: "theirs", text: "Ahead at 20? Take Roshan, then siege with the Aegis before {enemyCarry} is ready." },
+  { situation: "aheadAt20", for: "team", scaling: "theirs", text: "Ahead at 20? Take Roshan, then siege high ground with the Aegis before 30 min." },
   { situation: "aheadAt20", for: "team", scaling: "ours", text: "Ahead at 20? Keep vision in their jungle, take safe towers, and let {ourCarry} farm to full items." },
   { situation: "aheadAt20", for: "team", scaling: "ours", text: "Ahead at 20? Keep vision in their jungle, take safe towers, and let your carry farm to full items." },
   { situation: "aheadAt20", for: "team", scaling: "even", text: "Ahead at 20? Take Roshan and push one lane together with the Aegis." },

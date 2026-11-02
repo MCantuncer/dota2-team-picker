@@ -117,8 +117,8 @@ Danger heroes:
 - Lycan: farms fast. Take fights early.
 
 If the game goes wrong:
-- Behind at 20? Defend towers together and only fight with your key spells ready.
-- Ahead at 20? Take Roshan and push one lane together with the Aegis.
+- Behind at 20? Defend high ground until Medusa has Manta Style. Catch their pos 4 and 5 out of position.
+- Ahead at 20? Keep vision in their jungle, take safe towers, and let Medusa farm to full items.
 
 Lane Safe lane: Medusa + Dazzle vs Underlord + Chen, even
 Lane Mid: Storm Spirit vs Leshrac, even
@@ -326,8 +326,8 @@ Danger heroes:
 - Drow Ranger: Manta Style at 24 min. Take fights and towers before then.
 
 If the game goes wrong:
-- Behind at 20? Defend towers together and only fight with your key spells ready.
-- Ahead at 20? Take Roshan and push one lane together with the Aegis.
+- Behind at 20? Defend high ground until Wraith King has Radiance. Catch their pos 4 and 5 out of position.
+- Ahead at 20? Keep vision in their jungle, take safe towers, and let Wraith King farm to full items.
 
 Lane Safe lane: Wraith King + Lion vs Legion Commander + Shadow Shaman, even
 Lane Mid: Sniper vs Pudge, hard
@@ -629,15 +629,15 @@ Danger heroes:
 - Vengeful Spirit: farms fast. Take fights early.
 
 If the game goes wrong:
-- Behind at 20? Defend towers together and only fight with your key spells ready.
-- Ahead at 20? Take Roshan and push one lane together with the Aegis.
+- Behind at 20? Don't wait for the late game. Smoke together and catch one hero before each objective.
+- Ahead at 20? Take Roshan, then siege with the Aegis before Vengeful Spirit is ready.
 
 Lane Safe lane: Ursa + Silencer vs Tidehunter + Pudge, even
 Lane Mid: Ember Spirit vs Storm Spirit, even
 Lane Off lane: Mars + Shadow Shaman vs Vengeful Spirit + Witch Doctor, even
 
 ### Pos 1 Ursa
-Job: Farm and carry the late game; join fights once your items are in.
+Job: Farm fast, then join every push: this game should end before 30 minutes.
 Vs Tidehunter (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Pudge (lane, guessed): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Vengeful Spirit: Magic burst. Stay spread so one combo can't catch two.
