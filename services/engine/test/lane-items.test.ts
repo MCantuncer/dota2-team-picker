@@ -50,7 +50,7 @@ describe("laneAdjusted", () => {
     const build = laneAdjusted(juggernaut(), { verdict: "hard", enemies: [AXE, SNIPER] }, ITEMS);
     expect(names(build.start)).toEqual(["Quelling Blade", "2 Tango", "2 Iron Branch", "Healing Salve"]);
     const salve = build.start.at(-1)!;
-    expect(salve).toMatchObject({ draft: true, reason: "Hard lane against Axe and Sniper: more sustain", against: [2, 35] });
+    expect(salve).toMatchObject({ draft: true, phase: "start", reason: "Hard lane against Axe and Sniper: more sustain", against: [2, 35] });
   });
 
   it("gives up one copy at a time", () => {

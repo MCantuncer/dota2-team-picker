@@ -123,6 +123,14 @@ const SITUATIONAL_ITEMS = 3;
 /** Rough minute each phase's items are bought by, for the order and the timings shown. */
 const PHASE_MINUTE = { start: 0, early: 8, mid: 18, late: 32 } as const;
 
+/**
+ * The steps of an item path: bought at the horn, in lane (small items and boots), the first big
+ * item, the next items before LATE_MINUTE, and the late items after it.
+ */
+export type ItemPhase = "start" | "lane" | "first" | "next" | "late";
+/** Items usually bought from this minute on are late items. */
+export const LATE_MINUTE = 30;
+
 export interface BuildItem {
   itemId: number;
   name: string;
@@ -133,8 +141,12 @@ export interface BuildItem {
   lateMinute?: number;
   /** Copies bought, when more than one (two Iron Branches at the start). */
   count?: number;
+  /** Where the item sits on the player's path (see ItemPhase). */
+  phase?: ItemPhase;
   /** Set when this draft changed the item from the hero's usual build (see lane-items.ts). */
   draft?: true;
+  /** The usual core item this one is bought instead of, for a counter item (see swapFor). */
+  replaces?: number;
   /** Why it is in the build, naming the enemy heroes it answers. Empty for the usual build. */
   reason?: string;
   /** The enemy hero ids the item answers, most matching threats first. Set with `reason`. */
@@ -276,14 +288,40 @@ export function itemBuild(
       });
     }
   }
+  const bootsId = boots === undefined ? undefined : Number(boots);
+  const firstBig = core.find((c) => c.itemId !== bootsId);
+  const laterPhase = (i: BuildItem): ItemPhase => (i.minute >= LATE_MINUTE ? "late" : "next");
+  const corePhase = (i: BuildItem): ItemPhase => (i.itemId === bootsId ? "lane" : i === firstBig ? "first" : laterPhase(i));
+  const withCounter = (i: BuildItem) => ({ ...i, phase: corePhase(i), ...(i.reason ? { draft: true as const } : {}) });
   return {
     timings: chosen?.source ?? "around",
-    start,
-    lane,
-    core,
-    ...(stratzOr ? { bootsOr: toItem(String(stratzOr[0]), stratzOr[1]) } : {}),
-    situational,
+    start: start.map((i) => ({ ...i, phase: "start" as const })),
+    lane: lane.map((i) => ({ ...i, phase: "lane" as const })),
+    core: core.map(withCounter),
+    ...(stratzOr ? { bootsOr: { ...toItem(String(stratzOr[0]), stratzOr[1]), phase: "lane" as const } } : {}),
+    situational: swapFor(situational, core, firstBig, bootsId, (i) => items[i.itemId]?.key === "blink").map((i) => ({ ...i, phase: laterPhase(i), draft: true as const })),
   };
+}
+
+/**
+ * Each counter item is bought instead of a usual core item: the one nearest its minute that answers
+ * nothing, and each usual item at most once. Never the boots, the first big item or a Blink Dagger,
+ * which starts an initiator's fights.
+ */
+function swapFor(
+  situational: BuildItem[],
+  core: BuildItem[],
+  firstBig: BuildItem | undefined,
+  bootsId: number | undefined,
+  isBlink: (i: BuildItem) => boolean,
+): BuildItem[] {
+  const free = core.filter((c) => c !== firstBig && c.itemId !== bootsId && !c.reason && !isBlink(c));
+  return situational.map((s) => {
+    const nearest = [...free].sort((a, b) => Math.abs(a.minute - s.minute) - Math.abs(b.minute - s.minute))[0];
+    if (!nearest) return s;
+    free.splice(free.indexOf(nearest), 1);
+    return { ...s, replaces: nearest.itemId };
+  });
 }
 
 /**
