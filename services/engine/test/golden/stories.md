@@ -10,8 +10,7 @@ Headline: Win the fights around your item timings.
 - 30 min on: Catch one hero before each objective.
 
 Danger heroes:
-- Lich: Glimmer Cape around 21 min. Lock them down first in every fight.
-- Phantom Assassin: Black King Bar at 26 min. Take fights and towers before then.
+- Phantom Assassin: Battle Fury at 15 min. Take fights and towers before then.
 
 If the game goes wrong:
 - Behind at 20? Defend towers together and only fight with your key spells ready.
@@ -65,8 +64,8 @@ Headline: Survive their early pushes: we are stronger after 25 minutes.
 - 30 min on: You are stronger now: take Roshan, then end with the Aegis.
 
 Danger heroes:
-- Shadow Shaman: Blink Dagger around 20 min. Lock them down first in every fight.
-- Lycan: Black King Bar around 32 min. Take fights and towers before then.
+- Leshrac: Blink Dagger at 14 min. Lock them down first in every fight.
+- Lycan: Helm of the Overlord around 18 min. Take fights and towers before then.
 
 If the game goes wrong:
 - Behind at 20? Defend towers together and only fight with your key spells ready.
@@ -120,8 +119,8 @@ Headline: Win the fights around your item timings.
 - 30 min on: Catch one hero before each objective.
 
 Danger heroes:
-- Bristleback: Consecrated Wraps at 16 min. Lock them down first in every fight.
-- Spectre: Black King Bar around 33 min. Take fights and towers before then.
+- Bristleback: Consecrated Wraps at 16 min. Don't focus them: kill their damage dealers first.
+- Spectre: Radiance around 18 min. Take fights and towers before then.
 
 If the game goes wrong:
 - Behind at 20? Defend towers together and only fight with your key spells ready.
@@ -176,8 +175,8 @@ Headline: Survive their early pushes: we are stronger after 25 minutes.
 - 30 min on: You are stronger now: take Roshan, then end with the Aegis.
 
 Danger heroes:
-- Pudge: Black King Bar around 29 min. Lock them down first in every fight.
-- Drow Ranger: Black King Bar at 36 min. Take fights and towers before then.
+- Pudge: Blink Dagger around 21 min. Don't focus them: kill their damage dealers first.
+- Drow Ranger: Manta Style at 24 min. Take fights and towers before then.
 
 If the game goes wrong:
 - Behind at 20? Defend towers together and only fight with your key spells ready.
@@ -229,7 +228,6 @@ Headline: Win the fights around your item timings.
 - 30 min on: Catch one hero before each objective.
 
 Danger heroes:
-- Hoodwink: Aether Lens at 24 min. Lock them down first in every fight.
 - Naga Siren: Manta Style around 18 min. Take fights and towers before then.
 
 If the game goes wrong:
@@ -283,8 +281,8 @@ Headline: Win the fights around your item timings.
 - 30 min on: Catch one hero before each objective.
 
 Danger heroes:
-- Huskar: Black King Bar at 26 min. Lock them down first in every fight.
-- Troll Warlord: Black King Bar at 27 min. Take fights and towers before then.
+- Huskar: Blink Dagger at 14 min. Lock them down first in every fight.
+- Troll Warlord: Battle Fury at 15 min. Take fights and towers before then.
 
 If the game goes wrong:
 - Behind at 20? Defend towers together and only fight with your key spells ready.
