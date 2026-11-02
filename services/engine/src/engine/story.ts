@@ -16,7 +16,11 @@ export interface Spike {
   hero: string;
   item: string;
   minute: number;
+  /** The minute comes from a build mixed over the hero's positions, so it is told as "around". */
+  around?: boolean;
 }
+
+const atMinute = (s: Spike) => `${s.around ? "around" : "at"} ${s.minute}`;
 
 export interface StoryFacts {
   ourTiming: Timing;
@@ -86,7 +90,7 @@ function headline(f: StoryFacts): string {
     const ready = nthMinute(f.spikes, READY_SPIKES);
     const theirs = carrySpike(f) ?? byMinute(f.theirSpikes ?? [])[0];
     if (ready !== undefined && theirs && ready + EVEN_MINUTES <= theirs.minute) {
-      return `End early: ready at ${ready}, push before ${theirs.hero}'s ${theirs.item} at ${theirs.minute}.`;
+      return `End early: ready at ${ready}, push before ${theirs.hero}'s ${theirs.item} ${atMinute(theirs)}.`;
     }
     return ready !== undefined ? `End early: ready at ${ready}, take towers before 30 minutes.` : "End early: take towers before 30 minutes.";
   }
@@ -95,36 +99,39 @@ function headline(f: StoryFacts): string {
   const ready = nthMinute(f.spikes, READY_SPIKES);
   const theirs = carrySpike(f);
   if (ready !== undefined && theirs) {
-    if (ready + EVEN_MINUTES <= theirs.minute) return `Fight from ${ready} min, before ${theirs.hero} has ${theirs.item} at ${theirs.minute}.`;
-    if (theirs.minute + EVEN_MINUTES <= ready) return `${theirs.hero} has ${theirs.item} at ${theirs.minute}: hold fights until ${ready} min.`;
+    if (ready + EVEN_MINUTES <= theirs.minute) return `Fight from ${ready} min, before ${theirs.hero} has ${theirs.item} ${atMinute(theirs)}.`;
+    if (theirs.minute + EVEN_MINUTES <= ready) return `${theirs.hero} has ${theirs.item} ${atMinute(theirs)}: hold fights until ${ready} min.`;
     return `Both teams are ready at ${ready} min: fight once your items are in, not before.`;
   }
   return "Win the fights around your item timings.";
 }
 
-const itemAt = (s: Spike) => `${s.hero}'s ${s.item} at ${s.minute}`;
+const itemAt = (s: Spike) => `${s.hero}'s ${s.item} ${atMinute(s)}`;
 
 /**
  * Our cores' items in one window, told as one moment: "Juggernaut's Battle Fury at 14 and Mars's
- * Blink Dagger at 15: ready to fight at 15." in the window of the second item, then one later item
- * per window ("Juggernaut's Black King Bar at 24.").
+ * Blink Dagger at 15: ready to fight at 15." in the window of the second item, and one later item
+ * in each later window ("Juggernaut's Black King Bar at 24.").
  */
-function ourSpikeText(spikes: Spike[], from: number, to: number): string {
+function ourSpikeText(spikes: Spike[], from: number, to: number, window: Timing): string {
   const sorted = byMinute(spikes);
   const ready = sorted[READY_SPIKES - 1]?.minute;
   const inWindow = (m: number) => m >= from && m < to;
+  if (ready !== undefined && inWindow(ready)) {
+    // In their strongest time the items mean we can hold, not that we go.
+    const go = window === "late" ? `fight back from ${ready}` : `ready to fight at ${ready}`;
+    return `${sorted.slice(0, READY_SPIKES).map(itemAt).join(" and ")}: ${go}.`;
+  }
   // Before the ready moment the items wait for it; a single core's item still shows.
   const later = ready === undefined ? sorted : sorted.slice(READY_SPIKES);
   const next = later.find((s) => inWindow(s.minute));
-  const readyText =
-    ready !== undefined && inWindow(ready) ? `${sorted.slice(0, READY_SPIKES).map(itemAt).join(" and ")}: ready to fight at ${ready}.` : "";
-  return [readyText, next ? `${itemAt(next)}.` : ""].filter(Boolean).join(" ");
+  return next ? `${itemAt(next)}.` : "";
 }
 
 /** "Their Phantom Assassin has Battle Fury at 17." for the first of their spikes in a window. */
 function theirSpikeText(spikes: Spike[], from: number, to: number): string {
   const first = spikes.find((s) => s.minute >= from && s.minute < to);
-  return first ? `Their ${first.hero} has ${first.item} at ${first.minute}.` : "";
+  return first ? `Their ${first.hero} has ${first.item} ${atMinute(first)}.` : "";
 }
 
 /** "Juggernaut and Crystal Maiden" or "the safe lane". */
@@ -169,7 +176,7 @@ function action(chapter: number, f: StoryFacts): string {
     case 0:
       return laneText(f);
     case 1:
-      if (earlyIsOurs) return theirs ? `Take towers before ${theirs.hero}'s ${theirs.item} at ${theirs.minute}.` : "Group up and take towers.";
+      if (earlyIsOurs) return theirs ? `Take towers before ${theirs.hero}'s ${theirs.item} ${atMinute(theirs)}.` : "Group up and take towers.";
       if (f.theirTiming === "early") return f.ourCarry ? `Their strongest time: defend towers together while ${f.ourCarry} farms.` : "Their strongest time: defend towers together.";
       return f.combo ? `Open fights with ${f.combo}.` : "";
     case 2:
@@ -196,7 +203,7 @@ export function gameStory(facts: StoryFacts): Story {
       return {
         phase: c.phase,
         text: [
-          isLane ? "" : ourSpikeText(facts.spikes, c.from, c.to),
+          isLane ? "" : ourSpikeText(facts.spikes, c.from, c.to, ourWindow(facts.ourTiming, facts.theirTiming)),
           isLane ? "" : theirSpikeText(carryFirst, c.from, c.to),
           action(i, facts),
         ]
