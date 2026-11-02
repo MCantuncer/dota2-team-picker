@@ -99,6 +99,9 @@ const CONSUMABLES = new Set([
 const CORE_MIN_COST = 1500;
 const BOOTS = new Set(["phase_boots", "power_treads", "arcane_boots", "tranquil_boots", "boots", "travel_boots", "guardian_greaves", "boots_of_bearing"]);
 
+/** Whether an item is a pair of boots past Boots of Speed, like Power Treads. */
+export const isUpgradedBoots = (item: ItemInfo | undefined) => item !== undefined && item.key !== "boots" && BOOTS.has(item.key);
+
 /** Whether an item can be part of a core build: boots, Aghanim's Shard, or any non-consumable from CORE_MIN_COST up. */
 export function isCoreItem(item: ItemInfo | undefined): boolean {
   if (!item || CONSUMABLES.has(item.key)) return false;
@@ -125,6 +128,8 @@ export interface BuildItem {
   minute: number;
   /** After this minute a player is slower than most with this item. Not known yet for every item. */
   lateMinute?: number;
+  /** Copies bought, when more than one (two Iron Branches at the start). */
+  count?: number;
   /** Why it is in the build, naming the enemy heroes it answers. Empty for the usual build. */
   reason?: string;
   /** The enemy hero ids the item answers, most matching threats first. Set with `reason`. */
@@ -141,6 +146,8 @@ export interface ItemBuild {
   /** Small items bought in lane before the core, like Bracer or Magic Wand. */
   lane: BuildItem[];
   core: BuildItem[];
+  /** Other boots many players buy instead of the core's, like Phase Boots for Power Treads. */
+  bootsOr?: BuildItem;
   situational: BuildItem[];
 }
 
@@ -178,7 +185,11 @@ export function itemBuild(
     return { itemId: Number(id), name: item.name, img: item.img, minute: Math.round(minute), ...(reason ? { reason } : {}) };
   };
 
-  const start = Object.entries(phases.start)
+  const starts = data.itemStarts?.[heroId]?.[position];
+  // STRATZ's start for this position when there is one, else OpenDota's for the hero.
+  const start = starts?.start.length
+    ? starts.start.filter(([id]) => items[id]).map(([id, count]) => ({ ...toItem(String(id), 0), ...(count > 1 ? { count } : {}) }))
+    : Object.entries(phases.start)
     // A support's start list holds both the ward pack and single wards; keep the pack.
     .filter(([id]) => items[id]?.key !== "ward_sentry" || !phases.start[idOf("ward_dispenser") ?? ""])
     .sort((a, b) => b[1] - a[1])
@@ -195,24 +206,28 @@ export function itemBuild(
     .sort((a, b) => b[1].count - a[1].count);
   const isBoots = (id: string) => BOOTS.has(items[id]?.key ?? "");
   const isBig = (id: string) => isCoreItem(items[id]);
-  // One pair of boots: the most bought.
-  const boots = candidates.find(([id]) => isBoots(id))?.[0];
+  // One pair of boots: STRATZ's most bought for this position with its minute, else OpenDota's.
+  const [stratzBoots, stratzOr] = (starts?.boots ?? []).filter(([id]) => items[id]);
+  const boots = stratzBoots ? String(stratzBoots[0]) : candidates.find(([id]) => isBoots(id))?.[0];
+  const bootsMinute = stratzBoots?.[1] ?? (boots ? bought.get(boots)?.minute : undefined) ?? PHASE_MINUTE.early;
   const chosen = chooseTimingSlice(data, heroId, position, rankBracket);
   const timed = new Map(chosen?.slice.items.map(([id, minute, lateMinute]) => [String(id), { minute, lateMinute }]));
   const core = chosen
     ? [
         // STRATZ keeps boots out of its item timings, so they still come from OpenDota.
-        ...(boots ? [toItem(boots, bought.get(boots)?.minute ?? PHASE_MINUTE.early)] : []),
+        ...(boots ? [toItem(boots, bootsMinute)] : []),
         ...finishedItems(chosen.slice, items)
           .filter(([id]) => isBig(String(id)) && !isBoots(String(id)))
           .slice(0, CORE_ITEMS - (boots ? 1 : 0))
           .map(([id, minute, lateMinute]) => ({ ...toItem(String(id), minute), lateMinute })),
       ].sort((a, b) => a.minute - b.minute)
-    : candidates
-        .filter(([id]) => isBig(id) && (!isBoots(id) || id === boots))
-        .slice(0, CORE_ITEMS)
-        .map(([id, b]) => toItem(id, b.minute))
-        .sort((a, b) => a.minute - b.minute);
+    : [
+        ...(boots ? [toItem(boots, bootsMinute)] : []),
+        ...candidates
+          .filter(([id]) => isBig(id) && !isBoots(id))
+          .slice(0, CORE_ITEMS - (boots ? 1 : 0))
+          .map(([id, b]) => toItem(id, b.minute)),
+      ].sort((a, b) => a.minute - b.minute);
   oneAfterAnother(core);
   const lane = candidates
     .filter(([id]) => !isBig(id))
@@ -249,7 +264,14 @@ export function itemBuild(
       });
     }
   }
-  return { timings: chosen?.source ?? "around", start, lane, core, situational };
+  return {
+    timings: chosen?.source ?? "around",
+    start,
+    lane,
+    core,
+    ...(stratzOr ? { bootsOr: toItem(String(stratzOr[0]), stratzOr[1]) } : {}),
+    situational,
+  };
 }
 
 /**

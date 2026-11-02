@@ -124,6 +124,9 @@ describe("fetchItemTimings", () => {
     expect(queries).toHaveLength(1);
     expect(Object.keys(data.itemTimings![1]![1]!).sort()).toEqual(["3", "all"]);
     expect(data.itemTimingsAt).toBe("2026-11-02T00:00:00.000Z");
+    // Start items come with the timings: without them, the timings are due again.
+    expect(itemTimingsDue(data, new Date("2026-11-02T12:00:00Z"))).toBe(true);
+    data.itemStarts = {};
     expect(itemTimingsDue(data, new Date("2026-11-02T12:00:00Z"))).toBe(false);
     expect(itemTimingsDue(data, new Date("2026-11-03T00:00:00Z"))).toBe(true);
   });
