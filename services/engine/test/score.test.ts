@@ -1,8 +1,9 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { guessEnemyPositions, positionFit } from "../src/engine/positions";
 import { Engine } from "../src/engine/score";
 import { unmetNeeds } from "../src/engine/traits";
-import { POSITIONS } from "../src/engine/types";
+import { POSITIONS, type Snapshot } from "../src/engine/types";
 import { fixture } from "./fixture";
 
 describe("Engine.suggest", () => {
@@ -141,4 +142,29 @@ describe("blind pick risk", () => {
     expect(synergy(4)).toBeCloseTo(synergy(undefined) * 1.5, 1);
     expect(synergy(5)).toBeCloseTo(synergy(undefined), 5);
   });
+});
+
+describe("Engine.matchupEdge on real data", () => {
+  // The repo copy of the hero data: every hero has a full matchup row.
+  const engine = new Engine(JSON.parse(readFileSync(new URL("../data/snapshot.json", import.meta.url), "utf8")) as Snapshot);
+
+  it("gives no hero an edge against the field as a whole", () => {
+    // Weighted by games, a hero's results against everyone add up to its own win rate, which the
+    // expected value already holds, so its edges should average out to about 0. Shrinking small
+    // samples leaves a little; a bias against every enemy leaves a lot (up to 1.1 before the fix).
+    const means = engine.heroes.map((hero) => {
+      let games = 0;
+      let edge = 0;
+      for (const enemy of engine.heroes) {
+        const n = engine.data.matchups[hero.id]?.[enemy.id]?.games ?? 0;
+        if (enemy.id === hero.id || n === 0) continue;
+        games += n;
+        edge += n * engine.matchupEdge(hero.id, enemy.id);
+      }
+      return { name: hero.name, edge: edge / games };
+    });
+    for (const m of means) expect(Math.abs(m.edge), m.name).toBeLessThan(0.4);
+    const sd = Math.sqrt(means.reduce((s, m) => s + m.edge ** 2, 0) / means.length);
+    expect(sd).toBeLessThan(0.2);
+});
 });
