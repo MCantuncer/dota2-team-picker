@@ -32,11 +32,16 @@ const THREAT_TOTAL_EDGE = 2;
 /** Heroes in a style before a team counts as playing it. */
 const STYLE_MIN = 2;
 /**
- * An enemy counts as a core (and, in the pos 1 slot, as their carry) only when players put the
- * hero in pos 1 to 3 at least this often. The position guess always fills pos 1, so a lineup with
- * no real carry would otherwise make a support like Vengeful Spirit "their carry".
+ * An enemy counts as a core (and, in the pos 1 slot, as their carry) when players put the hero in
+ * pos 1 to 3 at least this often...
  */
 const CORE_SHARE = 0.5;
+/**
+ * ...or when the hero is played in their guessed core slot this often and the guess is sure: a
+ * flex carry like Vengeful Spirit (pos 1 in 1 game of 5). The position guess always fills pos 1,
+ * so a hero who is never played there (Witch Doctor) still doesn't become "their carry".
+ */
+const FLEX_SHARE = 0.15;
 
 export type LaneVerdict = "win" | "even" | "hard";
 
@@ -219,11 +224,14 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     }),
   ].filter((line, i, all) => all.indexOf(line) === i);
 
-  const playsCore = (id: number) => {
+  /** Whether the enemy plays core in their guessed slot (see CORE_SHARE and FLEX_SHARE). */
+  const playsCore = (id: number, position: Position) => {
     const fit = engine.fit(id);
-    return fit[1] + fit[2] + fit[3] >= CORE_SHARE;
+    if (position > 3) return false;
+    if (fit[1] + fit[2] + fit[3] >= CORE_SHARE) return true;
+    return fit[position] >= FLEX_SHARE && (theirOdds[input.theirs.indexOf(id)]?.[position] ?? 0) >= SURE_POSITION_ODDS;
   };
-  const isCore = (id: number) => playsCore(id) && [...theirByPos].some(([pos, h]) => h === id && pos <= 3);
+  const isCore = (id: number) => [...theirByPos].some(([pos, h]) => h === id && playsCore(id, pos));
   const threats = input.theirs
     .filter(isCore)
     .map((t) => ({ t, edge: ourIds.reduce((s, o) => s + engine.matchupEdge(t, o, bracket), 0) }))
@@ -231,7 +239,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     .sort((a, b) => b.edge - a.edge)
     .map((e) => e.t);
   const guessedCarry = theirByPos.get(1);
-  const theirCarry = guessedCarry !== undefined && playsCore(guessedCarry) ? guessedCarry : undefined;
+  const theirCarry = guessedCarry !== undefined && playsCore(guessedCarry, 1) ? guessedCarry : undefined;
   /**
    * An enemy's key item, the one their power comes from, only when its minute can be trusted: the
    * hero's position is a sure guess, and the build is for that position. STRATZ timings are; a rough
@@ -360,7 +368,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       ...(hardLane?.theirs.length ? { hardLaneEnemies: hardLane.theirs.map(name) } : {}),
       ourMid: ourMid && name(ourMid.heroId),
       theirSpikes: [...theirByPos]
-        .filter(([pos, id]) => pos <= 3 && playsCore(id))
+        .filter(([pos, id]) => playsCore(id, pos))
         .flatMap(([pos, id]) => {
           const item = sureKeyItem(id, pos);
           return item ? [{ hero: name(id), item: item.name, minute: item.minute }] : [];
