@@ -112,6 +112,13 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
         env:
           SNAPSHOT_URL: https://odigcdwsvajkbvcxeskj.supabase.co/storage/v1/object/public/hero-data/snapshot.json
+      # The live data the comparison ran on, to rerun it or rebuild test fixtures locally.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: live-snapshot
+          path: ${{ runner.temp }}/live-snapshot.json
+          if-no-files-found: ignore
+          retention-days: 3
 
   accounts:
     name: Accounts (edge functions)
