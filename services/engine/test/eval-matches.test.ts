@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { isCandidate, mergeMatches, monthPath, toEvalMatch, type EvalMatch, type MatchDetail } from "../src/data/eval-matches";
-import { matchPositionsQuery, MATCHES_PER_QUERY, toMatchPositions } from "../src/data/stratz";
+import { fetchMatchPositions, matchPositionsQuery, MATCHES_PER_QUERY, toMatchPositions } from "../src/data/stratz";
 import type { PublicMatch } from "../src/data/fetch";
 
 const publicMatch = (over: Partial<PublicMatch> = {}): PublicMatch => ({
@@ -94,7 +94,9 @@ describe("monthPath and mergeMatches", () => {
 
 describe("STRATZ match positions", () => {
   it("asks for players of up to MATCHES_PER_QUERY matches", () => {
-    expect(matchPositionsQuery([1, 2])).toBe("{ matches(ids: [1, 2]) { id players { heroId position } } }");
+    expect(matchPositionsQuery([1, 2])).toBe(
+      "{ m0: match(id: 1) { id players { heroId position } } m1: match(id: 2) { id players { heroId position } } }",
+    );
     expect(() => matchPositionsQuery([])).toThrow();
     expect(() => matchPositionsQuery(Array.from({ length: MATCHES_PER_QUERY + 1 }, (_, i) => i + 1))).toThrow();
     expect(() => matchPositionsQuery([1.5])).toThrow();
@@ -105,9 +107,34 @@ describe("STRATZ match positions", () => {
       { id: 7, players: [{ heroId: 1, position: "POSITION_2" }, { heroId: 2, position: "UNKNOWN" }, { heroId: 3, position: null }] },
       { id: "bad", players: [] },
       { id: 8, players: null },
+      null,
     ]);
     expect([...out.keys()]).toEqual([7, 8]);
     expect([...out.get(7)!]).toEqual([[1, 2]]);
     expect(out.get(8)!.size).toBe(0);
+  });
+});
+
+describe("fetchMatchPositions", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** Answers each query from `answers` in turn: data for the aliases, or a GraphQL error. */
+  const stubStratz = (answers: ({ data: object } | { errors: { message: string }[] })[]) => {
+    let call = 0;
+    vi.stubGlobal("fetch", async () => new Response(JSON.stringify(answers[call++]), { status: 200 }));
+  };
+  const ids = Array.from({ length: MATCHES_PER_QUERY + 1 }, (_, i) => i + 1);
+
+  it("keeps the batches STRATZ answered and skips the one it refused", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    stubStratz([{ errors: [{ message: "Match not found" }] }, { data: { m0: { id: 11, players: [{ heroId: 5, position: "POSITION_3" }] } } }]);
+    const out = await fetchMatchPositions("token", ids);
+    expect([...out.keys()]).toEqual([11]);
+    expect(out.get(11)!.get(5)).toBe(3);
+  });
+
+  it("fails when every batch is refused", async () => {
+    stubStratz([{ errors: [{ message: "User is not an admin." }] }, { errors: [{ message: "User is not an admin." }] }]);
+    await expect(fetchMatchPositions("token", ids)).rejects.toThrow(/not an admin/);
   });
 });
