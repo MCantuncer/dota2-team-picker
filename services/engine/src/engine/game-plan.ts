@@ -1,5 +1,6 @@
 import { SURE_POSITION_ODDS, chooseDangerHeroes, dangerLine } from "./danger";
 import { pickFallbacks, type Scaling } from "./fallbacks";
+import { enemyList, type EnemyNote } from "./enemy-list";
 import { laneAdjusted } from "./lane-items";
 import { gameStory, type Story } from "./story";
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
@@ -52,6 +53,8 @@ export interface PlayerPlan {
   job: string;
   /** What to do if their lane or items go wrong, at most two lines. */
   fallbacks: string[];
+  /** The five enemies as this player meets them, in-lane first (see enemy-list.ts). */
+  enemies: EnemyNote[];
 }
 
 export interface GamePlan {
@@ -248,6 +251,17 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       build,
       job: playerJob(p.position, name(p.heroId), isInitiator, keyItem(engine, build, p.heroId, p.position), combo && `${combo.text} with ${partner}`),
       fallbacks: [],
+      enemies: enemyList(
+        build,
+        input.theirs.map((id, i) => {
+          const position = [...theirByPos].find(([, h]) => h === id)?.[0];
+          return {
+            hero: engine.hero(id),
+            inLane: lane.theirs.includes(id),
+            laneSure: position !== undefined && (theirOdds[i]?.[position] ?? 0) >= SURE_POSITION_ODDS,
+          };
+        }),
+      ),
     };
   });
 

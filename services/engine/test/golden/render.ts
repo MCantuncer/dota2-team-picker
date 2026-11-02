@@ -41,6 +41,13 @@ export function storyText(title: string, plan: GamePlan, heroName: (id: number) 
       }
     }
     lines.push(`Job: ${p.job}`);
+    const itemName = (id: number) =>
+      [...(p.build?.start ?? []), ...(p.build?.lane ?? []), ...(p.build?.core ?? []), ...(p.build?.situational ?? [])].find((i) => i.itemId === id)?.name;
+    for (const e of p.enemies) {
+      const where = e.inLane ? (e.laneSure ? " (lane)" : " (lane, guessed)") : "";
+      const answer = e.answers.length ? `buy ${e.answers.map(itemName).join(", ")}` : e.tip;
+      lines.push(`Vs ${heroName(e.heroId)}${where}: ${e.threat}. ${answer}.`);
+    }
     for (const f of p.fallbacks) lines.push(`If it goes wrong: ${f}`);
   }
   return `${lines.join("\n")}\n`;
