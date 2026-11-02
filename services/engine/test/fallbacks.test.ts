@@ -53,9 +53,7 @@ describe("fallbackFor", () => {
     expect(fallbackFor("keyItemLate", 1, { hero: "Juggernaut", item: "Black King Bar", minute: 24 })).toBe(
       "No Black King Bar by 24 min? Don't show on the map without it. Farm behind your towers.",
     );
-    expect(fallbackFor("carryFree", 4, {})).toBe(
-      "Their carry is farming free? Pressure that lane before 10 min. After that, take towers on the other side.",
-    );
+    expect(fallbackFor("laneLost", 3, {})).toBe("Lane lost? Stop contesting the lane. Farm the jungle and stay alive for the first fights.");
   });
 
   it("returns null when no line fits", () => {
