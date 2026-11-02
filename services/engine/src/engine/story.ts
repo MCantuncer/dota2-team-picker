@@ -125,13 +125,18 @@ const who = (lane: LaneFact) => (lane.ours.length ? listNames(lane.ours) : `the 
 const against = (lane: LaneFact) => (lane.theirs.length ? ` against ${listNames(lane.theirs)}` : "");
 
 /**
- * What each lane does, from the lane verdicts: the won lane takes the tower, the hard lane plays
- * for experience. A rotation plan would need to know where their supports go, which a draft can't.
+ * What each lane does, from the lane verdicts: the won lane takes the tower, a hard off lane plays
+ * for experience and a hard core lane for safe farm. A rotation plan would need to know where their supports go, which a draft can't.
  */
 function laneText(f: StoryFacts): string {
   const verb = (lane: LaneFact, one: string, many: string) => (lane.ours.length === 1 ? one : many);
   const won = f.wonLane && `${who(f.wonLane)} ${verb(f.wonLane, "wins", "win")} the ${f.wonLane.name}${against(f.wonLane)}: take their tower.`;
-  const hard = f.hardLane && `Survive the ${f.hardLane.name}${against(f.hardLane)}: just get levels.`;
+  // An offlaner needs levels; a carry or mid in a hard lane still needs farm.
+  const hard =
+    f.hardLane &&
+    (f.hardLane.name === "off lane"
+      ? `Survive the off lane${against(f.hardLane)}: just get levels.`
+      : `${f.hardLane.ours[0] ?? "Our core"} farms safely in the ${f.hardLane.name}${against(f.hardLane)}: skip trades.`);
   return [won, hard].filter(Boolean).join(" ") || "Every lane is even: the better last hits win.";
 }
 

@@ -4,7 +4,7 @@
 
 Headline: Both teams are ready at 15 min: fight once your items are in, not before.
 
-- 0 to 10 min: Survive the safe lane against Axe and Witch Doctor: just get levels.
+- 0 to 10 min: Juggernaut farms safely in the safe lane against Axe and Witch Doctor: skip trades.
 - 10 to 20 min: Juggernaut's Battle Fury at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Puck's Blink Dagger at 19. Their Phantom Assassin has Battle Fury at 15.
 - 20 to 30 min: Roshan from 20 min, once three key items are in.
 - 30 min on: Fight when Phantom Assassin is dead or far from the fight.
@@ -211,7 +211,7 @@ If it goes wrong: Lycan is farming free? Ward their jungle so your cores can cat
 
 Headline: Fight from 13 min, before Spectre has Radiance at 18.
 
-- 0 to 10 min: Invoker wins the mid against Ember Spirit: take their tower. Survive the safe lane against Bristleback and Nyx Assassin: just get levels.
+- 0 to 10 min: Invoker wins the mid against Ember Spirit: take their tower. Faceless Void farms safely in the safe lane against Bristleback and Nyx Assassin: skip trades.
 - 10 to 20 min: Invoker's Meteor Hammer at 12 and Magnus's Blink Dagger at 13: ready to fight at 13. Faceless Void's Battle Fury at 16. Their Spectre has Radiance at 18. Open fights with Chronosphere into Sun Strike and Chaos Meteor.
 - 20 to 30 min: Roshan from 20 min, once three key items are in.
 - 30 min on: Fight when Spectre is dead or far from the fight.
@@ -317,7 +317,7 @@ If it goes wrong: Spectre is farming free? Ward their jungle so your cores can c
 
 Headline: Survive their early pushes: we are stronger after 25 minutes.
 
-- 0 to 10 min: Survive the mid against Pudge: just get levels.
+- 0 to 10 min: Sniper farms safely in the mid against Pudge: skip trades.
 - 10 to 20 min: Axe's Blink Dagger at 16 and Wraith King's Radiance at 17: ready to fight at 17. Their Legion Commander has Blink Dagger at 15. Their strongest time: defend towers together while Wraith King farms.
 - 20 to 30 min: Sniper's Hurricane Pike at 26. Their Drow Ranger has Manta Style at 24. Roshan from 26 min, once three key items are in.
 - 30 min on: You are stronger now: take Roshan, then end with the Aegis.
@@ -419,7 +419,7 @@ Vs Crystal Maiden: Magic burst. Stay spread so one combo can't catch two.
 
 Headline: Both teams are ready at 17 min: fight once your items are in, not before.
 
-- 0 to 10 min: Survive the safe lane against Primal Beast and Hoodwink: just get levels.
+- 0 to 10 min: Terrorblade farms safely in the safe lane against Primal Beast and Hoodwink: skip trades.
 - 10 to 20 min: Mars's Blink Dagger at 15 and Templar Assassin's Desolator at 17: ready to fight at 17. Terrorblade's Manta Style at 19. Their Naga Siren has Manta Style at 18.
 - 20 to 30 min: Their Pangolier has Blink Dagger at 20. Roshan from 20 min, once three key items are in.
 - 30 min on: Fight when Naga Siren is dead or far from the fight.

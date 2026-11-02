@@ -51,7 +51,7 @@ describe("gameStory", () => {
 
   it("tells each lane what to do from its verdict, never sending the mid on a template rotation", () => {
     expect(gameStory(facts({ hardLane: { name: "mid", ours: ["Puck"], theirs: ["Pudge"] } })).chapters[0]!.text).toBe(
-      "Survive the mid against Pudge: just get levels.",
+      "Puck farms safely in the mid against Pudge: skip trades.",
     );
     expect(gameStory(facts()).chapters[0]!.text).toBe("Every lane is even: the better last hits win.");
   });
