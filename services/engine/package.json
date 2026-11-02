@@ -15,7 +15,8 @@
     "fit-win-chance": "tsx scripts/fit-win-chance.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "compare-drafts": "tsx scripts/compare-drafts.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
