@@ -1,8 +1,19 @@
 /**
  * Danger heroes for the Game Story: the one or two enemies who decide the game, each with when
- * they come online and what our team does about it. Their timing is their BKB when they buy one,
- * else their first big item, because that is when fighting them gets hard (Game Story plan).
+ * they come online and what our team does about it. Only their cores (pos 1 to 3) count: a support
+ * who wins matchups still dies first in a fight. Their timing is their first big item, the one
+ * their power comes from (Phantom Assassin's Battle Fury or Desolator, not her late BKB).
  */
+
+/**
+ * Tanks that win the fight when a team spends its spells on them first, so the answer is to kill
+ * their damage dealers instead. Hand-kept: OpenDota's "Durable" role also covers Huskar and
+ * Spectre, who should be focused.
+ */
+export const DONT_FOCUS = new Set([
+  "Bristleback", "Centaur Warrunner", "Tidehunter", "Axe", "Mars", "Underlord", "Dragon Knight",
+  "Timbersaw", "Pudge", "Abaddon", "Primal Beast",
+]);
 
 /** At most this many danger heroes, so the section stays a few seconds to read. */
 export const DANGER_HEROES = 2;
@@ -32,7 +43,12 @@ export function chooseDangerHeroes(threats: number[], carry: number | undefined)
 
 /** "Faceless Void: Black King Bar at 21 min. Take fights and towers before then." */
 export function dangerLine(f: DangerFacts): string {
-  const answer = f.kind === "carry" ? "Take fights and towers before then." : "Lock them down first in every fight.";
+  const answer =
+    f.kind === "carry"
+      ? "Take fights and towers before then."
+      : DONT_FOCUS.has(f.hero)
+        ? "Don't focus them: kill their damage dealers first."
+        : "Lock them down first in every fight.";
   if (!f.item) return `${f.hero}: ${f.kind === "carry" ? "farms fast. Take fights early." : answer}`;
   return `${f.hero}: ${f.item.name} ${f.isSure ? "at" : "around"} ${f.item.minute} min. ${answer}`;
 }

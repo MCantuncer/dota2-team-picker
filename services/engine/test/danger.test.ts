@@ -36,6 +36,12 @@ describe("dangerLine", () => {
     );
   });
 
+  it("tells the team not to focus a tank first", () => {
+    expect(dangerLine({ hero: "Bristleback", kind: "threat", item: { name: "Consecrated Wraps", minute: 16 }, isSure: true })).toBe(
+      "Bristleback: Consecrated Wraps at 16 min. Don't focus them: kill their damage dealers first.",
+    );
+  });
+
   it("still warns without item data", () => {
     expect(dangerLine({ hero: "Medusa", kind: "carry", isSure: false })).toBe("Medusa: farms fast. Take fights early.");
   });

@@ -209,7 +209,9 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     }),
   ].filter((line, i, all) => all.indexOf(line) === i);
 
+  const isCore = (id: number) => [...theirByPos].some(([pos, h]) => h === id && pos <= 3);
   const threats = input.theirs
+    .filter(isCore)
     .map((t) => ({ t, edge: ourIds.reduce((s, o) => s + engine.matchupEdge(t, o, bracket), 0) }))
     .filter((e) => e.edge >= THREAT_TOTAL_EDGE)
     .sort((a, b) => b.edge - a.edge)
@@ -218,10 +220,9 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   const danger = chooseDangerHeroes(threats, theirCarry).map(({ id, kind }) => {
     const i = input.theirs.indexOf(id);
     const position = [...theirByPos].find(([, h]) => h === id)?.[0] ?? 1;
-    // Their usual build: counter items moved up against our heroes would give a too-early minute.
+    // Their usual build, with the item their power comes from.
     const build = itemBuild(engine.data, id, position, [], bracket);
-    const bkb = build?.core.find((c) => engine.data.items?.[c.itemId]?.key === "black_king_bar");
-    const item = bkb ?? keyItem(engine, build, id, position);
+    const item = keyItem(engine, build, id, position);
     return dangerLine({
       hero: name(id),
       kind,
