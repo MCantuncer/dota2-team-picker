@@ -2,7 +2,7 @@ import { SURE_POSITION_ODDS, chooseDangerHeroes, dangerLine } from "./danger";
 import { pickFallbacks, type Scaling } from "./fallbacks";
 import { gameStory, type Story } from "./story";
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
-import { itemBuild, listNames, type ItemBuild } from "./item-build";
+import { itemBuild, listNames, type BuildItem, type ItemBuild } from "./item-build";
 import { guessEnemyPositions, type PositionFit } from "./positions";
 import type { Engine } from "./score";
 import { traitsOf } from "./traits";
@@ -129,9 +129,16 @@ function laneText(verdict: LaneVerdict, theirNames: string): string {
 /** Items under this cost don't change a fight, so they are not named as a timing. */
 const KEY_ITEM_MIN_COST = 2000;
 
-/** First big item of the build, to name the player's timing. */
-function keyItem(engine: Engine, build: ItemBuild | null) {
-  return build?.core.find((i) => (engine.data.items?.[i.itemId]?.cost ?? 0) >= KEY_ITEM_MIN_COST);
+/**
+ * The item that decides the player's timing: Blink Dagger for a non-carry who starts fights and
+ * buys one (Tidehunter, Magnus, Lion start fights with it, whatever they buy first), else the first
+ * big item of the build. A carry's timing stays its farming item (Wraith King's Radiance).
+ */
+function keyItem(engine: Engine, build: ItemBuild | null, heroId: number | undefined, position: Position) {
+  const isBlink = (i: BuildItem) => engine.data.items?.[i.itemId]?.key === "blink";
+  const startsFights = position !== 1 && heroId !== undefined && traitsOf(engine.hero(heroId)).has("initiation");
+  const blink = startsFights ? build?.core.find(isBlink) : undefined;
+  return blink ?? build?.core.find((i) => (engine.data.items?.[i.itemId]?.cost ?? 0) >= KEY_ITEM_MIN_COST);
 }
 
 function playerJob(position: Position, name: string, isInitiator: boolean, item: ItemBuild["core"][number] | undefined, combo?: string): string {
@@ -214,7 +221,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     // Their usual build: counter items moved up against our heroes would give a too-early minute.
     const build = itemBuild(engine.data, id, position, [], bracket);
     const bkb = build?.core.find((c) => engine.data.items?.[c.itemId]?.key === "black_king_bar");
-    const item = bkb ?? keyItem(engine, build);
+    const item = bkb ?? keyItem(engine, build, id, position);
     return dangerLine({
       hero: name(id),
       kind,
@@ -232,18 +239,18 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       heroId: p.heroId,
       position: p.position,
       build,
-      job: playerJob(p.position, name(p.heroId), isInitiator, keyItem(engine, build), combo && `${combo.text} with ${partner}`),
+      job: playerJob(p.position, name(p.heroId), isInitiator, keyItem(engine, build, p.heroId, p.position), combo && `${combo.text} with ${partner}`),
       fallbacks: [],
     };
   });
 
   const laneOf = (heroId: number) => lanes.find((l) => l.ours.includes(heroId))!; // Every position is in a lane.
   const carry = players.find((p) => p.position === 1);
-  const carryItem = keyItem(engine, carry?.build ?? null);
+  const carryItem = keyItem(engine, carry?.build ?? null, carry?.heroId, 1);
   const enemyAt = (p: Position) => (theirByPos.has(p) ? name(theirByPos.get(p)!) : undefined); // has() checked.
   const picked = pickFallbacks({
     players: players.map((p) => {
-      const item = keyItem(engine, p.build);
+      const item = keyItem(engine, p.build, p.heroId, p.position);
       return {
         position: p.position,
         hero: name(p.heroId),
@@ -311,7 +318,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       wonLane: wonLane?.name.toLowerCase(),
       hardLane: hardLane?.name.toLowerCase(),
       spikes: players.flatMap((p) => {
-        const item = keyItem(engine, p.build);
+        const item = keyItem(engine, p.build, p.heroId, p.position);
         return item ? [{ hero: name(p.heroId), item: item.name, minute: item.minute }] : [];
       }),
       combo: firstCombo?.text,
