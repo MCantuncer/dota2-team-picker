@@ -327,7 +327,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   const ourTiming = timing(ourStyle?.key);
   const theirTiming = timing(theirStyle?.key);
   const firstCombo = ourCombos[0];
-  const ourMid = players.find((p) => p.position === 2);
+  const laneFact = (l: LanePlan) => ({ name: l.name.toLowerCase(), ours: l.ours.map(name), theirs: l.theirs.map(name) });
   const roadmap = [
     {
       phase: "Laning (0 to 10 min)",
@@ -371,10 +371,8 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     story: gameStory({
       ourTiming,
       theirTiming,
-      wonLane: wonLane?.name.toLowerCase(),
-      hardLane: hardLane?.name.toLowerCase(),
-      ...(hardLane?.theirs.length ? { hardLaneEnemies: hardLane.theirs.map(name) } : {}),
-      ourMid: ourMid && name(ourMid.heroId),
+      ...(wonLane ? { wonLane: laneFact(wonLane) } : {}),
+      ...(hardLane ? { hardLane: laneFact(hardLane) } : {}),
       theirSpikes: [...theirByPos]
         .filter(([pos, id]) => pos <= 3 && playsCore(id))
         .flatMap(([pos, id]) => {
