@@ -5,6 +5,9 @@
  * OpenDota call comes from the trends share of the daily budget first; the run stops when the
  * budget, the run cap or a rate limit says so.
  */
+import { buildFact, type FactItem, type FactRow } from "../feedback/fact.ts";
+import type { GameSummary } from "../feedback/summary.ts";
+import type { Match } from "../report/match.ts";
 import type { BenchmarkStat, HeroBenchmarks } from "./benchmarks.ts";
 import { isCountedGame, positionFromLane, readRecentMatch, type RecentMatch, type TrendGame } from "./games.ts";
 import type { CountedDraftGame } from "./drafts.ts";
@@ -14,8 +17,11 @@ import { poolCardText } from "./reason.ts";
 import { findPoolCandidates, type HeroRecord, pairKey, type PoolCandidate, type PoolEntry } from "./rules.ts";
 
 /** The trends job's own name and daily share in the OpenDota budget. */
-export const TRENDS_BUDGET = { caller: "trends", dailyCap: 300 } as const;
+/** Shared by the hero pool cards and game feedback (plan: 500 a day for both). */
+export const TRENDS_BUDGET = { caller: "trends", dailyCap: 500 } as const;
 export const MAX_RUN_CALLS = 40;
+/** Game feedback's own cap per run, after the cards, so neither starves the other. */
+export const MAX_FACT_CALLS = 20;
 
 /** A player claim_trend_players handed out. */
 export interface TrendPlayer {
@@ -80,13 +86,36 @@ export interface TrendDeps {
   save: (userId: string, check: TrendCheck) => Promise<void>;
   nowS: () => number;
   log: (message: string, err?: unknown) => void;
+  /** Game feedback (player_game_facts); left out, the run only does the cards. */
+  facts?: FactsDeps;
 }
+
+export interface FactsDeps {
+  /** Removes rows older than KEEP_DAYS. */
+  purge: () => Promise<void>;
+  /** Rows waiting for a parse whose next try is due, oldest first. */
+  dueRows: () => Promise<FactItem[]>;
+  /** Games with no row yet, picked by pickNewGames. */
+  newGames: () => Promise<FactItem[]>;
+  fetchMatch: (matchId: number) => Promise<unknown | null>;
+  requestParse: (matchId: number) => Promise<void>;
+  summarize: (match: Match, item: FactItem) => GameSummary | null;
+  /** Upserts the row on (user_id, match_id). */
+  save: (row: FactRow) => Promise<void>;
+  now: () => Date;
+}
+
+type StopReason = "run cap" | "daily budget" | "rate limit";
 
 export interface TrendRunResult {
   checked: number;
   cards: number;
   calls: number;
-  stopped: "run cap" | "daily budget" | "rate limit" | null;
+  stopped: StopReason | null;
+  /** Game feedback rows saved, and the calls they used (also counted in `calls`). */
+  facts: number;
+  factCalls: number;
+  factsStopped: StopReason | null;
 }
 
 /** OpenDota said 429: the run stops and the rest waits for the next one. */
@@ -99,7 +128,15 @@ class Stop extends Error {
 }
 
 export async function runTrends(deps: TrendDeps, maxCalls = MAX_RUN_CALLS): Promise<TrendRunResult> {
-  const result: TrendRunResult = { checked: 0, cards: 0, calls: 0, stopped: null };
+  const result: TrendRunResult = {
+    checked: 0,
+    cards: 0,
+    calls: 0,
+    stopped: null,
+    facts: 0,
+    factCalls: 0,
+    factsStopped: null,
+  };
   const take = async (n: number) => {
     if (result.calls + n > maxCalls) throw new Stop("run cap");
     if (!(await deps.takeCalls(n))) throw new Stop("daily budget");
@@ -124,7 +161,52 @@ export async function runTrends(deps: TrendDeps, maxCalls = MAX_RUN_CALLS): Prom
       deps.log(`Trend check for ${player.user_id} failed`, err);
     }
   }
+  if (deps.facts && result.stopped !== "daily budget" && result.stopped !== "rate limit") {
+    await runFacts(deps.facts, deps, result);
+  }
   return result;
+}
+
+const isStop = (err: unknown) => err instanceof Stop || err instanceof OpenDotaBusy;
+const stopReason = (err: unknown): StopReason => (err instanceof Stop ? err.reason : "rate limit");
+
+/**
+ * Game feedback after the cards: drop old rows, then build due rows and new games until the
+ * feedback cap, the daily budget or a rate limit stops it. One game's error never stops the rest.
+ */
+async function runFacts(facts: FactsDeps, deps: TrendDeps, result: TrendRunResult) {
+  const take = async (n: number) => {
+    if (result.factCalls + n > MAX_FACT_CALLS) throw new Stop("run cap");
+    if (!(await deps.takeCalls(n))) throw new Stop("daily budget");
+    result.factCalls += n;
+    result.calls += n;
+  };
+  try {
+    await facts.purge();
+    const items = [...await facts.dueRows(), ...await facts.newGames()];
+    for (const item of items) {
+      const row = await buildFact(item, {
+        take,
+        fetchMatch: facts.fetchMatch,
+        requestParse: facts.requestParse,
+        summarize: facts.summarize,
+        now: facts.now(),
+      }, isStop);
+      if (!row) continue;
+      try {
+        await facts.save(row);
+        result.facts++;
+      } catch (err) {
+        deps.log(`Saving game ${item.match_id} for ${item.user_id} failed`, err);
+      }
+    }
+  } catch (err) {
+    if (!isStop(err)) {
+      deps.log("Game feedback failed", err);
+      return;
+    }
+    result.factsStopped = stopReason(err);
+  }
 }
 
 async function checkPlayer(player: TrendPlayer, deps: TrendDeps, take: (n: number) => Promise<void>) {

@@ -2,9 +2,19 @@ import { assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
 import type { HeroBenchmarks } from "./benchmarks.ts";
 import type { CountedDraftGame } from "./drafts.ts";
 import type { CountedStratzGame } from "./stratz.ts";
-import { OpenDotaBusy, runTrends, type TrendCheck, type TrendDeps, type TrendPlayer } from "./job.ts";
+import type { FactItem, FactRow } from "../feedback/fact.ts";
+import {
+  type FactsDeps,
+  MAX_FACT_CALLS,
+  OpenDotaBusy,
+  runTrends,
+  type TrendCheck,
+  type TrendDeps,
+  type TrendPlayer,
+} from "./job.ts";
 
 const NOW_S = 1_800_000_000;
+const NO_FACTS = { facts: 0, factCalls: 0, factsStopped: null };
 const HOUR_S = 3600;
 const MONKEY_KING = 114;
 
@@ -94,7 +104,7 @@ function stub(players: TrendPlayer[], over: Partial<TrendDeps> = {}): Stub {
 Deno.test("a strong winning streak opens one card and saves the games", async () => {
   const s = stub([player()]);
   const result = await runTrends(s.deps);
-  assertEquals(result, { checked: 1, cards: 1, calls: 2, stopped: null });
+  assertEquals(result, { checked: 1, cards: 1, calls: 2, stopped: null, ...NO_FACTS });
   assertEquals(s.benchmarkFetches, [MONKEY_KING]);
   const [userId, check] = s.saved[0];
   assertEquals(userId, "u1");
@@ -168,7 +178,7 @@ Deno.test("a refused budget stops the run before the next player", async () => {
 Deno.test("the run cap stops the run without asking the budget", async () => {
   const s = stub([player(), player({ user_id: "u2" })]);
   const result = await runTrends(s.deps, 3);
-  assertEquals(result, { checked: 1, cards: 1, calls: 3, stopped: "run cap" });
+  assertEquals(result, { checked: 1, cards: 1, calls: 3, stopped: "run cap", ...NO_FACTS });
   assertEquals(s.taken, [1, 1, 1]);
 });
 
@@ -211,7 +221,7 @@ Deno.test("STRATZ positions and IMP make a card when OpenDota has no lanes, with
     fetchStratzGames: () => Promise.resolve([1, 2, 3, 4, 5, 6].map((id) => stratzGame(id))),
   });
   const result = await runTrends(s.deps);
-  assertEquals(result, { checked: 1, cards: 1, calls: 1, stopped: null });
+  assertEquals(result, { checked: 1, cards: 1, calls: 1, stopped: null, ...NO_FACTS });
   assertEquals(s.benchmarkFetches, []);
   const check = s.saved[0][1];
   assertEquals(check.games[0].position_source, "stratz");
@@ -286,4 +296,80 @@ Deno.test("a draft read error falls back to the other sources", async () => {
   const result = await runTrends(s.deps);
   assertEquals(result.cards, 1);
   assertEquals(s.logged, ["Draft games for u1 failed; using the other sources"]);
+});
+
+const factItem = (matchId: number): FactItem => ({
+  user_id: "u1",
+  account_id: 1000,
+  match_id: matchId,
+  hero_id: 4,
+  position: 2,
+  is_win: false,
+  started_at: new Date(NOW_S * 1000 - matchId * 1000).toISOString(),
+  created_at: null,
+  duration_s: null,
+  summary: null,
+  summary_version: null,
+  parse_requests: 0,
+  parse_requested_at: null,
+  attempts: 0,
+});
+
+function factsStub(items: FactItem[], over: Partial<FactsDeps> = {}) {
+  const saved: FactRow[] = [];
+  const order: string[] = [];
+  const facts: FactsDeps = {
+    purge: () => {
+      order.push("purge");
+      return Promise.resolve();
+    },
+    dueRows: () => Promise.resolve(items.slice(0, 1)),
+    newGames: () => Promise.resolve(items.slice(1)),
+    // A match OpenDota doesn't know yet: a new game saves nothing, a saved row counts an error.
+    fetchMatch: () => Promise.resolve(null),
+    requestParse: () => Promise.resolve(),
+    summarize: () => null,
+    save: (row) => {
+      saved.push(row);
+      return Promise.resolve();
+    },
+    now: () => new Date(NOW_S * 1000),
+    ...over,
+  };
+  return { facts, saved, order };
+}
+
+Deno.test("game feedback runs after the cards with its own call cap", async () => {
+  const items = Array.from({ length: MAX_FACT_CALLS + 5 }, (_, i) => factItem(i + 1));
+  items[0] = { ...items[0], created_at: new Date(NOW_S * 1000).toISOString(), duration_s: 1800 };
+  const f = factsStub(items);
+  const s = stub([player()], { facts: f.facts });
+  const result = await runTrends(s.deps);
+  assertEquals([result.checked, result.cards], [1, 1]);
+  assertEquals([result.factCalls, result.calls, result.factsStopped], [MAX_FACT_CALLS, 2 + MAX_FACT_CALLS, "run cap"]);
+  assertEquals(f.order, ["purge"]);
+  assertEquals(f.saved.map((r) => [r.match_id, r.attempts]), [[1, 1]], "only the saved row records the error");
+});
+
+Deno.test("game feedback is skipped when the cards used up the day's budget", async () => {
+  const f = factsStub([factItem(1)]);
+  const s = stub([player()], { facts: f.facts, takeCalls: () => Promise.resolve(false) });
+  const result = await runTrends(s.deps);
+  assertEquals([result.stopped, result.factCalls], ["daily budget", 0]);
+  assertEquals(f.order, []);
+});
+
+Deno.test("a rate limit stops game feedback; a save error only skips that game", async () => {
+  const items = [1, 2, 3].map(factItem).map((it) => ({ ...it, created_at: it.started_at, duration_s: 1800 }));
+  let fetches = 0;
+  const f = factsStub(items, {
+    dueRows: () => Promise.resolve(items),
+    newGames: () => Promise.resolve([]),
+    fetchMatch: () => (++fetches === 3 ? Promise.reject(new OpenDotaBusy()) : Promise.resolve(null)),
+    save: (row) => (row.match_id === 1 ? Promise.reject(new Error("db")) : Promise.resolve()),
+  });
+  const s = stub([player()], { facts: f.facts });
+  const result = await runTrends(s.deps);
+  assertEquals([result.facts, result.factsStopped], [1, "rate limit"]);
+  assertEquals(s.logged, ["Saving game 1 for u1 failed"]);
 });
