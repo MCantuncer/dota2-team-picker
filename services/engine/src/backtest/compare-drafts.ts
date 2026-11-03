@@ -56,6 +56,15 @@ export const DRAFTS: NamedDraft[] = [
     enemies: ["Axe", "Viper", "Nyx Assassin", "Ursa"],
     bans: BANS,
   },
+  {
+    // Can's game on 2026-11-03: Medusa was shown 2nd from the pool and lost to a Nyx Assassin pos 4.
+    label: "Carry, last pick into Nyx Assassin",
+    myPosition: 1,
+    rankBracket: 6,
+    allies: ["Ogre Magi:5", "Underlord:3", "Dawnbreaker:4", "Necrophos:2"],
+    enemies: ["Axe", "Nyx Assassin", "Ancient Apparition", "Rubick"],
+    favorites: ["Medusa"],
+  },
 ];
 
 const key = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, "");

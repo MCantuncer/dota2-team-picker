@@ -211,6 +211,17 @@ position, so a roaming pos 4 (Riki, Earth Spirit) no longer looks like a mid the
 lane data makes it look. A hero with fewer than 200 STRATZ games falls back to lane data. If STRATZ
 is down, the run keeps the last positions and carries on.
 
+With the token, the hero-vs-hero and same-team counts come from STRATZ too
+([`src/data/stratz-matchups.ts`](src/data/stratz-matchups.ts)): `heroStats.matchUp` for every hero,
+all ranks and each rank group (Herald-Guardian up to Divine-Immortal), 10 heroes per query. These are
+every ranked game of recent weeks, a median of about 1,100 games per pair at all ranks, where our own
+public match sample has about 135 (Medusa vs Nyx Assassin: 56 games in our sample, 1,547 at STRATZ,
+39.4% for Medusa). The STRATZ counts replace all four count fields at once (`matchupsFrom` says
+so) or not at all: each hero's expected win rate comes from the same rows as its pairs, so the two
+sources are never mixed. While the counts come from STRATZ, they are replaced on each run instead
+of faded, and the public match sample below is skipped. If STRATZ fails, the run keeps the last
+counts and warns when they are over 48 hours old.
+
 It also counts, from the saved ranked games of this patch (see "Games for the backtest"), how each
 hero does by the round its team picked it in, as in Ranked All Pick: 1st or 2nd pick, 3rd or 4th,
 or 5th. A hero that wins much less as a first-round pick is easy to counter and safer to pick late. These counts go in `pickPhase`.
@@ -218,7 +229,7 @@ or 5th. A hero that wins much less as a first-round pick is easy to counter and 
 The Action can be started by hand with **dry run** ticked to fetch and build the data without
 uploading it, for example to test a change on a branch.
 
-Each run adds new matches to the counts already saved and fades old ones by 1% per day since
+Without STRATZ counts, each run adds new matches to the counts already saved and fades old ones by 1% per day since
 the last run, so the data follows the meta as players find new builds. Fading changes how much
 old games count, not the win rates they show. Lane roles take one request per hero and change
 slowly, so they are downloaded once a week. Item builds also take one request per hero and are
