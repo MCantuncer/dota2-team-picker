@@ -23,10 +23,10 @@ Lane Off lane: Centaur Warrunner + Mirana vs Troll Warlord + Jakiro, win
 Timings: rank
 Start: Quelling Blade, Tango, 2 Iron Branch, Magic Stick, Faerie Fire, Circlet
 Lane: Magic Wand 2, Wraith Band 2, Perseverance 11
-Boots: Power Treads 8
-First: Battle Fury 15/17
+Boots: Power Treads 8 {Attack speed and a stat to switch.}
+First: Battle Fury 15/17 {Cleave for fast farm.}
 Next: Manta Style 23/24
-Late: Butterfly 31/32, Eye of Skadi 35/41, Abyssal Blade 38/41
+Late: Butterfly 31/32, Eye of Skadi 35/41 {Cuts Huskar's healing and slows them.}, Abyssal Blade 38/41
 If needed: Black King Bar 36/40 [Against Troll Warlord, Dark Seer and Snapfire] instead of Eye of Skadi
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Battle Fury around minute 15.
 Vs Dark Seer (lane): Locks you down. buy Black King Bar.
@@ -43,7 +43,7 @@ Lane: Null Talisman 3, Magic Wand 3 [Against Huskar's spells: get it early]
 Boots: Boots of Travel 15
 First: Maelstrom 16/18
 Next: Yasha and Kaya 24/31, Aghanim's Scepter 25, Shadow Blade 26/29
-Late: Black King Bar 32/36 [Against Troll Warlord, Dark Seer and Snapfire: don't skip it]
+Late: Black King Bar 32/36 [Against Troll Warlord, Dark Seer and Snapfire: don't skip it] {Stops their stuns: Troll Warlord, Dark Seer and Snapfire.}
 Job: Win your lane, then use runes to help the side lanes. Your timing is Maelstrom around minute 16.
 Vs Huskar (lane): Heals their team through fights. buy Magic Wand.
 Vs Troll Warlord: Evasion: right clicks miss. buy Black King Bar.
@@ -56,9 +56,9 @@ If it goes wrong: No Maelstrom by 18 min? Stop rotating and farm mid and the nea
 Timings: rank
 Start: 2 Gauntlets of Strength, Tango, Iron Branch, Ring of Protection, Quelling Blade
 Lane: Bracer 2, Magic Wand 3
-Boots: Phase Boots 12
+Boots: Phase Boots 12 {Armor and a burst of speed.}
 First: Vanguard 9/11
-Next: Blink Dagger 18/22, Blade Mail 19/24, Heart of Tarrasque 27/32, Pipe of Insight 28/30
+Next: Blink Dagger 18/22 {Start fights from 1,200 range.}, Blade Mail 19/24, Heart of Tarrasque 27/32, Pipe of Insight 28/30 {Blocks Snapfire and Jakiro's magic burst for your team.}
 If needed: Black King Bar 31 [Against Troll Warlord, Dark Seer and Snapfire] instead of Pipe of Insight, Lotus Orb 23 [Against Troll Warlord, Dark Seer and Snapfire] instead of Blade Mail
 Job: Make their carry's lane hard, then start the team's fights as Centaur Warrunner. Your timing is Blink Dagger around minute 18.
 Vs Troll Warlord (lane): Evasion: right clicks miss. buy Black King Bar, Lotus Orb.
@@ -89,7 +89,7 @@ Timings: all
 Start: Tango, Magic Stick, Blood Grenade, Iron Branch, Sentry Ward, Observer and Sentry Wards
 Lane: Ring of Basilius 5, Magic Wand 5
 Boots: Arcane Boots 11
-First: Glimmer Cape 21/23 [Against Snapfire and Jakiro]
+First: Glimmer Cape 21/23 [Against Snapfire and Jakiro] {Magic resistance against Snapfire and Jakiro.}
 Next: Aghanim's Shard 24/27, Aether Lens 25/31
 Late: Aghanim's Scepter 32/38, Refresher Orb 41/45
 If needed: Force Staff 27/28 [Against Troll Warlord and Huskar] instead of Aether Lens

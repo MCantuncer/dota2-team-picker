@@ -4,7 +4,7 @@ import type { BuildItem } from "../../src/engine/item-build";
 /** One item as "Battle Fury 15/16 [reason]": usual minute, slower than most after, why. */
 function itemText(item: BuildItem): string {
   const late = item.lateMinute ? `/${item.lateMinute}` : "";
-  return `${item.name} ${item.minute}${late}${item.reason ? ` [${item.reason}]` : ""}`;
+  return `${item.name} ${item.minute}${late}${item.reason ? ` [${item.reason}]` : ""}${item.effect ? ` {${item.effect}}` : ""}`;
 }
 
 /** A Game Story as plain text, close to what the panel shows, so a reviewer can read it in a diff. */

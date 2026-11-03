@@ -151,6 +151,10 @@ export interface BuildItem {
   reason?: string;
   /** The enemy hero ids the item answers, most matching threats first. Set with `reason`. */
   against?: number[];
+  /** What the item does in this game, naming the enemies it works on (see item-effects.ts). Core items only. */
+  effect?: string;
+  /** The enemy hero ids named in `effect`. */
+  effectAgainst?: number[];
 }
 
 export interface ItemBuild {

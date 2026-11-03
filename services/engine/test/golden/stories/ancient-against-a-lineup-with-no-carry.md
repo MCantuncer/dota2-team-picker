@@ -31,10 +31,10 @@ Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
 Timings: rank
 Start: Tango, 3 Iron Branch, Faerie Fire, Quelling Blade
 Lane: Magic Wand 3 [Against Storm Spirit's spells: get it early], Urn of Shadows 7
-Boots: Phase Boots 10
-First: Spirit Vessel 14/15
+Boots: Phase Boots 10 {Armor and a burst of speed.}
+First: Spirit Vessel 14/15 {Cuts Witch Doctor's healing.}
 Next: Mage Slayer 18/22
-Late: Black King Bar 30/34 [Against Vengeful Spirit, Witch Doctor and Tidehunter: don't skip it], Kaya and Sange 31/35, Aghanim's Scepter 32/35
+Late: Black King Bar 30/34 [Against Vengeful Spirit, Witch Doctor and Tidehunter: don't skip it] {Stops their stuns: Vengeful Spirit, Witch Doctor and Tidehunter.}, Kaya and Sange 31/35, Aghanim's Scepter 32/35
 Job: Win your lane, then use runes to help the side lanes. Your timing is Spirit Vessel around minute 14.
 Vs Storm Spirit (lane): Magic burst. buy Magic Wand.
 Vs Vengeful Spirit: Magic burst. buy Black King Bar.
@@ -47,9 +47,9 @@ If it goes wrong: No Spirit Vessel by 15 min? Stop rotating and farm mid and the
 Timings: all
 Start: Gauntlets of Strength, 2 Iron Branch, 2 Tango [Hard lane against Vengeful Spirit and Witch Doctor: more sustain], Quelling Blade, Healing Salve [Hard lane against Vengeful Spirit and Witch Doctor: more sustain]
 Lane: Bracer 2, Magic Wand 3 [Against Witch Doctor's spells: get it early], Soul Ring 5
-Boots: Phase Boots 10
-First: Blink Dagger 15/17
-Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24, Black King Bar 29/31 [Against Vengeful Spirit, Witch Doctor and Tidehunter: don't skip it]
+Boots: Phase Boots 10 {Armor and a burst of speed.}
+First: Blink Dagger 15/17 {Start fights from 1,200 range.}
+Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24 {-6 armor on your target.}, Black King Bar 29/31 [Against Vengeful Spirit, Witch Doctor and Tidehunter: don't skip it] {Stops their stuns: Vengeful Spirit, Witch Doctor and Tidehunter.}
 Job: Make their carry's lane hard, then start the team's fights as Mars. Your timing is Blink Dagger around minute 15.
 Vs Vengeful Spirit (lane): Magic burst. buy Black King Bar.
 Vs Witch Doctor (lane): Heals their team through fights. buy Magic Wand, Black King Bar.
@@ -64,8 +64,8 @@ Timings: all
 Start: 2 Tango [Hard lane against Vengeful Spirit and Witch Doctor: more sustain], Blood Grenade, Magic Stick, Iron Branch, Sentry Ward, Observer and Sentry Wards, Healing Salve [Hard lane against Vengeful Spirit and Witch Doctor: more sustain]
 Lane: Magic Wand 3 [Against Witch Doctor's spells: get it early], Ring of Basilius 6
 Boots: Arcane Boots 11
-First: Blink Dagger 20/22
-Next: Aether Lens 25/31, Glimmer Cape 28/35 [Against Vengeful Spirit, Witch Doctor and Tidehunter: don't skip it], Aghanim's Shard 29/36
+First: Blink Dagger 20/22 {Start fights from 1,200 range.}
+Next: Aether Lens 25/31, Glimmer Cape 28/35 [Against Vengeful Spirit, Witch Doctor and Tidehunter: don't skip it] {Magic resistance against Vengeful Spirit, Witch Doctor and Tidehunter.}, Aghanim's Shard 29/36
 Late: Aghanim's Scepter 36/42
 If needed: Force Staff 31/34 [Against Tidehunter] instead of Aghanim's Shard
 Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Blink Dagger around minute 20.
