@@ -215,6 +215,48 @@ isOneToOne: true
       referencedColumns: ["id"]
     }
                   ]
+                },"matchup_fetches": {
+                  Row: {
+                    "claimed_at": string,"enemy_id": number,"game_version": number,"hero_id": number,"position": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "claimed_at"?: string,"enemy_id": number,"game_version": number,"hero_id": number,"position": number
+                  }
+                  Update: {
+                    "claimed_at"?: string,"enemy_id"?: number,"game_version"?: number,"hero_id"?: number,"position"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"matchup_guides": {
+                  Row: {
+                    "enemy_id": number,"fetched_at": string,"game_version": number,"games": NonNullable<Json>,"hero_id": number,"position": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "enemy_id": number,"fetched_at"?: string,"game_version": number,"games": NonNullable<Json>,"hero_id": number,"position": number
+                  }
+                  Update: {
+                    "enemy_id"?: number,"fetched_at"?: string,"game_version"?: number,"games"?: NonNullable<Json>,"hero_id"?: number,"position"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"matchup_lookups": {
+                  Row: {
+                    "looked_up_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "looked_up_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "looked_up_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"opendota_caller_calls": {
                   Row: {
                     "caller": string,"calls": number,"day": string
@@ -505,6 +547,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"stratz_calls": {
+                  Row: {
+                    "calls": number,"hour": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "calls": number,"hour": string
+                  }
+                  Update: {
+                    "calls"?: number,"hour"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"team_game_plans": {
                   Row: {
                     "bans": (number)[],"created_at": string,"enemies": (number)[],"id": string,"picks": (number)[],"players": (string)[],"rank_bracket": number | null,"sent_by": string,"team_id": string
@@ -673,6 +729,9 @@ isOneToOne: false
               "attempts": number,"created_at": string,"draft_id": string,"match_id": number,"parse_requested_at": string,"parse_requests": number,"won": boolean
             }[]
                            },
+"claim_matchup_fetches":
+{ Args: { "version": number,"wanted": Json }; Returns: Json
+                           },
 "claim_trend_players":
 { Args: { "max_rows"?: number }; Returns: {
               "account_id": number,"has_recent_card": boolean,"hero_stats": Json,"pool": Json,"skip": (string)[],"user_id": string
@@ -693,6 +752,9 @@ isOneToOne: false
                            },
 "forget_match_files":
 { Args: { "matches": (number)[] }; Returns: number
+                           },
+"forget_old_matchups":
+{ Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "friend_suggestions":
 { Args: Record<PropertyKey, never>; Returns: {
@@ -839,6 +901,9 @@ isOneToOne: false
 "save_draft_suggestions":
 { Args: { "chance"?: number,"draft": string,"pos": number,"shown": (number)[],"shown_scores": (number)[] }; Returns: undefined
                            },
+"save_matchup_guides":
+{ Args: { "slices": Json,"version": number }; Returns: number
+                           },
 "save_trend_check":
 { Args: { "games": Json,"new_card": Json,"qualifying": (string)[],"state": string,"target": string }; Returns: undefined
                            },
@@ -868,8 +933,14 @@ isOneToOne: false
 "step_down_captain":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"take_matchup_lookup":
+{ Args: { "hourly_cap"?: number,"who": string }; Returns: boolean
+                           },
 "take_opendota_calls":
 { Args: { "caller_cap"?: number,"caller_name"?: string,"daily_cap"?: number,"wanted": number }; Returns: boolean
+                           },
+"take_stratz_calls":
+{ Args: { "hourly_cap"?: number,"wanted": number }; Returns: boolean
                            },
 "user_id_by_email":
 { Args: { "address": string }; Returns: string
