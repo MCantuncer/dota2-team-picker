@@ -33,6 +33,10 @@ Vs Witch Doctor (lane, guessed): Heals their team through fights. Kill them firs
 Vs Phantom Assassin: Evasion: right clicks miss. buy Monkey King Bar.
 Vs Shadow Fiend: Magic burst. Stay spread so one combo can't catch two.
 Vs Lich: Magic burst. Stay spread so one combo can't catch two.
+Watch Axe: Don't focus them: kill their damage dealers first.
+Watch Witch Doctor: Kill them first or fight short and decisive.
+Watch Phantom Assassin: buy Monkey King Bar.
+Watch Shadow Fiend, Lich: Stay spread so one combo can't catch two.
 If it goes wrong: No Battle Fury by 16 min? Don't show on the map without it. Farm the side Axe is not on.
 
 ### Pos 2 Puck
@@ -49,6 +53,10 @@ Vs Phantom Assassin: Evasion: right clicks miss. Fight them with spells, not rig
 Vs Axe: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
 Vs Lich: Magic burst. Stay spread so one combo can't catch two.
+Watch Shadow Fiend, Lich: Stay spread so one combo can't catch two.
+Watch Phantom Assassin: Fight them with spells, not right clicks.
+Watch Axe: Don't focus them: kill their damage dealers first.
+Watch Witch Doctor: Kill them first or fight short and decisive.
 If it goes wrong: No Blink Dagger by 20 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Mars
@@ -64,6 +72,11 @@ Vs Lich (lane, guessed): Magic burst. buy Infused Raindrops.
 Vs Shadow Fiend: Magic burst. Stay spread so one combo can't catch two.
 Vs Axe: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
+Watch Phantom Assassin: Fight them with spells, not right clicks.
+Watch Lich: buy Infused Raindrops.
+Watch Shadow Fiend: Stay spread so one combo can't catch two.
+Watch Axe: Don't focus them: kill their damage dealers first.
+Watch Witch Doctor: Kill them first or fight short and decisive.
 If it goes wrong: Lane lost? Stop contesting Phantom Assassin. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay behind your cores and soak damage.
 
@@ -81,6 +94,8 @@ Vs Lich (lane, guessed): Magic burst. buy Infused Raindrops, Glimmer Cape.
 Vs Shadow Fiend: Magic burst. buy Glimmer Cape, Force Staff.
 Vs Axe: Starts fights and soaks your damage. buy Force Staff.
 Vs Witch Doctor: Heals their team through fights. buy Glimmer Cape.
+Watch Phantom Assassin, Axe: buy Force Staff.
+Watch Lich, Shadow Fiend, Witch Doctor: buy Glimmer Cape.
 If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Juggernaut.
 If it goes wrong: Phantom Assassin is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 
@@ -98,4 +113,6 @@ Vs Witch Doctor (lane, guessed): Heals their team through fights. buy Magic Wand
 Vs Phantom Assassin: Evasion: right clicks miss. buy Force Staff.
 Vs Shadow Fiend: Magic burst. buy Glimmer Cape, Force Staff.
 Vs Lich: Magic burst. buy Glimmer Cape.
+Watch Axe, Phantom Assassin: buy Force Staff.
+Watch Witch Doctor, Shadow Fiend, Lich: buy Glimmer Cape.
 If it goes wrong: Phantom Assassin is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.

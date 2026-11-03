@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { enemyList, threatGroups, type EnemyNote } from "../src/engine/enemy-list";
+import { enemyList, threatRows, type EnemyNote, type ThreatRow } from "../src/engine/enemy-list";
 import type { ItemBuild } from "../src/engine/item-build";
 import type { HeroInfo } from "../src/engine/types";
 
@@ -49,42 +49,52 @@ describe("enemyList", () => {
   });
 });
 
-describe("threatGroups", () => {
-  const note = (heroId: number, threat: string, answers: number[], tip?: string): EnemyNote => ({
+describe("threatRows", () => {
+  const note = (heroId: number, threat: string, answers: number[], tip?: string, inLane = false): EnemyNote => ({
     heroId,
-    inLane: false,
+    inLane,
     laneSure: true,
     threat,
     answers,
     ...(tip ? { tip } : {}),
   });
+  const ids = (rows: ThreatRow[]) => rows.map((r) => [r.enemies.map((e) => e.heroId), r.answer ?? r.tip]);
 
-  it("says one answer once: every enemy it answers shares a row", () => {
-    // Can's Wraith King card (2026-11-03) said "Buy Black King Bar" for Ogre Magi, Enigma and Witch Doctor.
-    const rows = threatGroups([
-      note(84, "Saves allies with buffs", [116]),
-      note(33, "Locks you down", [116]),
+  it("says one answer once: every enemy it answers shares a row, each with its own threat", () => {
+    const dust = "Ask your support for Dust and Sentries before fights";
+    const rows = threatRows([
+      note(84, "Saves allies with buffs", [116], undefined, true),
+      note(33, "Locks you down", [116], undefined, true),
       note(30, "Heals their team through fights", [116]),
-      note(56, "Goes invisible", [], "Ask your support for Dust and Sentries before fights"),
-      note(8, "Right-click carry who grows late", [], "Fight before their big item, not after"),
+      note(56, "Goes invisible", [], dust),
     ]);
-    expect(rows).toEqual([
-      { heroIds: [84, 33, 30], threats: ["Saves allies with buffs", "Locks you down", "Heals their team through fights"], answer: 116 },
-      { heroIds: [56], threats: ["Goes invisible"], tip: "Ask your support for Dust and Sentries before fights" },
-      { heroIds: [8], threats: ["Right-click carry who grows late"], tip: "Fight before their big item, not after" },
+    expect(ids(rows)).toEqual([
+      [[84, 33, 30], 116],
+      [[56], dust],
+    ]);
+    expect(rows[0]?.enemies.map((e) => [e.threat, e.inLane])).toEqual([
+      ["Saves allies with buffs", true],
+      ["Locks you down", true],
+      ["Heals their team through fights", false],
     ]);
   });
 
-  it("groups enemies with no answer by their shared threat, most common threat first", () => {
+  it("puts an enemy with several answers under the one that covers the most enemies", () => {
+    // Linken's (1) comes first in the path but answers only hero 10; Black King Bar (116) answers both.
+    const rows = threatRows([note(10, "Locks you down", [1, 116]), note(11, "Locks you down", [116])]);
+    expect(ids(rows)).toEqual([[[10, 11], 116]]);
+    // A tie keeps path order.
+    expect(ids(threatRows([note(12, "Magic burst", [2, 3])]))).toEqual([[[12], 2]]);
+  });
+
+  it("groups enemies with no answer by their shared threat, and leaves out a tip it doesn't have", () => {
     const tip = "Stay spread so one combo can't catch two";
-    const rows = threatGroups([note(1, "Magic burst", [], tip), note(2, "Locks you down", [1]), note(3, "Magic burst", [], tip)]);
-    expect(rows).toEqual([
-      { heroIds: [1, 3], threats: ["Magic burst"], tip },
-      { heroIds: [2], threats: ["Locks you down"], answer: 1 },
+    const rows = threatRows([note(1, "Magic burst", [], tip), note(2, "Locks you down", [9]), note(3, "Magic burst", [], tip), note(4, "No special threat", [])]);
+    expect(ids(rows)).toEqual([
+      [[1, 3], tip],
+      [[2], 9],
+      [[4], undefined],
     ]);
-    expect(threatGroups([note(4, "Locks you down", [9]), note(5, "Magic burst", [9]), note(6, "Magic burst", [9])])[0]!.threats).toEqual([
-      "Magic burst",
-      "Locks you down",
-    ]);
+    expect(rows[2]).not.toHaveProperty("tip");
   });
 });

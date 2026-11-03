@@ -1,6 +1,6 @@
 import { SURE_POSITION_ODDS, chooseDangerHeroes, dangerLine } from "./danger";
 import { pickFallbacks, type Scaling } from "./fallbacks";
-import { enemyList, threatGroups, type EnemyNote, type ThreatGroup } from "./enemy-list";
+import { enemyList, threatRows, type EnemyNote, type ThreatRow } from "./enemy-list";
 import { laneAdjusted } from "./lane-items";
 import type { MatchupGame } from "./matchup-talents";
 import { skillPlan, type SkillPlan } from "./skill-plan";
@@ -69,7 +69,7 @@ export interface PlayerPlan {
   /** The five enemies as this player meets them, in-lane first (see enemy-list.ts). */
   enemies: EnemyNote[];
   /** The same enemies as rows, one per answer item or shared threat, so an answer is said once. */
-  threats: ThreatGroup[];
+  threatRows: ThreatRow[];
   /** Skill order and talent tree with reasons, when the snapshot has this hero's abilities. */
   skills?: SkillPlan;
 }
@@ -343,7 +343,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       ),
       fallbacks: [],
       enemies,
-      threats: threatGroups(enemies),
+      threatRows: threatRows(enemies),
       ...(skills ? { skills } : {}),
     };
   });

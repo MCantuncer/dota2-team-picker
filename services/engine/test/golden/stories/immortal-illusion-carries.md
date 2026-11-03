@@ -32,6 +32,9 @@ Vs Hoodwink (lane): Magic burst. Stay spread so one combo can't catch two.
 Vs Naga Siren: Illusions split your damage. buy Black King Bar.
 Vs Pangolier: Magic burst. buy Black King Bar.
 Vs Treant Protector: Goes invisible. Ask your support for Dust and Sentries before fights.
+Watch Primal Beast, Naga Siren, Pangolier: buy Black King Bar.
+Watch Hoodwink: Stay spread so one combo can't catch two.
+Watch Treant Protector: Ask your support for Dust and Sentries before fights.
 If it goes wrong: Lane lost? Leave it at 5 to 6 min for the jungle and farm toward Manta Style. Ask your supports to stack 2 camps.
 If it goes wrong: No Manta Style by 20 min? Don't show on the map without it. Farm the side Primal Beast is not on.
 
@@ -49,6 +52,9 @@ Vs Naga Siren: Illusions split your damage. buy Black King Bar.
 Vs Primal Beast: Starts fights and soaks your damage. buy Black King Bar.
 Vs Hoodwink: Magic burst. Stay spread so one combo can't catch two.
 Vs Treant Protector: Goes invisible. Ask your support for Dust and Sentries before fights.
+Watch Pangolier, Naga Siren, Primal Beast: buy Black King Bar.
+Watch Hoodwink: Stay spread so one combo can't catch two.
+Watch Treant Protector: Ask your support for Dust and Sentries before fights.
 If it goes wrong: No Desolator by 22 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Mars
@@ -64,6 +70,9 @@ Vs Treant Protector (lane): Goes invisible. Ask your support for Dust and Sentri
 Vs Pangolier: Magic burst. buy Black King Bar.
 Vs Primal Beast: Starts fights and soaks your damage. buy Black King Bar.
 Vs Hoodwink: Magic burst. Stay spread so one combo can't catch two.
+Watch Naga Siren, Pangolier, Primal Beast: buy Black King Bar.
+Watch Treant Protector: Ask your support for Dust and Sentries before fights.
+Watch Hoodwink: Stay spread so one combo can't catch two.
 If it goes wrong: Lane lost? Stop contesting Naga Siren. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay behind your cores and soak damage.
 
@@ -79,6 +88,10 @@ Vs Treant Protector (lane): Goes invisible. Ask your support for Dust and Sentri
 Vs Pangolier: Magic burst. buy Force Staff.
 Vs Primal Beast: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Hoodwink: Magic burst. Stay spread so one combo can't catch two.
+Watch Naga Siren, Pangolier: buy Force Staff.
+Watch Treant Protector: Ask your support for Dust and Sentries before fights.
+Watch Primal Beast: Don't focus them: kill their damage dealers first.
+Watch Hoodwink: Stay spread so one combo can't catch two.
 If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Terrorblade.
 If it goes wrong: Naga Siren is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 
@@ -96,5 +109,9 @@ Vs Hoodwink (lane): Magic burst. buy Glimmer Cape.
 Vs Naga Siren: Illusions split your damage. Hit the real hero: it is the one their team protects.
 Vs Pangolier: Magic burst. buy Glimmer Cape.
 Vs Treant Protector: Goes invisible. Ask your support for Dust and Sentries before fights.
+Watch Primal Beast: Don't focus them: kill their damage dealers first.
+Watch Hoodwink, Pangolier: buy Glimmer Cape.
+Watch Naga Siren: Hit the real hero: it is the one their team protects.
+Watch Treant Protector: Ask your support for Dust and Sentries before fights.
 If it goes wrong: Lane lost? Let Terrorblade take every last hit. Pull the near camp and keep a ward on the rune.
 If it goes wrong: Naga Siren is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.
