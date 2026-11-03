@@ -171,6 +171,7 @@ Deno.test("while STRATZ is held back nothing is taken or asked, and the answer s
   assertEquals(out.pending.length, 2);
   assertEquals(out.reasons, ["stratz-busy"]);
   assertEquals(out.retryAt, iso(NOW + 15 * MIN));
+  assertEquals(out.retryIn, 15 * 60);
 });
 
 Deno.test("a fresh cache answers without asking whether STRATZ is free", async () => {

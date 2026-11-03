@@ -7,7 +7,7 @@
  *
  * Fresh cache rows answer at once. The rest are fetched from STRATZ within 8 seconds, at most
  * 20 lookups per user per hour, inside one hourly STRATZ budget, and cached for 7 days.
- * Returns { slices: [{ hero, position, enemy, games, stale }], pending: [...], reasons: [...], retryAt? };
+ * Returns { slices: [{ hero, position, enemy, games, stale }], pending: [...], reasons: [...], retryAt?, retryIn? };
  * pending slices keep the weekly general build on the card. While the hero data refresh uses STRATZ the
  * reason is "stratz-busy" and retryAt says when to ask again.
  */

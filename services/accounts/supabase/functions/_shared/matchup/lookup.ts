@@ -78,6 +78,8 @@ export interface LookupResult {
   reasons: PendingReason[];
   /** With "stratz-busy": when asking again may fill the pending slices (ISO time). */
   retryAt?: string;
+  /** The same as seconds from now, for clients whose clock is off. */
+  retryIn?: number;
 }
 
 const key = (s: Slice) => `${s.hero}:${s.position}:${s.enemy}`;
@@ -230,7 +232,10 @@ export async function lookupMatchups(deps: LookupDeps, input: LookupInput): Prom
   }
 
   const out: LookupResult = { slices: [], pending: [], reasons: [...reasons] };
-  if (retryAt !== undefined) out.retryAt = new Date(retryAt).toISOString();
+  if (retryAt !== undefined) {
+    out.retryAt = new Date(retryAt).toISOString();
+    out.retryIn = Math.max(Math.ceil((retryAt - deps.now()) / 1000), 0);
+  }
   for (const s of slices) {
     const games = fetched.get(key(s));
     const c = cached.get(key(s));
