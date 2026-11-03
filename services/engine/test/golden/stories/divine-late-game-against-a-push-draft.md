@@ -22,10 +22,10 @@ Lane Off lane: Tidehunter + Rubick vs Lycan + Shadow Shaman, hard
 Timings: all
 Start: 2 Iron Branch, Magic Wand, Enchanted Mango, Magic Stick, Circlet
 Lane: Null Talisman 2
-Boots: Power Treads 8
+Boots: Power Treads 8 {Attack speed and a stat to switch.}
 First: Manta Style 18/19
 Next: Butterfly 26/27
-Late: Eye of Skadi 33/34, Daedalus 38/41, Aghanim's Blessing 46/48
+Late: Eye of Skadi 33/34 {Cuts the healing from Chen; your hits slow.}, Daedalus 38/41, Aghanim's Blessing 46/48
 If needed: Black King Bar 32 [Against Leshrac, Underlord and Shadow Shaman] instead of Eye of Skadi
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Manta Style around minute 18.
 Vs Underlord (lane): Starts fights and soaks your damage. buy Black King Bar.
@@ -42,9 +42,9 @@ If it goes wrong: No Manta Style by 19 min? Don't show on the map without it. Fa
 Timings: all
 Start: Tango, 3 Iron Branch, Faerie Fire
 Lane: Magic Wand 3 [Against Leshrac's spells: get it early], Soul Ring 7
-Boots: Power Treads 9
+Boots: Power Treads 9 {Attack speed and a stat to switch.}
 First: Orchid Malevolence 20/24
-Next: Kaya and Sange 26/28, Black King Bar 29/32 [Against Leshrac, Underlord and Shadow Shaman: don't skip it]
+Next: Kaya and Sange 26/28, Black King Bar 29/32 [Against Leshrac, Underlord and Shadow Shaman: don't skip it] {Spell immunity for the big fights.}
 Late: Parasma 35/39, Aghanim's Scepter 40/45
 Job: Win your lane, then use runes to help the side lanes. Your timing is Orchid Malevolence around minute 20.
 Vs Leshrac (lane): Magic burst. buy Magic Wand, Black King Bar.
@@ -61,9 +61,9 @@ If it goes wrong: No Orchid Malevolence by 24 min? Stop rotating and farm mid an
 Timings: rank
 Start: 2 Tango [Hard lane against Lycan and Shadow Shaman: more sustain], 2 Iron Branch, Quelling Blade, Magic Stick, Healing Salve [Hard lane against Lycan and Shadow Shaman: more sustain]
 Lane: Bracer 2, Magic Wand 4, Soul Ring 6, Ring of Basilius 11
-Boots: Phase Boots 9
+Boots: Phase Boots 9 {Armor and a burst of speed.}
 First: Vladmir's Offering 13/15
-Next: Mage Slayer 15/16, Blink Dagger 19/25, Aghanim's Scepter 26/33
+Next: Mage Slayer 15/16, Blink Dagger 19/25 {Start fights from 1,200 range.}, Aghanim's Scepter 26/33
 Late: Shiva's Guard 34/37
 If needed: Black King Bar 32 [Against Leshrac, Underlord and Shadow Shaman] instead of Shiva's Guard
 Job: Make their carry's lane hard, then start the team's fights as Tidehunter. Your timing is Blink Dagger around minute 19.
@@ -84,7 +84,7 @@ Start: 2 Tango [Hard lane against Lycan and Shadow Shaman: more sustain], Blood 
 Lane: Magic Wand 5, Ring of Basilius 7, Urn of Shadows 8
 Boots: Arcane Boots 11
 First: Essence Distiller 14/15
-Next: Aether Lens 21/24, Blink Dagger 22/27, Glimmer Cape 24/26
+Next: Aether Lens 21/24, Blink Dagger 22/27 {Start fights from 1,200 range.}, Glimmer Cape 24/26 {Hides you and blocks magic damage from Leshrac, Underlord and Shadow Shaman.}
 Late: Aghanim's Scepter 34/38
 Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Aether Lens around minute 21.
 Vs Lycan (lane, guessed): Right-click carry who grows late. Fight before their big item, not after.
@@ -105,7 +105,7 @@ Start: Tango, Blood Grenade, 2 Iron Branch, Magic Stick, Sentry Ward, Observer a
 Lane: Magic Wand 5, Ring of Basilius 7
 Boots: Arcane Boots 12
 First: Holy Locket 20/22
-Next: Mekansm 26/32, Glimmer Cape 27/30 [Against Leshrac, Underlord and Shadow Shaman: don't skip it], Aether Lens 28/37, Force Staff 29/32
+Next: Mekansm 26/32, Glimmer Cape 27/30 [Against Leshrac, Underlord and Shadow Shaman: don't skip it] {Invisibility and a magic damage barrier.}, Aether Lens 28/37, Force Staff 29/32 {Pushes you away from Lycan.}
 Job: Keep your carry alive in lane and place vision; save your key spell for their dive. Your timing is Holy Locket around minute 20.
 Vs Underlord (lane): Starts fights and soaks your damage. buy Glimmer Cape.
 Vs Chen (lane, guessed): Heals their team through fights. Kill them first or fight short and decisive.
