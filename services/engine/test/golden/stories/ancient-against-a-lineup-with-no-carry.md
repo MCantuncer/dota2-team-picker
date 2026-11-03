@@ -5,7 +5,7 @@ Headline: End early: ready at 15, push before Storm Spirit's Orchid Malevolence 
 - 0 to 10 min: Survive the off lane against Vengeful Spirit and Witch Doctor: just get levels.
 - 10 to 20 min: Ember Spirit's Spirit Vessel at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Their Storm Spirit has Orchid Malevolence at 18. Group up and take towers.
 - 20 to 30 min: Take Roshan and end with the Aegis before 30 minutes.
-- 30 min on: Fight when Vengeful Spirit is dead or far from the fight.
+- 30 min on: Catch Vengeful Spirit first, then take high ground.
 
 Danger heroes:
 - Vengeful Spirit: Lock them down first in every fight.

@@ -30,9 +30,37 @@ describe("gameStory", () => {
       "Puck's Witch Blade at 12 and Magnus's Blink Dagger at 14: ready to fight at 14. Their Phantom Assassin has Battle Fury at 17. Open fights with Reverse Polarity into Sven's God's Strength cleave.",
     );
     expect(story.chapters[2]!.text).toBe("Sven's Black King Bar at 24. Roshan from 20 min, once three key items are in.");
-    expect(story.chapters[3]!.text).toBe("Fight when Phantom Assassin is dead or far from the fight.");
+    expect(story.chapters[3]!.text).toBe("Catch Phantom Assassin first, then take high ground.");
     // Our second item at 14 beats their carry's at 17.
     expect(story.headline).toBe("Fight from 14 min, before Phantom Assassin has Battle Fury at 17.");
+  });
+
+  it("puts each item in the chapter of its own minute and never names their spike twice", () => {
+    // Can's game (2026-11-03): Eul's at 15 was told in the 20 to 30 chapter, and Radiance at 17 twice.
+    const story = gameStory(
+      facts({
+        theirTiming: "late",
+        spikes: [
+          { hero: "Death Prophet", item: "Eul's Scepter of Divinity", minute: 15 },
+          { hero: "Lina", item: "Yasha and Kaya", minute: 24 },
+        ],
+        theirSpikes: [
+          { hero: "Wraith King", item: "Blink Dagger", minute: 21 },
+          { hero: "Lifestealer", item: "Radiance", minute: 17 },
+        ],
+        enemyCarry: "Lifestealer",
+      }),
+    );
+    expect(story.ready).toBe(24);
+    const [, mid, late] = story.chapters;
+    expect(mid!.ours.map((s) => s.minute)).toEqual([15]);
+    expect(mid!.theirs.map((s) => s.item)).toEqual(["Radiance"]);
+    expect(mid!.action).toBe("Take towers before their Radiance.");
+    expect(mid!.text).toBe("Death Prophet's Eul's Scepter of Divinity at 15. Take towers before Lifestealer's Radiance at 17.");
+    expect(late!.ours.map((s) => s.minute)).toEqual([24]);
+    expect(late!.theirs.map((s) => s.item)).toEqual(["Blink Dagger"]);
+    expect(late!.action).toBe("Take Roshan at 24, end with the Aegis.");
+    expect([mid!.from, mid!.to, story.chapters.at(-1)!.to]).toEqual([10, 20, null]);
   });
 
   it("races our items against their carry's in the headline", () => {

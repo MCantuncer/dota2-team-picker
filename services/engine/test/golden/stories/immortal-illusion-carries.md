@@ -5,7 +5,7 @@ Headline: Both teams are ready at 17 min: fight once your items are in, not befo
 - 0 to 10 min: Terrorblade farms safely in the safe lane against Primal Beast and Hoodwink: skip trades.
 - 10 to 20 min: Mars's Blink Dagger at 15 and Templar Assassin's Desolator at 17: ready to fight at 17. Their Naga Siren has Manta Style around 18.
 - 20 to 30 min: Their Pangolier has Blink Dagger at 20. Roshan from 20 min, once three key items are in.
-- 30 min on: Fight when Naga Siren is dead or far from the fight.
+- 30 min on: Catch Naga Siren first, then take high ground.
 
 Danger heroes:
 - Naga Siren: Manta Style around 18 min. Take fights and towers before then.

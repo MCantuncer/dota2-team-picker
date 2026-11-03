@@ -5,7 +5,7 @@ Headline: Both teams are ready at 16 min: fight once your items are in, not befo
 - 0 to 10 min: Anti-Mage and Warlock win the safe lane against Dark Seer and Snapfire: take their tower.
 - 10 to 20 min: Anti-Mage's Battle Fury at 15 and Lina's Maelstrom at 16: ready to fight at 16. Their Troll Warlord has Battle Fury at 15.
 - 20 to 30 min: Their Dark Seer has Blink Dagger at 21. Roshan from 20 min, once three key items are in.
-- 30 min on: Fight when Troll Warlord is dead or far from the fight.
+- 30 min on: Catch Troll Warlord first, then take high ground.
 
 Danger heroes:
 - Huskar: Blink Dagger at 14 min. Lock them down first in every fight.
