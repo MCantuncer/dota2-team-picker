@@ -26,7 +26,7 @@ Lane: Magic Wand 2, Wraith Band 2, Perseverance 11
 Boots: Power Treads 8 {Attack speed and a stat to switch.}
 First: Battle Fury 15/17 {Cleave for fast farm.}
 Next: Manta Style 23/24
-Late: Butterfly 31/32, Eye of Skadi 35/41 {Cuts healing on Huskar and slows them.}, Abyssal Blade 38/41
+Late: Butterfly 31/32, Eye of Skadi 35/41 {Cuts the healing from Huskar; your hits slow.}, Abyssal Blade 38/41
 If needed: Black King Bar 36/40 [Against Troll Warlord, Dark Seer and Snapfire] instead of Eye of Skadi
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Battle Fury around minute 15.
 Vs Dark Seer (lane): Locks you down. buy Black King Bar.

@@ -27,32 +27,25 @@ describe("itemEffect", () => {
 
   it("names three heroes at most, and every disable that still goes through", () => {
     const LINA = hero(25, "Lina", ["Carry", "Support", "Nuker", "Disabler"]);
-    const VOID = hero(41, "Faceless Void", [
-      "Carry",
-      "Initiator",
-      "Disabler",
-      "Escape",
-      "Durable",
-    ]);
-    expect(
-      itemEffect("black_king_bar", [LION, SHAKER, AXE, LINA, ENIGMA, VOID]),
-    ).toEqual({
+    const VOID = hero(41, "Faceless Void", ["Carry", "Initiator", "Disabler", "Escape", "Durable"]);
+    expect(itemEffect("black_king_bar", [LION, SHAKER, AXE, LINA, ENIGMA, VOID])).toEqual({
       line: "Stops disables from Lion, Earthshaker and Lina. Berserker's Call, Black Hole and Chronosphere still go through it.",
       against: [26, 7, 25],
     });
   });
 
   it("says Black King Bar's plain line when every disable goes through it", () => {
-    expect(itemEffect("black_king_bar", [AXE])?.line).toBe(
-      "Spell immunity for the big fights. Berserker's Call still goes through it.",
-    );
+    expect(itemEffect("black_king_bar", [AXE])?.line).toBe("Spell immunity for the big fights. Berserker's Call still goes through it.");
+  });
+
+  it("leaves out heroes whose disable may go through Black King Bar", () => {
+    const PB = hero(137, "Primal Beast", ["Initiator", "Durable", "Disabler"]);
+    expect(itemEffect("black_king_bar", [PB, LION])?.line).toBe("Stops disables from Lion.");
   });
 
   it("names a list of heroes without a possessive", () => {
     const LINA = hero(25, "Lina", ["Carry", "Support", "Nuker", "Disabler"]);
-    expect(itemEffect("pipe", [LION, LINA])?.line).toBe(
-      "Blocks magic burst from Lion and Lina for your team.",
-    );
+    expect(itemEffect("pipe", [LION, LINA])?.line).toBe("Blocks magic burst from Lion and Lina for your team.");
   });
 
   it("names the illusion hero Radiance burns", () => {

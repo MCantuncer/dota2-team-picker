@@ -32,7 +32,7 @@ Timings: rank
 Start: Tango, 3 Iron Branch, Faerie Fire, Quelling Blade
 Lane: Magic Wand 3 [Against Storm Spirit's spells: get it early], Urn of Shadows 7
 Boots: Phase Boots 10 {Armor and a burst of speed.}
-First: Spirit Vessel 14/15 {Cuts healing on Witch Doctor.}
+First: Spirit Vessel 14/15 {Cuts the healing from Witch Doctor.}
 Next: Mage Slayer 18/22
 Late: Black King Bar 30/34 [Against Vengeful Spirit, Witch Doctor and Tidehunter: don't skip it] {Spell immunity for the big fights.}, Kaya and Sange 31/35, Aghanim's Scepter 32/35
 Job: Win your lane, then use runes to help the side lanes. Your timing is Spirit Vessel around minute 14.

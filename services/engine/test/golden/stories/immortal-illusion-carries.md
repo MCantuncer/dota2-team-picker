@@ -25,7 +25,7 @@ Start: 2 Iron Branch, 2 Tango [Hard lane against Primal Beast and Hoodwink: more
 Lane: Magic Wand 3, Falcon Blade 7
 Boots: Power Treads 7 {Attack speed and a stat to switch.}
 First: Manta Style 19/20
-Late: Eye of Skadi 30/31 {Cuts healing on Treant Protector and slows them.}, Hurricane Pike 32/41, Butterfly 33/41, Black King Bar 35/39 [Against Naga Siren, Pangolier and Primal Beast: don't skip it] {Spell immunity for the big fights.}
+Late: Eye of Skadi 30/31 {Cuts the healing from Treant Protector; your hits slow.}, Hurricane Pike 32/41, Butterfly 33/41, Black King Bar 35/39 [Against Naga Siren, Pangolier and Primal Beast: don't skip it] {Spell immunity for the big fights.}
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Manta Style around minute 19.
 Vs Primal Beast (lane): Starts fights and soaks your damage. buy Black King Bar.
 Vs Hoodwink (lane): Magic burst. Stay spread so one combo can't catch two.
@@ -72,7 +72,7 @@ Timings: around
 Start: 2 Tango [Hard lane against Naga Siren and Treant Protector: more sustain], Blood Grenade, Iron Branch, Magic Stick, Sentry Ward, Healing Salve [Hard lane against Naga Siren and Treant Protector: more sustain]
 Boots: Tranquil Boots 8, or Arcane Boots 12
 First: Blink Dagger 19 {Start fights from 1,200 range.}
-Late: Eul's Scepter of Divinity 31, Black King Bar 32 {Stops disables from Naga Siren, Pangolier and Primal Beast.}, Force Staff 33 [Against Naga Siren and Pangolier: don't skip it] {Pushes you out of trouble.}, Aghanim's Scepter 34
+Late: Eul's Scepter of Divinity 31, Black King Bar 32 {Stops disables from Pangolier, Hoodwink and Treant Protector.}, Force Staff 33 [Against Naga Siren and Pangolier: don't skip it] {Pushes you out of trouble.}, Aghanim's Scepter 34
 Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Blink Dagger around minute 19.
 Vs Naga Siren (lane): Illusions split your damage. buy Force Staff.
 Vs Treant Protector (lane): Goes invisible. Ask your support for Dust and Sentries before fights.

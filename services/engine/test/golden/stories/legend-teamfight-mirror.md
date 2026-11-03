@@ -26,7 +26,7 @@ Lane: Wraith Band 2, Magic Wand 3, Perseverance 10
 Boots: Power Treads 7 {Attack speed and a stat to switch.}, or Phase Boots 8
 First: Battle Fury 14/16 {Cleave for fast farm.}
 Next: Manta Style 23/24, Butterfly 29/30
-Late: Monkey King Bar 33/37 [Against Phantom Assassin: don't skip it] {Most of your hits can't miss.}, Swift Blink 40/43
+Late: Monkey King Bar 33/37 [Against Phantom Assassin: don't skip it] {Most of your hits go through evasion.}, Swift Blink 40/43
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Battle Fury around minute 14.
 Vs Axe (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Witch Doctor (lane, guessed): Heals their team through fights. Kill them first or fight short and decisive.

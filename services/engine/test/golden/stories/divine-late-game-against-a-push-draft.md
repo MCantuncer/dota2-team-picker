@@ -25,7 +25,7 @@ Lane: Null Talisman 2
 Boots: Power Treads 8 {Attack speed and a stat to switch.}
 First: Manta Style 18/19
 Next: Butterfly 26/27
-Late: Eye of Skadi 33/34 {Cuts healing on Chen and slows them.}, Daedalus 38/41, Aghanim's Blessing 46/48
+Late: Eye of Skadi 33/34 {Cuts the healing from Chen; your hits slow.}, Daedalus 38/41, Aghanim's Blessing 46/48
 If needed: Black King Bar 32 [Against Leshrac, Underlord and Shadow Shaman] instead of Eye of Skadi
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Manta Style around minute 18.
 Vs Underlord (lane): Starts fights and soaks your damage. buy Black King Bar.
