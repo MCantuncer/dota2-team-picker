@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
 import type { HeroBenchmarks } from "./benchmarks.ts";
+import type { CountedDraftGame } from "./drafts.ts";
 import type { CountedStratzGame } from "./stratz.ts";
 import { OpenDotaBusy, runTrends, type TrendCheck, type TrendDeps, type TrendPlayer } from "./job.ts";
 
@@ -71,6 +72,7 @@ function stub(players: TrendPlayer[], over: Partial<TrendDeps> = {}): Stub {
     },
     claimPlayers: () => Promise.resolve(players),
     fetchStratzGames: () => Promise.resolve(null),
+    fetchDraftGames: () => Promise.resolve([]),
     fetchRecentMatches: () => Promise.resolve([1, 2, 3, 4, 5, 6].map((id) => recentRow(id))),
     cachedBenchmarks: () => Promise.resolve(new Map()),
     fetchBenchmarks: (heroId) => {
@@ -243,4 +245,45 @@ Deno.test("a STRATZ error falls back to OpenDota alone", async () => {
   const result = await runTrends(s.deps);
   assertEquals(result.cards, 1);
   assertEquals(s.logged, ["STRATZ games for u1 failed; using OpenDota alone"]);
+});
+
+const draftGame = (matchId: number, over: Partial<CountedDraftGame> = {}): CountedDraftGame => ({
+  matchId,
+  heroId: MONKEY_KING,
+  startTime: NOW_S - matchId * HOUR_S,
+  isWin: true,
+  position: 1,
+  gameMode: 22,
+  lobbyType: 7,
+  ...over,
+});
+
+Deno.test("draft positions let unparsed OpenDota games be judged and make a card", async () => {
+  const s = stub([player()], {
+    fetchRecentMatches: unparsed,
+    fetchDraftGames: () => Promise.resolve([1, 2, 3, 4, 5, 6].map((id) => draftGame(id))),
+  });
+  const result = await runTrends(s.deps);
+  assertEquals(result.cards, 1);
+  assertEquals(s.benchmarkFetches, [MONKEY_KING]);
+  assertEquals(s.saved[0][1].games[0].position_source, "draft");
+  assertStringIncludes(s.saved[0][1].newCard?.reason ?? "", "as carry in your drafts");
+});
+
+Deno.test("STRATZ positions win over draft positions", async () => {
+  const s = stub([player()], {
+    fetchRecentMatches: unparsed,
+    fetchStratzGames: () => Promise.resolve([1, 2, 3, 4, 5, 6].map((id) => stratzGame(id, { position: 2 }))),
+    fetchDraftGames: () => Promise.resolve([1, 2, 3, 4, 5, 6].map((id) => draftGame(id))),
+  });
+  await runTrends(s.deps);
+  assertEquals(s.saved[0][1].games[0].position, 2);
+  assertEquals(s.saved[0][1].games[0].position_source, "stratz");
+});
+
+Deno.test("a draft read error falls back to the other sources", async () => {
+  const s = stub([player()], { fetchDraftGames: () => Promise.reject(new Error("db down")) });
+  const result = await runTrends(s.deps);
+  assertEquals(result.cards, 1);
+  assertEquals(s.logged, ["Draft games for u1 failed; using the other sources"]);
 });
