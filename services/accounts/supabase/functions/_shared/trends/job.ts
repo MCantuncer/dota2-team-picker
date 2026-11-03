@@ -1,12 +1,13 @@
 /**
  * One run of the refresh-trends job: for each player whose check is due, read their recent
- * games from STRATZ (when a token is set) and OpenDota, judge them by STRATZ IMP or the
+ * games from STRATZ (when a token is set), OpenDota and our party drafts, judge them by STRATZ IMP or the
  * heroes' OpenDota benchmarks, and save the games plus at most one new hero pool card. Every
  * OpenDota call comes from the trends share of the daily budget first; the run stops when the
  * budget, the run cap or a rate limit says so.
  */
 import type { BenchmarkStat, HeroBenchmarks } from "./benchmarks.ts";
 import { isCountedGame, positionFromLane, readRecentMatch, type RecentMatch, type TrendGame } from "./games.ts";
+import type { CountedDraftGame } from "./drafts.ts";
 import { mergeGames, type StratzGame } from "./merge.ts";
 import type { CountedStratzGame } from "./stratz.ts";
 import { poolCardText } from "./reason.ts";
@@ -67,6 +68,8 @@ export interface TrendDeps {
    * limits, so these calls don't come from the OpenDota budget.
    */
   fetchStratzGames: (accountId: number) => Promise<CountedStratzGame[] | null>;
+  /** The player's counted games from our party drafts, with their planned positions. */
+  fetchDraftGames: (userId: string) => Promise<CountedDraftGame[]>;
   /** OpenDota's recentMatches rows, unchecked. */
   fetchRecentMatches: (accountId: number) => Promise<unknown[]>;
   /** Benchmarks fetched in the last 7 days, by hero id. */
@@ -126,9 +129,10 @@ export async function runTrends(deps: TrendDeps, maxCalls = MAX_RUN_CALLS): Prom
 
 async function checkPlayer(player: TrendPlayer, deps: TrendDeps, take: (n: number) => Promise<void>) {
   const stratz = await stratzGamesOf(player, deps);
+  const drafts = await draftGamesOf(player, deps);
   await take(1);
   const raw = await deps.fetchRecentMatches(player.account_id);
-  if (raw.length === 0 && !stratz.length && Object.keys(player.hero_stats).length > 0) {
+  if (raw.length === 0 && !stratz.length && !drafts.length && Object.keys(player.hero_stats).length > 0) {
     // Games on record but none shown: most likely "Expose public match data" is off.
     return { state: "hidden", games: [], newCard: null, qualifying: [] } satisfies TrendCheck;
   }
@@ -137,8 +141,12 @@ async function checkPlayer(player: TrendPlayer, deps: TrendDeps, take: (n: numbe
     const match = readRecentMatch(r);
     return match && isCountedGame(match, nowS) ? [match] : [];
   });
-  const benchmarks = await benchmarksFor(matches, stratz, deps, take);
-  const games = mergeGames([], stratz, matches.map((match) => ({ match, benchmarks: benchmarks.get(match.heroId) })));
+  const benchmarks = await benchmarksFor(matches, stratz, drafts, deps, take);
+  const games = mergeGames(
+    drafts,
+    stratz,
+    matches.map((match) => ({ match, benchmarks: benchmarks.get(match.heroId) })),
+  );
   const candidates = findPoolCandidates({
     games,
     pool: player.pool,
@@ -150,7 +158,7 @@ async function checkPlayer(player: TrendPlayer, deps: TrendDeps, take: (n: numbe
   const newCard = best && !player.has_recent_card ? toCard(best, deps.heroName(best.heroId)) : null;
   return {
     state: "ok",
-    games: games.map((g) => toRow(g, matches, stratz)),
+    games: games.map((g) => toRow(g, matches, stratz, drafts)),
     newCard,
     qualifying: candidates.map((c) => pairKey(c.heroId, c.position)),
   } satisfies TrendCheck;
@@ -166,6 +174,16 @@ async function stratzGamesOf(player: TrendPlayer, deps: TrendDeps): Promise<Coun
   }
 }
 
+/** Draft games, or none when reading them fails: the check goes on with the other sources. */
+async function draftGamesOf(player: TrendPlayer, deps: TrendDeps): Promise<CountedDraftGame[]> {
+  try {
+    return await deps.fetchDraftGames(player.user_id);
+  } catch (err) {
+    deps.log(`Draft games for ${player.user_id} failed; using the other sources`, err);
+    return [];
+  }
+}
+
 /**
  * Benchmarks for the games judged by stats: a known position (STRATZ or lane) but no STRATZ
  * IMP. Cached ones first, then one call each.
@@ -173,14 +191,17 @@ async function stratzGamesOf(player: TrendPlayer, deps: TrendDeps): Promise<Coun
 async function benchmarksFor(
   matches: RecentMatch[],
   stratz: StratzGame[],
+  drafts: CountedDraftGame[],
   deps: TrendDeps,
   take: (n: number) => Promise<void>,
 ) {
   const stratzById = new Map(stratz.map((g) => [g.matchId, g]));
+  const draftById = new Map(drafts.map((g) => [g.matchId, g]));
   const needed = matches.filter((m) => {
     const s = stratzById.get(m.matchId);
     if (s && s.heroId === m.heroId && s.imp !== null) return false;
-    return (s?.heroId === m.heroId && s.position !== null) || positionFromLane(m) !== null;
+    return (s?.heroId === m.heroId && s.position !== null) || positionFromLane(m) !== null ||
+      draftById.get(m.matchId)?.heroId === m.heroId;
   });
   const heroIds = [...new Set(needed.map((m) => m.heroId))];
   const found = heroIds.length ? await deps.cachedBenchmarks(heroIds) : new Map<number, HeroBenchmarks>();
@@ -196,9 +217,14 @@ function toCard(candidate: PoolCandidate, heroName: string): NewCard {
   return { heroId: candidate.heroId, position: candidate.position, question, reason, evidence: candidate };
 }
 
-function toRow(game: TrendGame, matches: RecentMatch[], stratz: CountedStratzGame[]): GameRow {
+function toRow(
+  game: TrendGame,
+  matches: RecentMatch[],
+  stratz: CountedStratzGame[],
+  drafts: CountedDraftGame[],
+): GameRow {
   const match = matches.find((m) => m.matchId === game.matchId) ??
-    stratz.find((g) => g.matchId === game.matchId);
+    stratz.find((g) => g.matchId === game.matchId) ?? drafts.find((g) => g.matchId === game.matchId);
   return {
     match_id: game.matchId,
     hero_id: game.heroId,

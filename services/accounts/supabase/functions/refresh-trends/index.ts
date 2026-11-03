@@ -12,6 +12,7 @@ import { sameSecret } from "../_shared/job_secret.ts";
 import { fetchRecentMatches } from "../_shared/match.ts";
 import { takeOpenDotaCalls } from "../_shared/opendota_budget.ts";
 import { type HeroBenchmarks, readHeroBenchmarks } from "../_shared/trends/benchmarks.ts";
+import { type CountedDraftGame, DRAFT_GAMES_SELECT, readDraftGames } from "../_shared/trends/drafts.ts";
 import { OpenDotaBusy, runTrends, type TrendPlayer, TRENDS_BUDGET } from "../_shared/trends/job.ts";
 import { type CountedStratzGame, playerMatchesQuery, readStratzGames, STRATZ_URL } from "../_shared/trends/stratz.ts";
 
@@ -42,6 +43,7 @@ Deno.serve(async (req) => {
       return data as unknown as TrendPlayer[];
     },
     fetchStratzGames,
+    fetchDraftGames,
     fetchRecentMatches: (accountId) => fetchRecentMatches(accountId, openDota),
     cachedBenchmarks,
     fetchBenchmarks,
@@ -73,6 +75,14 @@ async function openDota(input: string | URL | Request, init?: RequestInit): Prom
     throw new OpenDotaBusy();
   }
   return res;
+}
+
+/** The player's games from our party drafts where their hero came from their own account. */
+async function fetchDraftGames(userId: string): Promise<CountedDraftGame[]> {
+  const { data, error } = await admin.from("draft_players").select(DRAFT_GAMES_SELECT).eq("user_id", userId)
+    .eq("hero_source", "account").not("position", "is", null).not("party_drafts.won", "is", null);
+  if (error) throw error;
+  return readDraftGames(data, Date.now() / 1000);
 }
 
 /** The player's counted STRATZ games, or null when no STRATZ_TOKEN is set. */
