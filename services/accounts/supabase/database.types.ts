@@ -822,6 +822,11 @@ isOneToOne: false
 "become_captain":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"browse_stacks":
+{ Args: { "page"?: number,"search"?: string }; Returns: {
+              "games": number,"id": string,"members": number,"name": string,"owner_name": string
+            }[]
+                           },
 "can_invite":
 { Args: { "target": string }; Returns: boolean
                            },
@@ -883,6 +888,11 @@ isOneToOne: false
 "get_team_invite":
 { Args: { "invite": string }; Returns: {
               "accepted": boolean,"captain_name": string,"email": string,"expired": boolean,"team_name": string
+            }[]
+                           },
+"hot_stacks":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "games": number,"id": string,"members": number,"name": string,"owner_name": string
             }[]
                            },
 "in_draft_party":
@@ -1045,6 +1055,21 @@ isOneToOne: false
                            },
 "set_pool_suggestions_off":
 { Args: { "is_off": boolean }; Returns: undefined
+                           },
+"stack_games":
+{ Args: { "teams": (string)[] }; Returns: {
+              "games": number,"team_id": string
+            }[]
+                           },
+"stack_members":
+{ Args: { "team": string }; Returns: {
+              "avatar_url": string,"display_name": string,"rank_tier": number,"role": string,"user_id": string
+            }[]
+                           },
+"stack_page":
+{ Args: { "team": string }; Returns: {
+              "games": number,"id": string,"members": number,"my_request": string,"my_role": string,"name": string,"open_to_requests": boolean,"owner_name": string
+            }[]
                            },
 "stale_match_files":
 { Args: { "max_rows"?: number }; Returns: {
