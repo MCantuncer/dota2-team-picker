@@ -77,6 +77,18 @@ export interface Snapshot {
    * Turns a draft edge into a win chance: chance = 1 / (1 + e^-(a + b * edge)), fitted on saved
    * ranked games for each number of heroes known. Only present when its calibration check passed.
    */
+  /**
+   * Learned multipliers on each score part (1 = the hand-set weight), fitted on saved ranked games.
+   * Only present when, on newer games, the learned weights beat the hand-set ones and the highest
+   * win rate rival on win lift (see backtest/score-weights.ts).
+   */
+  scoreWeights?: {
+    fittedAt: string;
+    /** Picks the weights were fitted on, and the win lift (points) they and the hand weights got on the check. */
+    picks: number;
+    lift: { learned: number; hand: number };
+    weights: ScoreWeights;
+  };
   winModel?: {
     fittedAt: string;
     games: number;
@@ -245,6 +257,9 @@ export interface ScoreBreakdown {
   flex: number;
   pickSafety: number;
 }
+
+/** A multiplier per score part. */
+export type ScoreWeights = Record<keyof ScoreBreakdown, number>;
 
 /** A hand-checked hard counter of a hero and where it stands in the draft, with a line to show. */
 export interface HardCounterNote {
