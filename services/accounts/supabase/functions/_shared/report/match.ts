@@ -8,6 +8,26 @@ export interface DeathLogEntry {
   time: number;
   goldLost: number;
   timeDead: number;
+  /** Unit key of whoever landed the last hit, e.g. "npc_dota_hero_lina". Null when not given. */
+  killer: string | null;
+}
+
+/** Percentiles (0 to 1) for the benchmarks beyond the four every parsed match has. */
+export interface OtherBenchmarks {
+  killsPerMin: number | null;
+  /** A high percentile means many deaths: lower is better. */
+  deathsPerMin: number | null;
+  assistsPerMin: number | null;
+  deniesPerMin: number | null;
+  heroHealingPerMin: number | null;
+  towerDamage: number | null;
+}
+
+/** A tower, barracks or ancient destroyed. The key names the building's side and lane. */
+export interface BuildingKill {
+  time: number;
+  /** e.g. "npc_dota_goodguys_tower1_mid" (goodguys are Radiant's buildings). */
+  key: string;
 }
 
 export interface Purchase {
@@ -44,8 +64,13 @@ export interface MatchPlayer {
   observersPlaced: number | null;
   sentriesPlaced: number | null;
   wardsDestroyed: number | null;
+  /** Totals at each minute, from minute 0. Parsed only. */
+  lastHitsByMinute: number[] | null;
+  deniesByMinute: number[] | null;
+  xpByMinute: number[] | null;
   /** Benchmark percentiles (0 to 1) against everyone playing the hero. */
   benchmarks: { goldPerMin: number; xpPerMin: number; lastHitsPerMin: number; heroDamagePerMin: number } | null;
+  otherBenchmarks: OtherBenchmarks | null;
   /** Damage this player took, by the enemy ability or item key that dealt it ("null" is attacks). Parsed only. */
   damageReceived: Record<string, number> | null;
 }
@@ -78,6 +103,8 @@ export interface Match {
   players: MatchPlayer[];
   /** Parsed only. */
   teamfights: Teamfight[] | null;
+  /** Buildings destroyed, in time order. Parsed only. */
+  buildingKills: BuildingKill[] | null;
 }
 
 type Obj = Record<string, unknown>;
@@ -116,6 +143,7 @@ export function readOpenDotaMatch(raw: unknown): Match {
     radiantGoldAdv: isParsed ? numArray(raw.radiant_gold_adv) : null,
     players,
     teamfights: isParsed ? readTeamfights(raw.teamfights) : null,
+    buildingKills: isParsed ? readBuildingKills(raw.objectives) : null,
   };
 }
 
@@ -144,6 +172,9 @@ function readPlayer(p: unknown, isParsed: boolean): MatchPlayer {
     lane: parsed(numOrNull(p, "lane")),
     isRoaming: parsed(typeof p.is_roaming === "boolean" ? p.is_roaming : null),
     netWorthByMinute: parsed(numArray(p.networth_t)),
+    lastHitsByMinute: parsed(numArray(p.lh_t)),
+    deniesByMinute: parsed(numArray(p.dn_t)),
+    xpByMinute: parsed(numArray(p.xp_t)),
     teamfightParticipation: parsed(numOrNull(p, "teamfight_participation")),
     stunSeconds: parsed(numOrNull(p, "stuns")),
     deathsLog: parsed(readDeaths(p.deaths_log)),
@@ -152,6 +183,7 @@ function readPlayer(p: unknown, isParsed: boolean): MatchPlayer {
     sentriesPlaced: parsed(numOrNull(p, "sen_placed")),
     wardsDestroyed: parsed(isNum(p.observer_kills) && isNum(p.sentry_kills) ? p.observer_kills + p.sentry_kills : null),
     benchmarks: readBenchmarks(p.benchmarks),
+    otherBenchmarks: readOtherBenchmarks(p.benchmarks),
     damageReceived: parsed(readNumberMap(p.damage_inflictor_received)),
   };
 }
@@ -162,6 +194,7 @@ function readDeaths(v: unknown): DeathLogEntry[] | null {
     time: num(d, "time"),
     goldLost: num(d, "gold_lost"),
     timeDead: num(d, "time_dead"),
+    killer: typeof d.key === "string" && d.key !== "" ? d.key : null,
   }));
 }
 
@@ -172,15 +205,39 @@ function readPurchases(v: unknown): Purchase[] | null {
   ) => (isNum(x.time) && typeof x.key === "string" ? [{ time: x.time, key: x.key }] : []));
 }
 
+const benchmarkPct = (v: Obj, key: string): number | null => {
+  const entry = v[key];
+  return isObj(entry) && isNum(entry.pct) ? entry.pct : null;
+};
+
 function readBenchmarks(v: unknown): MatchPlayer["benchmarks"] {
   if (!isObj(v)) return null;
-  const pct = (key: string): number | null => {
-    const entry = v[key];
-    return isObj(entry) && isNum(entry.pct) ? entry.pct : null;
-  };
+  const pct = (key: string) => benchmarkPct(v, key);
   const [gpm, xpm, lh, dmg] = ["gold_per_min", "xp_per_min", "last_hits_per_min", "hero_damage_per_min"].map(pct);
   if (gpm === null || xpm === null || lh === null || dmg === null) return null;
   return { goldPerMin: gpm, xpPerMin: xpm, lastHitsPerMin: lh, heroDamagePerMin: dmg };
+}
+
+function readOtherBenchmarks(v: unknown): OtherBenchmarks | null {
+  if (!isObj(v)) return null;
+  return {
+    killsPerMin: benchmarkPct(v, "kills_per_min"),
+    deathsPerMin: benchmarkPct(v, "deaths_per_min"),
+    assistsPerMin: benchmarkPct(v, "assists_per_min"),
+    deniesPerMin: benchmarkPct(v, "denies_per_min"),
+    heroHealingPerMin: benchmarkPct(v, "hero_healing_per_min"),
+    towerDamage: benchmarkPct(v, "tower_damage"),
+  };
+}
+
+function readBuildingKills(v: unknown): BuildingKill[] | null {
+  if (!Array.isArray(v)) return null;
+  return v
+    .filter(isObj)
+    .flatMap((o) =>
+      o.type === "building_kill" && isNum(o.time) && typeof o.key === "string" ? [{ time: o.time, key: o.key }] : []
+    )
+    .sort((a, b) => a.time - b.time);
 }
 
 function readNumberMap(v: unknown): Record<string, number> | null {
