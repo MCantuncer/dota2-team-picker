@@ -57,6 +57,10 @@ export interface Snapshot {
    * refresh) or, when missing, our own sample of public matches (added to on each refresh).
    */
   matchupsFrom?: { source: "stratz"; at: string };
+  /** Hard counters found in the counts (see data-hard-counters.ts), used next to the hand list. */
+  dataHardCounters?: { hero: number; counter: number; gap: number; names: string }[];
+  /** Refreshes in a row each "hero-counter" pair has been past the line, for the hold. */
+  hardCounterStreaks?: Record<string, number>;
   /** Games per lane role (1 safe, 2 mid, 3 off, 4 jungle). */
   laneRoles: Record<string, Partial<Record<"1" | "2" | "3" | "4", number>>>;
   /** When lane roles were last downloaded; they are refreshed weekly. */

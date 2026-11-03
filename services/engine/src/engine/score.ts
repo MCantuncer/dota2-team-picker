@@ -1,4 +1,5 @@
-import { hardCountersOf, type HardCounter } from "./hard-counters";
+import { mergeHardCounters } from "./data-hard-counters";
+import { HARD_COUNTERS, hardCountersOf, type HardCounter } from "./hard-counters";
 import { list, namedPoints, ordinal, pickLines, points, RANK_NAMES, ROLE_NAMES, summaryOf, type Line, type Warning } from "./reasons";
 import { blindPickRisk, openSlots, pickChance } from "./risk";
 import { guessEnemyPositions, LANE_OPPONENTS, positionFit, type PositionFit } from "./positions";
@@ -99,12 +100,13 @@ export class Engine {
   /** True when the snapshot's pick phase counts hold enough games to score with. */
   private readonly usePickPhase: boolean;
 
-  /** `hardCounters` replaces the hand-checked list, for tests. */
+  /** `hardCounters` replaces the hand-checked list and the data's, for tests. */
   constructor(
     readonly data: Snapshot,
     options: { hardCounters?: readonly HardCounter[] } = {},
   ) {
-    this.hardCounters = hardCountersOf(options.hardCounters);
+    // The hand-checked list plus the pairs found in the data; tests pass their own list instead.
+    this.hardCounters = hardCountersOf(options.hardCounters ?? mergeHardCounters(HARD_COUNTERS, data.dataHardCounters));
     this.heroes = Object.values(data.heroes).sort((a, b) => a.id - b.id);
     for (const h of this.heroes) {
       this.fits.set(h.id, positionFit(h, data.laneRoles[h.id], data.positions?.[h.id]));
