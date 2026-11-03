@@ -23,14 +23,14 @@ describe("Engine.suggest", () => {
     expect(first!.name).toBe("Mid Three");
     expect(second!.name).toBe("Mid Two");
     expect(first!.breakdown.counter).toBeGreaterThan(5);
-    expect(first!.reasons[0]).toMatch(/Strong against Offlane Five/);
+    expect(first!.reasons[0]).toMatch(/^Beats Offlane Five \(\+\d+\.\d\)/);
   });
 
   it("gives favorites a boost and says why", () => {
     const engine = new Engine(fixture());
     const [first] = engine.suggest({ myPosition: 2, allies: [], enemies: [], favorites: [2] });
     expect(first!.name).toBe("Mid Two");
-    expect(first!.reasons).toContain("One of your favorite heroes");
+    expect(first!.tags).toContain("Favorite (+1.5)");
   });
 
   it("respects bans and the count", () => {
@@ -98,12 +98,12 @@ describe("pick phase", () => {
     const engine = new Engine(withPickPhase(10000));
     const early = engine.suggest({ myPosition: 2, allies: [], enemies: [] }).find((s) => s.heroId === 3)!;
     const late = engine
-      .suggest({ myPosition: 2, allies: [{ heroId: 1 }, { heroId: 4 }, { heroId: 5 }], enemies: [] })
+      .suggest({ myPosition: 2, allies: [{ heroId: 1 }, { heroId: 4 }, { heroId: 5 }, { heroId: 6 }], enemies: [] })
       .find((s) => s.heroId === 3)!;
     expect(early.breakdown.pickSafety).toBeLessThan(-5);
-    expect(early.reasons).not.toContain("Wins more as a late pick");
+    expect(early.reasons.join()).not.toMatch(/Wins more as a last-round pick/);
     expect(late.breakdown.pickSafety).toBeGreaterThan(5);
-    expect(late.reasons).toContain("Wins more as a late pick");
+    expect(late.reasons.join()).toMatch(/Wins more as a last-round pick \(\+\d+\.\d\)/);
     expect(engine.pickPhaseEdge(2, 0)).toBeCloseTo(0);
   });
 

@@ -16,9 +16,12 @@ export type RankGroup = 1 | 2 | 3 | 4;
 export const rankGroup = (bracket: RankBracket): RankGroup => Math.ceil(bracket / 2) as RankGroup;
 export const RANK_GROUP_BRACKETS: Record<RankGroup, RankBracket[]> = { 1: [1, 2], 2: [3, 4], 3: [5, 6], 4: [7, 8] };
 
-/** Pick phase of a team's pick (0-based index within the team): 0 early (1st or 2nd), 1 middle (3rd), 2 late (4th or 5th). */
+/**
+ * Pick phase of a team's pick (0-based index within the team), by the Ranked All Pick rounds:
+ * 0 first round (1st or 2nd pick), 1 second round (3rd or 4th), 2 last round (5th).
+ */
 export type PickPhase = 0 | 1 | 2;
-export const phaseOf = (teamPickIndex: number): PickPhase => (teamPickIndex < 2 ? 0 : teamPickIndex === 2 ? 1 : 2);
+export const phaseOf = (teamPickIndex: number): PickPhase => (teamPickIndex < 2 ? 0 : teamPickIndex < 4 ? 1 : 2);
 
 export interface GamesWins {
   games: number;
@@ -57,7 +60,7 @@ export interface Snapshot {
   positions?: Record<string, number[]>;
   positionsAt?: string;
   /**
-   * Games and wins per hero by when its team picked it: [1st or 2nd pick, 3rd, 4th or 5th].
+   * Games and wins per hero by the round its team picked it in: [1st or 2nd pick, 3rd or 4th, 5th].
    * Counted from the saved ranked games of this patch.
    */
   pickPhase?: Record<string, { games: number[]; wins: number[] }>;
@@ -237,7 +240,12 @@ export interface Suggestion {
   name: string;
   score: number;
   breakdown: ScoreBreakdown;
+  /** Up to 4 lines on why the hero fits this draft, each with its points, then at most one warning. */
   reasons: string[];
+  /** Where the score comes from: this draft, or meta, role and comfort. */
+  summary: string;
+  /** Short labels such as "Favorite (+1.5)" or "Your record 12-8 (+0.9)". */
+  tags: string[];
   /** The hero's hard counters, to show apart from the reasons. */
   hardCounters: HardCounterNote[];
 }

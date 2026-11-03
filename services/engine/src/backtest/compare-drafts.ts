@@ -20,7 +20,8 @@ export interface NamedDraft {
 /** One draft's top suggestions, as saved to JSON. */
 export interface DraftRun {
   label: string;
-  cards: { name: string; score: number; reasons: string[] }[];
+  /** `summary` and `tags` are missing from runs saved by older versions. */
+  cards: { name: string; score: number; reasons: string[]; summary?: string; tags?: string[] }[];
 }
 
 const BANS = ["Pudge", "Invoker", "Faceless Void", "Slark", "Anti-Mage"];
@@ -84,7 +85,7 @@ export function toInput(engine: Engine, draft: NamedDraft, count = 8): DraftInpu
 export function runDrafts(engine: Engine, drafts: NamedDraft[] = DRAFTS): DraftRun[] {
   return drafts.map((draft) => ({
     label: draft.label,
-    cards: engine.suggest(toInput(engine, draft)).map((s) => ({ name: s.name, score: s.score, reasons: s.reasons })),
+    cards: engine.suggest(toInput(engine, draft)).map((s) => ({ name: s.name, score: s.score, reasons: s.reasons, summary: s.summary, tags: s.tags })),
   }));
 }
 
@@ -98,8 +99,13 @@ export function describe(draft: NamedDraft): string {
   return parts.join("; ");
 }
 
-const cell = (card: DraftRun["cards"][number] | undefined) =>
-  card ? `**${card.name}** ${card.score.toFixed(1)}<br>${card.reasons.join("<br>").replace(/\|/g, "/")}` : "";
+const cell = (card: DraftRun["cards"][number] | undefined) => {
+  if (!card) return "";
+  const lines = [`**${card.name}** ${card.score.toFixed(1)}`, ...card.reasons];
+  if (card.tags?.length) lines.push(card.tags.join(", "));
+  if (card.summary) lines.push(`_${card.summary}_`);
+  return lines.join("<br>").replace(/\|/g, "/");
+};
 
 /**
  * Markdown for each draft: the top cards with their reasons, and with `before`, the old list
