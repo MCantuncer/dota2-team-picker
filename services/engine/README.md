@@ -68,8 +68,8 @@ The weights live at the top of [`src/engine/score.ts`](src/engine/score.ts).
 
 ### What a card says
 
-Each suggestion carries up to four short lines on why it fits, each with its points, and at most one
-warning:
+Each suggestion carries up to four short lines on why it fits, each with its points, and one
+warning (two when it loses a matchup):
 
 - Lines from this draft come first: "Beats Axe (+3.1, likely your lane)", "Works with Crystal
   Maiden (+1.8, your lane partner)", "Adds what your team lacks: an initiator and a save (+2.4)",
@@ -79,10 +79,14 @@ warning:
   hero's place among heroes played in the position in 30% or more of their games, with 500 or more
   games at that rank, top 10).
   With no picks yet, these lines are all the card shows.
-- The warning starts with "Watch out:", for example "Watch out: loses to Viper (-2.2)".
+- The warning starts with "Watch out:", for example "Watch out: loses to Viper (-2.2)". A lost
+  matchup of 1 point or more is always shown, next to the biggest other warning, so a low win rate
+  never hides it. A named matchup with fewer than 100 games says so: "(-1.4, only 86 games)".
 
-`summary` splits the score into what this draft adds (counter, synergy, team needs, pick safety)
-and what holds in any draft (meta, position fit, comfort, flex). Favorites and your own record go
+`summary` gives the hero's place among every hero scored for the position in this draft (also in
+`place`), then splits the score into what this draft adds (counter, synergy, team needs, pick
+safety) and what holds in any draft (meta, position fit, comfort, flex): "Score -3.4, 31st of 47
+carries here: -5.5 from this draft, +2.1 from meta, role and comfort". Favorites and your own record go
 in `tags` ("Favorite (+1.5)", "Your record 12-8 (+0.9)").
 ## Backtest
 
