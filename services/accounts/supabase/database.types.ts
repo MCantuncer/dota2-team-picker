@@ -1001,7 +1001,7 @@ isOneToOne: false
                            },
 "party_player_stats":
 { Args: Record<PropertyKey, never>; Returns: {
-              "display_name": string,"favorites": Json,"hero_stats": Json,"positions": number[],"rank_tier": number,"user_id": string
+              "display_name": string,"favorites": Json,"hero_stats": Json,"positions": (number)[],"rank_tier": number,"user_id": string
             }[]
                            },
 "party_view":
