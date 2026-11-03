@@ -17,6 +17,7 @@ import {
   type RankBracket,
   type RankGroup,
   type ScoreBreakdown,
+  type ScoreWeights,
   type Snapshot,
   type Suggestion,
 } from "./types";
@@ -40,6 +41,18 @@ const WEIGHTS = {
   flex: 0.6,
   /** Extra weight on the synergy with your lane partner (0.5 = 1.5x), when its position is known. */
   lanePartner: 0.5,
+};
+
+/** Every score part as the hand-set weights above make it. */
+export const HAND_WEIGHTS: ScoreWeights = {
+  counter: 1,
+  synergy: 1,
+  meta: 1,
+  positionFit: 1,
+  teamNeeds: 1,
+  comfort: 1,
+  flex: 1,
+  pickSafety: 1,
 };
 
 /** Games of evidence a value is pulled toward its prior with (Bayesian shrinkage). */
@@ -106,11 +119,18 @@ export class Engine {
   /** True when the snapshot's pick phase counts hold enough games to score with. */
   private readonly usePickPhase: boolean;
 
-  /** `hardCounters` replaces the hand-checked list and the data's, for tests. */
+  /** Multipliers on each score part: learned from saved games when the data has them, else all 1. */
+  readonly partWeights: ScoreWeights;
+
+  /**
+   * `hardCounters` replaces the hand-checked list and the data's, for tests. `scoreWeights`
+   * replaces the data's learned weights; null uses the hand-set weights alone.
+   */
   constructor(
     readonly data: Snapshot,
-    options: { hardCounters?: readonly HardCounter[] } = {},
+    options: { hardCounters?: readonly HardCounter[]; scoreWeights?: ScoreWeights | null } = {},
   ) {
+    this.partWeights = options.scoreWeights === undefined ? (data.scoreWeights?.weights ?? HAND_WEIGHTS) : (options.scoreWeights ?? HAND_WEIGHTS);
     // The hand-checked list plus the pairs found in the data; tests pass their own list instead.
     this.hardCounters = hardCountersOf(options.hardCounters ?? mergeHardCounters(HARD_COUNTERS, data.dataHardCounters));
     this.heroes = Object.values(data.heroes).sort((a, b) => a.id - b.id);
@@ -400,15 +420,16 @@ export class Engine {
         pickSafety -= note.gap * Math.min(1, pickChance(slots, note.counterId) * GAMBLE_PICK_BOOST);
       }
 
+      const w = this.partWeights;
       const breakdown: ScoreBreakdown = {
-        counter: round(counter),
-        synergy: round(synergy),
-        meta: round(meta),
-        positionFit: round(positionScore),
-        teamNeeds: round(teamNeeds),
-        comfort: round(comfort),
-        flex: round(flex),
-        pickSafety: round(pickSafety),
+        counter: round(counter * w.counter),
+        synergy: round(synergy * w.synergy),
+        meta: round(meta * w.meta),
+        positionFit: round(positionScore * w.positionFit),
+        teamNeeds: round(teamNeeds * w.teamNeeds),
+        comfort: round(comfort * w.comfort),
+        flex: round(flex * w.flex),
+        pickSafety: round(pickSafety * w.pickSafety),
       };
       const score = round(Object.values(breakdown).reduce((s, x) => s + x, 0));
       results.push({

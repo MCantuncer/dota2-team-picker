@@ -41,6 +41,14 @@ jobs:
         run: npm run pull-data || echo "::warning::No published data yet, starting from the repo copy"
       - id: fetch
         run: npm run fetch-data -w services/engine -- --pages 250
+      # Learn how much each score part counts from the saved games, and keep the
+      # weights only if they beat the hand-set ones on newer games. Runs before
+      # the win chance so that is fitted on the engine as it will run. If this
+      # step fails, the data keeps the last checked weights.
+      - name: Fit the score weights
+        continue-on-error: true
+        working-directory: services/engine
+        run: npm run fit-score-weights -- --out "$RUNNER_TEMP/score-weights.md" && cat "$RUNNER_TEMP/score-weights.md" >> "$GITHUB_STEP_SUMMARY"
       # Refit the draft win chance on the saved games and check it on the newest
       # ones. Only a model that passes goes into the data. If this step fails,
       # the data keeps the last checked model.
