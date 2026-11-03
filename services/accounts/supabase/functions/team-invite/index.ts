@@ -11,9 +11,11 @@
  * accept. Sending again for the same email re-sends the link. Both emails name
  * the captain and the team (see supabase/templates).
  *
- * The team's owner (while their profiles.user_type is captain or admin) and
- * its co-captains may send, at most 30 emails a day each and one per address
- * per minute, so the sender can't be used to spam people.
+ * The Stack's owner and its co-captains may send. Every email is logged in
+ * invite_sends and counted against the limits in claim_invite_send (30 a day
+ * per sender, 5 on an account's first day, 3 a day per address, 300 a day for
+ * the site, one a minute per Stack and address), so the sender can't be used to
+ * spam people.
  *
  * The website calls it with supabase.functions.invoke("team-invite", {body}).
  */
@@ -24,8 +26,6 @@ import { checkInviteLimits } from "../_shared/invite_limits.ts";
 const SITE_URL = (Deno.env.get("SITE_URL") ?? "http://localhost:3000").replace(/\/$/, "");
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const CAPTAIN_TYPES = ["captain", "admin"];
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -47,16 +47,9 @@ Deno.serve(async (req) => {
   const team = await teamRunBy(teamId, auth.user.id);
   if (!team) return json({ error: "Team not found" }, 404);
 
-  const since = new Date(Date.now() - DAY_MS).toISOString();
-  const [sentToday, lastSent] = await Promise.all([
-    admin
-      .from("team_invites")
-      .select("id", { count: "exact", head: true })
-      .eq("sent_by", auth.user.id)
-      .gte("sent_at", since),
-    admin.from("team_invites").select("sent_at").eq("team_id", team.id).eq("email", email).maybeSingle(),
-  ]);
-  const limits = checkInviteLimits({ sentToday, lastSent });
+  const limits = checkInviteLimits(
+    await admin.rpc("claim_invite_send", { sender: auth.user.id, team: team.id, address: email }),
+  );
   if (!limits.ok) return json({ error: limits.message }, limits.status);
 
   const { data: invite, error } = await admin
@@ -96,24 +89,20 @@ Deno.serve(async (req) => {
   return json(invite);
 });
 
-/**
- * The team, if this user may invite to it: its owner while they are still a captain or admin, or one
- * of its co-captains.
- */
+/** The team, if this user may invite to it: its owner or one of its co-captains. */
 async function teamRunBy(teamId: string, userId: string): Promise<{ id: string; name: string } | null> {
   if (!UUID.test(teamId)) return null;
-  const { data: team } = await admin.from("teams").select("id, name, owner_id").eq("id", teamId).maybeSingle();
+  const { data: team, error } = await admin.from("teams").select("id, name, owner_id").eq("id", teamId).maybeSingle();
+  if (error) console.error("Loading team failed", error);
   if (!team) return null;
-  if (team.owner_id === userId) {
-    const { data: owner } = await admin.from("profiles").select("user_type").eq("id", userId).maybeSingle();
-    return CAPTAIN_TYPES.includes(owner?.user_type) ? team : null;
-  }
-  const { data: member } = await admin
+  if (team.owner_id === userId) return team;
+  const { data: member, error: memberError } = await admin
     .from("team_members")
     .select("role")
     .eq("team_id", teamId)
     .eq("user_id", userId)
     .maybeSingle();
+  if (memberError) console.error("Loading team member failed", memberError);
   return member?.role === "co_captain" ? team : null;
 }
 

@@ -6,11 +6,12 @@ select tests.create_user('cap@example.com', 'captain') as cap \gset
 select tests.create_user('mem@example.com') as mem \gset
 select tests.create_user('out@example.com') as out \gset
 
--- Only captains create teams.
+-- Anyone creates their own teams (Stacks).
 select tests.sign_in_as('out@example.com');
-select throws_ok(format('insert into public.teams (owner_id, name) values (%L, %L)', :'out', 'Nope'),
-  '42501', null, 'a plain user cannot create a team');
+select lives_ok(format('insert into public.teams (owner_id, name) values (%L, %L)', :'out', 'Mine'),
+  'a plain user can create a team');
 select tests.sign_out();
+delete from public.teams where owner_id = :'out';
 
 select tests.sign_in_as('cap@example.com');
 insert into public.teams (owner_id, name) values (:'cap', 'Radiant') returning id as team \gset
