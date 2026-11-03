@@ -168,6 +168,13 @@ describe("oddsLabel", () => {
     expect(oddsLabel(c("no-clear-difference"))).toBeUndefined();
     expect(oddsLabel(c("too-few-games"))).toBeUndefined();
   });
+
+  it("doesn't say most players take a talent picked half the time", () => {
+    const c: TierChoice = { tier: 0, usual: 10, pick: 10, result: "no-clear-difference", oddsRatio: 1, chance: 0.5, sides: [{ id: 10, wins: 5, losses: 5 }, { id: 11, wins: 5, losses: 5 }] };
+    expect(tierReason(c, name, ["Lion"], { share: 0.5, games: 40 })).toBe(
+      "No clear difference against Lion, so take +2 Mana Regen, which players take as often as the other (50% of 40 recent games).",
+    );
+  });
 });
 
 describe("card lines", () => {

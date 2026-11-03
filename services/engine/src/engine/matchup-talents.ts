@@ -165,7 +165,9 @@ export function tierReason(
   const [x, y] = c.sides;
   if (!x || !y) return "";
   const against = `against ${listOr(enemies)}`;
-  const most = `${name(x.id)}, which most players take (${Math.round(usual.share * 100)}% of ${usual.games} recent games)`;
+  // The usual talent is the one taken more often, so a tie can't say "most players".
+  const who = usual.share > 0.5 ? "most players take" : "players take as often as the other";
+  const most = `${name(x.id)}, which ${who} (${Math.round(usual.share * 100)}% of ${usual.games} recent games)`;
   switch (c.result) {
     case "too-few-games":
       return `Too few high-rank games ${against} to compare, so take ${most}.`;
