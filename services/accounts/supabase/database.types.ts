@@ -627,6 +627,20 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"stratz_refresh": {
+                  Row: {
+                    "busy_until": string | null,"finished_at": string | null,"id": boolean,"last_lookup_at": string | null,"started_at": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "busy_until"?: string | null,"finished_at"?: string | null,"id"?: boolean,"last_lookup_at"?: string | null,"started_at"?: string | null
+                  }
+                  Update: {
+                    "busy_until"?: string | null,"finished_at"?: string | null,"id"?: boolean,"last_lookup_at"?: string | null,"started_at"?: string | null
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"team_game_plans": {
                   Row: {
                     "bans": (number)[],"created_at": string,"enemies": (number)[],"id": string,"picks": (number)[],"players": (string)[],"rank_bracket": number | null,"sent_by": string,"team_id": string
@@ -935,6 +949,9 @@ isOneToOne: false
 "mark_active":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"mark_stratz_refresh":
+{ Args: { "running": boolean }; Returns: string
+                           },
 "may_change_draft":
 { Args: { "draft": string }; Returns: boolean
                            },
@@ -970,6 +987,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "invite_id": string,"inviter_avatar_url": string,"inviter_name": string,"members": number,"sent_at": string,"team_id": string,"team_name": string
             }[]
+                           },
+"note_stratz_busy":
+{ Args: { "until": string }; Returns: undefined
                            },
 "owns_team":
 { Args: { "team": string }; Returns: boolean
@@ -1059,6 +1079,9 @@ isOneToOne: false
                            },
 "step_down_captain":
 { Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"stratz_free_at":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "take_matchup_lookup":
 { Args: { "hourly_cap"?: number,"who": string }; Returns: boolean

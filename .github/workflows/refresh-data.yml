@@ -4,8 +4,12 @@ on:
   # Four runs a day, off the hour (GitHub delays jobs queued on the hour).
   # 4 x 250 pages plus 4 x up to 140 requests for backtest games stays
   # inside OpenDota's free daily allowance (the collector stops early when it runs low).
+  # The last run starts 14:17 UTC and the lookups are free again by about
+  # 15:30 UTC (later when GitHub delays the run), before the evening games in
+  # Europe: while a run uses the STRATZ token, the site's matchup lookups
+  # wait (see the mark-refresh steps).
   schedule:
-    - cron: "17 */6 * * *"
+    - cron: "17 2,6,10,14 * * *"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -34,6 +38,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # STRATZ lets a token be used from 2 addresses per 15 minutes, and the
+      # site's matchup lookups share this token: they wait while this is marked,
+      # and this step waits until 15 minutes after their last call. A failed
+      # mark must not stop the refresh, but it shows as a warning.
+      - name: Tell the matchup lookups the refresh is using STRATZ
+        run: npm run mark-refresh -w services/engine -- start || echo "::warning::Could not mark the STRATZ refresh as started"
       # Build on the last published data. The very first run starts from the
       # copy in the repo instead.
       - name: Download the latest data
@@ -76,3 +86,8 @@ jobs:
           - [ ] Hard counters (\`services/engine/src/engine/hard-counters.ts\`): re-check each pair once about a week of $PATCH games is in.
           - [ ] Spell combos and team styles (\`services/engine/src/engine/gameplan.ts\`).
           - [ ] Traits for new or reworked heroes (\`services/engine/src/engine/traits.ts\`)."
+      # Runs even when a step above failed, so the lookups don't wait for the
+      # mark to run out (90 minutes).
+      - name: Tell the matchup lookups the refresh is done
+        if: ${{ always() }}
+        run: npm run mark-refresh -w services/engine -- end || echo "::warning::Could not mark the STRATZ refresh as done"

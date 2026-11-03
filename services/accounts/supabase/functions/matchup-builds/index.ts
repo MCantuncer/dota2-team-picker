@@ -7,8 +7,9 @@
  *
  * Fresh cache rows answer at once. The rest are fetched from STRATZ within 8 seconds, at most
  * 20 lookups per user per hour, inside one hourly STRATZ budget, and cached for 7 days.
- * Returns { slices: [{ hero, position, enemy, games, stale }], pending: [...], reasons: [...] };
- * pending slices keep the weekly general build on the card.
+ * Returns { slices: [{ hero, position, enemy, games, stale }], pending: [...], reasons: [...], retryAt? };
+ * pending slices keep the weekly general build on the card. While the hero data refresh uses STRATZ the
+ * reason is "stratz-busy" and retryAt says when to ask again.
  */
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders, json } from "../_shared/cors.ts";
@@ -44,6 +45,15 @@ Deno.serve(async (req) => {
 
   try {
     const result = await lookupMatchups({
+      async freeAt() {
+        const { data, error } = await admin.rpc("stratz_free_at");
+        if (error) throw error;
+        return data;
+      },
+      async noteBusy(until) {
+        const { error } = await admin.rpc("note_stratz_busy", { until: new Date(until).toISOString() });
+        if (error) throw error;
+      },
       async readCache(heroes, enemies, version) {
         const since = new Date(Date.now() - KEEP_DAYS * 24 * 60 * 60 * 1000).toISOString();
         const { data, error } = await admin.from("matchup_guides")

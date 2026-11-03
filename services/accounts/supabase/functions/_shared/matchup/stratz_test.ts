@@ -1,5 +1,5 @@
 import { assertEquals, assertRejects } from "jsr:@std/assert@1";
-import { postStratz } from "./stratz.ts";
+import { BUSY_WAIT_MS, postStratz, StratzBusy } from "./stratz.ts";
 
 const answering = (status: number, body: unknown) => {
   const sent: RequestInit[] = [];
@@ -26,4 +26,13 @@ Deno.test("throws on HTTP errors, GraphQL errors and empty data", async () => {
     "bad",
   );
   await assertRejects(() => postStratz("t", "q", 1000, answering(200, {}).fetchFn), Error, "HTTP 200");
+});
+
+Deno.test("a 429 throws StratzBusy with the Retry-After wait, or 15 minutes without one", async () => {
+  const busy = (headers: HeadersInit) =>
+    (() => Promise.resolve(new Response("{}", { status: 429, headers }))) as typeof fetch;
+  const withWait = await assertRejects(() => postStratz("t", "q", 1000, busy({ "Retry-After": "120" })), StratzBusy);
+  assertEquals(withWait.retryAfterMs, 120_000);
+  const without = await assertRejects(() => postStratz("t", "q", 1000, busy({})), StratzBusy);
+  assertEquals(without.retryAfterMs, BUSY_WAIT_MS);
 });
