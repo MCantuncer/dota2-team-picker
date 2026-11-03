@@ -5,7 +5,7 @@ Headline: Fight from 13 min, before Spectre has Radiance around 18.
 - 0 to 10 min: Invoker wins the mid against Ember Spirit: take their tower. Faceless Void farms safely in the safe lane against Bristleback and Nyx Assassin: skip trades.
 - 10 to 20 min: Invoker's Meteor Hammer at 12 and Magnus's Blink Dagger at 13: ready to fight at 13. Their Spectre has Radiance around 18. Open fights with Chronosphere into Sun Strike and Chaos Meteor.
 - 20 to 30 min: Roshan from 20 min, once three key items are in.
-- 30 min on: Fight when Spectre is dead or far from the fight.
+- 30 min on: Catch Spectre first, then take high ground.
 
 Danger heroes:
 - Bristleback: Consecrated Wraps at 16 min. Don't focus them: kill their damage dealers first.

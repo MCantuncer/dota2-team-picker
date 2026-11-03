@@ -5,7 +5,7 @@ Headline: Both teams are ready at 15 min: fight once your items are in, not befo
 - 0 to 10 min: Survive the off lane against Phantom Assassin and Lich: just get levels.
 - 10 to 20 min: Juggernaut's Battle Fury at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Their Phantom Assassin has Battle Fury at 15.
 - 20 to 30 min: Roshan from 20 min, once three key items are in.
-- 30 min on: Fight when Phantom Assassin is dead or far from the fight.
+- 30 min on: Catch Phantom Assassin first, then take high ground.
 
 Danger heroes:
 - Phantom Assassin: Battle Fury at 15 min. Take fights and towers before then.

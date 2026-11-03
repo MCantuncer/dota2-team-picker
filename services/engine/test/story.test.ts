@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { STORY_WORDS, gameStory, wordCount, type StoryFacts, type Timing } from "../src/engine/story";
+import { STORY_WORDS, gameStory, wordCount, type Chapter, type StoryFacts, type Timing } from "../src/engine/story";
 
 const facts = (over: Partial<StoryFacts> = {}): StoryFacts => ({ ourTiming: null, theirTiming: null, spikes: [], ...over });
 
@@ -30,9 +30,63 @@ describe("gameStory", () => {
       "Puck's Witch Blade at 12 and Magnus's Blink Dagger at 14: ready to fight at 14. Their Phantom Assassin has Battle Fury at 17. Open fights with Reverse Polarity into Sven's God's Strength cleave.",
     );
     expect(story.chapters[2]!.text).toBe("Sven's Black King Bar at 24. Roshan from 20 min, once three key items are in.");
-    expect(story.chapters[3]!.text).toBe("Fight when Phantom Assassin is dead or far from the fight.");
+    expect(story.chapters[3]!.text).toBe("Catch Phantom Assassin first, then take high ground.");
     // Our second item at 14 beats their carry's at 17.
     expect(story.headline).toBe("Fight from 14 min, before Phantom Assassin has Battle Fury at 17.");
+  });
+
+  it("puts each item in the chapter of its own minute and never names their spike twice", () => {
+    // Can's game (2026-11-03): Eul's at 15 was told in the 20 to 30 chapter, and Radiance at 17 twice.
+    const story = gameStory(
+      facts({
+        theirTiming: "late",
+        spikes: [
+          { hero: "Death Prophet", item: "Eul's Scepter of Divinity", minute: 15 },
+          { hero: "Lina", item: "Yasha and Kaya", minute: 24 },
+        ],
+        theirSpikes: [
+          { hero: "Wraith King", item: "Blink Dagger", minute: 21 },
+          { hero: "Lifestealer", item: "Radiance", minute: 17 },
+        ],
+        enemyCarry: "Lifestealer",
+      }),
+    );
+    expect(story.ready).toBe(24);
+    // Lane, 10 to 20, 20 to 30 and 30 on: all four have something to say here.
+    expect(story.chapters).toHaveLength(4);
+    const [, mid, late] = story.chapters as [Chapter, Chapter, Chapter, Chapter];
+    expect(mid.ours.map((s) => s.minute)).toEqual([15]);
+    expect(mid.theirs.map((s) => s.item)).toEqual(["Radiance"]);
+    // The chapter's item art shows Radiance at 17, so the short line drops the minute and the text says it once.
+    expect(mid.action).toBe("Take towers before their Radiance.");
+    expect(mid.text).toBe("Death Prophet's Eul's Scepter of Divinity at 15. Take towers before Lifestealer's Radiance at 17.");
+    expect(late.ours.map((s) => s.minute)).toEqual([24]);
+    expect(late.theirs.map((s) => s.item)).toEqual(["Blink Dagger"]);
+    expect(late.action).toBe("Take Roshan and end with the Aegis before 30 minutes.");
+    expect([mid.from, mid.to, story.chapters[3]?.to]).toEqual([10, 20, null]);
+  });
+
+  it("keeps their spike's minute in the short line when it lands in another chapter", () => {
+    const story = gameStory(
+      facts({ theirTiming: "late", theirSpikes: [{ hero: "Lifestealer", item: "Radiance", minute: 25 }], enemyCarry: "Lifestealer" }),
+    );
+    const mid = story.chapters.find((c) => c.phase === "10 to 20 min");
+    expect(mid?.action).toBe("Take towers before Lifestealer's Radiance at 25.");
+    expect(mid?.theirs).toEqual([]);
+  });
+
+  it("names the items that make us ready, never one after the ready minute", () => {
+    const spikes = [15, 24, 26].map((minute, i) => ({ hero: `Hero ${i}`, item: `Item ${i}`, minute }));
+    const late = gameStory(facts({ spikes })).chapters.find((c) => c.phase === "20 to 30 min");
+    expect(late?.ours.map((s) => s.minute)).toEqual([24, 26]);
+    // Item 0 at 15 is told in its own chapter; Item 2 at 26 comes after the ready minute.
+    expect(late?.text).toBe("Hero 1's Item 1 at 24: ready to fight at 24. Roshan from 26 min, once three key items are in.");
+  });
+
+  it("leaves items under 10 minutes off the lane chapter", () => {
+    const story = gameStory(facts({ spikes: [{ hero: "Lion", item: "Blink Dagger", minute: 8 }], theirSpikes: [{ hero: "Axe", item: "Blink Dagger", minute: 9 }] }));
+    expect(story.chapters[0]?.ours).toEqual([]);
+    expect(story.chapters[0]?.theirs).toEqual([]);
   });
 
   it("races our items against their carry's in the headline", () => {
@@ -100,8 +154,8 @@ describe("gameStory", () => {
 
   it("stays within its word caps in the worst case, for every pair of team timings", () => {
     const long = "Outworld Devourer";
-    // One key item per player, two in each of the busiest chapters.
-    const spikes = [8, 9, 14, 16, 22].map((minute) => ({ hero: "Keeper of the Light", item: "Aghanim's Scepter", minute }));
+    // Key items in every chapter, the ready moment included, and two after 30.
+    const spikes = [8, 9, 14, 16, 22, 24, 33, 36].map((minute) => ({ hero: "Keeper of the Light", item: "Aghanim's Scepter", minute }));
     const timings: Timing[] = ["early", "late", null];
     for (const ourTiming of timings) {
       for (const theirTiming of timings) {
