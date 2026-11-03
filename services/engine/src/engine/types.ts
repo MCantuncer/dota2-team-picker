@@ -74,10 +74,6 @@ export interface Snapshot {
    */
   pickPhase?: Record<string, { games: number[]; wins: number[] }>;
   /**
-   * Turns a draft edge into a win chance: chance = 1 / (1 + e^-(a + b * edge)), fitted on saved
-   * ranked games for each number of heroes known. Only present when its calibration check passed.
-   */
-  /**
    * Learned multipliers on each score part (1 = the hand-set weight), fitted on saved ranked games.
    * Only present when, on newer games, the learned weights beat the hand-set ones and the highest
    * win rate rival on win lift (see backtest/score-weights.ts).
@@ -89,6 +85,10 @@ export interface Snapshot {
     lift: { learned: number; hand: number };
     weights: ScoreWeights;
   };
+  /**
+   * Turns a draft edge into a win chance: chance = 1 / (1 + e^-(a + b * edge)), fitted on saved
+   * ranked games for each number of heroes known. Only present when its calibration check passed.
+   */
   winModel?: {
     fittedAt: string;
     games: number;
