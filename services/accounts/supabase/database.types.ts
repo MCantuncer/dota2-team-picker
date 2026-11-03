@@ -181,6 +181,26 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"invite_sends": {
+                  Row: {
+                    "email": string,"id": number,"sender_id": string,"sent_at": string,"team_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "email": string,"id"?: never,"sender_id": string,"sent_at"?: string,"team_id"?: string | null
+                  }
+                  Update: {
+                    "email"?: string,"id"?: never,"sender_id"?: string,"sent_at"?: string,"team_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "invite_sends_team_id_fkey"
+      columns: ["team_id"]
+isOneToOne: false
+      referencedRelation: "teams"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"match_files": {
                   Row: {
                     "match_id": number,"saved_at": string,"size_bytes": number
@@ -769,6 +789,9 @@ isOneToOne: false
                            },
 "captain_timing":
 { Args: { "what": string }; Returns: string
+                           },
+"claim_invite_send":
+{ Args: { "address": string,"sender": string,"team": string }; Returns: string
                            },
 "claim_match_reports":
 { Args: { "lease"?: string,"max_rows"?: number }; Returns: {

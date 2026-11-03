@@ -94,8 +94,10 @@ function puts them in the user's metadata, which the templates read), and both l
 `get_team_invite(id)` returns what the join page shows; `accept_team_invite(id)` joins the team if
 the signed-in user's email is the invited one and the invite was sent in the last 7 days.
 
-Only captains can create teams. Owners and co-captains can send invites, at most 30 a day each and one per address per
-minute. See **Account types** below.
+Any user can create teams (shown as Stacks on the site), up to 10 each. Owners and co-captains can send invites. Every
+email is logged in `invite_sends`, and `claim_invite_send` checks the limits before it goes out: 30 a day per sender, 5 on
+an account's first day, 3 a day per address across all teams, 300 a day for the whole site, and one a minute per team and
+address.
 
 **`steam-link`**: the profile page calls `supabase.functions.invoke("steam-link", {body: {next}})`
 and sends the browser to the returned Steam address. Steam sends it back to the function, which
@@ -118,16 +120,16 @@ once every 20 seconds per draft. Returns `{matchId, won}`, or `{matchId: null}` 
 
 ## Account types
 
-`profiles.user_type` is `user` (the default), `captain` (can run Captain mode: create teams and
-send invites) or `admin` (captain plus the admin pages). Users can't change it; set it by hand in
+`profiles.user_type` is `user` (the default), `captain` (no longer needed: every user can create
+teams and send invites; the value goes away once the site's Captain page is removed) or `admin`
+(the admin pages). Users can't change it; set it by hand in
 the dashboard's **SQL Editor**:
 
 ```sql
 update public.profiles set user_type = 'admin' where id = '<user id from Authentication > Users>';
 ```
 
-A team's owner can also make any member a **co-captain** (`team_members.role`). Co-captains don't
-need the captain type: they can run the draft, send and cancel invites, and remove players on that
+A team's owner can also make any member a **co-captain** (`team_members.role`). Co-captains can run the draft, send and cancel invites, and remove players on that
 team. Only the owner can rename or delete the team, change roles, or remove a co-captain.
 
 ## Setup

@@ -13,8 +13,8 @@ select tests.create_user('p6@example.com') as p6 \gset
 insert into public.friendships (requester_id, addressee_id, status) values
   (:'lead', :'pal', 'accepted'), (:'lead', :'p4', 'accepted'), (:'lead', :'p5', 'accepted'), (:'lead', :'p6', 'accepted'),
   (:'lead', :'stranger', 'pending');
-insert into public.teams (owner_id, name) values (:'mate', 'Radiant') returning id as team \gset
-insert into public.team_members (team_id, user_id) values (:'team', :'lead');
+insert into public.teams (owner_id, name) values (:'lead', 'Radiant') returning id as team \gset
+insert into public.team_members (team_id, user_id) values (:'team', :'mate');
 
 -- Starting a party and inviting.
 select tests.sign_in_as('lead@example.com');

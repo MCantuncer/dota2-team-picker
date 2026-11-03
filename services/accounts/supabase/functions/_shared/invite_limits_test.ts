@@ -1,33 +1,27 @@
 import { assertEquals } from "jsr:@std/assert@1";
-import { checkInviteLimits, DAILY_INVITE_LIMIT, type LimitQueries } from "./invite_limits.ts";
+import { checkInviteLimits } from "./invite_limits.ts";
 
-const NOW = Date.parse("2026-10-24T12:00:00Z");
-const ok = (count: number, sentAt: string | null = null): LimitQueries => ({
-  sentToday: { count, error: null },
-  lastSent: { data: sentAt ? { sent_at: sentAt } : null, error: null },
+Deno.test("allows an invite when the database says ok", () => {
+  assertEquals(checkInviteLimits({ data: "ok", error: null }), { ok: true });
 });
 
-Deno.test("allows an invite under both limits", () => {
-  assertEquals(checkInviteLimits(ok(0), NOW), { ok: true });
-  assertEquals(checkInviteLimits(ok(DAILY_INVITE_LIMIT - 1, "2026-10-24T11:58:00Z"), NOW), { ok: true });
+Deno.test("refuses with 429 and a plain message for each limit", () => {
+  for (const code of ["resend_wait", "sender_daily", "new_account", "address_daily", "site_daily"]) {
+    const result = checkInviteLimits({ data: code, error: null });
+    assertEquals(result.ok ? null : result.status, 429, code);
+    assertEquals(result.ok ? "" : result.message.length > 0, true, code);
+  }
 });
 
-Deno.test("refuses once the daily limit is reached", () => {
-  const result = checkInviteLimits(ok(DAILY_INVITE_LIMIT), NOW);
-  assertEquals(result.ok ? null : result.status, 429);
-});
-
-Deno.test("refuses a resend to the same address within a minute", () => {
-  const result = checkInviteLimits(ok(1, "2026-10-24T11:59:30Z"), NOW);
-  assertEquals(result.ok ? null : result.status, 429);
-});
-
-Deno.test("fails closed when a limit query errors", () => {
+Deno.test("fails closed when the check errors or answers something unknown", () => {
   const error = { message: "connection reset" };
-  const countFailed = { ...ok(0), sentToday: { count: null, error } };
-  const lastFailed = { ...ok(0), lastSent: { data: null, error } };
-  for (const queries of [countFailed, lastFailed, { ...ok(0), sentToday: { count: null, error: null } }]) {
-    const result = checkInviteLimits(queries, NOW);
+  for (
+    const claim of [{ data: null, error }, { data: "ok", error }, { data: "maybe", error: null }, {
+      data: 1,
+      error: null,
+    }]
+  ) {
+    const result = checkInviteLimits(claim);
     assertEquals(result.ok ? null : result.status, 503);
   }
 });
