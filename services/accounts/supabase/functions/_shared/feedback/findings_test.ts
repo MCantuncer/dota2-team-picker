@@ -146,7 +146,8 @@ Deno.test("every tip shown comes from the reviewed set", () => {
         }),
     ),
   ];
-  const changes = [...trendFindings(games, names), ...gameFindings(games[0]!, names)]; // Safe: games has 6 entries..flatMap((f) => f.change ?? []);
+  // Safe: games has 6 entries.
+  const changes = [...trendFindings(games, names), ...gameFindings(games[0]!, names)].flatMap((f) => f.change ?? []);
   assertEquals(changes.length > 0, true);
   const templates = Object.values(TIPS).flatMap((byRole) => Object.values(byRole));
   const asRegex = (t: string) => new RegExp(`^${t.replace(/[.*+?^$()|[\]\\]/g, "\\$&").replace(/\{\w+\}/g, ".+")}$`);
