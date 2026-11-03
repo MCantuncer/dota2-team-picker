@@ -1,0 +1,112 @@
+import { assertEquals, assertThrows } from "jsr:@std/assert@1";
+import {
+  guideListQuery,
+  guideMatchIds,
+  matchesQuery,
+  type MatchupGame,
+  queriesNeeded,
+  sliceGames,
+  toMatchupGame,
+} from "./queries.ts";
+
+const SVEN_VS_LION = { hero: 18, position: 1, enemy: 26 };
+
+Deno.test("asks for the win list of H against E and the loss list of E against H", () => {
+  const q = guideListQuery([SVEN_VS_LION]);
+  assertEquals(q.includes("w0: guide(heroId: 18, positionId: POSITION_1, againstHeroId: 26, take: 10)"), true);
+  assertEquals(q.includes("l0: guide(heroId: 26, againstHeroId: 18, take: 10)"), true);
+});
+
+Deno.test("refuses bad slices and too many of them", () => {
+  assertThrows(() => guideListQuery([]));
+  assertThrows(() => guideListQuery([{ hero: 18, position: 6, enemy: 26 }]));
+  assertThrows(() => guideListQuery([{ hero: 18, position: 1, enemy: 18 }]));
+  assertThrows(() => guideListQuery([{ hero: 1.5, position: 1, enemy: 26 }]));
+  assertThrows(() => guideListQuery(Array(26).fill(SVEN_VS_LION)));
+});
+
+Deno.test("reads match ids from a guide list, once each", () => {
+  assertEquals(guideMatchIds({ guides: [{ matchId: 5 }, { matchId: 5 }, { matchId: "x" }, null, { matchId: 7 }] }), [
+    5,
+    7,
+  ]);
+  assertEquals(guideMatchIds(null), []);
+  assertEquals(guideMatchIds({ guides: "no" }), []);
+});
+
+Deno.test("asks for up to 20 matches with every player", () => {
+  assertEquals(matchesQuery([9]).includes("m0: match(id: 9) { id gameVersionId players {"), true);
+  assertThrows(() => matchesQuery([]));
+  assertThrows(() => matchesQuery(Array(21).fill(1)));
+  assertThrows(() => matchesQuery([0]));
+});
+
+function match(over: Record<string, unknown> = {}, sven: Record<string, unknown> = {}) {
+  return {
+    id: 100,
+    gameVersionId: 184,
+    players: [
+      {
+        steamAccountId: 11,
+        heroId: 18,
+        position: "POSITION_1",
+        level: 20,
+        isVictory: true,
+        abilities: [{ abilityId: 3, time: 200 }, { abilityId: 1, time: 100 }],
+        ...sven,
+      },
+      { steamAccountId: 12, heroId: 26, position: "POSITION_5", level: 15, isVictory: false, abilities: [] },
+    ],
+    ...over,
+  };
+}
+
+Deno.test("keeps H's game with points in time order", () => {
+  assertEquals(toMatchupGame(match(), SVEN_VS_LION, true), {
+    match: 100,
+    account: 11,
+    won: true,
+    level: 20,
+    version: 184,
+    points: [1, 3],
+  });
+});
+
+Deno.test("drops a game that doesn't fit the slice or the list", () => {
+  assertEquals(toMatchupGame(match(), SVEN_VS_LION, false), null, "a loss list game H won");
+  assertEquals(toMatchupGame(match({}, { position: "POSITION_2" }), SVEN_VS_LION, true), null, "another position");
+  assertEquals(toMatchupGame(match(), { ...SVEN_VS_LION, enemy: 5 }, true), null, "the enemy isn't in it");
+  assertEquals(
+    toMatchupGame(match({}, { abilities: [{ abilityId: 1 }] }), SVEN_VS_LION, true),
+    null,
+    "a point without its time",
+  );
+  assertEquals(toMatchupGame(match({ gameVersionId: null }), SVEN_VS_LION, true), null, "no version");
+  assertEquals(toMatchupGame(null, SVEN_VS_LION, true), null, "no match");
+});
+
+Deno.test("drops a game where the enemy was on H's team", () => {
+  const sameTeam = match();
+  sameTeam.players[1]!.isVictory = true;
+  assertEquals(toMatchupGame(sameTeam, SVEN_VS_LION, true), null);
+});
+
+Deno.test("keeps this patch, each match once and at most 2 games per account", () => {
+  const game = (match: number, account: number, version = 184): MatchupGame => ({
+    match,
+    account,
+    won: true,
+    level: 20,
+    version,
+    points: [],
+  });
+  const kept = sliceGames([game(1, 7), game(1, 7), game(2, 7), game(3, 7), game(4, 8, 183), null, game(5, 8)], 184);
+  assertEquals(kept.map((g) => g.match), [1, 2, 5]);
+});
+
+Deno.test("counts the STRATZ queries a lookup can take", () => {
+  assertEquals(queriesNeeded(0), 0);
+  // 25 slices: one list query, then up to 500 matches in 25 queries.
+  assertEquals(queriesNeeded(25), 26);
+  assertEquals(queriesNeeded(1), 2);
+});
