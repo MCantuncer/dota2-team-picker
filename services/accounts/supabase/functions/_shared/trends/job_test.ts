@@ -3,6 +3,7 @@ import type { HeroBenchmarks } from "./benchmarks.ts";
 import type { CountedDraftGame } from "./drafts.ts";
 import type { CountedStratzGame } from "./stratz.ts";
 import type { FactItem, FactRow } from "../feedback/fact.ts";
+import { summarizeGame } from "../feedback/summary.ts";
 import {
   type FactsDeps,
   MAX_FACT_CALLS,
@@ -14,7 +15,7 @@ import {
 } from "./job.ts";
 
 const NOW_S = 1_800_000_000;
-const NO_FACTS = { facts: 0, factCalls: 0, factsStopped: null };
+const NO_FACTS = { facts: 0, feedback: 0, factCalls: 0, factsStopped: null };
 const HOUR_S = 3600;
 const MONKEY_KING = 114;
 
@@ -329,6 +330,11 @@ function factsStub(items: FactItem[], over: Partial<FactsDeps> = {}) {
     fetchMatch: () => Promise.resolve(null),
     requestParse: () => Promise.resolve(),
     summarize: () => null,
+    findingsOf: () => [],
+    refreshFeedback: (userId) => {
+      order.push(`feedback ${userId}`);
+      return Promise.resolve();
+    },
     save: (row) => {
       saved.push(row);
       return Promise.resolve();
@@ -372,4 +378,27 @@ Deno.test("a rate limit stops game feedback; a save error only skips that game",
   const result = await runTrends(s.deps);
   assertEquals([result.facts, result.factsStopped], [1, "rate limit"]);
   assertEquals(s.logged, ["Saving game 1 for u1 failed"]);
+});
+
+Deno.test("feedback is worked out again once for each player with a new summary", async () => {
+  const raw = JSON.parse(
+    Deno.readTextFileSync(new URL("../report/fixtures/all-pick-9072422905.json", import.meta.url)),
+  );
+  const items = [factItem(1), { ...factItem(2), user_id: "u2" }, factItem(3)];
+  const f = factsStub(items, {
+    dueRows: () => Promise.resolve([]),
+    newGames: () => Promise.resolve(items),
+    fetchMatch: () => Promise.resolve(raw),
+    summarize: (match, item) =>
+      summarizeGame({ match, accountId: item.account_id, startTime: 0, position: 2, items: {}, heroIdsByKey: {} }),
+    refreshFeedback: (userId) => {
+      f.order.push(`feedback ${userId}`);
+      return userId === "u2" ? Promise.reject(new Error("db")) : Promise.resolve();
+    },
+  });
+  const s = stub([], { facts: f.facts });
+  const result = await runTrends(s.deps);
+  assertEquals([result.facts, result.feedback], [3, 1]);
+  assertEquals(f.order, ["purge", "feedback u1", "feedback u2"]);
+  assertEquals(s.logged, ["Feedback for u2 failed"]);
 });

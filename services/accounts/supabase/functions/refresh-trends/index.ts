@@ -22,7 +22,9 @@ import {
   readDueRows,
   readNewGames,
 } from "../_shared/feedback/fact.ts";
-import { summarizeGame } from "../_shared/feedback/summary.ts";
+import { gameFindings, type Names } from "../_shared/feedback/findings.ts";
+import { buildPlayerFeedback, WINDOW_DAYS } from "../_shared/feedback/profile.ts";
+import { type GameSummary, summarizeGame, SUMMARY_VERSION } from "../_shared/feedback/summary.ts";
 import { fetchMatch, fetchRecentMatches, requestParse } from "../_shared/match.ts";
 import type { ItemCost } from "../_shared/report/facts.ts";
 import { takeOpenDotaCalls } from "../_shared/opendota_budget.ts";
@@ -88,7 +90,7 @@ Deno.serve(async (req) => {
     },
     nowS: () => Date.now() / 1000,
     log: (message, err) => console.error(message, err),
-    facts: factsDeps(items, heroIdsByKey),
+    facts: factsDeps(items, heroIdsByKey, { hero: (id) => names.get(id) ?? `Hero ${id}` }),
   }).catch((err) => {
     console.error("The trends run failed", err);
     return null;
@@ -219,7 +221,11 @@ async function loadHeroKeys(): Promise<Record<string, number>> {
 }
 
 /** player_game_facts reads and writes for the feedback part of the run. */
-function factsDeps(items: Record<string, ItemCost>, heroIdsByKey: Record<string, number>): FactsDeps {
+function factsDeps(
+  items: Record<string, ItemCost>,
+  heroIdsByKey: Record<string, number>,
+  names: Names,
+): FactsDeps {
   const daysAgo = (days: number) => new Date(Date.now() - days * DAY_MS).toISOString();
   return {
     purge: async () => {
@@ -258,9 +264,30 @@ function factsDeps(items: Record<string, ItemCost>, heroIdsByKey: Record<string,
         items,
         heroIdsByKey,
       }),
+    findingsOf: (summary) => gameFindings(summary, names),
     save: async (row: FactRow) => {
       const { error } = await admin.from("player_game_facts").upsert(row, { onConflict: "user_id,match_id" });
       if (error) throw error;
+    },
+    refreshFeedback: async (userId) => {
+      const { data, error } = await admin.from("player_game_facts").select("summary").eq("user_id", userId)
+        .eq("summary_version", SUMMARY_VERSION).gte("started_at", daysAgo(WINDOW_DAYS));
+      if (error) throw error;
+      // Safe: rows with this summary_version hold a GameSummary the job wrote.
+      const summaries = data.map((r) => r.summary as unknown as GameSummary);
+      const fb = buildPlayerFeedback(summaries, names, Date.now() / 1000);
+      const at = (s: number | null) => (s === null ? null : new Date(s * 1000).toISOString());
+      const { error: saveError } = await admin.from("player_feedback").upsert({
+        user_id: userId,
+        version: fb.version,
+        findings: fb.findings,
+        improved: fb.improved,
+        games: fb.games,
+        parsed_games: fb.parsedGames,
+        first_game_at: at(fb.firstGameAt),
+        last_game_at: at(fb.lastGameAt),
+      });
+      if (saveError) throw saveError;
     },
     now: () => new Date(),
   };
