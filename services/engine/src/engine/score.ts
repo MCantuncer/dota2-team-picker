@@ -1,4 +1,5 @@
 import { hardCountersOf, type HardCounter } from "./hard-counters";
+import { blindPickRisk, openSlots, pickChance } from "./risk";
 import { guessEnemyPositions, LANE_OPPONENTS, positionFit, type PositionFit } from "./positions";
 import { NEED_LABELS, traitsOf, unmetNeeds } from "./traits";
 import {
@@ -35,8 +36,8 @@ const WEIGHTS = {
   personal: 0.5,
   /** Points per extra position the hero can play, on the first pick. */
   flex: 0.6,
-  /** How much the worst counters still in the pool hurt, on the first pick. */
-  pickSafety: 0.5,
+  /** Extra weight on the synergy with your lane partner (0.5 = 1.5x), when its position is known. */
+  lanePartner: 0.5,
 };
 
 /** Games of evidence a value is pulled toward its prior with (Bayesian shrinkage). */
@@ -54,6 +55,14 @@ const PHASE_NAMES = ["an early", "a 3rd", "a late"];
  * likelier to pick it than its usual pick rate says. A first guess, to be tuned with the backtest.
  */
 const GAMBLE_PICK_BOOST = 2;
+
+/** Bans that lower a hero's blind pick risk by at least this many points are named as a reason. */
+const BAN_LIFT_REASON = 0.3;
+/** A hero this many points riskier than the other choices gets an "easy to punish" warning. */
+const RISK_WARNING = 0.5;
+
+/** Your lane partner's position, for each position. */
+const LANE_PARTNER: Record<Position, Position | undefined> = { 1: 5, 2: undefined, 3: 4, 4: 3, 5: 1 };
 
 /** Heroes played in a position less often than this are not suggested for it. */
 const MIN_POSITION_FIT = 0.15;
@@ -251,17 +260,18 @@ export class Engine {
     const needs = unmetNeeds(allies);
     const needWeight = WEIGHTS.teamNeed * ((allies.length + 1) / 5);
 
-    // Heroes the enemy can still pick, for judging how safe an early pick is.
+    // Heroes the enemy can still pick, for judging how safe a pick is while they still have picks.
     const pool = this.heroes.filter((h) => !taken.has(h.id));
-    const enemySlotsLeft = 5 - input.enemies.length;
     const phase = phaseOf(allyIds.length);
-    const vulnerability = this.usePickPhase ? new Map<number, number>() : this.vulnerability(pool, input.rankBracket);
-    const avgVulnerability = mean([...vulnerability.values()]);
+    const candidates = pool.filter((h) => this.fit(h.id)[pos] >= MIN_POSITION_FIT || favorites.has(h.id));
+    const risk = this.risks(candidates.map((h) => h.id), input);
+    const avgRisk = mean([...risk.values()].map((r) => r.risk));
+    const slots = openSlots(this, pool.map((h) => h.id), input.enemies);
+    const partner = LANE_PARTNER[pos];
 
     const results: Suggestion[] = [];
-    for (const hero of pool) {
+    for (const hero of candidates) {
       const fit = this.fit(hero.id);
-      if (fit[pos] < MIN_POSITION_FIT && !favorites.has(hero.id)) continue;
 
       const reasons: { text: string; value: number }[] = [];
       const warnings: { text: string; value: number }[] = [];
@@ -281,7 +291,10 @@ export class Engine {
 
       // Synergy with the allies already picked.
       let synergy = 0;
-      const synergies = allyIds.map((a) => ({ a, edge: this.synergyEdge(hero.id, a, input.rankBracket) }));
+      const synergies = input.allies.map(({ heroId: a, position }) => {
+        const lanePartner = partner !== undefined && position === partner ? 1 + WEIGHTS.lanePartner : 1;
+        return { a, edge: this.synergyEdge(hero.id, a, input.rankBracket) * lanePartner };
+      });
       for (const s of synergies) synergy += s.edge;
       const friends = synergies.filter((s) => s.edge >= 0.5).sort((a, b) => b.edge - a.edge);
       if (friends.length) reasons.push({ text: `Works well with ${this.names(friends.map((s) => s.a))}`, value: synergy });
@@ -323,30 +336,34 @@ export class Engine {
       const flex = otherPositions.length * WEIGHTS.flex * earliness;
       if (flex >= 0.3) reasons.push({ text: `Flexible pick: can also play pos ${otherPositions.join(" or ")}`, value: flex });
 
-      // Pick safety: how the hero does when picked at this point of the draft, from the saved games.
-      // Without enough of them, early on, how hard the enemy can still counter it from match data.
-      let pickSafety = 0;
+      // Pick safety: how much the hero stands to lose to the heroes the enemy may still pick,
+      // compared with the other choices, so bans of its counters make it safer.
+      const mineRisk = risk.get(hero.id);
+      let pickSafety = mineRisk ? mineRisk.risk - avgRisk : 0;
+      if (mineRisk && mineRisk.banLift >= BAN_LIFT_REASON) {
+        reasons.push({ text: `Safer now: ${this.names(mineRisk.banned)} ${mineRisk.banned.length > 1 ? "are" : "is"} banned`, value: mineRisk.banLift });
+      }
+      if (mineRisk && pickSafety <= -RISK_WARNING) {
+        warnings.push({ text: `Easy to punish: ${this.names(mineRisk.threats)} can still be picked`, value: -pickSafety });
+      }
+
+      // How the hero does when picked at this point of the draft, from the saved games.
       const phaseEdge = this.pickPhaseEdge(hero.id, phase);
       if (phaseEdge !== undefined) {
-        pickSafety = phaseEdge;
+        pickSafety += phaseEdge;
         if (phaseEdge >= 1) reasons.push({ text: `Wins more as ${PHASE_NAMES[phase]} pick`, value: phaseEdge });
         else if (phaseEdge <= -1) {
           const text = phase === 0 ? "Easy to counter-pick later in the draft" : `Wins less as ${PHASE_NAMES[phase]} pick`;
           warnings.push({ text, value: -phaseEdge });
         }
-      } else if (enemySlotsLeft > 0 && earliness > 0) {
-        const relative = vulnerability.get(hero.id)! - avgVulnerability;
-        pickSafety = relative * WEIGHTS.pickSafety * earliness * (enemySlotsLeft / 5);
-        if (pickSafety <= -1) warnings.push({ text: "Easy to counter-pick later in the draft", value: -pickSafety });
       }
 
       // A hard counter still open is a gamble, costing its gap times the chance the enemy takes it.
-      // A counter on the enemy team is already in the counter part.
+      // A counter on the enemy team is already in the counter part, and neither is in the risk above.
       const hardCounters = this.hardCounterNotes(hero.id, input);
       for (const note of hardCounters) {
         if (note.status !== "open") continue;
-        const chance = Math.min(1, (this.pickRate(note.counterId) / 2) * (enemySlotsLeft / 5) * GAMBLE_PICK_BOOST);
-        pickSafety -= note.gap * chance;
+        pickSafety -= note.gap * Math.min(1, pickChance(slots, note.counterId) * GAMBLE_PICK_BOOST);
       }
 
       const breakdown: ScoreBreakdown = {
@@ -392,12 +409,26 @@ export class Engine {
     return notes;
   }
 
-  /** Average edge of each hero against its 5 worst matchups still in the pool (negative = easy to counter). */
-  private vulnerability(pool: HeroInfo[], bracket?: RankBracket): Map<number, number> {
+  /**
+   * Blind pick risk of each candidate (see risk.ts), how much the bans lowered it and by which
+   * banned heroes, and the two heroes it is most at risk from. Hard counters are left out: the
+   * gamble counts them.
+   */
+  private risks(candidates: number[], input: DraftInput) {
+    const picked = new Set([...input.allies.map((a) => a.heroId), ...input.enemies]);
+    const bans = new Set((input.bans ?? []).filter((id) => !picked.has(id)));
+    const unpicked = this.heroes.map((h) => h.id).filter((id) => !picked.has(id));
+    const skip = new Set(candidates.flatMap((c) => (this.hardCounters.get(c) ?? []).map((hc) => `${c}-${hc.counter}`)));
+    const base = { candidates, enemies: input.enemies, myPosition: input.myPosition, rankBracket: input.rankBracket, skip };
+    const now = blindPickRisk(this, { ...base, pool: unpicked.filter((id) => !bans.has(id)) });
+    const unbanned = bans.size ? blindPickRisk(this, { ...base, pool: unpicked }) : now;
+    const top = (by: Map<number, number>, n: number, keep: (id: number) => boolean) =>
+      [...by].filter(([id]) => keep(id)).sort((x, y) => x[1] - y[1]).slice(0, n).map(([id]) => id);
     return new Map(
-      pool.map((hero) => {
-        const edges = pool.filter((h) => h.id !== hero.id).map((h) => this.matchupEdge(hero.id, h.id, bracket));
-        return [hero.id, mean(edges.sort((a, b) => a - b).slice(0, 5))];
+      candidates.map((c) => {
+        const r = now.get(c)!; // Every candidate was scored.
+        const before = unbanned.get(c)!;
+        return [c, { risk: r.risk, banLift: r.risk - before.risk, banned: top(before.by, 2, (id) => bans.has(id)), threats: top(r.by, 2, () => true) }];
       }),
     );
   }

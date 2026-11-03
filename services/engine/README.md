@@ -31,7 +31,8 @@ Every part of the score is in win-rate percentage points, so `+2.0` roughly mean
 - **Counter**: how the hero does against each enemy already picked, compared with what their
   overall win rates predict. Enemies you will probably meet in lane count up to 1.5x. Enemy
   positions are guessed from which lanes each hero is usually played in.
-- **Synergy**: the same idea for the allies already picked.
+- **Synergy**: the same idea for the allies already picked. Your lane partner (pos 1 with 5, 3 with 4)
+  counts 1.5x when its position is known.
 - **Meta**: the hero's current win rate at your rank.
 - **Position fit**: how often the hero is played in your position. Heroes almost never played
   there are left out.
@@ -39,16 +40,19 @@ Every part of the score is in win-rate percentage points, so `+2.0` roughly mean
   pushing, magic or physical damage). Counts more as your team fills up.
 - **Comfort**: your favorites, and your own record on the hero when known.
 - **Flex**: early in the draft, a hero that can play several positions hides your plan.
-- **Pick safety**: how the hero does when its team picks it at this point of the draft (1st or 2nd
-  pick, 3rd, 4th or 5th) compared with all its games, from the saved ranked games of this patch
-  (`pickPhase`). A hero that wins less as an early pick is easy to counter, so it loses points early and
-  gains them late ("Easy to counter-pick later in the draft", "Wins more as a late pick"). Until the
-  counts hold 3,000 games, early in the draft a hero with bad matchups still in the pool loses points
-  instead.
+- **Pick safety**: blind pick risk ([`src/engine/risk.ts`](src/engine/risk.ts)). For each enemy position
+  not picked yet, every hero still in the pool gets a chance of being their pick there (pick rate times
+  how often it plays that position). The hero loses its bad matchups against them weighted by those
+  chances, lane opponents 1.5x, compared with the other heroes for your position. Bans and picks take
+  heroes out of the pool, so banning a hero's counters makes it safer ("Safer now: Anti-Mage is
+  banned"), and a hero well above the usual risk is flagged ("Easy to punish: Axe and Legion Commander
+  can still be picked"). Once the saved ranked games of this patch hold 3,000 games (`pickPhase`), how
+  the hero does when its team picks it at this point of the draft (1st or 2nd, 3rd, 4th or 5th) is
+  added too ("Wins more as a late pick").
 - **Hard counters**: a hand-checked list ([`src/engine/hard-counters.ts`](src/engine/hard-counters.ts)) of 17
   pairs where one hero ruins another by a specific mechanic, such as Anti-Mage against Medusa. With the
   counter on the enemy team, the matchup costs at least the listed gap ("Hard countered by Anti-Mage").
-  While the counter can still be picked, the hero loses the gap times the chance the enemy takes it
+  While the counter can still be picked, the hero loses the gap times the chance the enemy takes it (the same chance as in pick safety, which leaves hard counters out)
   ("Gamble: Anti-Mage still available"). Once it is banned or on your team, there is no cost and the
   reason says "Anti-Mage is out, safe to pick".
 
