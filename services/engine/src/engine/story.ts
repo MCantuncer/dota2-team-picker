@@ -1,9 +1,9 @@
 /**
  * The Game Story: the game told in four timed chapters from our team's side, with a one-line
  * headline, built from the game plan's facts: the lane verdicts and their heroes, and our key
- * item minutes raced against theirs. Each chapter names both teams' spikes in its time window, so
- * every player knows when the team is strong and when the enemy is. Kept short on purpose: the team has
- * about a minute to read it (see STORY_WORDS).
+ * item minutes raced against theirs. Each chapter carries both teams' key items bought in its time
+ * window (for the web timeline's item art), one short action, and the same as text for sharing.
+ * Kept short on purpose: the team has about a minute to read it (see STORY_WORDS).
  */
 
 import { listNames } from "./item-build";
@@ -127,15 +127,17 @@ function headline(f: StoryFacts): string {
 const itemAt = (s: Spike) => `${s.hero}'s ${s.item} ${atMinute(s)}`;
 
 /**
- * Our cores' items in one window, one by name (two in the ready window): "Puck's Witch Blade at 12 and Magnus's Blink Dagger at
- * 14: ready to fight at 14." when the ready moment (our second item) is in it. Each item is told in the
- * window of its own minute.
+ * Our cores' items in one window, one by name, or the two that make us ready in the ready window:
+ * "Puck's Witch Blade at 12 and Magnus's Blink Dagger at 14: ready to fight at 14." Each item is told
+ * in the window of its own minute.
  */
 function ourSpikeText(inWindow: Spike[], ready: number | undefined, window: Timing): string {
   if (!inWindow.length) return "";
   const readyHere = ready !== undefined && inWindow.some((s) => s.minute === ready);
-  // Two by name only in the ready window, one elsewhere: the item art shows the rest.
-  const named = inWindow.slice(0, readyHere ? 2 : 1).map(itemAt).join(" and ");
+  // In the ready window, the two items that make us ready (never one after it); one item elsewhere.
+  const named = (readyHere ? inWindow.filter((s) => s.minute <= ready).slice(-2) : inWindow.slice(0, 1))
+    .map(itemAt)
+    .join(" and ");
   // In their strongest time the items mean we can hold, not that we go.
   const go = window === "late" ? `fight back from ${ready}` : `ready to fight at ${ready}`;
   return readyHere ? `${named}: ${go}.` : `${named}.`;
@@ -187,7 +189,7 @@ interface Action {
 
 const same = (line: string): Action => ({ short: line, long: line });
 
-function action(chapter: number, f: StoryFacts, ready: number | undefined, inWindow: (m: number) => boolean): Action {
+function action(chapter: number, f: StoryFacts, inWindow: (m: number) => boolean): Action {
   const window = ourWindow(f.ourTiming, f.theirTiming);
   const earlyIsOurs = window === "early";
   const lateIsOurs = window === "late";
@@ -200,12 +202,15 @@ function action(chapter: number, f: StoryFacts, ready: number | undefined, inWin
       if (earlyIsOurs) {
         if (!theirs) return same("Group up and take towers.");
         // The item art shows the minute; the text names it once.
-        return { short: `Take towers before their ${theirs.item}.`, long: `Take towers before ${theirs.hero}'s ${theirs.item} ${atMinute(theirs)}.`, names: theirs };
+        const long = `Take towers before ${theirs.hero}'s ${theirs.item} ${atMinute(theirs)}.`;
+        // In this chapter the item art shows their spike's minute; outside it the line keeps it.
+        if (!inWindow(theirs.minute)) return same(long);
+        return { short: `Take towers before their ${theirs.item}.`, long, names: theirs };
       }
       if (f.theirTiming === "early") return same(f.ourCarry ? `Their strongest time: defend towers together while ${f.ourCarry} farms.` : "Their strongest time: defend towers together.");
       return same(f.combo ? `Open fights with ${f.combo}.` : "");
     case 2:
-      if (earlyIsOurs) return same(ready !== undefined && inWindow(ready) ? `Take Roshan at ${ready}, end with the Aegis.` : "Take Roshan and end with the Aegis before 30 minutes.");
+      if (earlyIsOurs) return same("Take Roshan and end with the Aegis before 30 minutes.");
       // Not inside their strongest time (see the early headline).
       if (roshan !== undefined && roshan < 30) return same(`Roshan from ${Math.max(roshan, f.theirTiming === "early" ? 25 : 20)} min, once three key items are in.`);
       if (lateIsOurs) return same("Your items are in: take back the map.");
@@ -220,22 +225,27 @@ function action(chapter: number, f: StoryFacts, ready: number | undefined, inWin
 export function gameStory(facts: StoryFacts): Story {
   const ready = nthMinute(facts.spikes, READY_SPIKES);
   const window = ourWindow(facts.ourTiming, facts.theirTiming);
-  // Their carry's item first: it is the timing our fights race against.
-  const carryFirst = [...(facts.theirSpikes ?? [])]
-    .sort((a, b) => a.minute - b.minute)
-    .sort((a, b) => Number(b.hero === facts.enemyCarry) - Number(a.hero === facts.enemyCarry));
+  // Their carry's item first: it is the timing our fights race against. Then by minute.
+  const isCarry = (s: Spike) => Number(s.hero === facts.enemyCarry);
+  const carryFirst = [...(facts.theirSpikes ?? [])].sort((a, b) => isCarry(b) - isCarry(a) || a.minute - b.minute);
   const chapters = CHAPTERS.map((c, i): Chapter => {
     const inWindow = (m: number) => m >= c.from && m < c.to;
-    const ours = byMinute(facts.spikes).filter((s) => inWindow(s.minute));
-    const theirs = carryFirst.filter((s) => inWindow(s.minute));
-    const act = action(i, facts, ready, inWindow);
-    // The lane chapter is about lanes: items under 10 min show on the player cards and danger list.
+    // The lane chapter is about lanes: items under 10 min show on the player cards and danger list, not
+    // here. A ready minute under 10 is still on the story for the timeline's mark.
     const isLane = i === 0;
+    const ours = isLane ? [] : byMinute(facts.spikes).filter((s) => inWindow(s.minute));
+    const theirs = isLane ? [] : carryFirst.filter((s) => inWindow(s.minute));
+    const act = action(i, facts, inWindow);
     const theirLine = theirSpikeText(theirs.find((s) => s !== act.names));
-    const text = [isLane ? "" : ourSpikeText(ours, ready, window), isLane ? "" : theirLine, act.long].filter(Boolean).join(" ");
-    return { phase: c.phase, from: c.from, to: Number.isFinite(c.to) ? c.to : null, ours, theirs, action: act.short, text };
+    // After 30 the move matters more than one more item: the text keeps to the action (the art still shows them).
+    const isLast = c.to === Infinity;
+    const spikeLines = isLast ? [] : [ourSpikeText(ours, ready, window), theirLine];
+    const text = [...spikeLines, act.long].filter(Boolean).join(" ");
+    const to = Number.isFinite(c.to) ? c.to : null;
+    return { phase: c.phase, from: c.from, to, ours, theirs, action: act.short, text };
   }).filter((c) => c.text);
   return { headline: headline(facts), ...(ready !== undefined ? { ready } : {}), chapters };
 }
+
 /** Words in a piece of text, as the word caps count them. */
 export const wordCount = (text: string) => text.split(/\s+/).filter(Boolean).length;
