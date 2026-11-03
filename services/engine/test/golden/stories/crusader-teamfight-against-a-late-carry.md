@@ -26,7 +26,7 @@ Lane: Wraith Band 2, Magic Wand 3, Infused Raindrops 4 [Against Nyx Assassin's m
 Boots: Power Treads 8 {Attack speed and a stat to switch.}
 First: Mask of Madness 14/15
 Next: Battle Fury 16/18 {Cleave for fast farm.}, Mjollnir 24/25 {Attack speed and chain lightning.}, Manta Style 26/27
-Late: Black King Bar 32/35 [Against Ember Spirit, Nyx Assassin and Disruptor: don't skip it] {Stops their stuns: Ember Spirit, Nyx Assassin and Disruptor.}
+Late: Black King Bar 32/35 [Against Ember Spirit, Nyx Assassin and Disruptor: don't skip it] {Spell immunity for the big fights.}
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Battle Fury around minute 16. Set up Chronosphere into Sun Strike and Chaos Meteor with Invoker.
 Vs Bristleback (lane): Tank who soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Nyx Assassin (lane): Goes invisible. buy Infused Raindrops, Black King Bar.
@@ -43,7 +43,7 @@ Lane: Null Talisman 2, Magic Wand 3
 Boots: Boots of Travel 19
 First: Meteor Hammer 12/14
 Next: Aghanim's Shard 26/33, Octarine Core 29/33
-Late: Aghanim's Scepter 31/41, Black King Bar 32/41 [Against Ember Spirit, Nyx Assassin and Disruptor: don't skip it] {Stops their stuns: Ember Spirit, Nyx Assassin and Disruptor.}
+Late: Aghanim's Scepter 31/41, Black King Bar 32/41 [Against Ember Spirit, Nyx Assassin and Disruptor: don't skip it] {Spell immunity for the big fights.}
 Job: Win your lane, then use runes to help the side lanes. Your timing is Meteor Hammer around minute 12. Set up Chronosphere into Sun Strike and Chaos Meteor with Faceless Void.
 Vs Ember Spirit (lane): Magic burst. buy Black King Bar.
 Vs Spectre: Strong passives. Fight them when they are low, not head on.
@@ -59,7 +59,7 @@ Lane: Bracer 2, Magic Wand 4
 Boots: Power Treads 9 {Attack speed and a stat to switch.}
 First: Blink Dagger 13/16 {Start fights from 1,200 range.}
 Next: Harpoon 25/26, Aghanim's Scepter 29/34
-Late: Black King Bar 31/39 [Against Ember Spirit, Nyx Assassin and Disruptor: don't skip it] {Stops their stuns: Ember Spirit, Nyx Assassin and Disruptor.}, Refresher Orb 43/47
+Late: Black King Bar 31/39 [Against Ember Spirit, Nyx Assassin and Disruptor: don't skip it] {Spell immunity for the big fights.}, Refresher Orb 43/47
 Job: Make their carry's lane hard, then start the team's fights as Magnus. Your timing is Blink Dagger around minute 13.
 Vs Spectre (lane): Strong passives. Fight them when they are low, not head on.
 Vs Disruptor (lane): Magic burst. buy Black King Bar.
@@ -92,7 +92,7 @@ Start: 2 Tango [Hard lane against Bristleback and Nyx Assassin: more sustain], M
 Lane: Magic Wand 3 [Against Bristleback's spells: get it early], Infused Raindrops 4 [Against Nyx Assassin's magic burst], Ring of Basilius 6
 Boots: Arcane Boots 11
 First: Blink Dagger 24/31 {Start fights from 1,200 range.}
-Next: Mekansm 25/29, Aether Lens 26/30, Glimmer Cape 27/30 [Against Ember Spirit, Bristleback and Nyx Assassin: don't skip it] {Magic resistance against Ember Spirit, Bristleback and Nyx Assassin.}
+Next: Mekansm 25/29, Aether Lens 26/30, Glimmer Cape 27/30 [Against Ember Spirit, Bristleback and Nyx Assassin: don't skip it] {Invisibility and a magic damage barrier.}
 Late: Aghanim's Shard 32/34
 If needed: Ghost Scepter 18 [Against Spectre, Ember Spirit and Bristleback] instead of Mekansm, Force Staff 28 [Against Spectre, Ember Spirit and Bristleback] instead of Aether Lens
 Job: Keep your carry alive in lane and place vision; save your key spell for their dive. Your timing is Blink Dagger around minute 24.

@@ -26,7 +26,7 @@ Lane: Bracer 2, Magic Wand 3
 Boots: Phase Boots 8 {Armor and a burst of speed.}
 First: Radiance 17/18 {Burns everything near you, and 25% evasion.}
 Next: Blink Dagger 21/22 {Start fights from 1,200 range.}, Desolator 23/30 {-6 armor on your target.}
-Late: Black King Bar 32/36 [Against Drow Ranger, Pudge and Legion Commander: don't skip it] {Stops their stuns: Drow Ranger, Pudge and Legion Commander. Duel still goes through it.}, Assault Cuirass 33/36 {Armor for you and your team against Drow Ranger and Legion Commander.}
+Late: Black King Bar 32/36 [Against Drow Ranger, Pudge and Legion Commander: don't skip it] {Spell immunity for the big fights. Duel still goes through it.}, Assault Cuirass 33/36 {Armor for you and your team against Drow Ranger and Legion Commander.}
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Radiance around minute 17.
 Vs Legion Commander (lane): Magic burst. buy Black King Bar.
 Vs Shadow Shaman (lane, guessed): Magic burst. Stay spread so one combo can't catch two.
@@ -60,7 +60,7 @@ Lane: Bracer 2, Magic Wand 3
 Boots: Phase Boots 9 {Armor and a burst of speed.}
 First: Vanguard 8/10
 Next: Blink Dagger 16/21 {Start fights from 1,200 range.}, Blade Mail 18/22
-Late: Black King Bar 30/31 [Against Drow Ranger, Pudge and Legion Commander: don't skip it] {Stops their stuns: Drow Ranger, Pudge and Legion Commander. Duel still goes through it.}, Kaya 34/35
+Late: Black King Bar 30/31 [Against Drow Ranger, Pudge and Legion Commander: don't skip it] {Spell immunity for the big fights. Duel still goes through it.}, Kaya 34/35
 If needed: Lotus Orb 32 [Against Drow Ranger, Pudge and Legion Commander] instead of Kaya
 Job: Make their carry's lane hard, then start the team's fights as Axe. Your timing is Blink Dagger around minute 16.
 Vs Drow Ranger (lane): Locks you down. buy Black King Bar, Lotus Orb.
@@ -92,8 +92,8 @@ Start: Tango, Blood Grenade, 2 Iron Branch, Magic Stick, Observer and Sentry War
 Lane: Magic Wand 5
 Boots: Tranquil Boots 7
 First: Blink Dagger 18/20 {Start fights from 1,200 range.}
-Next: Glimmer Cape 26/29 [Against Pudge, Legion Commander and Shadow Shaman: don't skip it] {Magic resistance against Pudge, Legion Commander and Shadow Shaman.}, Aether Lens 29/35
-Late: Force Staff 30/35 [Against Drow Ranger and Legion Commander: don't skip it] {Pushes you out of Drow Ranger and Legion Commander's reach.}, Aghanim's Scepter 36/44
+Next: Glimmer Cape 26/29 [Against Pudge, Legion Commander and Shadow Shaman: don't skip it] {Invisibility and a magic damage barrier.}, Aether Lens 29/35
+Late: Force Staff 30/35 [Against Drow Ranger and Legion Commander: don't skip it] {Pushes you out of trouble.}, Aghanim's Scepter 36/44
 Job: Keep your carry alive in lane and place vision; save your key spell for their dive. Your timing is Blink Dagger around minute 18.
 Vs Legion Commander (lane): Magic burst. buy Glimmer Cape, Force Staff.
 Vs Shadow Shaman (lane, guessed): Magic burst. buy Glimmer Cape.

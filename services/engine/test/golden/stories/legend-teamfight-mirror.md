@@ -26,7 +26,7 @@ Lane: Wraith Band 2, Magic Wand 3, Perseverance 10
 Boots: Power Treads 7 {Attack speed and a stat to switch.}, or Phase Boots 8
 First: Battle Fury 14/16 {Cleave for fast farm.}
 Next: Manta Style 23/24, Butterfly 29/30
-Late: Monkey King Bar 33/37 [Against Phantom Assassin: don't skip it] {Your hits can't miss Phantom Assassin.}, Swift Blink 40/43
+Late: Monkey King Bar 33/37 [Against Phantom Assassin: don't skip it] {Most of your hits can't miss.}, Swift Blink 40/43
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Battle Fury around minute 14.
 Vs Axe (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Witch Doctor (lane, guessed): Heals their team through fights. Kill them first or fight short and decisive.
@@ -57,7 +57,7 @@ Start: Gauntlets of Strength, 2 Iron Branch, 2 Tango [Hard lane against Phantom 
 Lane: Bracer 2, Magic Wand 4, Infused Raindrops 4 [Against Lich's magic burst], Soul Ring 5
 Boots: Phase Boots 10 {Armor and a burst of speed.}
 First: Blink Dagger 15/17 {Start fights from 1,200 range.}
-Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24 {-6 armor on your target.}, Black King Bar 29/31 {Stops their stuns: Axe and Witch Doctor.}
+Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24 {-6 armor on your target.}, Black King Bar 29/31 {Stops disables from Witch Doctor. Berserker's Call still goes through it.}
 Job: Make their carry's lane hard, then start the team's fights as Mars. Your timing is Blink Dagger around minute 15.
 Vs Phantom Assassin (lane): Evasion: right clicks miss. Fight them with spells, not right clicks.
 Vs Lich (lane, guessed): Magic burst. buy Infused Raindrops.
@@ -73,7 +73,7 @@ Start: 2 Tango [Hard lane against Phantom Assassin and Lich: more sustain], Bloo
 Lane: Magic Wand 4, Infused Raindrops 4 [Against Lich's magic burst]
 Boots: Tranquil Boots 7
 First: Blink Dagger 17/20 {Start fights from 1,200 range.}
-Next: Glimmer Cape 26/27 [Against Shadow Fiend, Witch Doctor and Lich: don't skip it] {Magic resistance against Shadow Fiend, Witch Doctor and Lich.}, Force Staff 28/31 [Against Phantom Assassin, Shadow Fiend and Axe: don't skip it] {Pushes you out of Phantom Assassin, Shadow Fiend and Axe's reach.}, Aether Lens 29/35
+Next: Glimmer Cape 26/27 [Against Shadow Fiend, Witch Doctor and Lich: don't skip it] {Invisibility and a magic damage barrier.}, Force Staff 28/31 [Against Phantom Assassin, Shadow Fiend and Axe: don't skip it] {Pushes you out of trouble.}, Aether Lens 29/35
 Late: Aghanim's Scepter 34/38
 Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Blink Dagger around minute 17.
 Vs Phantom Assassin (lane): Evasion: right clicks miss. buy Force Staff.
@@ -90,8 +90,8 @@ Start: Tango, Blood Grenade, Magic Stick, Iron Branch, Enchanted Mango, Observer
 Lane: Magic Wand 3 [Against Witch Doctor's spells: get it early]
 Boots: Tranquil Boots 8
 First: Blink Dagger 23/26 {Start fights from 1,200 range.}
-Next: Glimmer Cape 24/31 [Against Shadow Fiend, Witch Doctor and Lich: don't skip it] {Magic resistance against Shadow Fiend, Witch Doctor and Lich.}, Force Staff 25/31 [Against Phantom Assassin, Shadow Fiend and Axe: don't skip it] {Pushes you out of Phantom Assassin, Shadow Fiend and Axe's reach.}
-Late: Black King Bar 35/42 {Stops their stuns: Axe and Witch Doctor.}, Aghanim's Scepter 37/42
+Next: Glimmer Cape 24/31 [Against Shadow Fiend, Witch Doctor and Lich: don't skip it] {Invisibility and a magic damage barrier.}, Force Staff 25/31 [Against Phantom Assassin, Shadow Fiend and Axe: don't skip it] {Pushes you out of trouble.}
+Late: Black King Bar 35/42 {Stops disables from Witch Doctor. Berserker's Call still goes through it.}, Aghanim's Scepter 37/42
 Job: Keep your carry alive in lane and place vision; save your key spell for their dive. Your timing is Blink Dagger around minute 23.
 Vs Axe (lane): Starts fights and soaks your damage. buy Force Staff.
 Vs Witch Doctor (lane, guessed): Heals their team through fights. buy Magic Wand, Glimmer Cape.
