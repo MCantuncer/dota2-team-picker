@@ -47,8 +47,8 @@ Every part of the score is in win-rate percentage points, so `+2.0` roughly mean
   heroes out of the pool, so banning a hero's counters makes it safer ("Safer now: Anti-Mage is
   banned"), and a hero well above the usual risk is flagged ("Easy to punish: Axe and Legion Commander
   can still be picked"). Once the saved ranked games of this patch hold 3,000 games (`pickPhase`), how
-  the hero does when its team picks it at this point of the draft (1st or 2nd, 3rd, 4th or 5th) is
-  added too ("Wins more as a late pick").
+  the hero does when its team picks it in this round of the draft is added too ("Wins more as a
+  last-round pick"). The rounds follow Ranked All Pick: two picks, two picks, then the last.
 - **Hard counters**: a hand-checked list ([`src/engine/hard-counters.ts`](src/engine/hard-counters.ts)) of 17
   pairs where one hero ruins another by a specific mechanic, such as Anti-Mage against Medusa. With the
   counter on the enemy team, the matchup costs at least the listed gap ("Hard countered by Anti-Mage").
@@ -65,6 +65,25 @@ toward zero, so a group with few games (Divine-Immortal is about 5% of public ma
 the all-ranks result, and the rank's own pattern takes over as its games add up.
 The weights live at the top of [`src/engine/score.ts`](src/engine/score.ts).
 
+
+### What a card says
+
+Each suggestion carries up to four short lines on why it fits, each with its points, and at most one
+warning:
+
+- Lines from this draft come first: "Beats Axe (+3.1, likely your lane)", "Works with Crystal
+  Maiden (+1.8, your lane partner)", "Adds what your team lacks: an initiator and a save (+2.4)",
+  "Safer now: Anti-Mage is banned (+0.6)", or "Hard to punish: few heroes still open beat it
+  (+1.4)".
+- Then one line that holds in any draft, such as "3rd best mid at Legend: 54.0% win rate" (the
+  hero's place among heroes played in the position in 30% or more of their games, with 500 or more
+  games at that rank, top 10).
+  With no picks yet, these lines are all the card shows.
+- The warning starts with "Watch out:", for example "Watch out: loses to Viper (-2.2)".
+
+`summary` splits the score into what this draft adds (counter, synergy, team needs, pick safety)
+and what holds in any draft (meta, position fit, comfort, flex). Favorites and your own record go
+in `tags` ("Favorite (+1.5)", "Your record 12-8 (+0.9)").
 ## Backtest
 
 `npm run backtest` scores the engine on real ranked games saved by the refresh Action (see
@@ -189,8 +208,8 @@ lane data makes it look. A hero with fewer than 200 STRATZ games falls back to l
 is down, the run keeps the last positions and carries on.
 
 It also counts, from the saved ranked games of this patch (see "Games for the backtest"), how each
-hero does by when its team picked it: 1st or 2nd pick, 3rd, or 4th or 5th. A hero that wins much
-less as an early pick is easy to counter and safer to pick late. These counts go in `pickPhase`.
+hero does by the round its team picked it in, as in Ranked All Pick: 1st or 2nd pick, 3rd or 4th,
+or 5th. A hero that wins much less as a first-round pick is easy to counter and safer to pick late. These counts go in `pickPhase`.
 
 The Action can be started by hand with **dry run** ticked to fetch and build the data without
 uploading it, for example to test a change on a branch.

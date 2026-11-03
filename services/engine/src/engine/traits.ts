@@ -33,6 +33,17 @@ export const NEED_LABELS: Record<Need, string> = {
   physicalDamage: "adds right-click damage to a magic-heavy team",
 };
 
+/** The same needs in a few words, for a list on a suggestion card. */
+export const NEED_SHORT: Record<Need, string> = {
+  disable: "a stun",
+  initiation: "an initiator",
+  save: "a save",
+  durable: "a frontliner",
+  push: "wave clear",
+  magicDamage: "magic damage",
+  physicalDamage: "right-click damage",
+};
+
 export function traitsOf(hero: HeroInfo): Set<Need> {
   const t = new Set<Need>();
   if (hero.roles.includes("Disabler")) t.add("disable");

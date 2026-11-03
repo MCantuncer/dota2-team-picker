@@ -10,9 +10,9 @@ describe("blind pick risk", () => {
   it("warns about the counter still open and gets safer when it is banned", () => {
     const open = offlaneFive([]);
     const banned = offlaneFive([3]);
-    expect(open.reasons).toContain("Watch out: easy to punish: Mid Three can still be picked");
+    expect(open.reasons.at(-1)).toMatch(/^Watch out: easy to punish: Mid Three can still be picked \(-\d+\.\d\)$/);
     expect(banned.breakdown.pickSafety).toBeGreaterThan(open.breakdown.pickSafety + 1);
-    expect(banned.reasons).toContain("Safer now: Mid Three is banned");
+    expect(banned.reasons.join()).toMatch(/Safer now: Mid Three is banned \(\+\d+\.\d\)/);
   });
 
   it("has no risk once the enemy has picked all five", () => {

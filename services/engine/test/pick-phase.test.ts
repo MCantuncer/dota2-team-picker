@@ -17,8 +17,8 @@ const game = (radiantWin: boolean, id = 1): EvalMatch => ({
 });
 
 describe("phaseOf", () => {
-  it("splits a team's five picks into early, middle and late", () => {
-    expect([0, 1, 2, 3, 4].map(phaseOf)).toEqual([0, 0, 1, 2, 2]);
+  it("splits a team's five picks by the Ranked All Pick rounds: two, two, then the last", () => {
+    expect([0, 1, 2, 3, 4].map(phaseOf)).toEqual([0, 0, 1, 1, 2]);
   });
 });
 
