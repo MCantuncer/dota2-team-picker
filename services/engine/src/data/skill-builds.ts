@@ -7,8 +7,8 @@
  * constants query per run, so the refresh is spread over runs: each run does at most `maxQueries` and
  * the oldest slices go first. Each slice is saved as it finishes, so a cut keeps the work done.
  */
-import type { HeroAbilities, Position, Snapshot } from "../engine/types";
-import { TALENT_LEVELS, toSkillSlice, type LevelRow, type SliceTotals, type TalentRow } from "./skill-build-choice";
+import type { Position, Snapshot } from "../engine/types";
+import { toSkillSlice, type LevelRow, type SliceTotals, type TalentRow } from "./skill-build-choice";
 import type { GuidePlayer } from "./skill-sequence";
 import { startRequests } from "./item-starts";
 import {

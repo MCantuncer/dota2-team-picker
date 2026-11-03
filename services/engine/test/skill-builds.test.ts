@@ -8,8 +8,8 @@ import {
   skillRequests,
   toGuidePlayer,
 } from "../src/data/skill-builds";
-import type { HeroAbilities, Snapshot } from "../src/engine/types";
-import { points, Q, R, SVEN, SVEN_BUILD, TOTALS, W, E } from "./skill-build-fixture";
+import type { Snapshot } from "../src/engine/types";
+import { points, Q, SVEN, SVEN_BUILD, TOTALS, W } from "./skill-build-fixture";
 
 describe("queries and answers", () => {
   it("picks the most picked heroes to ask for guides against", () => {
