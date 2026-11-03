@@ -670,6 +670,11 @@ isOneToOne: false
               "attempts": number,"created_at": string,"draft_id": string,"match_id": number,"parse_requested_at": string,"parse_requests": number,"won": boolean
             }[]
                            },
+"claim_trend_players":
+{ Args: { "max_rows"?: number }; Returns: {
+              "account_id": number,"has_recent_card": boolean,"hero_stats": Json,"pool": Json,"skip": (string)[],"user_id": string
+            }[]
+                           },
 "claim_unattached_drafts":
 { Args: { "max_rows"?: number }; Returns: {
               "account_ids": (number)[],"allies": (number)[],"created_at": string,"draft_id": string
@@ -819,11 +824,17 @@ isOneToOne: false
 "run_build_reports":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"run_refresh_trends":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "runs_team":
 { Args: { "team": string }; Returns: boolean
                            },
 "save_draft_suggestions":
 { Args: { "chance"?: number,"draft": string,"pos": number,"shown": (number)[],"shown_scores": (number)[] }; Returns: undefined
+                           },
+"save_trend_check":
+{ Args: { "games": Json,"new_card": Json,"qualifying": (string)[],"state": string,"target": string }; Returns: undefined
                            },
 "send_friend_request":
 { Args: { "target": string }; Returns: string
