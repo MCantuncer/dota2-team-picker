@@ -2,7 +2,7 @@ begin;
 \ir _helpers.psql
 select plan(15);
 
-select tests.create_user('own@example.com', 'captain') as own \gset
+select tests.create_user('own@example.com') as own \gset
 select tests.create_user('co@example.com') as co \gset
 select tests.create_user('co2@example.com') as co2 \gset
 select tests.create_user('pl@example.com') as pl \gset

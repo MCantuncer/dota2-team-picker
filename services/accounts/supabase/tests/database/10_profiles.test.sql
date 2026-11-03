@@ -1,6 +1,6 @@
 begin;
 \ir _helpers.psql
-select plan(14);
+select plan(16);
 
 select tests.create_user('ana@example.com') as ana \gset
 select tests.create_user('ben@example.com') as ben \gset
@@ -8,6 +8,10 @@ select tests.create_user('ben@example.com') as ben \gset
 -- Sign-up creates a profile with a name taken from the email.
 select is((select display_name from public.profiles where id = :'ana'), 'ana', 'sign-up creates a profile');
 select is((select user_type from public.profiles where id = :'ben'), 'user', 'new accounts are plain users');
+-- Captain mode is gone: the type is user or admin only, and is_captain() is dropped.
+select throws_ok(format('update public.profiles set user_type = %L where id = %L', 'captain', :'ben'),
+  '23514', null, 'captain is no longer an account type');
+select hasnt_function('public', 'is_captain', 'is_captain() is gone');
 
 -- Visitors who are not signed in see nothing.
 select tests.sign_in_anon();
