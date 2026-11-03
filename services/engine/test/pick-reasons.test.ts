@@ -55,8 +55,8 @@ describe("suggestion cards", () => {
   it("gives every card a summary and a number on each draft line", () => {
     const cards = engine.suggest({ myPosition: 2, allies: [{ heroId: 6, position: 5 }], enemies: [5], favorites: [2] });
     for (const card of cards) {
-      expect(card.summary).toMatch(/^Score [+-]\d+\.\d: [+-]\d+\.\d from this draft, [+-]\d+\.\d from meta, role and comfort$/);
-      expect(card.reasons.length).toBeLessThanOrEqual(5);
+      expect(card.summary).toMatch(/^Score [+-]\d+\.\d, \d+(st|nd|rd|th) of \d+ mids here: [+-]\d+\.\d from this draft, [+-]\d+\.\d from meta, role and comfort$/);
+      expect(card.reasons.length).toBeLessThanOrEqual(6);
       for (const reason of card.reasons) expect(reason).toMatch(/[+-]\d+\.\d|\d+\.\d%/);
     }
   });

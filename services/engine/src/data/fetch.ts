@@ -29,6 +29,7 @@ import { fetchItems, itemsDue } from "./items";
 import { countPickPhases } from "./pick-phase";
 import { fetchSkillBuilds } from "./skill-builds";
 import { fetchPositions, postStratz } from "./stratz";
+import { applyStratzCounts, fetchStratzCounts } from "./stratz-matchups";
 import { rankGroup, type GamesWins, type HeroInfo, type RankBracket, type Snapshot } from "../engine/types";
 
 const SNAPSHOT_PATH = "data/snapshot.json";
@@ -40,6 +41,8 @@ const DECAY_PER_DAY = 0.99;
  */
 const PATCH_CARRYOVER = 0.25;
 const LANE_ROLES_MAX_AGE_DAYS = 7;
+/** STRATZ matchups older than this get a warning in the refresh log (4 refreshes a day). */
+const STRATZ_STALE_HOURS = 48;
 /**
  * Stop reading match pages when the API's daily allowance drops this low.
  * The free tier allows about 3,000 requests a day per IP, and GitHub runners
@@ -100,6 +103,8 @@ function add(map: Record<string, GamesWins>, key: string, won: boolean) {
 }
 
 function scaleCounts(snapshot: Snapshot, factor: number) {
+  // STRATZ counts are replaced whole on every refresh, so they never fade.
+  if (snapshot.matchupsFrom?.source === "stratz") return;
   const scale = (gw: GamesWins) => {
     gw.games = Math.round(gw.games * factor * 10) / 10;
     gw.wins = Math.round(gw.wins * factor * 10) / 10;
@@ -313,15 +318,37 @@ async function main() {
     console.warn(`::warning::${(err as Error).message}`);
   }
 
+  if (stratzToken) {
+    console.log("Matchups and synergy from STRATZ...");
+    try {
+      const heroIds = Object.values(snapshot.heroes).map((h) => h.id).sort((a, b) => a - b);
+      const counts = await fetchStratzCounts(heroIds, (query) => postStratz(stratzToken, query, "matchups"));
+      applyStratzCounts(snapshot, counts, now);
+      const pairs = Object.values(counts.matchups).reduce((n, row) => n + Object.keys(row).length, 0);
+      const games = Object.values(counts.matchups).flatMap((row) => Object.values(row).map((gw) => gw.games));
+      games.sort((a, b) => a - b);
+      console.log(`STRATZ matchups: ${pairs} pairs, median ${games[Math.floor(games.length / 2)] ?? 0} games per pair.`);
+    } catch (err) {
+      // Keep the last counts, whichever source they came from, and go on.
+      console.warn(`::warning::${(err as Error).message}`);
+    }
+  }
+  if (snapshot.matchupsFrom?.source === "stratz") {
+    const hours = (now.getTime() - Date.parse(snapshot.matchupsFrom.at)) / 3_600_000;
+    if (hours > STRATZ_STALE_HOURS) console.warn(`::warning::STRATZ matchups are ${Math.round(hours)} hours old.`);
+  }
+
+  // Our own sample of public matches is only counted while the matchups don't come from STRATZ.
+  const useSample = snapshot.matchupsFrom?.source !== "stratz";
   decayCounts(snapshot, now);
 
-  console.log(`Public matches (up to ${maxPages} pages)...`);
+  console.log(useSample ? `Public matches (up to ${maxPages} pages)...` : "Matchups are from STRATZ, skipping public matches.");
   const stopAt = snapshot.lastPublicMatchId ?? 0;
   let before: number | undefined;
   let newest = stopAt;
   let counted = 0;
   try {
-    for (let page = 0; page < maxPages; page++) {
+    for (let page = 0; useSample && page < maxPages; page++) {
       if (requestsLeftToday() < DAILY_RESERVE) {
         console.log(`Stopping: only ${requestsLeftToday()} API requests left today.`);
         break;
