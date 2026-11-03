@@ -910,9 +910,6 @@ isOneToOne: false
 "invited_to_party":
 { Args: { "party": string }; Returns: boolean
                            },
-"is_captain":
-{ Args: Record<PropertyKey, never>; Returns: boolean
-                           },
 "is_my_member":
 { Args: { "member": string }; Returns: boolean
                            },

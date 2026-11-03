@@ -2,7 +2,7 @@ begin;
 \ir _helpers.psql
 select plan(18);
 
-select tests.create_user('cap@example.com', 'captain') as cap \gset
+select tests.create_user('cap@example.com') as cap \gset
 select tests.create_user('mem@example.com') as mem \gset
 select tests.create_user('out@example.com') as out \gset
 
