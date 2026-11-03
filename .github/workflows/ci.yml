@@ -35,7 +35,8 @@ jobs:
 
   backtest:
     name: Engine backtest
-    # Scores this PR's engine and main's on the same saved games and writes both to the job summary.
+    # Scores this PR's engine and main's on the same saved games and writes both to the job summary
+    # and the job log, so the win lift can be read from the log too.
     # It reports numbers only; a lower score does not fail the PR.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -86,7 +87,7 @@ jobs:
             fi
             echo
             echo "Each side uses its own data/snapshot.json and only games played after it was built."
-          } >> "$GITHUB_STEP_SUMMARY"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
       # The same fixed drafts on the live hero data, main's suggestions beside this PR's, so a
       # change shows which heroes and reasons it moves.
       - name: Compare suggestions on fixed drafts
