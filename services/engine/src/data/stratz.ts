@@ -100,22 +100,39 @@ export async function fetchMatchPositions(token: string, ids: number[]): Promise
   return out;
 }
 
-/** POSTs a GraphQL query and returns its `data`. Throws on HTTP or GraphQL errors. */
-export async function postStratz<T>(token: string, query: string, what: string): Promise<T> {
-  const res = await fetch(URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      // STRATZ asks API clients to send this user agent.
-      "User-Agent": "STRATZ_API",
-    },
-    body: JSON.stringify({ query }),
-  });
-  const body = (await res.json().catch(() => ({}))) as { data?: T | null; errors?: { message: string }[] };
-  if (!res.ok || body.errors?.length || !body.data) {
-    const why = body.errors?.map((e) => e.message).join("; ") || `HTTP ${res.status}`;
-    throw new Error(`STRATZ ${what} failed: ${why}`);
+/** Tries per query when STRATZ answers 429 (too many requests). */
+const RATE_LIMIT_ATTEMPTS = 4;
+/** First wait after a 429 when STRATZ does not say how long; doubles each time. */
+const RATE_LIMIT_WAIT_MS = 5_000;
+
+/**
+ * POSTs a GraphQL query and returns its `data`. A 429 is retried after the wait STRATZ gives in
+ * Retry-After (or 5s, 10s, 20s). Throws on other HTTP or GraphQL errors, or when the retries run out.
+ */
+export async function postStratz<T>(token: string, query: string, what: string, sleep = wait): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    const res = await fetch(URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        // STRATZ asks API clients to send this user agent.
+        "User-Agent": "STRATZ_API",
+      },
+      body: JSON.stringify({ query }),
+    });
+    if (res.status === 429 && attempt < RATE_LIMIT_ATTEMPTS) {
+      const seconds = Number(res.headers.get("retry-after"));
+      await sleep(Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : RATE_LIMIT_WAIT_MS * 2 ** (attempt - 1));
+      continue;
+    }
+    const body = (await res.json().catch(() => ({}))) as { data?: T | null; errors?: { message: string }[] };
+    if (!res.ok || body.errors?.length || !body.data) {
+      const why = body.errors?.map((e) => e.message).join("; ") || `HTTP ${res.status}`;
+      throw new Error(`STRATZ ${what} failed: ${why}`);
+    }
+    return body.data;
   }
-  return body.data;
 }
+
+const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
