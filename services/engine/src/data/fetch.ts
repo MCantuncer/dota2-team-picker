@@ -25,6 +25,7 @@ import { fetchItemStarts } from "./item-starts";
 import { fetchItemTimings, itemTimingsDue } from "./item-timings";
 import { fetchItems, itemsDue } from "./items";
 import { countPickPhases } from "./pick-phase";
+import { fetchSkillBuilds } from "./skill-builds";
 import { fetchPositions, postStratz } from "./stratz";
 import { rankGroup, type GamesWins, type HeroInfo, type RankBracket, type Snapshot } from "../engine/types";
 
@@ -273,6 +274,20 @@ async function main() {
     }
   } else if (stratzToken) {
     console.log(`Item timings are from ${snapshot.itemTimingsAt}, keeping them.`);
+  }
+
+  if (stratzToken) {
+    console.log("Skill builds from STRATZ guide matches...");
+    try {
+      const counts = await fetchSkillBuilds(snapshot, (query) => postStratz(stratzToken, query, "skill builds"), now);
+      const kb = (gzipSync(JSON.stringify(snapshot.skillBuilds ?? {})).length / 1024).toFixed(1);
+      console.log(
+        `Skill builds: ${counts.done} of ${counts.due} due slices refreshed in ${counts.queries} queries (${counts.matchQueries} for matches), ${kb} KB gzipped.`,
+      );
+    } catch (err) {
+      // Skill builds are an extra; keep the slices done so far and go on. The next run resumes.
+      console.warn(`::warning::${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   console.log("Pick phases from the saved ranked games...");
