@@ -307,14 +307,14 @@ isOneToOne: true
                   ]
                 },"parties": {
                   Row: {
-                    "captain_id": string | null,"captain_request_at": string | null,"captain_request_by": string | null,"closed_at": string | null,"created_at": string,"id": string,"leader_id": string,"team_id": string | null
+                    "captain_id": string | null,"captain_request_at": string | null,"captain_request_by": string | null,"closed_at": string | null,"created_at": string,"id": string,"leader_id": string,"rank_bracket": number | null,"team_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "captain_id"?: string | null,"captain_request_at"?: string | null,"captain_request_by"?: string | null,"closed_at"?: string | null,"created_at"?: string,"id"?: string,"leader_id": string,"team_id"?: string | null
+                    "captain_id"?: string | null,"captain_request_at"?: string | null,"captain_request_by"?: string | null,"closed_at"?: string | null,"created_at"?: string,"id"?: string,"leader_id": string,"rank_bracket"?: number | null,"team_id"?: string | null
                   }
                   Update: {
-                    "captain_id"?: string | null,"captain_request_at"?: string | null,"captain_request_by"?: string | null,"closed_at"?: string | null,"created_at"?: string,"id"?: string,"leader_id"?: string,"team_id"?: string | null
+                    "captain_id"?: string | null,"captain_request_at"?: string | null,"captain_request_by"?: string | null,"closed_at"?: string | null,"created_at"?: string,"id"?: string,"leader_id"?: string,"rank_bracket"?: number | null,"team_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -999,6 +999,11 @@ isOneToOne: false
               "code": string,"expires_at": string
             }[]
                            },
+"party_player_stats":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "display_name": string,"favorites": Json,"hero_stats": Json,"positions": number[],"rank_tier": number,"user_id": string
+            }[]
+                           },
 "party_view":
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_url": string,"captain_asked_at": string,"captain_id": string,"captain_online": boolean,"captain_request_by": string,"captain_request_expires_at": string,"display_name": string,"joined_at": string,"leader_id": string,"party_id": string,"position": number,"server_now": string,"team_id": string,"user_id": string
@@ -1052,6 +1057,9 @@ isOneToOne: false
                            },
 "set_party_position":
 { Args: { "want": number }; Returns: undefined
+                           },
+"set_party_rank":
+{ Args: { "bracket": number }; Returns: undefined
                            },
 "set_pool_suggestions_off":
 { Args: { "is_off": boolean }; Returns: undefined
