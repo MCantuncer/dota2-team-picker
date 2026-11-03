@@ -49,6 +49,12 @@ export interface Names {
 
 const roleOf = (position: Position | null): Role => (position !== null && position >= 4 ? "support" : "core");
 const pct = (p: number) => Math.round(p * 100);
+/** 1st, 2nd, 3rd, 4th, 11th, 12th, 13th, 21st. */
+export function ordinal(n: number): string {
+  const teen = n % 100 >= 11 && n % 100 <= 13;
+  const suffix = teen ? "th" : ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th";
+  return `${n}${suffix}`;
+}
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 const average = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 
@@ -173,7 +179,7 @@ function percentileFinding(
     tone,
     score: Math.abs(goodness - 0.5) * rows.length,
     headline: rule.headlines[tone],
-    happened: rows.map((r) => `${names.hero(r.g.heroId)}: ${pct(r.value)}th percentile for ${rule.label}`),
+    happened: rows.map((r) => `${names.hero(r.g.heroId)}: ${ordinal(pct(r.value))} percentile for ${rule.label}`),
     pattern: `Across ${where}, you had ${comparison} on OpenDota (all ranks).`,
     cost: winSplit(
       rows.map((r) => r.g),

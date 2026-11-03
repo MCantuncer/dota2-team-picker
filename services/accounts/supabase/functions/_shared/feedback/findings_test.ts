@@ -1,7 +1,7 @@
 import { assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
 import type { HeroCard } from "../report/facts.ts";
 import type { Position } from "../trends/games.ts";
-import { type Finding, gameFindings, runePattern, trendFindings } from "./findings.ts";
+import { type Finding, gameFindings, ordinal, runePattern, trendFindings } from "./findings.ts";
 import type { DeathFact, GameSummary, Percentiles } from "./summary.ts";
 import { TIPS } from "./tips.ts";
 
@@ -152,4 +152,20 @@ Deno.test("every tip shown comes from the reviewed set", () => {
   const templates = Object.values(TIPS).flatMap((byRole) => Object.values(byRole));
   const asRegex = (t: string) => new RegExp(`^${t.replace(/[.*+?^$()|[\]\\]/g, "\\$&").replace(/\{\w+\}/g, ".+")}$`);
   for (const text of changes) assertEquals(templates.some((t) => asRegex(t).test(text)), true, text);
+});
+
+Deno.test("percentiles read as English ordinals", () => {
+  assertEquals([1, 2, 3, 4, 11, 12, 13, 21, 22, 82, 100].map(ordinal), [
+    "1st",
+    "2nd",
+    "3rd",
+    "4th",
+    "11th",
+    "12th",
+    "13th",
+    "21st",
+    "22nd",
+    "82nd",
+    "100th",
+  ]);
 });
