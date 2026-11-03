@@ -28,10 +28,11 @@ export interface LevelRow {
   matchCount: number;
 }
 
-/** A row of STRATZ's talent totals: games where the talent was picked. */
+/** A row of STRATZ's talent totals: games where the talent was picked, and how many of them were won. */
 export interface TalentRow {
   abilityId: number;
   matchCount: number;
+  winCount?: number;
 }
 
 /** STRATZ's totals for one hero and position. */
@@ -146,7 +147,12 @@ export function chooseTalents(
   hero: HeroAbilities,
 ): SkillBuildSlice["talents"] {
   const games = new Map<number, number>();
-  for (const r of totals) games.set(r.abilityId, (games.get(r.abilityId) ?? 0) + r.matchCount);
+  const wins = new Map<number, number>();
+  for (const r of totals) {
+    games.set(r.abilityId, (games.get(r.abilityId) ?? 0) + r.matchCount);
+    wins.set(r.abilityId, (wins.get(r.abilityId) ?? 0) + (r.winCount ?? 0));
+  }
+  const hasWins = totals.length > 0 && totals.every((r) => r.winCount !== undefined);
   return hero.talents.flatMap((pair, tier) => {
     // A tier missing a side (STRATZ's constants left one out) would read "100% pick this": skip it.
     if (pair.length !== 2) return [];
@@ -160,9 +166,9 @@ export function chooseTalents(
       if (at >= 0) atLevel.set(at + 1, (atLevel.get(at + 1) ?? 0) + 1);
     }
     const [usual] = [...atLevel].sort((a, b) => b[1] - a[1] || a[0] - b[0]);
-    return [
-      { tier, id: top.id, share: share(top.games, all), games: all, level: usual?.[0] ?? TALENT_LEVELS[tier] ?? 0 },
-    ];
+    const level = usual?.[0] ?? TALENT_LEVELS[tier] ?? 0;
+    const sides = pair.map((t) => ({ id: t.id, games: games.get(t.id) ?? 0, wins: wins.get(t.id) ?? 0 }));
+    return [{ tier, id: top.id, share: share(top.games, all), games: all, level, ...(hasWins ? { sides } : {}) }];
   });
 }
 

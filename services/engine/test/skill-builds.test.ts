@@ -7,6 +7,7 @@ import {
   matchesQuery,
   skillRequests,
   toGuidePlayer,
+  validTalentRows,
 } from "../src/data/skill-builds";
 import type { Snapshot } from "../src/engine/types";
 import { points, Q, SVEN, SVEN_BUILD, TOTALS, W } from "./skill-build-fixture";
@@ -37,6 +38,24 @@ describe("queries and answers", () => {
     expect(() => listQuery([], [])).toThrow();
     expect(() => listQuery([{ heroId: 18, position: 1 }], [0])).toThrow();
     expect(() => matchesQuery([{ matchId: 1.5, steamAccountId: 77 }])).toThrow();
+  });
+
+  it("asks for talent win counts and keeps only sensible ones", () => {
+    expect(listQuery([{ heroId: 18, position: 1 }], [])).toContain(
+      "talent(heroId: 18, positionIds: [POSITION_1]) { abilityId matchCount winCount }",
+    );
+    expect(
+      validTalentRows([
+        { abilityId: 1, matchCount: 10, winCount: 6 },
+        { abilityId: 2, matchCount: 10, winCount: 11 },
+        { abilityId: 3, matchCount: 10 },
+        { abilityId: 4 },
+      ]),
+    ).toEqual([
+      { abilityId: 1, matchCount: 10, winCount: 6 },
+      { abilityId: 2, matchCount: 10 },
+      { abilityId: 3, matchCount: 10 },
+    ]);
   });
 
   it("reads guide match ids and guide players defensively", () => {

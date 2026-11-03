@@ -212,6 +212,19 @@ describe("talents", () => {
     ]);
   });
 
+  it("keeps both sides' games and wins when STRATZ gives win counts", () => {
+    const totals = [
+      { abilityId: 10, matchCount: 16000, winCount: 8800 },
+      { abilityId: 11, matchCount: 78000, winCount: 39000 },
+    ];
+    expect(chooseTalents(totals, [SVEN_BUILD], SVEN)[0]?.sides).toEqual([
+      { id: 10, games: 16000, wins: 8800 },
+      { id: 11, games: 78000, wins: 39000 },
+    ]);
+    // A row without wins leaves the tier without sides rather than claim 0 wins.
+    expect(chooseTalents([...totals, { abilityId: 12, matchCount: 5 }], [SVEN_BUILD], SVEN)[0]?.sides).toBeUndefined();
+  });
+
   it("skips a tier with one talent rather than claim everyone picks it", () => {
     const hero = { ...SVEN, talents: SVEN.talents.map((pair, tier) => (tier === 0 ? pair.slice(1) : pair)) };
     expect(chooseTalents(TOTALS.talents, [SVEN_BUILD], hero).map((t) => t.tier)).toEqual([1]);
