@@ -30,7 +30,9 @@ Every part of the score is in win-rate percentage points, so `+2.0` roughly mean
 
 - **Counter**: how the hero does against each enemy already picked, compared with what their
   overall win rates predict. Enemies you will probably meet in lane count up to 1.5x. Enemy
-  positions are guessed from which lanes each hero is usually played in.
+  positions are guessed from which lanes each hero is usually played in. Which enemy support is
+  the 4 and which the 5 is easy to guess wrong, and supports rotate, so in a lane with an enemy
+  support (every lane but mid) each enemy counts at least half its chance of being pos 4 or 5.
 - **Synergy**: the same idea for the allies already picked. Your lane partner (pos 1 with 5, 3 with 4)
   counts 1.5x when its position is known.
 - **Meta**: the hero's current win rate at your rank.

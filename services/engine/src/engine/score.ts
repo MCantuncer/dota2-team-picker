@@ -73,6 +73,12 @@ const BAN_LIFT_REASON = 0.3;
 /** A hero this many points riskier than the other choices gets an "easy to punish" warning. */
 const RISK_WARNING = 0.5;
 
+/**
+ * Share of an enemy's pos 4 plus pos 5 chance that counts as facing you in a lane with an enemy
+ * support. At most 0.5, below the 0.5+ that names a hero "likely your lane".
+ */
+const SUPPORT_LANE_SHARE = 0.5;
+
 /** Your lane partner's position, for each position. */
 const LANE_PARTNER: Record<Position, Position | undefined> = { 1: 5, 2: undefined, 3: 4, 4: 3, 5: 1 };
 
@@ -220,11 +226,17 @@ export class Engine {
     return (shrink(inPhase, overall, PRIOR_GAMES.pickPhase) - overall) * 100;
   }
 
-  /** Chance (0-1) that each enemy is one you face in lane when playing `pos`. */
+  /**
+   * Chance (0-1) that each enemy is one you face in lane when playing `pos`. Which enemy support
+   * is the 4 and which the 5 is often guessed wrong, and supports rotate, so in a lane with an
+   * enemy support every likely support counts at least SUPPORT_LANE_SHARE of its support chance.
+   */
   laneChances(enemies: number[], pos: Position): number[] {
-    return guessEnemyPositions(enemies.map((e) => this.fit(e))).map((fit) =>
-      LANE_OPPONENTS[pos].reduce((s, p) => s + fit[p], 0),
-    );
+    const facesSupport = LANE_OPPONENTS[pos].some((p) => p >= 4);
+    return guessEnemyPositions(enemies.map((e) => this.fit(e))).map((fit) => {
+      const chance = LANE_OPPONENTS[pos].reduce((s, p) => s + fit[p], 0);
+      return facesSupport ? Math.max(chance, SUPPORT_LANE_SHARE * (fit[4] + fit[5])) : chance;
+    });
   }
 
   /** Points for how natural the hero is in a position, 0 for an average fit. */
