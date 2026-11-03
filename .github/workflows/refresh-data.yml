@@ -2,8 +2,8 @@ name: Refresh hero data
 
 on:
   # Four runs a day, off the hour (GitHub delays jobs queued on the hour).
-  # 4 x 250 pages plus 4 x about 105 requests for backtest games stays well
-  # inside OpenDota's free daily allowance.
+  # 4 x 250 pages plus 4 x up to 140 requests for backtest games stays
+  # inside OpenDota's free daily allowance (the collector stops early when it runs low).
   schedule:
     - cron: "17 */6 * * *"
   workflow_dispatch:

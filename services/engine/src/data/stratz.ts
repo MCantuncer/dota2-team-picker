@@ -40,15 +40,18 @@ export async function fetchPositions(token: string): Promise<NonNullable<Snapsho
   return toPositions(data.heroStats);
 }
 
-/** STRATZ answers at most this many matches per `matches(ids:)` query. */
+/** Matches asked for in one query. */
 export const MATCHES_PER_QUERY = 10;
 
-/** Asks for the detected position of every player in up to MATCHES_PER_QUERY matches. */
+/**
+ * Asks for the detected position of every player in up to MATCHES_PER_QUERY matches, one
+ * aliased `match(id:)` each. The `matches(ids:)` list query is for STRATZ admins only.
+ */
 export function matchPositionsQuery(ids: number[]): string {
   if (ids.length === 0 || ids.length > MATCHES_PER_QUERY || !ids.every(Number.isSafeInteger)) {
     throw new Error(`Expected 1 to ${MATCHES_PER_QUERY} match ids, got ${ids.length}`);
   }
-  return `{ matches(ids: [${ids.join(", ")}]) { id players { heroId position } } }`;
+  return `{ ${ids.map((id, i) => `m${i}: match(id: ${id}) { id players { heroId position } }`).join(" ")} }`;
 }
 
 interface MatchPlayersRow {
@@ -60,10 +63,10 @@ interface MatchPlayersRow {
  * Turns the answer into position (1-5) by hero id for each match. Players STRATZ could
  * not place (UNKNOWN, FILTERED, missing) are left out, so a match may have fewer than 10.
  */
-export function toMatchPositions(rows: MatchPlayersRow[]): Map<number, Map<number, Position>> {
+export function toMatchPositions(rows: (MatchPlayersRow | null | undefined)[]): Map<number, Map<number, Position>> {
   const out = new Map<number, Map<number, Position>>();
   for (const row of rows) {
-    if (typeof row.id !== "number") continue;
+    if (typeof row?.id !== "number") continue;
     const byHero = new Map<number, Position>();
     for (const p of row.players ?? []) {
       const position = POSITIONS.indexOf(p.position as (typeof POSITIONS)[number]) + 1;
@@ -74,14 +77,26 @@ export function toMatchPositions(rows: MatchPlayersRow[]): Map<number, Map<numbe
   return out;
 }
 
-/** Positions by hero for each match id, fetched MATCHES_PER_QUERY at a time. */
+/**
+ * Positions by hero for each match id, fetched MATCHES_PER_QUERY at a time. A batch STRATZ
+ * refuses (for example a game it has not seen yet) is skipped with a warning and asked again on a
+ * later run; when every batch fails, the call throws.
+ */
 export async function fetchMatchPositions(token: string, ids: number[]): Promise<Map<number, Map<number, Position>>> {
   const out = new Map<number, Map<number, Position>>();
+  const failures: string[] = [];
   for (let i = 0; i < ids.length; i += MATCHES_PER_QUERY) {
     const batch = ids.slice(i, i + MATCHES_PER_QUERY);
-    const data = await postStratz<{ matches?: MatchPlayersRow[] | null }>(token, matchPositionsQuery(batch), "match positions");
-    for (const [id, positions] of toMatchPositions(data.matches ?? [])) out.set(id, positions);
+    try {
+      const data = await postStratz<Record<string, MatchPlayersRow | null>>(token, matchPositionsQuery(batch), "match positions");
+      for (const [id, positions] of toMatchPositions(Object.values(data))) out.set(id, positions);
+    } catch (err) {
+      failures.push((err as Error).message);
+    }
   }
+  const batches = Math.ceil(ids.length / MATCHES_PER_QUERY);
+  if (batches > 0 && failures.length === batches) throw new Error(failures[0]);
+  for (const f of new Set(failures)) console.warn(`::warning::${f} (skipped one batch of games)`);
   return out;
 }
 

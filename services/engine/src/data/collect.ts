@@ -19,7 +19,8 @@ import { isCandidate, mergeMatches, monthPath, toEvalMatch, type EvalMatch, type
 
 /** Leave this many OpenDota requests for the data refresh and other users of the runner's IP. */
 const DAILY_RESERVE = 300;
-const MAX_PAGES = 5;
+/** Pages of 100 public matches to look through: about 3 in 100 are ranked All Pick with a known rank. */
+const MAX_PAGES = 40;
 /** Ask STRATZ again for games up to this old that still miss positions. */
 const POSITION_RETRY_S = 3 * 24 * 60 * 60;
 const FILE_MAX_AGE_S = 300;
