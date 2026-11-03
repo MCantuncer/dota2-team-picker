@@ -934,6 +934,7 @@ isOneToOne: false
 "created_at": string,
 "id": string,
 "leader_id": string,
+"rank_bracket": number | null,
 "team_id": string | null
             }
                           SetofOptions: {
