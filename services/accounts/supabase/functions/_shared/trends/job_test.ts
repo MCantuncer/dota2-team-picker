@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
 import type { HeroBenchmarks } from "./benchmarks.ts";
+import type { CountedStratzGame } from "./stratz.ts";
 import { OpenDotaBusy, runTrends, type TrendCheck, type TrendDeps, type TrendPlayer } from "./job.ts";
 
 const NOW_S = 1_800_000_000;
@@ -69,6 +70,7 @@ function stub(players: TrendPlayer[], over: Partial<TrendDeps> = {}): Stub {
       return Promise.resolve(true);
     },
     claimPlayers: () => Promise.resolve(players),
+    fetchStratzGames: () => Promise.resolve(null),
     fetchRecentMatches: () => Promise.resolve([1, 2, 3, 4, 5, 6].map((id) => recentRow(id))),
     cachedBenchmarks: () => Promise.resolve(new Map()),
     fetchBenchmarks: (heroId) => {
@@ -186,4 +188,59 @@ Deno.test("one player's error is logged and the others still run", async () => {
   assertEquals(result.checked, 1);
   assertEquals(s.saved.map(([id]) => id), ["u2"]);
   assertEquals(s.logged, ["Trend check for u1 failed"]);
+});
+
+const stratzGame = (matchId: number, over: Partial<CountedStratzGame> = {}): CountedStratzGame => ({
+  matchId,
+  heroId: MONKEY_KING,
+  startTime: NOW_S - matchId * HOUR_S,
+  isWin: true,
+  position: 1,
+  imp: 30,
+  gameMode: 22,
+  lobbyType: 7,
+  ...over,
+});
+const unparsed = () => Promise.resolve([1, 2, 3, 4, 5, 6].map((id) => recentRow(id, { lane_role: null })));
+
+Deno.test("STRATZ positions and IMP make a card when OpenDota has no lanes, with no benchmark call", async () => {
+  const s = stub([player()], {
+    fetchRecentMatches: unparsed,
+    fetchStratzGames: () => Promise.resolve([1, 2, 3, 4, 5, 6].map((id) => stratzGame(id))),
+  });
+  const result = await runTrends(s.deps);
+  assertEquals(result, { checked: 1, cards: 1, calls: 1, stopped: null });
+  assertEquals(s.benchmarkFetches, []);
+  const check = s.saved[0][1];
+  assertEquals(check.games[0].position_source, "stratz");
+  assertEquals(check.games[0].imp, 30);
+  assertStringIncludes(check.newCard?.reason ?? "", "STRATZ IMP averaged +30");
+});
+
+Deno.test("a STRATZ position without IMP is judged by benchmarks", async () => {
+  const s = stub([player()], {
+    fetchRecentMatches: unparsed,
+    fetchStratzGames: () => Promise.resolve([1, 2, 3, 4, 5, 6].map((id) => stratzGame(id, { imp: null }))),
+  });
+  await runTrends(s.deps);
+  assertEquals(s.benchmarkFetches, [MONKEY_KING]);
+  assertEquals(s.saved[0][1].games[0].is_strong, true);
+  assertEquals(s.saved[0][1].newCard !== null, true);
+});
+
+Deno.test("STRATZ only games keep their mode and lobby", async () => {
+  const s = stub([player()], {
+    fetchRecentMatches: () => Promise.resolve([]),
+    fetchStratzGames: () => Promise.resolve([stratzGame(1, { gameMode: 2, lobbyType: 0 })]),
+  });
+  await runTrends(s.deps);
+  assertEquals(s.saved[0][1].state, "ok");
+  assertEquals([s.saved[0][1].games[0].game_mode, s.saved[0][1].games[0].lobby_type], [2, 0]);
+});
+
+Deno.test("a STRATZ error falls back to OpenDota alone", async () => {
+  const s = stub([player()], { fetchStratzGames: () => Promise.reject(new Error("HTTP 502")) });
+  const result = await runTrends(s.deps);
+  assertEquals(result.cards, 1);
+  assertEquals(s.logged, ["STRATZ games for u1 failed; using OpenDota alone"]);
 });

@@ -1,12 +1,14 @@
 /**
  * One run of the refresh-trends job: for each player whose check is due, read their recent
- * games from OpenDota, judge them against the heroes' benchmarks, and save the games plus at
- * most one new hero pool card. Every OpenDota call comes from the trends share of the daily
- * budget first; the run stops when the budget, the run cap or a rate limit says so.
+ * games from STRATZ (when a token is set) and OpenDota, judge them by STRATZ IMP or the
+ * heroes' OpenDota benchmarks, and save the games plus at most one new hero pool card. Every
+ * OpenDota call comes from the trends share of the daily budget first; the run stops when the
+ * budget, the run cap or a rate limit says so.
  */
 import type { BenchmarkStat, HeroBenchmarks } from "./benchmarks.ts";
 import { isCountedGame, positionFromLane, readRecentMatch, type RecentMatch, type TrendGame } from "./games.ts";
-import { mergeGames } from "./merge.ts";
+import { mergeGames, type StratzGame } from "./merge.ts";
+import type { CountedStratzGame } from "./stratz.ts";
 import { poolCardText } from "./reason.ts";
 import { findPoolCandidates, type HeroRecord, pairKey, type PoolCandidate, type PoolEntry } from "./rules.ts";
 
@@ -60,6 +62,11 @@ export interface TrendDeps {
   /** Takes calls from the trends share; false when refused or the check failed. */
   takeCalls: (n: number) => Promise<boolean>;
   claimPlayers: () => Promise<TrendPlayer[]>;
+  /**
+   * The player's counted STRATZ games, or null when STRATZ is not set up. STRATZ has its own
+   * limits, so these calls don't come from the OpenDota budget.
+   */
+  fetchStratzGames: (accountId: number) => Promise<CountedStratzGame[] | null>;
   /** OpenDota's recentMatches rows, unchecked. */
   fetchRecentMatches: (accountId: number) => Promise<unknown[]>;
   /** Benchmarks fetched in the last 7 days, by hero id. */
@@ -118,9 +125,10 @@ export async function runTrends(deps: TrendDeps, maxCalls = MAX_RUN_CALLS): Prom
 }
 
 async function checkPlayer(player: TrendPlayer, deps: TrendDeps, take: (n: number) => Promise<void>) {
+  const stratz = await stratzGamesOf(player, deps);
   await take(1);
   const raw = await deps.fetchRecentMatches(player.account_id);
-  if (raw.length === 0 && Object.keys(player.hero_stats).length > 0) {
+  if (raw.length === 0 && !stratz.length && Object.keys(player.hero_stats).length > 0) {
     // Games on record but none shown: most likely "Expose public match data" is off.
     return { state: "hidden", games: [], newCard: null, qualifying: [] } satisfies TrendCheck;
   }
@@ -129,8 +137,8 @@ async function checkPlayer(player: TrendPlayer, deps: TrendDeps, take: (n: numbe
     const match = readRecentMatch(r);
     return match && isCountedGame(match, nowS) ? [match] : [];
   });
-  const benchmarks = await benchmarksFor(matches, deps, take);
-  const games = mergeGames([], [], matches.map((match) => ({ match, benchmarks: benchmarks.get(match.heroId) })));
+  const benchmarks = await benchmarksFor(matches, stratz, deps, take);
+  const games = mergeGames([], stratz, matches.map((match) => ({ match, benchmarks: benchmarks.get(match.heroId) })));
   const candidates = findPoolCandidates({
     games,
     pool: player.pool,
@@ -142,15 +150,39 @@ async function checkPlayer(player: TrendPlayer, deps: TrendDeps, take: (n: numbe
   const newCard = best && !player.has_recent_card ? toCard(best, deps.heroName(best.heroId)) : null;
   return {
     state: "ok",
-    games: games.map((g) => toRow(g, matches)),
+    games: games.map((g) => toRow(g, matches, stratz)),
     newCard,
     qualifying: candidates.map((c) => pairKey(c.heroId, c.position)),
   } satisfies TrendCheck;
 }
 
-/** Benchmarks for heroes played at a known position: cached ones first, then one call each. */
-async function benchmarksFor(matches: RecentMatch[], deps: TrendDeps, take: (n: number) => Promise<void>) {
-  const heroIds = [...new Set(matches.filter((m) => positionFromLane(m) !== null).map((m) => m.heroId))];
+/** STRATZ games, or none when STRATZ is off or fails: one source failing never stops the check. */
+async function stratzGamesOf(player: TrendPlayer, deps: TrendDeps): Promise<CountedStratzGame[]> {
+  try {
+    return (await deps.fetchStratzGames(player.account_id)) ?? [];
+  } catch (err) {
+    deps.log(`STRATZ games for ${player.user_id} failed; using OpenDota alone`, err);
+    return [];
+  }
+}
+
+/**
+ * Benchmarks for the games judged by stats: a known position (STRATZ or lane) but no STRATZ
+ * IMP. Cached ones first, then one call each.
+ */
+async function benchmarksFor(
+  matches: RecentMatch[],
+  stratz: StratzGame[],
+  deps: TrendDeps,
+  take: (n: number) => Promise<void>,
+) {
+  const stratzById = new Map(stratz.map((g) => [g.matchId, g]));
+  const needed = matches.filter((m) => {
+    const s = stratzById.get(m.matchId);
+    if (s && s.heroId === m.heroId && s.imp !== null) return false;
+    return (s?.heroId === m.heroId && s.position !== null) || positionFromLane(m) !== null;
+  });
+  const heroIds = [...new Set(needed.map((m) => m.heroId))];
   const found = heroIds.length ? await deps.cachedBenchmarks(heroIds) : new Map<number, HeroBenchmarks>();
   for (const heroId of heroIds.filter((id) => !found.has(id))) {
     await take(1);
@@ -164,8 +196,9 @@ function toCard(candidate: PoolCandidate, heroName: string): NewCard {
   return { heroId: candidate.heroId, position: candidate.position, question, reason, evidence: candidate };
 }
 
-function toRow(game: TrendGame, matches: RecentMatch[]): GameRow {
-  const match = matches.find((m) => m.matchId === game.matchId);
+function toRow(game: TrendGame, matches: RecentMatch[], stratz: CountedStratzGame[]): GameRow {
+  const match = matches.find((m) => m.matchId === game.matchId) ??
+    stratz.find((g) => g.matchId === game.matchId);
   return {
     match_id: game.matchId,
     hero_id: game.heroId,
