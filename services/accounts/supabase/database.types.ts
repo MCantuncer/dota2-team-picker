@@ -473,6 +473,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"player_game_facts": {
+                  Row: {
+                    "attempts": number,"created_at": string,"draft_id": string | null,"duration_s": number,"error": string | null,"hero_id": number,"is_win": boolean,"match_id": number,"next_try_at": string,"parse_requested_at": string | null,"parse_requests": number,"position": number | null,"started_at": string,"status": string,"summary": Json | null,"summary_version": number | null,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "attempts"?: number,"created_at"?: string,"draft_id"?: string | null,"duration_s": number,"error"?: string | null,"hero_id": number,"is_win": boolean,"match_id": number,"next_try_at"?: string,"parse_requested_at"?: string | null,"parse_requests"?: number,"position"?: number | null,"started_at": string,"status"?: string,"summary"?: Json | null,"summary_version"?: number | null,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "attempts"?: number,"created_at"?: string,"draft_id"?: string | null,"duration_s"?: number,"error"?: string | null,"hero_id"?: number,"is_win"?: boolean,"match_id"?: number,"next_try_at"?: string,"parse_requested_at"?: string | null,"parse_requests"?: number,"position"?: number | null,"started_at"?: string,"status"?: string,"summary"?: Json | null,"summary_version"?: number | null,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "player_game_facts_draft_id_fkey"
+      columns: ["draft_id"]
+isOneToOne: false
+      referencedRelation: "party_drafts"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "player_game_facts_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"player_games": {
                   Row: {
                     "created_at": string,"game_mode": number,"hero_id": number,"imp": number | null,"is_strong": boolean | null,"is_win": boolean,"lobby_rank": number | null,"lobby_type": number,"match_id": number,"percentiles": Json | null,"position": number | null,"position_source": string | null,"started_at": string,"stat_values": Json | null,"user_id": string
