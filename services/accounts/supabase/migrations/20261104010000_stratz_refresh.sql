@@ -35,7 +35,7 @@ as $$
 $$;
 
 -- When the lookups may use STRATZ again, or null when they may now. A refresh marked as started and not
--- finished counts as running for 90 minutes (the job's own limit is 45), so a killed job can't hold the
+-- finished counts as running for 90 minutes (the job's own limit is 60), so a killed job can't hold the
 -- lookups back for long. While it runs the end is unknown, so the answer is 15 minutes from now.
 create function public.stratz_free_at()
 returns timestamptz
@@ -65,7 +65,9 @@ as $$
   where id;
 $$;
 
--- As before (20261103041500_matchup_guides), and a taken call also notes the time, for the refresh to wait.
+-- As before (20261103041500_matchup_guides), but nothing is taken while STRATZ is held back (checked in the
+-- same statement, so a refresh starting between a lookup's check and its take still wins), and a taken
+-- call notes the time, for the refresh to wait.
 create or replace function public.take_stratz_calls(wanted integer, hourly_cap integer default 600)
 returns boolean
 language sql
@@ -75,7 +77,7 @@ as $$
   with this_hour as (select date_trunc('hour', now()) as hour),
   taken as (
     insert into public.stratz_calls (hour, calls)
-    select hour, wanted from this_hour where wanted between 1 and hourly_cap
+    select hour, wanted from this_hour where wanted between 1 and hourly_cap and public.stratz_free_at() is null
     on conflict (hour) do update set calls = public.stratz_calls.calls + excluded.calls
       where public.stratz_calls.calls + excluded.calls <= hourly_cap
     returning 1

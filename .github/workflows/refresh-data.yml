@@ -5,7 +5,7 @@ on:
   # 4 x 250 pages plus 4 x up to 140 requests for backtest games stays
   # inside OpenDota's free daily allowance (the collector stops early when it runs low).
   # The last run starts 14:17 UTC and the lookups are free again by about
-  # 15:30 UTC (later when GitHub delays the run), before the evening games in
+  # 15:45 UTC (later when GitHub delays the run), before the evening games in
   # Europe: while a run uses the STRATZ token, the site's matchup lookups
   # wait (see the mark-refresh steps).
   schedule:
@@ -26,7 +26,7 @@ concurrency: refresh-data
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       SUPABASE_URL: https://odigcdwsvajkbvcxeskj.supabase.co
       SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}

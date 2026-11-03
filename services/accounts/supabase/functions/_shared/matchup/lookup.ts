@@ -211,9 +211,10 @@ export async function lookupMatchups(deps: LookupDeps, input: LookupInput): Prom
           const deadline = deps.now() + BUDGET_MS;
           try {
             const { done, busy } = await fetchSlices(deps, claimed, input.version, deadline);
-            if (busy) await refused(busy);
             if (done.length > 0) await deps.save(done, input.version);
             for (const s of done) fetched.set(key(s), s.games);
+            // After the whole slices are saved, so a failure noting the 429 loses none of them.
+            if (busy) await refused(busy);
             if (done.length < claimed.length && !busy) reasons.add("time");
           } catch (err) {
             if (err instanceof StratzBusy) {

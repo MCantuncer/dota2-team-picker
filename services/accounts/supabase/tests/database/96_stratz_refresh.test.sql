@@ -1,6 +1,6 @@
 begin;
 \ir _helpers.psql
-select plan(20);
+select plan(21);
 
 select tests.create_user('player@example.com');
 
@@ -14,6 +14,7 @@ select is(public.mark_stratz_refresh(true), now() + interval '15 minutes',
   'the refresh starts its calls 15 minutes after the last lookup call');
 select is((select finished_at from public.stratz_refresh), null, 'starting clears the finish');
 select is(public.stratz_free_at(), now() + interval '15 minutes', 'a running refresh holds lookups back');
+select is(public.take_stratz_calls(1, 600), false, 'no STRATZ calls are taken while it runs');
 
 select lives_ok($$select public.mark_stratz_refresh(false)$$, 'the refresh is marked done');
 select is((select (started_at, finished_at) from public.stratz_refresh), (now(), now()),
