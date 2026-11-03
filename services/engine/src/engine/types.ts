@@ -254,8 +254,10 @@ export interface Suggestion {
   breakdown: ScoreBreakdown;
   /** Up to 4 lines on why the hero fits this draft, each with its points, then at most one warning. */
   reasons: string[];
-  /** Where the score comes from: this draft, or meta, role and comfort. */
+  /** Where the score comes from (this draft, or meta, role and comfort) and the hero's place. */
   summary: string;
+  /** Place among every hero scored for the position in this draft, 1 = best. */
+  place: { rank: number; of: number };
   /** Short labels such as "Favorite (+1.5)" or "Your record 12-8 (+0.9)". */
   tags: string[];
   /** The hero's hard counters, to show apart from the reasons. */
