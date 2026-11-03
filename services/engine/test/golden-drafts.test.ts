@@ -10,6 +10,8 @@ import { storyText } from "./golden/render";
 // Real data cut down to the golden heroes (scripts/golden-fixture.ts).
 const snapshot = JSON.parse(readFileSync(new URL("./fixtures/golden-snapshot.json", import.meta.url), "utf8")) as Snapshot;
 const engine = new Engine(snapshot);
+/** "Legend teamfight mirror" is stored in golden/stories/legend-teamfight-mirror.md. */
+const storyFile = (name: string) => `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.md`;
 const plans = GOLDEN_DRAFTS.map((draft) => ({
   draft,
   plan: gamePlan(engine, {
@@ -20,9 +22,15 @@ const plans = GOLDEN_DRAFTS.map((draft) => ({
 }));
 
 describe("golden drafts", () => {
-  it("keep the stories a strong player has read (review stories.md when it changes)", async () => {
-    const text = plans.map(({ draft, plan }) => storyText(draft.name, plan, (id) => engine.hero(id).name)).join("\n");
-    await expect(`# Golden draft stories\n\n${text}`).toMatchFileSnapshot("./golden/stories.md");
+  // One file per draft, so pull requests that change different drafts' stories don't conflict.
+  it.each(plans)("keep the story a strong player has read: $draft.name (review its file when it changes)", async ({ draft, plan }) => {
+    const text = storyText(draft.name, plan, (id) => engine.hero(id).name);
+    await expect(text).toMatchFileSnapshot(`./golden/stories/${storyFile(draft.name)}`);
+  });
+
+  it("give every draft its own story file", () => {
+    const files = GOLDEN_DRAFTS.map((d) => storyFile(d.name));
+    expect(new Set(files).size).toBe(files.length);
   });
 
   it("buy core items one after another, never two at the same minute", () => {

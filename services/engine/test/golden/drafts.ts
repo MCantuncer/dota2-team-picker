@@ -2,7 +2,7 @@ import type { RankBracket } from "../../src/engine/types";
 
 /**
  * Golden drafts: real drafts across every rank group whose Game Story a strong player has read.
- * Their stories are saved in stories.md, so any change to the story shows up there for review.
+ * Their stories are saved in stories/<draft>.md, one file per draft, so any change to the story shows up there for review.
  * Our heroes are listed pos 1 to 5.
  */
 export interface GoldenDraft {
