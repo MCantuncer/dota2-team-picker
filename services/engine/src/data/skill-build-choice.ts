@@ -7,7 +7,13 @@
  * are grouped by the order the abilities are maxed and which get an early point, and the biggest group
  * is used only when STRATZ's totals agree with it. Otherwise there is no build rather than a guess.
  */
-import type { HeroAbilities, Position, SkillBuild, SkillBuildSlice } from "../engine/types";
+import {
+  TALENT_LEVELS,
+  type HeroAbilities,
+  type Position,
+  type SkillBuild,
+  type SkillBuildSlice,
+} from "../engine/types";
 import { BUILD_LEVELS, type GuidePlayer, getsPointEveryLevel, learnedHero, toSequence } from "./skill-sequence";
 
 /** Fewer usable games than this and the slice has no build ("few-matches"). */
@@ -19,7 +25,6 @@ const ALTERNATIVE_SHARE = 0.25;
 /** Abilities with a point by this level count as taken early in a build's group key. */
 const EARLY_LEVEL = 4;
 /** The talent tiers' levels; players often take them a level later. */
-export const TALENT_LEVELS = [10, 15, 20, 25];
 
 /** A row of STRATZ's abilityMaxLevel or abilityMinLevel: games where an ability was maxed (or first taken) at a hero level. */
 export interface LevelRow {

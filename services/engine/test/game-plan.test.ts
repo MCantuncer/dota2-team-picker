@@ -149,3 +149,69 @@ describe("gamePlan", () => {
     ]);
   });
 });
+
+describe("gamePlan skills", () => {
+  const withSkills = (): Snapshot => ({
+    ...data(),
+    heroAbilities: {
+      18: {
+        abilities: [{ id: 1, key: "sven_storm_bolt", name: "Storm Hammer", slot: 1, maxLevel: 4, ultimate: false }],
+        talents: [
+          [
+            { id: 10, name: "+2 Mana Regen" },
+            { id: 11, name: "+15 Damage" },
+          ],
+        ],
+      },
+    },
+    skillBuilds: {
+      18: {
+        3: {
+          at: "2026-11-01T00:00:00Z",
+          gameVersionId: 184,
+          matches: 50,
+          talents: [{ tier: 0, id: 10, share: 0.6, games: 50, level: 10 }],
+          none: "no-agreement",
+        },
+      },
+    },
+  });
+  const svenSkills = (input: Partial<Parameters<typeof gamePlan>[1]> = {}) => {
+    const skills = gamePlan(new Engine(withSkills()), { ours, theirs, ...input }).players.find(
+      (p) => p.heroId === 18,
+    )?.skills;
+    if (!skills) throw new Error("Expected Sven's skill plan");
+    return skills;
+  };
+
+  it("adds the skill plan only for heroes with abilities in the snapshot", () => {
+    expect(svenSkills().live).toBe("loading");
+    expect(
+      gamePlan(new Engine(withSkills()), { ours, theirs }).players.find((p) => p.heroId === 94)?.skills,
+    ).toBeUndefined();
+  });
+
+  it("decides the talents from the matchup games and names the enemies", () => {
+    const game = (match: number, id: number, won: boolean) => ({
+      match,
+      account: match,
+      won,
+      level: 12,
+      version: 184,
+      points: [id],
+    });
+    // +15 Damage won 30 and lost 5, +2 Mana Regen won 5 and lost 30.
+    const games = Array.from({ length: 70 }, (_, i) => game(i + 1, i < 35 ? 11 : 10, i < 35 ? i < 30 : i < 40));
+    const sven = svenSkills({ matchups: { 18: games } });
+    expect(sven.live).toBe("ready");
+    expect(sven.talents[0]).toMatchObject({ pick: 11, result: "recommended" });
+    expect(sven.talents[0]?.reason).toMatch(
+      /^Against Anti-Mage, Spectre, Terrorblade, Witch Doctor or Lich \(any of them\)/,
+    );
+  });
+
+  it("tells a failed lookup from one that found no games", () => {
+    expect(svenSkills({ matchups: null }).live).toBe("unavailable");
+    expect(svenSkills({ matchups: {} }).live).toBe("ready");
+  });
+});
