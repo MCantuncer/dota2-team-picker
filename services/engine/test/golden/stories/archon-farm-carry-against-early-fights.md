@@ -5,7 +5,7 @@ Headline: Both teams are ready at 16 min: fight once your items are in, not befo
 - 0 to 10 min: Anti-Mage and Warlock win the safe lane against Dark Seer and Snapfire: take their tower.
 - 10 to 20 min: Anti-Mage's Battle Fury at 15 and Lina's Maelstrom at 16: ready to fight at 16. Their Troll Warlord has Battle Fury at 15.
 - 20 to 30 min: Their Dark Seer has Blink Dagger at 21. Roshan from 20 min, once three key items are in.
-- 30 min on: Fight when Troll Warlord is dead or far from the fight.
+- 30 min on: Catch Troll Warlord first, then take high ground.
 
 Danger heroes:
 - Huskar: Blink Dagger at 14 min. Lock them down first in every fight.
@@ -34,6 +34,9 @@ Vs Snapfire (lane, guessed): Magic burst. buy Black King Bar.
 Vs Troll Warlord: Evasion: right clicks miss. buy Black King Bar.
 Vs Huskar: Heals their team through fights. Kill them first or fight short and decisive.
 Vs Jakiro: Magic burst. Stay spread so one combo can't catch two.
+Watch Dark Seer, Snapfire, Troll Warlord: buy Black King Bar.
+Watch Huskar: Kill them first or fight short and decisive.
+Watch Jakiro: Stay spread so one combo can't catch two.
 If it goes wrong: No Battle Fury by 17 min? Don't show on the map without it. Farm the side Dark Seer is not on.
 
 ### Pos 2 Lina
@@ -50,6 +53,9 @@ Vs Troll Warlord: Evasion: right clicks miss. buy Black King Bar.
 Vs Dark Seer: Locks you down. buy Black King Bar.
 Vs Snapfire: Magic burst. buy Black King Bar.
 Vs Jakiro: Magic burst. Stay spread so one combo can't catch two.
+Watch Huskar: buy Magic Wand.
+Watch Troll Warlord, Dark Seer, Snapfire: buy Black King Bar.
+Watch Jakiro: Stay spread so one combo can't catch two.
 If it goes wrong: No Maelstrom by 18 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Centaur Warrunner
@@ -66,6 +72,9 @@ Vs Jakiro (lane): Magic burst. Stay spread so one combo can't catch two.
 Vs Huskar: Heals their team through fights. Kill them first or fight short and decisive.
 Vs Dark Seer: Locks you down. buy Black King Bar, Lotus Orb.
 Vs Snapfire: Magic burst. buy Black King Bar, Lotus Orb.
+Watch Troll Warlord, Dark Seer, Snapfire: buy Black King Bar.
+Watch Jakiro: Stay spread so one combo can't catch two.
+Watch Huskar: Kill them first or fight short and decisive.
 If it goes wrong: No Blink Dagger by 22 min? Don't start fights without it. Stay behind your cores and soak damage.
 
 ### Pos 4 Mirana
@@ -83,6 +92,10 @@ Vs Jakiro (lane): Magic burst. buy Magic Wand.
 Vs Huskar: Heals their team through fights. buy Force Staff.
 Vs Dark Seer: Locks you down. Keep distance until their disable is used.
 Vs Snapfire: Magic burst. Stay spread so one combo can't catch two.
+Watch Troll Warlord, Huskar: buy Force Staff.
+Watch Jakiro: buy Magic Wand.
+Watch Dark Seer: Keep distance until their disable is used.
+Watch Snapfire: Stay spread so one combo can't catch two.
 
 ### Pos 5 Warlock
 Timings: all
@@ -99,3 +112,6 @@ Vs Snapfire (lane, guessed): Magic burst. buy Glimmer Cape.
 Vs Troll Warlord: Evasion: right clicks miss. buy Force Staff.
 Vs Huskar: Heals their team through fights. buy Force Staff.
 Vs Jakiro: Magic burst. buy Glimmer Cape.
+Watch Dark Seer: Keep distance until their disable is used.
+Watch Snapfire, Jakiro: buy Glimmer Cape.
+Watch Troll Warlord, Huskar: buy Force Staff.

@@ -1,6 +1,6 @@
 import { SURE_POSITION_ODDS, chooseDangerHeroes, dangerLine } from "./danger";
 import { pickFallbacks, type Scaling } from "./fallbacks";
-import { enemyList, type EnemyNote } from "./enemy-list";
+import { enemyList, threatRows, type EnemyNote, type ThreatRow } from "./enemy-list";
 import { laneAdjusted } from "./lane-items";
 import type { MatchupGame } from "./matchup-talents";
 import { skillPlan, type SkillPlan } from "./skill-plan";
@@ -68,6 +68,8 @@ export interface PlayerPlan {
   fallbacks: string[];
   /** The five enemies as this player meets them, in-lane first (see enemy-list.ts). */
   enemies: EnemyNote[];
+  /** The same enemies as rows, one per answer item or shared threat, so an answer is said once. */
+  threatRows: ThreatRow[];
   /** Skill order and talent tree with reasons, when the snapshot has this hero's abilities. */
   skills?: SkillPlan;
 }
@@ -315,6 +317,17 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     const answered = typeof matchups === "object" && matchups !== null;
     const games = answered ? (matchups[p.heroId] === undefined ? [] : matchups[p.heroId]) : matchups;
     const skills = skillPlan(engine.data, p.heroId, p.position, input.theirs.map(name), games);
+    const enemies = enemyList(
+      build,
+      input.theirs.map((id, i) => {
+        const position = [...theirByPos].find(([, h]) => h === id)?.[0];
+        return {
+          hero: engine.hero(id),
+          inLane: lane.theirs.includes(id),
+          laneSure: position !== undefined && (theirOdds[i]?.[position] ?? 0) >= SURE_POSITION_ODDS,
+        };
+      }),
+    );
     return {
       heroId: p.heroId,
       position: p.position,
@@ -329,17 +342,8 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
         combo && `${combo.text} with ${partner}`,
       ),
       fallbacks: [],
-      enemies: enemyList(
-        build,
-        input.theirs.map((id, i) => {
-          const position = [...theirByPos].find(([, h]) => h === id)?.[0];
-          return {
-            hero: engine.hero(id),
-            inLane: lane.theirs.includes(id),
-            laneSure: position !== undefined && (theirOdds[i]?.[position] ?? 0) >= SURE_POSITION_ODDS,
-          };
-        }),
-      ),
+      enemies,
+      threatRows: threatRows(enemies),
       ...(skills ? { skills } : {}),
     };
   });
