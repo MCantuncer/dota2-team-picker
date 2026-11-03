@@ -52,6 +52,10 @@ export interface Snapshot {
   /** The same counts split by rank group (from each match's average rank), keyed by RankGroup. */
   rankMatchups?: Record<string, Record<string, Record<string, GamesWins>>>;
   rankSynergy?: Record<string, Record<string, GamesWins>>;
+  /** Hard counters found in the counts (see data-hard-counters.ts), used next to the hand list. */
+  dataHardCounters?: { hero: number; counter: number; gap: number; names: string }[];
+  /** Refreshes in a row each "hero-counter" pair has been past the line, for the hold. */
+  hardCounterStreaks?: Record<string, number>;
   /** Games per lane role (1 safe, 2 mid, 3 off, 4 jungle). */
   laneRoles: Record<string, Partial<Record<"1" | "2" | "3" | "4", number>>>;
   /** When lane roles were last downloaded; they are refreshed weekly. */

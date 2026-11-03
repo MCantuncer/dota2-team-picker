@@ -18,7 +18,9 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { gzipSync } from "node:zlib";
+import { findHardCounters, HOLD_RUNS, holdHardCounters } from "../engine/data-hard-counters";
 import { positionFit } from "../engine/positions";
+import { Engine } from "../engine/score";
 import { getOpenDota as get, requestsLeftToday } from "./opendota";
 import { loadEvalGames, monthPaths } from "./eval-store";
 import { fetchItemStarts } from "./item-starts";
@@ -158,6 +160,15 @@ export function countMatch(snapshot: Snapshot, m: PublicMatch): boolean {
     });
   }
   return true;
+}
+
+/** Finds this run's hard counters in the counts and keeps those that held (see data-hard-counters.ts). */
+export function updateDataHardCounters(snapshot: Snapshot) {
+  const found = findHardCounters(new Engine(snapshot, { hardCounters: [] }), snapshot);
+  const { list, streaks } = holdHardCounters(found, snapshot.hardCounterStreaks);
+  snapshot.dataHardCounters = list;
+  snapshot.hardCounterStreaks = streaks;
+  console.log(`Hard counters from the data: ${found.length} past the line, ${list.length} held for ${HOLD_RUNS} runs.`);
 }
 
 /** Prints games per position and the heroes whose main position STRATZ corrects, as a sanity check. */
@@ -338,6 +349,7 @@ async function main() {
   console.log(`Counted ${counted} new matches.`);
 
   snapshot.lastPublicMatchId = newest;
+  updateDataHardCounters(snapshot);
   snapshot.generatedAt = now.toISOString();
   mkdirSync(dirname(SNAPSHOT_PATH), { recursive: true });
   writeFileSync(SNAPSHOT_PATH, JSON.stringify(snapshot));

@@ -55,6 +55,11 @@ Every part of the score is in win-rate percentage points, so `+2.0` roughly mean
   While the counter can still be picked, the hero loses the gap times the chance the enemy takes it (the same chance as in pick safety, which leaves hard counters out)
   ("Gamble: Anti-Mage still available"). Once it is banned or on your team, there is no cost and the
   reason says "Anti-Mage is out, safe to pick".
+  Next to that list, the refresh finds hard counters in the match data for every hero
+  ([`src/engine/data-hard-counters.ts`](src/engine/data-hard-counters.ts)): a pair where the hero does
+  5 or more points worse than both heroes' win rates predict, over 1,000 or more games at all ranks,
+  on two refreshes in a row, at most the 3 worst per hero. They go in `dataHardCounters` and count
+  the same way; a pair already on the hand list keeps the hand list's gap.
 
 Small samples are pulled toward the expected value, so a 3-0 matchup does not look like a sure win.
 
