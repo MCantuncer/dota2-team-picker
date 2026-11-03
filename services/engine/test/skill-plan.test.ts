@@ -178,7 +178,7 @@ describe("skillPlan", () => {
         [
           `${label}:`,
           `order: ${p.buildReason}`,
-          ...p.talents.map((t) => `level ${t.level}: ${t.reason}`),
+          ...p.talents.map((t) => `level ${t.level}: ${t.reason}${t.odds ? ` [${t.odds}]` : ""}`),
           ...(p.note ? [`note: ${p.note}`] : []),
         ].join("\n"),
       )

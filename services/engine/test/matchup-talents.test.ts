@@ -4,6 +4,7 @@ import {
   type MatchupGame,
   normalCdf,
   poolGames,
+  oddsLabel,
   tierReason,
   type TierChoice,
 } from "../src/engine/matchup-talents";
@@ -172,7 +173,8 @@ describe("card lines", () => {
     ];
     const lines = cases.map(([label, g]) => {
       const c: TierChoice = tier(g);
-      return `${label}:\n${tierReason(c, name, ENEMIES, 0.55)}`;
+      const odds = oddsLabel(c);
+      return `${label}:\n${tierReason(c, name, ENEMIES, 0.55)}${odds ? `\n${odds}` : ""}`;
     });
     await expect(lines.join("\n\n") + "\n").toMatchFileSnapshot("./golden/talent-lines.txt");
   });
