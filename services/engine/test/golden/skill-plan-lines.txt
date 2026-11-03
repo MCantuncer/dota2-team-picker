@@ -1,17 +1,22 @@
 loading:
 order: 78 of 120 high-rank wins this patch (65%) used this order, and the wider totals agree.
-level 10: 55% of 110 recent games took +2 Mana Regen. The games against these heroes are loading.
-level 15: 80% of 60 recent games took +8 Strength. The games against these heroes are loading.
+level 10: 55% of 110 recent games took +2 Mana Regen.
+level 15: 80% of 60 recent games took +8 Strength.
 
 lookup failed:
 order: 78 of 120 high-rank wins this patch (65%) used this order, and the wider totals agree.
-level 10: 55% of 110 recent games took +2 Mana Regen. The games against these heroes couldn't load, so this is the usual pick.
-level 15: 80% of 60 recent games took +8 Strength. The games against these heroes couldn't load, so this is the usual pick.
+level 10: 55% of 110 recent games took +2 Mana Regen.
+level 15: 80% of 60 recent games took +8 Strength.
 
 lookup found no games:
 order: 78 of 120 high-rank wins this patch (65%) used this order, and the wider totals agree.
 level 10: 55% of 110 recent games took +2 Mana Regen. No games against these heroes reached this level, so this is the usual pick.
 level 15: 80% of 60 recent games took +8 Strength. No games against these heroes reached this level, so this is the usual pick.
+
+signed out:
+order: 78 of 120 high-rank wins this patch (65%) used this order, and the wider totals agree.
+level 10: 55% of 110 recent games took +2 Mana Regen.
+level 15: 80% of 60 recent games took +8 Strength.
 
 ready:
 order: 78 of 120 high-rank wins this patch (65%) used this order, and the wider totals agree.
@@ -27,8 +32,8 @@ note: Games were picked as about half wins and half losses, so only the comparis
 
 no agreement:
 order: High-rank winners don't agree on one order this patch (120 wins), so none is shown.
-level 10: 55% of 110 recent games took +2 Mana Regen. The games against these heroes are loading.
-level 15: 80% of 60 recent games took +8 Strength. The games against these heroes are loading.
+level 10: 55% of 110 recent games took +2 Mana Regen.
+level 15: 80% of 60 recent games took +8 Strength.
 
 no weekly build:
 order: No high-rank skill builds for this hero in this position yet.

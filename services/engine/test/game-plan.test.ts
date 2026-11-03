@@ -213,5 +213,8 @@ describe("gamePlan skills", () => {
   it("tells a failed lookup from one that found no games", () => {
     expect(svenSkills({ matchups: null }).live).toBe("unavailable");
     expect(svenSkills({ matchups: {} }).live).toBe("ready");
+    // A hero whose lookup didn't finish, while the others did.
+    expect(svenSkills({ matchups: { 18: null, 94: [] } }).live).toBe("unavailable");
+    expect(svenSkills({ matchups: "sign-in" }).live).toBe("sign-in");
   });
 });
