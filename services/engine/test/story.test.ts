@@ -154,7 +154,6 @@ describe("gameStory", () => {
 
   it("stays within its word caps in the worst case, for every pair of team timings", () => {
     const long = "Outworld Devourer";
-    // One key item per player, two in each of the busiest chapters.
     // Key items in every chapter, the ready moment included, and two after 30.
     const spikes = [8, 9, 14, 16, 22, 24, 33, 36].map((minute) => ({ hero: "Keeper of the Light", item: "Aghanim's Scepter", minute }));
     const timings: Timing[] = ["early", "late", null];
