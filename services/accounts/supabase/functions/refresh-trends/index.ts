@@ -3,8 +3,8 @@
  *
  *   POST /refresh-trends   (X-Job-Secret: <the shared secret in Vault and REFRESH_TRENDS_SECRET>)
  *
- * Reads the recent games of active Steam players whose check is due and opens hero pool
- * cards (see _shared/trends/job.ts). Returns what the run did.
+ * Reads the recent games of active Steam players whose check is due (from STRATZ when
+ * STRATZ_TOKEN is set, and OpenDota) and opens hero pool cards (see _shared/trends/job.ts). Returns what the run did.
  */
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { json } from "../_shared/cors.ts";
@@ -13,6 +13,7 @@ import { fetchRecentMatches } from "../_shared/match.ts";
 import { takeOpenDotaCalls } from "../_shared/opendota_budget.ts";
 import { type HeroBenchmarks, readHeroBenchmarks } from "../_shared/trends/benchmarks.ts";
 import { OpenDotaBusy, runTrends, type TrendPlayer, TRENDS_BUDGET } from "../_shared/trends/job.ts";
+import { type CountedStratzGame, playerMatchesQuery, readStratzGames, STRATZ_URL } from "../_shared/trends/stratz.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
 const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
@@ -40,6 +41,7 @@ Deno.serve(async (req) => {
       // Safe: claim_trend_players returns these columns; pool and hero_stats are built as TrendPlayer expects.
       return data as unknown as TrendPlayer[];
     },
+    fetchStratzGames,
     fetchRecentMatches: (accountId) => fetchRecentMatches(accountId, openDota),
     cachedBenchmarks,
     fetchBenchmarks,
@@ -71,6 +73,28 @@ async function openDota(input: string | URL | Request, init?: RequestInit): Prom
     throw new OpenDotaBusy();
   }
   return res;
+}
+
+/** The player's counted STRATZ games, or null when no STRATZ_TOKEN is set. */
+async function fetchStratzGames(accountId: number): Promise<CountedStratzGame[] | null> {
+  const token = Deno.env.get("STRATZ_TOKEN");
+  if (!token) return null;
+  const res = await fetch(STRATZ_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      // STRATZ asks API clients to send this user agent.
+      "User-Agent": "STRATZ_API",
+    },
+    body: JSON.stringify({ query: playerMatchesQuery(accountId) }),
+    signal: AbortSignal.timeout(10_000),
+  });
+  const body = await res.json().catch(() => ({})) as { data?: unknown; errors?: { message?: string }[] };
+  if (!res.ok || body.errors?.length || !body.data) {
+    throw new Error(`STRATZ: ${body.errors?.map((e) => e.message).join("; ") || `HTTP ${res.status}`}`);
+  }
+  return readStratzGames(body.data, Date.now() / 1000);
 }
 
 async function cachedBenchmarks(heroIds: number[]): Promise<Map<number, HeroBenchmarks>> {
