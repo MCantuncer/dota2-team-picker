@@ -3,7 +3,8 @@
  * skill-builds.ts): which abilities can take skill points, which is the ultimate, and the talent tiers.
  */
 import type { HeroAbilities, Snapshot } from "../engine/types";
-import { TALENT_LEVELS, type TalentRow } from "./skill-build-choice";
+import { TALENT_LEVELS } from "../engine/types";
+import type { TalentRow } from "./skill-build-choice";
 
 const ATTRIBUTE_BONUS = "special_bonus_attributes";
 /** STRATZ's slot for the ultimate (R). */

@@ -140,6 +140,9 @@ export interface HeroAbility {
   ultimate: boolean;
 }
 
+/** The hero level of each talent tier. */
+export const TALENT_LEVELS: readonly number[] = [10, 15, 20, 25];
+
 export interface HeroAbilities {
   /** Learnable abilities in hotkey order (Q, W, E, ..., R last). */
   abilities: HeroAbility[];
