@@ -44,7 +44,7 @@ select throws_ok(format('select public.claim_invite_send(%L, %L, %L)', :'own', :
 select tests.sign_out();
 
 -- Limits, counted from the log. Older accounts first.
-update auth.users set created_at = now() - interval '30 days' where id in (:'own', :'co');
+update public.profiles set created_at = now() - interval '30 days' where id in (:'own', :'co', :'mem');
 select is(public.claim_invite_send(:'own', :'team', 'a@example.com'), 'ok', 'the first send is allowed');
 select is(public.claim_invite_send(:'own', :'team', 'a@example.com'), 'resend_wait', 'a resend within a minute waits');
 update public.invite_sends set sent_at = now() - interval '2 minutes';

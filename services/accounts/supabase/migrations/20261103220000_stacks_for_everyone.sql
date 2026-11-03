@@ -86,7 +86,7 @@ begin
   if sent_by_sender >= 30 then
     return 'sender_daily';
   end if;
-  if sent_by_sender >= 5 and exists (select 1 from auth.users u where u.id = sender and u.created_at > day_ago) then
+  if sent_by_sender >= 5 and exists (select 1 from public.profiles p where p.id = sender and p.created_at > day_ago) then
     return 'new_account';
   end if;
   if (select count(*) from public.invite_sends s where s.email = address and s.sent_at > day_ago) >= 3 then
