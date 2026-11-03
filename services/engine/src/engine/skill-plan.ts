@@ -13,8 +13,8 @@
 import {
   chooseMatchupTalents,
   type MatchupGame,
-  SAMPLE_NOTE,
   oddsLabel,
+  SAMPLE_NOTE,
   tierReason,
   type TierChoice,
   type TalentResult,
@@ -42,8 +42,6 @@ export interface TalentTier {
   reason: string;
   /** "1.8x the odds · 42 games", small under the reason, when the matchup games lean to the other talent. */
   odds?: string;
-  /** Raw wins and losses against these enemies, usual first, when the matchup games are in. */
-  sides?: { id: number; wins: number; losses: number }[];
 }
 
 export interface SkillPlan {
@@ -137,8 +135,8 @@ export function skillPlan(
     const c = choices.find((x) => x.tier === tier);
     if (c) {
       const odds = oddsLabel(c);
-      const reason = tierReason(c, name, enemies, g.share);
-      return [{ ...base, pick: c.pick, result: c.result, reason, ...(odds ? { odds } : {}), sides: c.sides }];
+      const reason = tierReason(c, name, enemies, g);
+      return [{ ...base, pick: c.pick, result: c.result, reason, ...(odds ? { odds } : {}) }];
     }
     const reason = `${pct(g.share)} of ${g.games} recent games took ${name(g.id)}.${waiting}`;
     return [{ ...base, pick: g.id, result: "general", reason }];

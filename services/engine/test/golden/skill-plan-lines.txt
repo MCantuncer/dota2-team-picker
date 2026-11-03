@@ -20,15 +20,15 @@ level 15: 80% of 60 recent games took +8 Strength.
 
 ready:
 order: 78 of 120 high-rank wins this patch (65%) used this order, and the wider totals agree.
-level 10: Take +15 Damage: against Lion, Lina, Zeus, Pudge or Tidehunter, players who took it won more often than with +2 Mana Regen (55% of high-rank games this week). [5.6x the odds · 130 games]
+level 10: Take +15 Damage against Lion, Lina, Zeus, Pudge or Tidehunter: it did better than +2 Mana Regen, which most players take (55% of 110 recent games). [5.6x the odds · 130 games]
 level 15: 80% of 60 recent games took +8 Strength. No games against these heroes reached this level, so this is the usual pick.
-note: Odds compare players who took each talent in high-rank games against these heroes.
+note: Odds compare the two talents in high-rank games against these heroes, adjusted toward all games when there are few.
 
 leaning:
 order: 78 of 120 high-rank wins this patch (65%) used this order, and the wider totals agree.
-level 10: +15 Damage did a bit better against Lion, Lina, Zeus, Pudge or Tidehunter, not enough to switch from +2 Mana Regen. [2.3x the odds · 58 games]
+level 10: +15 Damage did better against Lion, Lina, Zeus, Pudge or Tidehunter, but not surely enough to switch from +2 Mana Regen, which most players take (55% of 110 recent games). [2.3x the odds · 58 games]
 level 15: 80% of 60 recent games took +8 Strength. No games against these heroes reached this level, so this is the usual pick.
-note: Odds compare players who took each talent in high-rank games against these heroes.
+note: Odds compare the two talents in high-rank games against these heroes, adjusted toward all games when there are few.
 
 no agreement:
 order: High-rank winners don't agree on one order this patch (120 wins), so none is shown.

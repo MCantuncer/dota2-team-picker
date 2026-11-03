@@ -1,13 +1,13 @@
 recommended:
-Take +15 Damage: against Lion, Lina, Zeus, Pudge or Tidehunter, players who took it won more often than with +2 Mana Regen (55% of high-rank games this week).
+Take +15 Damage against Lion, Lina, Zeus, Pudge or Tidehunter: it did better than +2 Mana Regen, which most players take (55% of 110 recent games).
 5.6x the odds · 130 games
 
 leaning:
-+15 Damage did a bit better against Lion, Lina, Zeus, Pudge or Tidehunter, not enough to switch from +2 Mana Regen.
++15 Damage did better against Lion, Lina, Zeus, Pudge or Tidehunter, but not surely enough to switch from +2 Mana Regen, which most players take (55% of 110 recent games).
 2.3x the odds · 58 games
 
 no clear difference:
-No clear difference against Lion, Lina, Zeus, Pudge or Tidehunter, so take the usual +2 Mana Regen.
+No clear difference against Lion, Lina, Zeus, Pudge or Tidehunter, so take +2 Mana Regen, which most players take (55% of 110 recent games).
 
 too few games:
-Too few high-rank games against Lion, Lina, Zeus, Pudge or Tidehunter to compare, so take +2 Mana Regen (55% of high-rank games this week).
+Too few high-rank games against Lion, Lina, Zeus, Pudge or Tidehunter to compare, so take +2 Mana Regen, which most players take (55% of 110 recent games).

@@ -157,6 +157,19 @@ describe("poolGames", () => {
   });
 });
 
+describe("oddsLabel", () => {
+  it("gives the odds only when the games lean to the other talent", () => {
+    const c = (result: TierChoice["result"]): TierChoice => ({
+      tier: 0, usual: 10, pick: 10, result, oddsRatio: 1.8, chance: 0.9,
+      sides: [{ id: 10, wins: 10, losses: 12 }, { id: 11, wins: 12, losses: 8 }],
+    });
+    expect(oddsLabel(c("recommended"))).toBe("1.8x the odds · 42 games");
+    expect(oddsLabel(c("leaning"))).toBe("1.8x the odds · 42 games");
+    expect(oddsLabel(c("no-clear-difference"))).toBeUndefined();
+    expect(oddsLabel(c("too-few-games"))).toBeUndefined();
+  });
+});
+
 describe("card lines", () => {
   it("are written from the numbers (golden examples)", async () => {
     const cases: [string, MatchupGame[]][] = [
@@ -174,7 +187,7 @@ describe("card lines", () => {
     const lines = cases.map(([label, g]) => {
       const c: TierChoice = tier(g);
       const odds = oddsLabel(c);
-      return `${label}:\n${tierReason(c, name, ENEMIES, 0.55)}${odds ? `\n${odds}` : ""}`;
+      return `${label}:\n${tierReason(c, name, ENEMIES, { share: 0.55, games: 110 })}${odds ? `\n${odds}` : ""}`;
     });
     await expect(lines.join("\n\n") + "\n").toMatchFileSnapshot("./golden/talent-lines.txt");
   });

@@ -153,30 +153,35 @@ export function chooseMatchupTalents(
 /**
  * The card's line for a tier: one sentence on what to take and why, with no raw wins and losses (Can
  * 2026-11-02) and no win rate, since the sample was picked half wins and half losses. The odds go in
- * `oddsLabel`, small under it. `name` gives a talent's name, `enemies` the enemy heroes' names,
- * `usualShare` how often high-rank players took the usual talent this week.
+ * `oddsLabel`, small under it. `name` gives a talent's name, `enemies` the enemy heroes' names, and
+ * `usual` how often the usual talent was taken in the weekly slice's games that reached this tier.
  */
-export function tierReason(c: TierChoice, name: (id: number) => string, enemies: string[], usualShare: number): string {
+export function tierReason(
+  c: TierChoice,
+  name: (id: number) => string,
+  enemies: string[],
+  usual: { share: number; games: number },
+): string {
   const [x, y] = c.sides;
   if (!x || !y) return "";
   const against = `against ${listOr(enemies)}`;
-  const share = `${Math.round(usualShare * 100)}% of high-rank games this week`;
+  const most = `${name(x.id)}, which most players take (${Math.round(usual.share * 100)}% of ${usual.games} recent games)`;
   switch (c.result) {
     case "too-few-games":
-      return `Too few high-rank games ${against} to compare, so take ${name(x.id)} (${share}).`;
+      return `Too few high-rank games ${against} to compare, so take ${most}.`;
     case "recommended":
-      return `Take ${name(y.id)}: ${against}, players who took it won more often than with ${name(x.id)} (${share}).`;
+      return `Take ${name(y.id)} ${against}: it did better than ${most}.`;
     case "leaning":
-      return `${name(y.id)} did a bit better ${against}, not enough to switch from ${name(x.id)}.`;
+      return `${name(y.id)} did better ${against}, but not surely enough to switch from ${most}.`;
     case "no-clear-difference":
-      return `No clear difference ${against}, so take the usual ${name(x.id)}.`;
+      return `No clear difference ${against}, so take ${most}.`;
   }
 }
 
 /**
  * The small line under a reason: "1.8x the odds · 42 games" (Can chose this form, 2026-11-03), the other
- * talent against the usual one, in the matchup games of this tier. Only when the comparison leans to the
- * other talent; otherwise there is no number worth showing.
+ * talent against the usual one, over the matchup games that reached this tier. Only when the comparison
+ * leans to the other talent; otherwise there is no number worth showing.
  */
 export function oddsLabel(c: TierChoice): string | undefined {
   if (c.result !== "recommended" && c.result !== "leaning") return undefined;
@@ -185,7 +190,8 @@ export function oddsLabel(c: TierChoice): string | undefined {
 }
 
 /** Shown once per card under the talent tree, so the odds are read as a comparison, not a win rate. */
-export const SAMPLE_NOTE = "Odds compare players who took each talent in high-rank games against these heroes.";
+export const SAMPLE_NOTE =
+  "Odds compare the two talents in high-rank games against these heroes, adjusted toward all games when there are few.";
 
 function listOr(names: string[]): string {
   if (names.length <= 1) return names[0] ?? "these heroes";
