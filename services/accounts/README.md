@@ -183,8 +183,12 @@ team. Only the owner can rename or delete the team, change roles, or remove a co
 
    ```sh
    npx supabase secrets set SITE_URL=https://your-site.vercel.app
+   npx supabase secrets set STRATZ_TOKEN=<your STRATZ API token>
    npx supabase functions deploy
    ```
+
+   `STRATZ_TOKEN` is for `matchup-builds` (the skill order and talents against the draft's
+   enemies). Without it that function answers 503 and the cards keep the weekly general builds.
 
 ## Local development
 
