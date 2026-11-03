@@ -6,6 +6,7 @@
  * budget, the run cap or a rate limit says so.
  */
 import { buildFact, type FactItem, type FactRow } from "../feedback/fact.ts";
+import type { Finding } from "../feedback/findings.ts";
 import type { GameSummary } from "../feedback/summary.ts";
 import type { Match } from "../report/match.ts";
 import type { BenchmarkStat, HeroBenchmarks } from "./benchmarks.ts";
@@ -100,8 +101,11 @@ export interface FactsDeps {
   fetchMatch: (matchId: number) => Promise<unknown | null>;
   requestParse: (matchId: number) => Promise<void>;
   summarize: (match: Match, item: FactItem) => GameSummary | null;
+  findingsOf: (summary: GameSummary) => Finding[];
   /** Upserts the row on (user_id, match_id). */
   save: (row: FactRow) => Promise<void>;
+  /** Works out and saves the player's feedback over their recent games again (no OpenDota calls). */
+  refreshFeedback: (userId: string) => Promise<void>;
   now: () => Date;
 }
 
@@ -114,6 +118,8 @@ export interface TrendRunResult {
   stopped: StopReason | null;
   /** Game feedback rows saved, and the calls they used (also counted in `calls`). */
   facts: number;
+  /** Players whose feedback was worked out again. */
+  feedback: number;
   factCalls: number;
   factsStopped: StopReason | null;
 }
@@ -134,6 +140,7 @@ export async function runTrends(deps: TrendDeps, maxCalls = MAX_RUN_CALLS): Prom
     calls: 0,
     stopped: null,
     facts: 0,
+    feedback: 0,
     factCalls: 0,
     factsStopped: null,
   };
@@ -172,7 +179,8 @@ const stopReason = (err: unknown): StopReason => (err instanceof Stop ? err.reas
 
 /**
  * Game feedback after the cards: drop old rows, then build due rows and new games until the
- * feedback cap, the daily budget or a rate limit stops it. One game's error never stops the rest.
+ * feedback cap, the daily budget or a rate limit stops it, then work out the feedback again for
+ * each player with a new summary. One game's or player's error never stops the rest.
  */
 async function runFacts(facts: FactsDeps, deps: TrendDeps, result: TrendRunResult) {
   const take = async (n: number) => {
@@ -181,6 +189,7 @@ async function runFacts(facts: FactsDeps, deps: TrendDeps, result: TrendRunResul
     result.factCalls += n;
     result.calls += n;
   };
+  const changed = new Set<string>();
   try {
     await facts.purge();
     const items = [...await facts.dueRows(), ...await facts.newGames()];
@@ -190,22 +199,29 @@ async function runFacts(facts: FactsDeps, deps: TrendDeps, result: TrendRunResul
         fetchMatch: facts.fetchMatch,
         requestParse: facts.requestParse,
         summarize: facts.summarize,
+        findingsOf: facts.findingsOf,
         now: facts.now(),
       }, isStop);
       if (!row) continue;
       try {
         await facts.save(row);
         result.facts++;
+        if (row.findings) changed.add(row.user_id);
       } catch (err) {
         deps.log(`Saving game ${item.match_id} for ${item.user_id} failed`, err);
       }
     }
   } catch (err) {
-    if (!isStop(err)) {
-      deps.log("Game feedback failed", err);
-      return;
+    if (isStop(err)) result.factsStopped = stopReason(err);
+    else deps.log("Game feedback failed", err);
+  }
+  for (const userId of changed) {
+    try {
+      await facts.refreshFeedback(userId);
+      result.feedback++;
+    } catch (err) {
+      deps.log(`Feedback for ${userId} failed`, err);
     }
-    result.factsStopped = stopReason(err);
   }
 }
 

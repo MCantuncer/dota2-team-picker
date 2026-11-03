@@ -10,6 +10,7 @@ import {
   readDueRows,
   readNewGames,
 } from "./fact.ts";
+import { gameFindings } from "./findings.ts";
 import { type GameSummary, summarizeGame } from "./summary.ts";
 
 const NOW = new Date("2026-11-03T12:00:00Z");
@@ -68,6 +69,7 @@ function stub(raw: unknown, over: Partial<FactDeps> = {}) {
         items: {},
         heroIdsByKey: {},
       }),
+    findingsOf: (summary) => gameFindings(summary, { hero: (id) => `Hero ${id}` }),
     now: NOW,
     ...over,
   };
@@ -80,6 +82,7 @@ Deno.test("a parsed match is saved as parsed with its summary, using one call", 
   const row = await buildFact(item(), deps, isBusy);
   assertEquals([row?.status, row?.summary_version, row?.attempts, row?.error], ["parsed", 1, 0, null]);
   assertEquals((row?.summary as GameSummary).isParsed, true);
+  assertEquals(Array.isArray(row?.findings), true, "the game's own findings come with it");
   assertEquals(row?.duration_s, parsedRaw().duration);
   assertEquals([taken, parses], [[1], []]);
 });
@@ -134,6 +137,7 @@ Deno.test("an error on a saved row counts, keeps its summary and waits longer ea
   assertEquals([row?.status, row?.attempts, row?.duration_s], ["waiting_parse", 2, 2000]);
   assertEquals([row?.summary, row?.summary_version], [{ kept: true }, 1]);
   assertEquals(row?.error, "OpenDota doesn't have the match yet");
+  assertEquals("findings" in (row ?? {}), false, "the saved findings stay");
   assertEquals(row?.next_try_at, new Date(NOW.getTime() + 20 * 60 * 1000).toISOString());
 });
 

@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
   if (readError) return json({ error: "Profile not found" }, 404);
 
   // Games and cards first: if this fails, nothing is unlinked yet and the user can retry.
-  for (const table of ["player_games", "pool_suggestions", "player_game_facts"] as const) {
+  for (const table of ["player_games", "pool_suggestions", "player_game_facts", "player_feedback"] as const) {
     const { error } = await admin.from(table).delete().eq("user_id", auth.user.id);
     if (error) {
       console.error(`Steam unlink: clearing ${table} failed`, error);

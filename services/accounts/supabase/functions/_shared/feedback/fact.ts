@@ -16,6 +16,7 @@
 import { MAX_ERRORS, MAX_PARSE_REQUESTS, PARSE_WAIT_MS, retryGapMs } from "../report/build.ts";
 import { type Match, readOpenDotaMatch } from "../report/match.ts";
 import type { Position } from "../trends/games.ts";
+import type { Finding } from "./findings.ts";
 import { type GameSummary, SUMMARY_VERSION } from "./summary.ts";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -66,6 +67,8 @@ export interface FactRow {
   attempts: number;
   error: string | null;
   next_try_at: string;
+  /** This game's strengths and problems; left out after a failed try, so the saved ones stay. */
+  findings?: Finding[];
 }
 
 export interface FactDeps {
@@ -76,6 +79,8 @@ export interface FactDeps {
   requestParse: (matchId: number) => Promise<void>;
   /** The player's summary, or null when their account isn't in the match. */
   summarize: (match: Match, item: FactItem) => GameSummary | null;
+  /** The game's strengths and problems (gameFindings). */
+  findingsOf: (summary: GameSummary) => Finding[];
   now: Date;
 }
 
@@ -101,6 +106,7 @@ export async function buildFact(item: FactItem, deps: FactDeps, isStop: IsStop):
       ...rowOf(item, match.durationS),
       summary,
       summary_version: SUMMARY_VERSION,
+      findings: deps.findingsOf(summary),
       parse_requests: item.parse_requests,
       parse_requested_at: item.parse_requested_at,
       attempts: 0,
