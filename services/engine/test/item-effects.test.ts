@@ -18,7 +18,7 @@ const PL = hero(12, "Phantom Lancer", ["Carry", "Escape", "Pusher"]);
 const ZEUS = hero(22, "Zeus", ["Nuker", "Carry"]);
 
 describe("itemEffect", () => {
-  it("names the stuns Black King Bar stops, and the ultimate that still goes through it", () => {
+  it("names the disables Black King Bar stops, and the ultimate that still goes through it", () => {
     expect(itemEffect("black_king_bar", [LION, ENIGMA, PL])).toEqual({
       line: "Stops disables from Lion. Black Hole still goes through it.",
       against: [26],
@@ -111,17 +111,9 @@ describe("withEffects", () => {
   });
 
   it("gives a counter item its plain line, since its reason already names the enemies", () => {
-    const counter = {
-      ...build,
-      core: [{ ...build.core[0]!, reason: "Against Lion" }],
-    }; // build.core has two items.
-    expect(withEffects(counter, [LION], items).core[0]).toMatchObject({
-      effect: "Spell immunity for the big fights.",
-      effectAgainst: [],
-    });
+    const counter = { ...build, core: [{ ...build.core[0]!, reason: "Against Lion" }] }; // build.core has two items.
+    expect(withEffects(counter, [LION], items).core[0]).toMatchObject({ effect: "Spell immunity for the big fights.", effectAgainst: [] });
     // It still warns of a disable that goes through.
-    expect(withEffects(counter, [LION, ENIGMA], items).core[0]?.effect).toBe(
-      "Spell immunity for the big fights. Black Hole still goes through it.",
-    );
+    expect(withEffects(counter, [LION, ENIGMA], items).core[0]?.effect).toBe("Spell immunity for the big fights. Black Hole still goes through it.");
   });
 });
