@@ -101,10 +101,11 @@ export interface GamePlanInput {
   rankBracket?: RankBracket;
   /**
    * The live matchup lookup's games for each of our heroes against these enemies, by hero id. Leave
-   * it out while the lookup runs. null means the lookup failed or was refused; a hero missing from
-   * an answered lookup had no games.
+   * it out while the lookup runs. null means the lookup failed or was refused, for everyone or (as a
+   * hero's value) for that hero; "sign-in" means the viewer must sign in to run it. A hero missing
+   * from an answered lookup had no games.
    */
-  matchups?: Record<number, MatchupGame[]> | null;
+  matchups?: Record<number, MatchupGame[] | null> | null | "sign-in";
 }
 
 /** Heroes per style, and the style with the most heroes when at least STYLE_MIN share it. */
@@ -309,7 +310,10 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     const combo = ourCombos.find((c) => c.a === p.heroId || c.b === p.heroId);
     const partner = combo && name(combo.a === p.heroId ? combo.b : combo.a);
     const isInitiator = traitsOf(engine.hero(p.heroId)).has("initiation");
-    const games = input.matchups === undefined ? undefined : input.matchups && (input.matchups[p.heroId] ?? []);
+    const { matchups } = input;
+    // A hero's null (its lookup failed) stays null; a hero missing from the answer had no games.
+    const answered = typeof matchups === "object" && matchups !== null;
+    const games = answered ? (matchups[p.heroId] === undefined ? [] : matchups[p.heroId]) : matchups;
     const skills = skillPlan(engine.data, p.heroId, p.position, input.theirs.map(name), games);
     return {
       heroId: p.heroId,

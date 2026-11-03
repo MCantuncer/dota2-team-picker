@@ -20,8 +20,11 @@ import {
 } from "./matchup-talents";
 import { TALENT_LEVELS, type Position, type SkillBuildSlice, type Snapshot } from "./types";
 
-/** Where the talent tree's numbers come from. */
-export type SkillLive = "ready" | "loading" | "unavailable";
+/**
+ * Where the talent tree's numbers come from: the matchup games ("ready"), or the usual talents
+ * while they load, when the lookup failed, or when the viewer must sign in to run it.
+ */
+export type SkillLive = "ready" | "loading" | "unavailable" | "sign-in";
 
 export interface TalentTier {
   tier: number;
@@ -70,7 +73,7 @@ function buildReason(slice: SkillBuildSlice | undefined, patch: string): string 
 }
 
 /** The newest game version among the weekly slices: older slices are from last patch. */
-function latestVersion(builds: Snapshot["skillBuilds"]): number {
+export function latestSkillVersion(builds: Snapshot["skillBuilds"]): number {
   let latest = 0;
   for (const byPosition of Object.values(builds ?? {})) {
     for (const s of Object.values(byPosition ?? {})) latest = Math.max(latest, s?.gameVersionId ?? 0);
@@ -96,19 +99,20 @@ const tookAny = (c: TierChoice) => c.sides.some((s) => s.wins + s.losses > 0);
 /**
  * The card's skill plan for one of our heroes, or null when the snapshot has no abilities for it.
  * `matchup` is the live lookup's games for this hero against the enemies: undefined while loading,
- * null when the lookup failed or was refused, empty when it found no games.
+ * null when the lookup failed or was refused, "sign-in" when the viewer isn't signed in, empty when
+ * it found no games. Only "ready" tiers say more than the usual share; the card says the state once.
  */
 export function skillPlan(
   data: Pick<Snapshot, "heroAbilities" | "skillBuilds">,
   heroId: number,
   position: Position,
   enemies: string[],
-  matchup: MatchupGame[] | null | undefined,
+  matchup: MatchupGame[] | null | undefined | "sign-in",
 ): SkillPlan | null {
   const hero = data.heroAbilities?.[heroId];
   if (!hero) return null;
   const found = data.skillBuilds?.[heroId]?.[position];
-  const patch = found && found.gameVersionId < latestVersion(data.skillBuilds) ? "last patch" : "this patch";
+  const patch = found && found.gameVersionId < latestSkillVersion(data.skillBuilds) ? "last patch" : "this patch";
   const names: Record<number, string> = {};
   for (const a of hero.abilities) names[a.id] = a.name;
   for (const t of hero.talents.flat()) names[t.id] = t.name;
@@ -116,14 +120,11 @@ export function skillPlan(
 
   // A weekly talent that isn't in the hero's tree (a patch changed it) can't be shown or compared.
   const general = (found?.talents ?? []).filter((g) => hero.talents[g.tier]?.some((o) => o.id === g.id));
-  const live: SkillLive = matchup === undefined ? "loading" : matchup === null ? "unavailable" : "ready";
-  const choices = (matchup ? chooseMatchupTalents(hero.talents, general, matchup) : []).filter(tookAny);
-  const waiting =
-    live === "loading"
-      ? " The games against these heroes are loading."
-      : live === "unavailable"
-        ? " The games against these heroes couldn't load, so this is the usual pick."
-        : " No games against these heroes reached this level, so this is the usual pick.";
+  const games = Array.isArray(matchup) ? matchup : null;
+  const live: SkillLive =
+    matchup === undefined ? "loading" : matchup === null ? "unavailable" : games ? "ready" : "sign-in";
+  const choices = (games ? chooseMatchupTalents(hero.talents, general, games) : []).filter(tookAny);
+  const waiting = games ? " No games against these heroes reached this level, so this is the usual pick." : "";
 
   const talents = hero.talents.flatMap((options, tier): TalentTier[] => {
     if (options.length !== 2) return [];

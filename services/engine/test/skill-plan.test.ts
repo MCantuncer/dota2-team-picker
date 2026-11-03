@@ -113,6 +113,15 @@ describe("skillPlan", () => {
     expect(none.note).toBeUndefined();
   });
 
+  it("keeps the usual talents for a signed-out viewer", () => {
+    const p = plan(data(), 18, 3, ENEMIES, "sign-in");
+    expect(p.live).toBe("sign-in");
+    expect(tiers(p)).toEqual([
+      [10, "general"],
+      [13, "general"],
+    ]);
+  });
+
   it("shows every tier of the tree, also one with no talent picks", () => {
     const three = {
       ...sven,
@@ -158,6 +167,7 @@ describe("skillPlan", () => {
       ["loading", plan(data(), 18, 3, ENEMIES, undefined)],
       ["lookup failed", plan(data(), 18, 3, ENEMIES, null)],
       ["lookup found no games", plan(data(), 18, 3, ENEMIES, [])],
+      ["signed out", plan(data(), 18, 3, ENEMIES, "sign-in")],
       ["ready", plan(data(), 18, 3, ENEMIES, clear())],
       ["leaning", plan(data(), 18, 3, ENEMIES, leaning())],
       ["no agreement", plan(data(slice({ build: undefined, none: "no-agreement" })), 18, 3, ENEMIES, undefined)],
