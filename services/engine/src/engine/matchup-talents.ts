@@ -10,7 +10,7 @@
  *
  * Few games give noisy ratios, so the estimate starts from STRATZ's overall odds ratio of the two
  * talents (all games at this rank) and moves toward the matchup games as they add up (a normal
- * prior on log OR, width PRIOR_SD). The card shows the raw wins and losses every time.
+ * prior on log OR, width PRIOR_SD). The card shows the odds and the games behind them, never raw wins and losses.
  */
 import type { SkillBuildSlice } from "./types";
 
@@ -151,31 +151,49 @@ export function chooseMatchupTalents(
 }
 
 /**
- * The card's line for a tier, one or two sentences with the numbers behind it. `name` gives a
- * talent's name, `enemies` the enemy heroes' names, `usualShare` how often players take the usual
- * talent overall.
+ * The card's line for a tier: one sentence on what to take and why, with no raw wins and losses (Can
+ * 2026-11-02) and no win rate, since the sample was picked half wins and half losses. The odds go in
+ * `oddsLabel`, small under it. `name` gives a talent's name, `enemies` the enemy heroes' names, and
+ * `usual` how often the usual talent was taken in the weekly slice's games that reached this tier.
  */
-export function tierReason(c: TierChoice, name: (id: number) => string, enemies: string[], usualShare: number): string {
+export function tierReason(
+  c: TierChoice,
+  name: (id: number) => string,
+  enemies: string[],
+  usual: { share: number; games: number },
+): string {
   const [x, y] = c.sides;
   if (!x || !y) return "";
-  const against = `Against ${listOr(enemies)} (any of them)`;
-  const counts = `${name(x.id)} won ${x.wins} and lost ${x.losses}, ${name(y.id)} won ${y.wins} and lost ${y.losses}`;
-  const usual = `Most players take ${name(x.id)} (${Math.round(usualShare * 100)}%).`;
+  const against = `against ${listOr(enemies)}`;
+  // The usual talent is the one taken more often, so a tie can't say "most players".
+  const who = usual.share > 0.5 ? "most players take" : "players take as often as the other";
+  const most = `${name(x.id)}, which ${who} (${Math.round(usual.share * 100)}% of ${usual.games} recent games)`;
   switch (c.result) {
     case "too-few-games":
-      return `${against}: too few high-rank games to compare (${counts}). ${usual}`;
+      return `Too few high-rank games ${against} to compare, so take ${most}.`;
     case "recommended":
-      return `${against}: ${counts}. Adjusted for few games, players who took ${name(y.id)} had about ${c.oddsRatio} times the odds of winning, though most players take ${name(x.id)} (${Math.round(usualShare * 100)}%).`;
+      return `Take ${name(y.id)} ${against}: it did better than ${most}.`;
     case "leaning":
-      return `${against}: ${counts}. Leaning ${name(y.id)}: adjusted about ${c.oddsRatio} times the odds, not sure enough to switch.`;
+      return `${name(y.id)} did better ${against}, but not surely enough to switch from ${most}.`;
     case "no-clear-difference":
-      return `${against}: ${counts}. No clear difference against these heroes, so take the usual ${name(x.id)}.`;
+      return `No clear difference ${against}, so take ${most}.`;
   }
 }
 
-/** Shown once per card under the talent tree, so the raw counts aren't read as win rates. */
+/**
+ * The small line under a reason: "1.8x the odds · 42 games" (Can chose this form, 2026-11-03), the other
+ * talent against the usual one, over the matchup games that reached this tier. Only when the comparison
+ * leans to the other talent; otherwise there is no number worth showing.
+ */
+export function oddsLabel(c: TierChoice): string | undefined {
+  if (c.result !== "recommended" && c.result !== "leaning") return undefined;
+  const games = c.sides.reduce((n, s) => n + s.wins + s.losses, 0);
+  return `${c.oddsRatio}x the odds · ${games} games`;
+}
+
+/** Shown once per card under the talent tree, so the odds are read as a comparison, not a win rate. */
 export const SAMPLE_NOTE =
-  "Games were picked as about half wins and half losses, so only the comparison between the two talents counts.";
+  "Odds compare the two talents in high-rank games against these heroes, adjusted toward all games when there are few.";
 
 function listOr(names: string[]): string {
   if (names.length <= 1) return names[0] ?? "these heroes";

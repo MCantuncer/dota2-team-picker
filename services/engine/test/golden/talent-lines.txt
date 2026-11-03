@@ -1,11 +1,13 @@
 recommended:
-Against Lion, Lina, Zeus, Pudge or Tidehunter (any of them): +2 Mana Regen won 15 and lost 40, +15 Damage won 60 and lost 15. Adjusted for few games, players who took +15 Damage had about 5.6 times the odds of winning, though most players take +2 Mana Regen (55%).
+Take +15 Damage against Lion, Lina, Zeus, Pudge or Tidehunter: it did better than +2 Mana Regen, which most players take (55% of 110 recent games).
+5.6x the odds · 130 games
 
 leaning:
-Against Lion, Lina, Zeus, Pudge or Tidehunter (any of them): +2 Mana Regen won 6 and lost 11, +15 Damage won 29 and lost 12. Leaning +15 Damage: adjusted about 2.3 times the odds, not sure enough to switch.
++15 Damage did better against Lion, Lina, Zeus, Pudge or Tidehunter, but not surely enough to switch from +2 Mana Regen, which most players take (55% of 110 recent games).
+2.3x the odds · 58 games
 
 no clear difference:
-Against Lion, Lina, Zeus, Pudge or Tidehunter (any of them): +2 Mana Regen won 10 and lost 10, +15 Damage won 10 and lost 10. No clear difference against these heroes, so take the usual +2 Mana Regen.
+No clear difference against Lion, Lina, Zeus, Pudge or Tidehunter, so take +2 Mana Regen, which most players take (55% of 110 recent games).
 
 too few games:
-Against Lion, Lina, Zeus, Pudge or Tidehunter (any of them): too few high-rank games to compare (+2 Mana Regen won 0 and lost 4, +15 Damage won 5 and lost 0). Most players take +2 Mana Regen (55%).
+Too few high-rank games against Lion, Lina, Zeus, Pudge or Tidehunter to compare, so take +2 Mana Regen, which most players take (55% of 110 recent games).

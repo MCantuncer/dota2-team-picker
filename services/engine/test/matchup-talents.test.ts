@@ -4,6 +4,7 @@ import {
   type MatchupGame,
   normalCdf,
   poolGames,
+  oddsLabel,
   tierReason,
   type TierChoice,
 } from "../src/engine/matchup-talents";
@@ -156,6 +157,26 @@ describe("poolGames", () => {
   });
 });
 
+describe("oddsLabel", () => {
+  it("gives the odds only when the games lean to the other talent", () => {
+    const c = (result: TierChoice["result"]): TierChoice => ({
+      tier: 0, usual: 10, pick: 10, result, oddsRatio: 1.8, chance: 0.9,
+      sides: [{ id: 10, wins: 10, losses: 12 }, { id: 11, wins: 12, losses: 8 }],
+    });
+    expect(oddsLabel(c("recommended"))).toBe("1.8x the odds · 42 games");
+    expect(oddsLabel(c("leaning"))).toBe("1.8x the odds · 42 games");
+    expect(oddsLabel(c("no-clear-difference"))).toBeUndefined();
+    expect(oddsLabel(c("too-few-games"))).toBeUndefined();
+  });
+
+  it("doesn't say most players take a talent picked half the time", () => {
+    const c: TierChoice = { tier: 0, usual: 10, pick: 10, result: "no-clear-difference", oddsRatio: 1, chance: 0.5, sides: [{ id: 10, wins: 5, losses: 5 }, { id: 11, wins: 5, losses: 5 }] };
+    expect(tierReason(c, name, ["Lion"], { share: 0.5, games: 40 })).toBe(
+      "No clear difference against Lion, so take +2 Mana Regen, which players take as often as the other (50% of 40 recent games).",
+    );
+  });
+});
+
 describe("card lines", () => {
   it("are written from the numbers (golden examples)", async () => {
     const cases: [string, MatchupGame[]][] = [
@@ -172,7 +193,8 @@ describe("card lines", () => {
     ];
     const lines = cases.map(([label, g]) => {
       const c: TierChoice = tier(g);
-      return `${label}:\n${tierReason(c, name, ENEMIES, 0.55)}`;
+      const odds = oddsLabel(c);
+      return `${label}:\n${tierReason(c, name, ENEMIES, { share: 0.55, games: 110 })}${odds ? `\n${odds}` : ""}`;
     });
     await expect(lines.join("\n\n") + "\n").toMatchFileSnapshot("./golden/talent-lines.txt");
   });

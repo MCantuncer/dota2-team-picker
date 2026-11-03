@@ -205,9 +205,10 @@ describe("gamePlan skills", () => {
     const sven = svenSkills({ matchups: { 18: games } });
     expect(sven.live).toBe("ready");
     expect(sven.talents[0]).toMatchObject({ pick: 11, result: "recommended" });
-    expect(sven.talents[0]?.reason).toMatch(
-      /^Against Anti-Mage, Spectre, Terrorblade, Witch Doctor or Lich \(any of them\)/,
-    );
+    expect(sven.talents[0]?.reason).toMatch(/^Take \+15 Damage against Anti-Mage, Spectre, Terrorblade, Witch Doctor or Lich: /);
+    // The odds and games, never raw wins and losses or a win rate (Can 2026-11-02).
+    expect(sven.talents[0]?.odds).toMatch(/^\d+(\.\d)?x the odds · 70 games$/);
+    expect(sven.talents[0]?.reason).not.toMatch(/won \d+ and lost|won\b[^.]*%/i);
   });
 
   it("tells a failed lookup from one that found no games", () => {
