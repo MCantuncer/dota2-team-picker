@@ -102,7 +102,7 @@ export function listQuery(requests: SkillRequest[], opponents: number[]): string
         ),
       `    x${i}: abilityMaxLevel(${where}) { abilityId level matchCount }`,
       `    n${i}: abilityMinLevel(${where}) { abilityId level matchCount }`,
-      `    t${i}: talent(${where}) { abilityId matchCount }`,
+      `    t${i}: talent(${where}) { abilityId matchCount winCount }`,
     ];
   });
   return `{\n  heroStats {\n${lines.join("\n")}\n  }\n}`;
@@ -139,7 +139,14 @@ export function validLevelRows(rows: unknown): LevelRow[] {
 
 export function validTalentRows(rows: unknown): TalentRow[] {
   if (!Array.isArray(rows)) return [];
-  return rows.filter((r): r is TalentRow => isNumber(r?.abilityId) && isNumber(r?.matchCount));
+  return rows
+    .filter((r): r is TalentRow => isNumber(r?.abilityId) && isNumber(r?.matchCount))
+    .map((r) => ({
+      abilityId: r.abilityId,
+      matchCount: r.matchCount,
+      // Wins can't exceed games; a row without a usable count is kept without it.
+      ...(isNumber(r.winCount) && r.winCount >= 0 && r.winCount <= r.matchCount ? { winCount: r.winCount } : {}),
+    }));
 }
 
 /** Guides from one guide list answer (a list of lists of guides), one per match. */

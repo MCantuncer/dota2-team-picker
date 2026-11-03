@@ -171,8 +171,17 @@ export interface SkillBuildSlice {
   /**
    * Per talent tier: the talent picked in more games, its share of the games that took a talent in
    * that tier, how many games that is (few games at level 20 and 25), and the level players usually took it.
+   * `sides` has both talents' games and wins in STRATZ's totals (all games at this rank, not only guides):
+   * the starting point the matchup lookup is compared against. Missing in slices saved before it existed.
    */
-  talents: { tier: number; id: number; share: number; games: number; level: number }[];
+  talents: {
+    tier: number;
+    id: number;
+    share: number;
+    games: number;
+    level: number;
+    sides?: { id: number; games: number; wins: number }[];
+  }[];
 }
 
 export interface ItemInfo {
