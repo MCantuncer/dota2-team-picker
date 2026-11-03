@@ -1,5 +1,5 @@
 import { hardCountersOf, type HardCounter } from "./hard-counters";
-import { list, namedPoints, ordinal, pickLines, points, RANK_NAMES, ROLE_NAMES, summaryOf, type Line } from "./reasons";
+import { list, namedPoints, ordinal, pickLines, points, RANK_NAMES, ROLE_NAMES, summaryOf, type Line, type Warning } from "./reasons";
 import { blindPickRisk, openSlots, pickChance } from "./risk";
 import { guessEnemyPositions, LANE_OPPONENTS, positionFit, type PositionFit } from "./positions";
 import { NEED_SHORT, traitsOf, unmetNeeds } from "./traits";
@@ -63,6 +63,9 @@ const META_RANK_FIT = 0.3;
  * likelier to pick it than its usual pick rate says. A first guess, to be tuned with the backtest.
  */
 const GAMBLE_PICK_BOOST = 2;
+
+/** A matchup with fewer games than this says so on the card, since its number is mostly the prior. */
+const FEW_MATCHUP_GAMES = 100;
 
 /** Bans that lower a hero's blind pick risk by at least this many points are named as a reason. */
 const BAN_LIFT_REASON = 0.3;
@@ -294,18 +297,18 @@ export class Engine {
       const fit = this.fit(hero.id);
 
       const reasons: Line[] = [];
-      const warnings: { text: string; value: number }[] = [];
+      const warnings: Warning[] = [];
       const tags: string[] = [];
 
       // Counters: how this hero does against the enemies already picked.
       const edges = this.counterEdges(hero.id, input.enemies, laneChance, input.rankBracket);
       const counter = edges.reduce((s, x) => s + x.edge, 0);
       const named = (xs: typeof edges) =>
-        namedPoints(xs.map((x) => ({ name: this.hero(x.enemy).name, value: x.edge, note: x.lane ? "likely your lane" : undefined })));
+        namedPoints(xs.map((x) => ({ name: this.hero(x.enemy).name, value: x.edge, note: this.matchupNote(hero.id, x.enemy, x.lane) })));
       const good = edges.filter((x) => x.edge >= 0.5);
       const bad = edges.filter((x) => x.edge <= -0.5);
       if (good.length) reasons.push({ text: `Beats ${named(good)}`, value: counter, kind: "draft" });
-      if (bad.length) warnings.push({ text: `Loses to ${named(bad)}`, value: -Math.min(...bad.map((x) => x.edge)) });
+      if (bad.length) warnings.push({ text: `Loses to ${named(bad)}`, value: -Math.min(...bad.map((x) => x.edge)), matchup: true });
 
       // Synergy with the allies already picked; the lane partner counts extra.
       const synergies = input.allies.map(({ heroId: a, position }) => {
@@ -413,12 +416,27 @@ export class Engine {
         breakdown,
         reasons: pickLines(reasons, warnings),
         summary: summaryOf(breakdown),
+        place: { rank: 0, of: 0 },
         tags,
         hardCounters,
       });
     }
 
-    return results.sort((a, b) => b.score - a.score).slice(0, input.count ?? 8);
+    // Every hero's place among all the heroes scored for the position, before the list is cut, so
+    // a card can say "31st of 52" with the same score it shows.
+    results.sort((a, b) => b.score - a.score);
+    results.forEach((s, i) => {
+      s.place = { rank: i + 1, of: results.length };
+      s.summary = summaryOf(s.breakdown, { ...s.place, pos });
+    });
+    return results.slice(0, input.count ?? 8);
+  }
+
+  /** "likely your lane", "only 56 games" or both, for a matchup named on a card. */
+  private matchupNote(hero: number, enemy: number, lane: boolean): string | undefined {
+    const games = this.data.matchups[hero]?.[enemy]?.games ?? 0;
+    const notes = [lane ? "likely your lane" : "", games < FEW_MATCHUP_GAMES ? `only ${Math.round(games)} games` : ""];
+    return notes.filter(Boolean).join(", ") || undefined;
   }
 
   /**

@@ -52,6 +52,11 @@ export interface Snapshot {
   /** The same counts split by rank group (from each match's average rank), keyed by RankGroup. */
   rankMatchups?: Record<string, Record<string, Record<string, GamesWins>>>;
   rankSynergy?: Record<string, Record<string, GamesWins>>;
+  /**
+   * Where the four count fields above come from: STRATZ (every ranked game, replaced on each
+   * refresh) or, when missing, our own sample of public matches (added to on each refresh).
+   */
+  matchupsFrom?: { source: "stratz"; at: string };
   /** Games per lane role (1 safe, 2 mid, 3 off, 4 jungle). */
   laneRoles: Record<string, Partial<Record<"1" | "2" | "3" | "4", number>>>;
   /** When lane roles were last downloaded; they are refreshed weekly. */
@@ -254,8 +259,10 @@ export interface Suggestion {
   breakdown: ScoreBreakdown;
   /** Up to 4 lines on why the hero fits this draft, each with its points, then at most one warning. */
   reasons: string[];
-  /** Where the score comes from: this draft, or meta, role and comfort. */
+  /** Where the score comes from (this draft, or meta, role and comfort) and the hero's place. */
   summary: string;
+  /** Place among every hero scored for the position in this draft, 1 = best. */
+  place: { rank: number; of: number };
   /** Short labels such as "Favorite (+1.5)" or "Your record 12-8 (+0.9)". */
   tags: string[];
   /** The hero's hard counters, to show apart from the reasons. */
