@@ -644,6 +644,9 @@ isOneToOne: false
 "answer_party_invite":
 { Args: { "accept": boolean,"party": string }; Returns: undefined
                            },
+"answer_pool_suggestion":
+{ Args: { "answer": string,"card": string }; Returns: string
+                           },
 "attach_draft_match":
 { Args: { "did_win": boolean,"draft": string,"lobby": number,"match": number,"mode": number,"our_players": Json }; Returns: boolean
                            },
@@ -745,6 +748,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"mark_active":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "may_change_draft":
 { Args: { "draft": string }; Returns: boolean
                            },
@@ -844,6 +850,9 @@ isOneToOne: false
                            },
 "set_party_position":
 { Args: { "want": number }; Returns: undefined
+                           },
+"set_pool_suggestions_off":
+{ Args: { "is_off": boolean }; Returns: undefined
                            },
 "stale_match_files":
 { Args: { "max_rows"?: number }; Returns: {

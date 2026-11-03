@@ -3,8 +3,9 @@
  *
  *   POST /steam-unlink   (Authorization: Bearer <user's access token>)
  *
- * Removes the SteamID and everything the profile sync copied from Steam and
- * OpenDota: Steam name, rank, hero record and a Steam picture. Accounts made
+ * Removes the SteamID and everything copied from Steam and OpenDota: Steam
+ * name, rank, hero record, a Steam picture, and the recent games and hero
+ * pool cards read from that account. Accounts made
  * by "Sign in with Steam" have no other way to sign in, so they cannot
  * disconnect (409).
  */
@@ -34,6 +35,15 @@ Deno.serve(async (req) => {
     .single();
   if (readError) return json({ error: "Profile not found" }, 404);
 
+  // Games and cards first: if this fails, nothing is unlinked yet and the user can retry.
+  for (const table of ["player_games", "pool_suggestions"] as const) {
+    const { error } = await admin.from(table).delete().eq("user_id", auth.user.id);
+    if (error) {
+      console.error(`Steam unlink: clearing ${table} failed`, error);
+      return json({ error: "Could not disconnect Steam, try again" }, 500);
+    }
+  }
+
   const { error } = await admin
     .from("profiles")
     .update({
@@ -42,6 +52,8 @@ Deno.serve(async (req) => {
       rank_tier: null,
       hero_stats: {},
       synced_at: null,
+      trends_checked_at: null,
+      trends_state: null,
       ...(isSteamAvatar(profile.avatar_url) ? { avatar_url: null } : {}),
     })
     .eq("id", auth.user.id);
