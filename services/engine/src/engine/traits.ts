@@ -4,7 +4,7 @@ import type { HeroInfo } from "./types";
  * Heroes that can save an ally from a gank. OpenDota has no role for this,
  * so the list is kept by hand. Matched by display name.
  */
-const SAVE_HEROES = new Set([
+export const SAVE_HEROES = new Set([
   "Abaddon",
   "Dazzle",
   "Earth Spirit",
@@ -12,7 +12,7 @@ const SAVE_HEROES = new Set([
   "Marci",
   "Omniknight",
   "Oracle",
-  "Outworld Destroyer",
+  "Outworld Devourer",
   "Shadow Demon",
   "Vengeful Spirit",
   "Winter Wyvern",
