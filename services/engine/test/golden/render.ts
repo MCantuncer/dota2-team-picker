@@ -48,6 +48,10 @@ export function storyText(title: string, plan: GamePlan, heroName: (id: number) 
       const answer = e.answers.length ? `buy ${e.answers.map(itemName).join(", ")}` : e.tip;
       lines.push(`Vs ${heroName(e.heroId)}${where}: ${e.threat}. ${answer}.`);
     }
+    for (const row of p.threatRows) {
+      const heroes = row.enemies.map((e) => heroName(e.heroId)).join(", ");
+      lines.push(`Watch ${heroes}: ${row.answer !== undefined ? `buy ${itemName(row.answer)}` : (row.tip ?? "nothing to do")}.`);
+    }
     for (const f of p.fallbacks) lines.push(`If it goes wrong: ${f}`);
   }
   return `${lines.join("\n")}\n`;

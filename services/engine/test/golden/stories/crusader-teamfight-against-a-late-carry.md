@@ -5,7 +5,7 @@ Headline: Fight from 13 min, before Spectre has Radiance around 18.
 - 0 to 10 min: Invoker wins the mid against Ember Spirit: take their tower. Faceless Void farms safely in the safe lane against Bristleback and Nyx Assassin: skip trades.
 - 10 to 20 min: Invoker's Meteor Hammer at 12 and Magnus's Blink Dagger at 13: ready to fight at 13. Their Spectre has Radiance around 18. Open fights with Chronosphere into Sun Strike and Chaos Meteor.
 - 20 to 30 min: Roshan from 20 min, once three key items are in.
-- 30 min on: Fight when Spectre is dead or far from the fight.
+- 30 min on: Catch Spectre first, then take high ground.
 
 Danger heroes:
 - Bristleback: Consecrated Wraps at 16 min. Don't focus them: kill their damage dealers first.
@@ -33,6 +33,9 @@ Vs Nyx Assassin (lane): Goes invisible. buy Infused Raindrops, Black King Bar.
 Vs Spectre: Strong passives. Fight them when they are low, not head on.
 Vs Ember Spirit: Magic burst. buy Black King Bar.
 Vs Disruptor: Magic burst. buy Black King Bar.
+Watch Bristleback: Don't focus them: kill their damage dealers first.
+Watch Nyx Assassin, Ember Spirit, Disruptor: buy Black King Bar.
+Watch Spectre: Fight them when they are low, not head on.
 If it goes wrong: Lane lost? Leave it at 5 to 6 min for the jungle and farm toward Battle Fury. Ask your supports to stack 2 camps.
 If it goes wrong: No Battle Fury by 18 min? Don't show on the map without it. Farm the side Bristleback is not on.
 
@@ -50,6 +53,9 @@ Vs Spectre: Strong passives. Fight them when they are low, not head on.
 Vs Bristleback: Tank who soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Nyx Assassin: Goes invisible. buy Black King Bar.
 Vs Disruptor: Magic burst. buy Black King Bar.
+Watch Ember Spirit, Nyx Assassin, Disruptor: buy Black King Bar.
+Watch Spectre: Fight them when they are low, not head on.
+Watch Bristleback: Don't focus them: kill their damage dealers first.
 If it goes wrong: No Meteor Hammer by 14 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Magnus
@@ -66,6 +72,9 @@ Vs Disruptor (lane): Magic burst. buy Black King Bar.
 Vs Ember Spirit: Magic burst. buy Black King Bar.
 Vs Bristleback: Tank who soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Nyx Assassin: Goes invisible. buy Black King Bar.
+Watch Spectre: Fight them when they are low, not head on.
+Watch Disruptor, Ember Spirit, Nyx Assassin: buy Black King Bar.
+Watch Bristleback: Don't focus them: kill their damage dealers first.
 If it goes wrong: Lane lost? Stop contesting Spectre. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 16 min? Don't start fights without it. Stay behind your cores and soak damage.
 
@@ -83,6 +92,10 @@ Vs Disruptor (lane): Magic burst. Stay spread so one combo can't catch two.
 Vs Ember Spirit: Magic burst. Stay spread so one combo can't catch two.
 Vs Bristleback: Tank who soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Nyx Assassin: Goes invisible. Ask your support for Dust and Sentries before fights.
+Watch Spectre: Fight them when they are low, not head on.
+Watch Disruptor, Ember Spirit: Stay spread so one combo can't catch two.
+Watch Bristleback: Don't focus them: kill their damage dealers first.
+Watch Nyx Assassin: Ask your support for Dust and Sentries before fights.
 If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Faceless Void.
 If it goes wrong: Spectre is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 
@@ -101,5 +114,8 @@ Vs Nyx Assassin (lane): Goes invisible. buy Infused Raindrops, Glimmer Cape.
 Vs Spectre: Strong passives. buy Ghost Scepter, Force Staff.
 Vs Ember Spirit: Magic burst. buy Glimmer Cape, Ghost Scepter, Force Staff.
 Vs Disruptor: Magic burst. Stay spread so one combo can't catch two.
+Watch Bristleback, Nyx Assassin, Ember Spirit: buy Glimmer Cape.
+Watch Spectre: buy Ghost Scepter.
+Watch Disruptor: Stay spread so one combo can't catch two.
 If it goes wrong: Lane lost? Let Faceless Void take every last hit. Pull the near camp and keep a ward on the rune.
 If it goes wrong: Spectre is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.

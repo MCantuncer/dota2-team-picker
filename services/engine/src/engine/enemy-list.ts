@@ -63,3 +63,39 @@ export function enemyList(build: ItemBuild | null, enemies: EnemyFacts[]): Enemy
       return { heroId: hero.id, inLane, laneSure, threat: line.threat, answers, ...(answers.length ? {} : { tip: line.tip }) };
     });
 }
+
+/** Enemies that share an answer item (or, without one, the same threat) shown as one row. */
+export interface ThreatRow {
+  /** The enemies in this row, lane enemies first, each with its own threat (an answer item covers the
+   * heroes, not every threat they bring). */
+  enemies: Pick<EnemyNote, "heroId" | "inLane" | "laneSure" | "threat">[];
+  /** The item in this player's path that answers them all, when one does. */
+  answer?: number;
+  /** What to do instead, when no item answers them. */
+  tip?: string;
+}
+
+/**
+ * The enemy list as rows, so one answer is said once: three stunners answered by Black King Bar make one
+ * row, not three lines that each say "Buy Black King Bar". Each enemy goes to the answer item that
+ * covers the most enemies (ties by path order); enemies without one group by their threat. Rows keep
+ * the order of their first enemy, lane enemies first.
+ */
+export function threatRows(notes: EnemyNote[]): ThreatRow[] {
+  const covers = new Map<number, number>();
+  for (const n of notes) for (const id of n.answers) covers.set(id, (covers.get(id) ?? 0) + 1);
+  // Path order breaks ties: reduce keeps the earlier answer unless a later one covers more enemies.
+  const best = (n: EnemyNote) =>
+    n.answers.reduce<number | undefined>((b, id) => (b === undefined || (covers.get(id) ?? 0) > (covers.get(b) ?? 0) ? id : b), undefined);
+  const rows = new Map<string, ThreatRow>();
+  for (const note of notes) {
+    const answer = best(note);
+    const key = answer !== undefined ? `item:${answer}` : `threat:${note.threat}`;
+    const row: ThreatRow =
+      rows.get(key) ?? { enemies: [], ...(answer !== undefined ? { answer } : note.tip !== undefined ? { tip: note.tip } : {}) };
+    const { heroId, inLane, laneSure, threat } = note;
+    row.enemies.push({ heroId, inLane, laneSure, threat });
+    rows.set(key, row);
+  }
+  return [...rows.values()];
+}

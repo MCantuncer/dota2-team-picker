@@ -33,6 +33,9 @@ Vs Chen (lane, guessed): Heals their team through fights. Kill them first or fig
 Vs Lycan: Right-click carry who grows late. Fight before their big item, not after.
 Vs Leshrac: Magic burst. buy Black King Bar.
 Vs Shadow Shaman: Magic burst. buy Black King Bar.
+Watch Underlord, Leshrac, Shadow Shaman: buy Black King Bar.
+Watch Chen: Kill them first or fight short and decisive.
+Watch Lycan: Fight before their big item, not after.
 If it goes wrong: No Manta Style by 19 min? Don't show on the map without it. Farm the side Underlord is not on.
 
 ### Pos 2 Storm Spirit
@@ -49,6 +52,9 @@ Vs Lycan: Right-click carry who grows late. Fight before their big item, not aft
 Vs Underlord: Starts fights and soaks your damage. buy Black King Bar.
 Vs Shadow Shaman: Magic burst. buy Black King Bar.
 Vs Chen: Heals their team through fights. Kill them first or fight short and decisive.
+Watch Leshrac, Underlord, Shadow Shaman: buy Black King Bar.
+Watch Lycan: Fight before their big item, not after.
+Watch Chen: Kill them first or fight short and decisive.
 If it goes wrong: No Orchid Malevolence by 24 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Tidehunter
@@ -66,6 +72,9 @@ Vs Shadow Shaman (lane, guessed): Magic burst. buy Black King Bar.
 Vs Leshrac: Magic burst. buy Black King Bar.
 Vs Underlord: Starts fights and soaks your damage. buy Black King Bar.
 Vs Chen: Heals their team through fights. Kill them first or fight short and decisive.
+Watch Lycan: Fight before their big item, not after.
+Watch Shadow Shaman, Leshrac, Underlord: buy Black King Bar.
+Watch Chen: Kill them first or fight short and decisive.
 If it goes wrong: Lane lost? Stop contesting Lycan. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 25 min? Don't start fights without it. Stay behind your cores and soak damage.
 
@@ -83,6 +92,10 @@ Vs Shadow Shaman (lane, guessed): Magic burst. Stay spread so one combo can't ca
 Vs Leshrac: Magic burst. Stay spread so one combo can't catch two.
 Vs Underlord: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Chen: Heals their team through fights. Kill them first or fight short and decisive.
+Watch Lycan: Fight before their big item, not after.
+Watch Shadow Shaman, Leshrac: Stay spread so one combo can't catch two.
+Watch Underlord: Don't focus them: kill their damage dealers first.
+Watch Chen: Kill them first or fight short and decisive.
 If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Medusa.
 If it goes wrong: Lycan is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 
@@ -99,4 +112,7 @@ Vs Chen (lane, guessed): Heals their team through fights. Kill them first or fig
 Vs Lycan: Right-click carry who grows late. Fight before their big item, not after.
 Vs Leshrac: Magic burst. buy Glimmer Cape.
 Vs Shadow Shaman: Magic burst. buy Glimmer Cape.
+Watch Underlord, Leshrac, Shadow Shaman: buy Glimmer Cape.
+Watch Chen: Kill them first or fight short and decisive.
+Watch Lycan: Fight before their big item, not after.
 If it goes wrong: Lycan is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.
