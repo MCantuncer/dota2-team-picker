@@ -23,3 +23,10 @@ Deno.test("fails closed when the budget can't be read", async () => {
     assertEquals(result.ok ? null : result.status, 503);
   }
 });
+
+Deno.test("a caller with its own share passes its name and cap", async () => {
+  const args: unknown[] = [];
+  const c: BudgetClient = { rpc: (_fn, a) => (args.push(a), Promise.resolve({ data: true, error: null })) };
+  assertEquals(await takeOpenDotaCalls(c, 2, { caller: "trends", dailyCap: 300 }), { ok: true });
+  assertEquals(args, [{ wanted: 2, caller_name: "trends", caller_cap: 300 }]);
+});

@@ -446,3 +446,7 @@ verify_jwt = false
 # Called by pg_cron, which has no user token; the function checks a shared secret instead.
 [functions.build-reports]
 verify_jwt = false
+
+# Called by pg_cron, which has no user token; the function checks a shared secret instead.
+[functions.refresh-trends]
+verify_jwt = false

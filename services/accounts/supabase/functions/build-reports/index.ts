@@ -11,6 +11,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import { json } from "../_shared/cors.ts";
 import { attachMatch, findDraftMatch } from "../_shared/attach.ts";
 import { fetchMatch, fetchRecentMatches, requestParse } from "../_shared/match.ts";
+import { sameSecret } from "../_shared/job_secret.ts";
 import { takeOpenDotaCalls } from "../_shared/opendota_budget.ts";
 import { buildReport, type ClaimedReport, OpenDotaBusy } from "../_shared/report/build.ts";
 import type { ItemCost } from "../_shared/report/facts.ts";
@@ -133,14 +134,4 @@ async function loadItems(): Promise<Record<string, ItemCost>> {
     console.error("Loading item costs failed; reports leave key items out", err);
     return {};
   }
-}
-
-/** Compares secrets in constant time, by their SHA-256 digests. */
-async function sameSecret(given: string, expected: string): Promise<boolean> {
-  const digest = async (s: string) =>
-    new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)));
-  const [a, b] = await Promise.all([digest(given), digest(expected)]);
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
-  return diff === 0;
 }
