@@ -110,7 +110,7 @@ export function matchesQuery(ids: number[]): string {
  * sorted by time. A game without H's purchase list (STRATZ hasn't parsed it) is dropped; a missing networth
  * lead only leaves `lead` empty.
  */
-export function toMatchupGame(answer: unknown, s: Slice, won: boolean): MatchupGame | null {
+export function toMatchupGame(answer: unknown, s: Slice, won: boolean): ItemGame | null {
   // Checked field by field below.
   const match = answer as {
     id?: unknown;
@@ -172,10 +172,10 @@ export function toMatchupGame(answer: unknown, s: Slice, won: boolean): MatchupG
  * A slice's games: this patch only (version at least `fromVersion`), each match once, at most
  * GAMES_PER_ACCOUNT per Steam account, in the order given (newest first from STRATZ).
  */
-export function sliceGames(games: (MatchupGame | null)[], fromVersion: number): MatchupGame[] {
+export function sliceGames(games: (ItemGame | null)[], fromVersion: number): ItemGame[] {
   const seen = new Set<number>();
   const perAccount = new Map<number, number>();
-  return games.filter((g): g is MatchupGame => {
+  return games.filter((g): g is ItemGame => {
     if (!g || g.version < fromVersion || seen.has(g.match)) return false;
     const n = perAccount.get(g.account) ?? 0;
     if (n >= GAMES_PER_ACCOUNT) return false;

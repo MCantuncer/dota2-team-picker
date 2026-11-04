@@ -3,8 +3,8 @@ import {
   guideListQuery,
   guideMatchIds,
   hasItems,
+  type ItemGame,
   matchesQuery,
-  type MatchupGame,
   queriesNeeded,
   sliceGames,
   toMatchupGame,
@@ -157,7 +157,7 @@ Deno.test("drops a game where the enemy was on H's team", () => {
 });
 
 Deno.test("keeps this patch, each match once and at most 2 games per account", () => {
-  const game = (match: number, account: number, version = 184): MatchupGame => ({
+  const game = (match: number, account: number, version = 184): ItemGame => ({
     match,
     account,
     won: true,
