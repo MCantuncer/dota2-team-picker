@@ -5,7 +5,7 @@ import {
   fallbackOdds,
   fallbackSide,
   hasItems,
-  isBigItem,
+  bigItemCheck,
   type ItemGame,
   leadBucket,
   placeboPassRates,
@@ -50,13 +50,26 @@ describe("leadBucket", () => {
   });
 });
 
-describe("isBigItem", () => {
-  it("leaves out plain boots and small items", () => {
-    const item = (key: string, cost: number) => ({ key, name: key, cost, img: "", components: [] });
-    expect(isBigItem(item("boots", 500))).toBe(false);
-    expect(isBigItem(item("power_treads", 1400))).toBe(true);
-    expect(isBigItem(item("radiance", 4700))).toBe(true);
-    expect(isBigItem(item("magic_wand", 450))).toBe(false);
+describe("bigItemCheck", () => {
+  const item = (key: string, cost: number, components: number[] = []) => ({ key, name: key, cost, img: "", components });
+  const isBig = bigItemCheck({
+    "29": item("boots", 500),
+    "63": item("power_treads", 1400, [29]),
+    "108": item("radiance", 4700, [109]),
+    "109": item("relic", 3750),
+    "1": item("blink", 2250),
+    "600": item("overwhelming_blink", 6800, [1]),
+    "609": item("aghanims_shard", 1400),
+    "36": item("magic_wand", 450),
+  });
+  it("leaves out plain boots, the shard and small items", () => {
+    expect([29, 63, 108, 609, 36].map(isBig)).toEqual([false, true, true, false, false]);
+  });
+  it("leaves out a part built into a bigger item soon after: a Radiance game takes one slot", () => {
+    expect(bigItems(game({ items: [[109, 600], [108, 900]] }), isBig)).toEqual([[108, 900]]);
+  });
+  it("keeps an item upgraded much later as its own slot: Blink at 12, Overwhelming Blink at 35", () => {
+    expect(bigItems(game({ items: [[1, 720], [600, 2100]] }), isBig)).toEqual([[1, 720], [600, 2100]]);
   });
 });
 
