@@ -77,7 +77,7 @@ const GAMES_PER_ACCOUNT = 2;
  * enemies came back for both), and at most GAMES_PER_ACCOUNT wins and as many losses per Steam
  * account. The cap is per result so wins and losses are picked the same way whatever the order.
  */
-export function poolGames(games: MatchupGame[]): MatchupGame[] {
+export function poolGames<G extends MatchupGame>(games: G[]): G[] {
   const seen = new Set<number>();
   const perAccount = new Map<string, number>();
   return games.filter((g) => {
