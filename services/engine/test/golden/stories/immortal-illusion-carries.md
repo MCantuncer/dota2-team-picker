@@ -29,11 +29,12 @@ Late: Eye of Skadi 30/31 {Cuts the healing from Treant Protector; your hits slow
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Manta Style around minute 19.
 Vs Primal Beast (lane): Starts fights and soaks your damage. buy Black King Bar.
 Vs Hoodwink (lane): Magic burst. Stay spread so one combo can't catch two.
-Vs Naga Siren: Illusions split your damage. buy Black King Bar.
+Vs Naga Siren: Illusions split your damage. Hit the real hero: it is the one their team protects.
 Vs Pangolier: Magic burst. buy Black King Bar.
 Vs Treant Protector: Goes invisible. Ask your support for Dust and Sentries before fights.
-Watch Primal Beast, Naga Siren, Pangolier: buy Black King Bar.
+Watch Primal Beast, Pangolier: buy Black King Bar.
 Watch Hoodwink: Stay spread so one combo can't catch two.
+Watch Naga Siren: Hit the real hero: it is the one their team protects.
 Watch Treant Protector: Ask your support for Dust and Sentries before fights.
 If it goes wrong: Lane lost? Leave it at 5 to 6 min for the jungle and farm toward Manta Style. Ask your supports to stack 2 camps.
 If it goes wrong: No Manta Style by 20 min? Don't show on the map without it. Farm the side Primal Beast is not on.
@@ -48,11 +49,12 @@ Next: Blink Dagger 18/21 {Start fights from 1,200 range.}, Hurricane Pike 29/32
 Late: Black King Bar 31/36 [Against Naga Siren, Pangolier and Primal Beast: don't skip it] {Spell immunity for the big fights.}, Daedalus 32/34
 Job: Win your lane, then use runes to help the side lanes. Your timing is Desolator around minute 17.
 Vs Pangolier (lane): Magic burst. buy Black King Bar.
-Vs Naga Siren: Illusions split your damage. buy Black King Bar.
+Vs Naga Siren: Illusions split your damage. Hit the real hero: it is the one their team protects.
 Vs Primal Beast: Starts fights and soaks your damage. buy Black King Bar.
 Vs Hoodwink: Magic burst. Stay spread so one combo can't catch two.
 Vs Treant Protector: Goes invisible. Ask your support for Dust and Sentries before fights.
-Watch Pangolier, Naga Siren, Primal Beast: buy Black King Bar.
+Watch Pangolier, Primal Beast: buy Black King Bar.
+Watch Naga Siren: Hit the real hero: it is the one their team protects.
 Watch Hoodwink: Stay spread so one combo can't catch two.
 Watch Treant Protector: Ask your support for Dust and Sentries before fights.
 If it goes wrong: No Desolator by 22 min? Stop rotating and farm mid and the near camps until it is done.
@@ -65,13 +67,14 @@ Boots: Phase Boots 10 {Armor and a burst of speed.}
 First: Blink Dagger 15/17 {Start fights from 1,200 range.}
 Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24 {-6 armor on your target.}, Black King Bar 29/31 [Against Naga Siren, Pangolier and Primal Beast: don't skip it] {Spell immunity for the big fights.}
 Job: Make their carry's lane hard, then start the team's fights as Mars. Your timing is Blink Dagger around minute 15.
-Vs Naga Siren (lane): Illusions split your damage. buy Black King Bar.
+Vs Naga Siren (lane): Illusions split your damage. Hit the real hero: it is the one their team protects.
 Vs Treant Protector (lane): Goes invisible. Ask your support for Dust and Sentries before fights.
 Vs Pangolier: Magic burst. buy Black King Bar.
 Vs Primal Beast: Starts fights and soaks your damage. buy Black King Bar.
 Vs Hoodwink: Magic burst. Stay spread so one combo can't catch two.
-Watch Naga Siren, Pangolier, Primal Beast: buy Black King Bar.
+Watch Naga Siren: Hit the real hero: it is the one their team protects.
 Watch Treant Protector: Ask your support for Dust and Sentries before fights.
+Watch Pangolier, Primal Beast: buy Black King Bar.
 Watch Hoodwink: Stay spread so one combo can't catch two.
 If it goes wrong: Lane lost? Stop contesting Naga Siren. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay behind your cores and soak damage.

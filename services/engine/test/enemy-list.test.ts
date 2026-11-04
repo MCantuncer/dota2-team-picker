@@ -32,6 +32,24 @@ describe("enemyList", () => {
     ]);
   });
 
+  it("names each hero's most dangerous spell, and none for a hero not in the list", () => {
+    expect(list().find((e) => e.heroId === 2)!.spell).toEqual({ key: "axe_berserkers_call", name: "Berserker's Call", line: "Forces you to hit him while his team arrives", kind: "other" });
+    const unknown = enemyList(null, [{ hero: hero(999, "New Hero", []), inLane: false, laneSure: false }]);
+    expect(unknown[0]?.spell).toBeUndefined();
+  });
+
+  it("only names answers that stop the hero's worst spell", () => {
+    const drow = hero(6, "Drow Ranger", ["Carry"]);
+    const items: ItemBuild = {
+      ...build(),
+      core: [
+        { itemId: 116, name: "Black King Bar", img: "/apps/dota2/images/dota_react/items/black_king_bar.png", minute: 25, phase: "late", draft: true, against: [6] },
+        { itemId: 112, name: "Assault Cuirass", img: "/apps/dota2/images/dota_react/items/assault.png", minute: 32, phase: "late", draft: true, against: [6] },
+      ],
+    };
+    expect(enemyList(items, [{ hero: drow, inLane: false, laneSure: true }])[0]?.answers).toEqual([112]);
+  });
+
   it("names the items that answer a hero, and a tip when none does", () => {
     const pa = list().find((e) => e.heroId === 44)!;
     expect(pa).toMatchObject({ threat: "Evasion: right clicks miss", answers: [145] });

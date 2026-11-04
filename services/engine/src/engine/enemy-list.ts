@@ -4,6 +4,7 @@
  * that answer it, or a tip when no item does.
  */
 import { DONT_FOCUS } from "./danger";
+import { KEY_SPELLS, type KeySpell } from "./data-key-spells";
 import { threatsOf, type ItemBuild, type Threat } from "./item-build";
 import type { HeroInfo } from "./types";
 
@@ -19,6 +20,20 @@ export interface EnemyNote {
   answers: number[];
   /** What to do instead, when no item answers the hero. */
   tip?: string;
+  /** The hero's spell that hurts you most, for the ability art and a short line (data-key-spells.ts). */
+  spell?: KeySpell;
+}
+
+/** Items that stop spells but not right clicks, and items that stop right clicks but not spells, by item art. */
+const SPELL_ONLY = ["black_king_bar", "lotus_orb", "pipe", "glimmer_cape"];
+const ATTACK_ONLY = ["ghost", "heavens_halberd", "crimson_guard", "assault", "shivas_guard", "blade_mail", "monkey_king_bar"];
+const itemKey = (img: string) => img.split("/").pop()?.replace(/\.png$/, "") ?? "";
+
+/** Whether an item can answer this kind of spell: Black King Bar does nothing against Marksmanship. */
+function fits(kind: KeySpell["kind"] | undefined, img: string): boolean {
+  if (kind === "attack") return !SPELL_ONLY.includes(itemKey(img));
+  if (kind === "magic") return !ATTACK_ONLY.includes(itemKey(img));
+  return true;
 }
 
 /** Answer items named per enemy; more would bury the first. */
@@ -55,12 +70,22 @@ export function enemyList(build: ItemBuild | null, enemies: EnemyFacts[]): Enemy
   return [...enemies]
     .sort((a, b) => Number(b.inLane) - Number(a.inLane))
     .map(({ hero, inLane, laneSure }) => {
-      const answers = [...new Set(path.filter((i) => i.against?.includes(hero.id)).map((i) => i.itemId))].slice(0, MAX_ANSWERS);
+      const spell = KEY_SPELLS[hero.name];
+      // An answer must stop the hero's worst spell, or the row would pair Marksmanship with Black King Bar.
+      const answers = [...new Set(path.filter((i) => i.against?.includes(hero.id) && fits(spell?.kind, i.img)).map((i) => i.itemId))].slice(0, MAX_ANSWERS);
       const threats = threatsOf(hero);
       const first = THREAT_ORDER.find((t) => threats.has(t));
       const tank = threats.has("disable") ? INITIATOR_TANK : TANK;
       const line = DONT_FOCUS.has(hero.name) ? tank : first ? THREAT_LINE[first] : NOTHING;
-      return { heroId: hero.id, inLane, laneSure, threat: line.threat, answers, ...(answers.length ? {} : { tip: line.tip }) };
+      return {
+        heroId: hero.id,
+        inLane,
+        laneSure,
+        threat: line.threat,
+        answers,
+        ...(answers.length ? {} : { tip: line.tip }),
+        ...(spell ? { spell } : {}),
+      };
     });
 }
 
