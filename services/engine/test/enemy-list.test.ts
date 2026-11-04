@@ -32,6 +32,12 @@ describe("enemyList", () => {
     ]);
   });
 
+  it("names each hero's most dangerous spell, and none for a hero not in the list", () => {
+    expect(list().find((e) => e.heroId === 2)!.spell).toEqual({ key: "axe_berserkers_call", name: "Berserker's Call", line: "Forces you to hit him while his team arrives" });
+    const unknown = enemyList(null, [{ hero: hero(999, "New Hero", []), inLane: false, laneSure: false }]);
+    expect(unknown[0]?.spell).toBeUndefined();
+  });
+
   it("names the items that answer a hero, and a tip when none does", () => {
     const pa = list().find((e) => e.heroId === 44)!;
     expect(pa).toMatchObject({ threat: "Evasion: right clicks miss", answers: [145] });

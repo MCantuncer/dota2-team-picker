@@ -4,6 +4,7 @@
  * that answer it, or a tip when no item does.
  */
 import { DONT_FOCUS } from "./danger";
+import { KEY_SPELLS, type KeySpell } from "./data-key-spells";
 import { threatsOf, type ItemBuild, type Threat } from "./item-build";
 import type { HeroInfo } from "./types";
 
@@ -19,6 +20,8 @@ export interface EnemyNote {
   answers: number[];
   /** What to do instead, when no item answers the hero. */
   tip?: string;
+  /** The hero's spell that hurts you most, for the ability art and a short line (data-key-spells.ts). */
+  spell?: KeySpell;
 }
 
 /** Answer items named per enemy; more would bury the first. */
@@ -60,7 +63,16 @@ export function enemyList(build: ItemBuild | null, enemies: EnemyFacts[]): Enemy
       const first = THREAT_ORDER.find((t) => threats.has(t));
       const tank = threats.has("disable") ? INITIATOR_TANK : TANK;
       const line = DONT_FOCUS.has(hero.name) ? tank : first ? THREAT_LINE[first] : NOTHING;
-      return { heroId: hero.id, inLane, laneSure, threat: line.threat, answers, ...(answers.length ? {} : { tip: line.tip }) };
+      const spell = KEY_SPELLS[hero.name];
+      return {
+        heroId: hero.id,
+        inLane,
+        laneSure,
+        threat: line.threat,
+        answers,
+        ...(answers.length ? {} : { tip: line.tip }),
+        ...(spell ? { spell } : {}),
+      };
     });
 }
 
