@@ -1082,6 +1082,11 @@ isOneToOne: false
               "match_id": number
             }[]
                            },
+"stack_player_stats":
+{ Args: { "team": string }; Returns: {
+              "display_name": string,"favorites": Json,"hero_stats": Json,"positions": (number)[],"rank_tier": number,"user_id": string
+            }[]
+                           },
 "start_party":
 { Args: { "team"?: string }; Returns: string
                            },
