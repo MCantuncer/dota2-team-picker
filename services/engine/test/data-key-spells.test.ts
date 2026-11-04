@@ -16,6 +16,7 @@ describe("KEY_SPELLS", () => {
       expect(s.line.length, hero).toBeLessThanOrEqual(56);
       expect(s.line, hero).not.toMatch(/[—–]/);
       expect(s.key, hero).toMatch(/^[a-z0-9_]+$/);
+      expect(s.name, hero).not.toMatch(/_/);
     }
   });
 });

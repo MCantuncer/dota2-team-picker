@@ -82,7 +82,7 @@ export const KEY_SPELLS: Record<string, KeySpell> = {
   "Earth Spirit": spell("earth_spirit_magnetize", "Magnetize", "Damage that spreads through your team"),
   Earthshaker: spell("earthshaker_echo_slam", "Echo Slam", "Hits harder the more of you stand together"),
   "Elder Titan": spell("elder_titan_natural_order", "Natural Order", "Takes your armor and magic resistance"),
-  "Ember Spirit": spell("ember_spirit_sleight_of_fist", "legion_commander_duel", "Sleight of Fist", "Hits everyone nearby and can't be caught"),
+  "Ember Spirit": spell("ember_spirit_sleight_of_fist", "Sleight of Fist", "Hits everyone nearby and can't be caught"),
   Enchantress: spell("enchantress_impetus", "Impetus", "Hits harder from far away"),
   Enigma: spell("enigma_black_hole", "Black Hole", "Holds your whole team, even through Black King Bar"),
   "Faceless Void": spell("faceless_void_chronosphere", "Chronosphere", "Freezes everyone inside but him"),
