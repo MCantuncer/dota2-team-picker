@@ -22,7 +22,7 @@ export type SpellKind = "attack" | "magic" | "other";
 
 /** Spells that work through right clicks. */
 const ATTACK = new Set([
-  "alchemist_chemical_rage", "chaos_knight_phantasm", "ember_spirit_sleight_of_fist", "clinkz_wind_walk", "drow_ranger_marksmanship",
+  "alchemist_chemical_rage", "chaos_knight_phantasm", "ember_spirit_sleight_of_fist", "legion_commander_duel", "clinkz_wind_walk", "drow_ranger_marksmanship",
   "gyrocopter_flak_cannon", "juggernaut_omni_slash", "life_stealer_rage", "lone_druid_spirit_bear",
   "lycan_shapeshift", "marci_unleash", "monkey_king_wukongs_command", "naga_siren_mirror_image",
   "night_stalker_darkness", "phantom_assassin_coup_de_grace", "phantom_lancer_juxtapose", "riki_backstab",
@@ -30,8 +30,11 @@ const ATTACK = new Set([
   "ursa_fury_swipes",
 ]);
 
-/** Spells neither Black King Bar nor armor answers: lives, saves, global presence. */
+/** Spells neither Black King Bar nor armor answers: lives, saves, global presence, and disables that go
+ * through Black King Bar. */
 const OTHER = new Set([
+  "enigma_black_hole", "faceless_void_chronosphere", "magnataur_reverse_polarity", "bane_fiends_grip",
+  "doom_bringer_doom", "beastmaster_primal_roar", "axe_berserkers_call",
   "abaddon_borrowed_time", "arc_warden_tempest_double", "bristleback_bristleback", "broodmother_spawn_spiderlings",
   "chen_hand_of_god", "dazzle_shallow_grave", "furion_teleportation", "mirana_invis", "nyx_assassin_vendetta",
   "oracle_false_promise", "slark_dark_pact", "spectre_haunt", "tinker_rearm", "weaver_time_lapse",
@@ -73,15 +76,15 @@ export const KEY_SPELLS: Record<string, KeySpell> = {
   Dazzle: spell("dazzle_shallow_grave", "Shallow Grave", "Their hero can't die for a few seconds"),
   "Death Prophet": spell("death_prophet_exorcism", "Exorcism", "Spirits tear down heroes and towers"),
   Disruptor: spell("disruptor_static_storm", "Static Storm", "Silences, and mutes items with his scepter"),
-  Doom: spell("doom_bringer_doom", "Doom", "No spells and no items for seconds"),
+  Doom: spell("doom_bringer_doom", "Doom", "No spells and no items, even through Black King Bar"),
   "Dragon Knight": spell("dragon_knight_dragon_tail", "Dragon Tail", "A stun from range in dragon form"),
   "Drow Ranger": spell("drow_ranger_marksmanship", "Marksmanship", "Hard hitting arrows from far away"),
   "Earth Spirit": spell("earth_spirit_magnetize", "Magnetize", "Damage that spreads through your team"),
   Earthshaker: spell("earthshaker_echo_slam", "Echo Slam", "Hits harder the more of you stand together"),
   "Elder Titan": spell("elder_titan_natural_order", "Natural Order", "Takes your armor and magic resistance"),
-  "Ember Spirit": spell("ember_spirit_sleight_of_fist", "Sleight of Fist", "Hits everyone nearby and can't be caught"),
+  "Ember Spirit": spell("ember_spirit_sleight_of_fist", "legion_commander_duel", "Sleight of Fist", "Hits everyone nearby and can't be caught"),
   Enchantress: spell("enchantress_impetus", "Impetus", "Hits harder from far away"),
-  Enigma: spell("enigma_black_hole", "Black Hole", "Holds your whole team, through Black King Bar"),
+  Enigma: spell("enigma_black_hole", "Black Hole", "Holds your whole team, even through Black King Bar"),
   "Faceless Void": spell("faceless_void_chronosphere", "Chronosphere", "Freezes everyone inside but him"),
   Grimstroke: spell("grimstroke_soul_chain", "Soulbind", "Chains two heroes: a stun hits both"),
   Gyrocopter: spell("gyrocopter_flak_cannon", "Flak Cannon", "Hits every hero near you"),

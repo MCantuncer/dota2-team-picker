@@ -28,14 +28,14 @@ First: Radiance 17/18 {Burns everything near you, and 25% evasion.}
 Next: Blink Dagger 21/22 {Start fights from 1,200 range.}, Desolator 23/30 {-6 armor on your target.}
 Late: Black King Bar 32/36 [Against Drow Ranger, Pudge and Legion Commander: don't skip it] {Spell immunity for the big fights. Duel still goes through it.}, Assault Cuirass 33/36 {Armor for you and your team against Drow Ranger and Legion Commander.}
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Radiance around minute 17.
-Vs Legion Commander (lane): Magic burst. buy Black King Bar.
+Vs Legion Commander (lane): Magic burst. Stay spread so one combo can't catch two.
 Vs Shadow Shaman (lane, guessed): Magic burst. Stay spread so one combo can't catch two.
 Vs Drow Ranger: Locks you down. Keep distance until their disable is used.
 Vs Pudge: Starts fights and soaks your damage. buy Black King Bar.
 Vs Crystal Maiden: Magic burst. Stay spread so one combo can't catch two.
-Watch Legion Commander, Pudge: buy Black King Bar.
-Watch Shadow Shaman, Crystal Maiden: Stay spread so one combo can't catch two.
+Watch Legion Commander, Shadow Shaman, Crystal Maiden: Stay spread so one combo can't catch two.
 Watch Drow Ranger: Keep distance until their disable is used.
+Watch Pudge: buy Black King Bar.
 If it goes wrong: No Radiance by 18 min? Don't show on the map without it. Farm the side Legion Commander is not on.
 
 ### Pos 2 Sniper
@@ -50,12 +50,12 @@ If needed: Black King Bar 32 [Against Drow Ranger, Pudge and Legion Commander] i
 Job: Win your lane, then use runes to help the side lanes. Your timing is Hurricane Pike around minute 26.
 Vs Pudge (lane): Starts fights and soaks your damage. buy Black King Bar.
 Vs Drow Ranger: Locks you down. Keep distance until their disable is used.
-Vs Legion Commander: Magic burst. buy Black King Bar.
+Vs Legion Commander: Magic burst. Stay spread so one combo can't catch two.
 Vs Shadow Shaman: Magic burst. Stay spread so one combo can't catch two.
 Vs Crystal Maiden: Magic burst. Stay spread so one combo can't catch two.
-Watch Pudge, Legion Commander: buy Black King Bar.
+Watch Pudge: buy Black King Bar.
 Watch Drow Ranger: Keep distance until their disable is used.
-Watch Shadow Shaman, Crystal Maiden: Stay spread so one combo can't catch two.
+Watch Legion Commander, Shadow Shaman, Crystal Maiden: Stay spread so one combo can't catch two.
 If it goes wrong: Lane lost? Stop contesting runes. Push the wave, farm the near jungle, and wait for your pos 4 to rotate.
 If it goes wrong: No Hurricane Pike by 31 min? Stop rotating and farm mid and the near camps until it is done.
 
@@ -72,11 +72,11 @@ Job: Make their carry's lane hard, then start the team's fights as Axe. Your tim
 Vs Drow Ranger (lane): Locks you down. Keep distance until their disable is used.
 Vs Crystal Maiden (lane, guessed): Magic burst. Stay spread so one combo can't catch two.
 Vs Pudge: Starts fights and soaks your damage. buy Black King Bar, Lotus Orb.
-Vs Legion Commander: Magic burst. buy Black King Bar, Lotus Orb.
+Vs Legion Commander: Magic burst. Stay spread so one combo can't catch two.
 Vs Shadow Shaman: Magic burst. Stay spread so one combo can't catch two.
 Watch Drow Ranger: Keep distance until their disable is used.
-Watch Crystal Maiden, Shadow Shaman: Stay spread so one combo can't catch two.
-Watch Pudge, Legion Commander: buy Black King Bar.
+Watch Crystal Maiden, Legion Commander, Shadow Shaman: Stay spread so one combo can't catch two.
+Watch Pudge: buy Black King Bar.
 If it goes wrong: No Blink Dagger by 21 min? Don't start fights without it. Stay behind your cores and soak damage.
 
 ### Pos 4 Ogre Magi
@@ -92,11 +92,11 @@ Job: Help win the off lane, then look for kills around the map with your mid. Yo
 Vs Drow Ranger (lane): Locks you down. buy Force Staff.
 Vs Crystal Maiden (lane, guessed): Magic burst. Stay spread so one combo can't catch two.
 Vs Pudge: Starts fights and soaks your damage. buy Glimmer Cape.
-Vs Legion Commander: Magic burst. buy Glimmer Cape, Force Staff.
+Vs Legion Commander: Magic burst. buy Force Staff.
 Vs Shadow Shaman: Magic burst. buy Glimmer Cape.
-Watch Drow Ranger: buy Force Staff.
+Watch Drow Ranger, Legion Commander: buy Force Staff.
 Watch Crystal Maiden: Stay spread so one combo can't catch two.
-Watch Pudge, Legion Commander, Shadow Shaman: buy Glimmer Cape.
+Watch Pudge, Shadow Shaman: buy Glimmer Cape.
 
 ### Pos 5 Lion
 Timings: all
@@ -107,11 +107,11 @@ First: Blink Dagger 18/20 {Start fights from 1,200 range.}
 Next: Glimmer Cape 26/29 [Against Pudge, Legion Commander and Shadow Shaman: don't skip it] {Invisibility and a magic damage barrier.}, Aether Lens 29/35
 Late: Force Staff 30/35 [Against Drow Ranger and Legion Commander: don't skip it] {Pushes you out of trouble.}, Aghanim's Scepter 36/44
 Job: Keep your carry alive in lane and place vision; save your key spell for their dive. Your timing is Blink Dagger around minute 18.
-Vs Legion Commander (lane): Magic burst. buy Glimmer Cape, Force Staff.
+Vs Legion Commander (lane): Magic burst. buy Force Staff.
 Vs Shadow Shaman (lane, guessed): Magic burst. buy Glimmer Cape.
 Vs Drow Ranger: Locks you down. buy Force Staff.
 Vs Pudge: Starts fights and soaks your damage. buy Glimmer Cape.
 Vs Crystal Maiden: Magic burst. Stay spread so one combo can't catch two.
-Watch Legion Commander, Shadow Shaman, Pudge: buy Glimmer Cape.
-Watch Drow Ranger: buy Force Staff.
+Watch Legion Commander, Drow Ranger: buy Force Staff.
+Watch Shadow Shaman, Pudge: buy Glimmer Cape.
 Watch Crystal Maiden: Stay spread so one combo can't catch two.
