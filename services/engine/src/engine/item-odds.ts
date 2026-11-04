@@ -16,8 +16,9 @@
  * The bar is not the talents' bar on purpose: talents start from STRATZ's overall odds (a prior centred on
  * real data), items have no such overall number, so the prior is centred on 0 and the bar asks for more games.
  */
-import { normalCdf } from "./matchup-talents";
-import type { MatchupGame } from "./matchup-talents";
+import { isCoreItem } from "./item-build";
+import { type MatchupGame, normalCdf } from "./matchup-talents";
+import type { ItemInfo } from "./types";
 
 /** A game with the item fields (rows cached before 2026-11-04 have none). */
 export type ItemGame = MatchupGame & Required<Pick<MatchupGame, "items" | "duration" | "lead">>;
@@ -31,14 +32,17 @@ export const WINDOW = 6;
 /** Networth lead (toward our hero's team) past which a game is ahead or behind. */
 export const EVEN_LEAD = 3000;
 /**
- * Width of the prior on log OR, centred on 0. Chosen with item-odds-sim.ts: at 1 with SHOW_CHANCE 0.95 a line
- * with no real difference shows in under 1% of 100 game questions, and a true 2x shows in about 17%. At 0.5
- * a true 2x showed in 4%, so nothing would ever show.
+ * Width of the prior on log OR, centred on 0: 95% of item effects between 0.37x and 2.7x the odds, which is
+ * what item choices at the same moment plausibly do. It is set by that, not by how often lines show; a wider
+ * prior shows more lines but prints odds about double the truth (scripts/item-odds-sim.ts).
  */
-export const PRIOR_SD = 1;
+export const PRIOR_SD = 0.5;
 /** The chance that the odds ratio is above 1 that a line needs to show. */
 export const SHOW_CHANCE = 0.95;
-/** Each of the four cells (A won, A lost, B won, B lost) needs this many games, and the question this many. */
+/**
+ * Each of the four cells (A won, A lost, B won, B lost) needs this many games, and the question this many,
+ * counting only the lead buckets the estimate uses.
+ */
 export const MIN_CELL = 5;
 export const MIN_GAMES = 30;
 
@@ -49,6 +53,11 @@ export function leadBucket(lead: number[], minute: number): Bucket | undefined {
   const v = lead[minute];
   if (v === undefined) return undefined;
   return v < -EVEN_LEAD ? "behind" : v > EVEN_LEAD ? "ahead" : "even";
+}
+
+/** Items a slot can be: core items (item-build.ts) except plain Boots of Speed, which every build passes through. */
+export function isBigItem(item: ItemInfo | undefined): boolean {
+  return isCoreItem(item) && item?.key !== "boots";
 }
 
 /** The game's big items, each once, at its first purchase: [item id, seconds]. */
@@ -83,23 +92,26 @@ function tally(games: ItemGame[], minute: number, arm: (g: ItemGame) => "a" | "b
 }
 
 export interface ItemOdds {
-  /** The adjusted odds ratio of B against A. */
+  /** The odds ratio of B against A, pulled toward 1 by the prior (P(OR > 1) is one sided: B better only). */
   oddsRatio: number;
   /** The chance that B's odds ratio is above 1. */
   chance: number;
-  /** Games in the comparison, and the smallest of the four cells. */
+  /** Games in the buckets used, and the smallest of the four cells there. */
   games: number;
   minCell: number;
   /** Whether the line shows: enough games and a sure enough ratio. */
   shows: boolean;
 }
 
-/** The buckets' log ORs combined by inverse variance, then pulled toward 0 by the prior. */
-export function combine(buckets: Arms[]): ItemOdds {
+/**
+ * The buckets' log ORs combined by inverse variance, then pulled toward 0 by the prior. A bucket with an empty
+ * cell has no finite log OR and is left out, games included; that can only pull the result toward 1.
+ */
+export function combine(all: Arms[]): ItemOdds {
+  const buckets = all.filter(({ a, b }) => a.wins && a.losses && b.wins && b.losses);
   let weight = 0;
   let sum = 0;
   for (const { a, b } of buckets) {
-    if (!a.wins || !a.losses || !b.wins || !b.losses) continue;
     const variance = 1 / a.wins + 1 / a.losses + 1 / b.wins + 1 / b.losses;
     sum += Math.log((b.wins / b.losses) / (a.wins / a.losses)) / variance;
     weight += 1 / variance;
@@ -204,12 +216,14 @@ export function placeboPassRates(questions: PlaceboQuestion[], runs: number, ran
         groups.set(b, [...(groups.get(b) ?? []), i]);
       });
       for (const idx of groups.values()) {
+        // Fisher-Yates over this bucket's game indexes; k and j stay inside idx, and its values inside won.
         for (let k = idx.length - 1; k > 0; k--) {
           const j = Math.floor(random() * (k + 1));
           const [x, y] = [idx[k]!, idx[j]!];
           [won[x], won[y]] = [won[y]!, won[x]!];
         }
       }
+      // won has one entry per game.
       return q.ask(q.games.map((g, i) => ({ ...g, won: won[i]! }))).shows;
     });
     return passed.length / questions.length;

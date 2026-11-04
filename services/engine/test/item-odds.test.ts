@@ -5,6 +5,7 @@ import {
   fallbackOdds,
   fallbackSide,
   hasItems,
+  isBigItem,
   type ItemGame,
   leadBucket,
   placeboPassRates,
@@ -12,8 +13,7 @@ import {
   slotItem,
   slotOdds,
 } from "../src/engine/item-odds";
-import { showRate, simulateGames } from "../src/engine/item-odds-sim";
-import { questionsFor } from "../scripts/item-odds-report";
+import { simulate, simulateGames } from "../scripts/item-odds-sim";
 
 // Ids 1 to 9 are big items, 50 is a component.
 const isBig = (id: number) => id < 10;
@@ -50,6 +50,16 @@ describe("leadBucket", () => {
   });
 });
 
+describe("isBigItem", () => {
+  it("leaves out plain boots and small items", () => {
+    const item = (key: string, cost: number) => ({ key, name: key, cost, img: "", components: [] });
+    expect(isBigItem(item("boots", 500))).toBe(false);
+    expect(isBigItem(item("power_treads", 1400))).toBe(true);
+    expect(isBigItem(item("radiance", 4700))).toBe(true);
+    expect(isBigItem(item("magic_wand", 450))).toBe(false);
+  });
+});
+
 describe("bigItems", () => {
   it("keeps each big item once, at its first purchase", () => {
     const g = game({ items: [[50, 100], [1, 600], [1, 700], [2, 900]] });
@@ -70,12 +80,12 @@ describe("slotItem", () => {
 });
 
 describe("combine", () => {
-  it("skips a bucket with an empty cell and counts every game", () => {
+  it("skips a bucket with an empty cell, games included", () => {
     const odds = combine([
       { a: cell(10, 10), b: cell(20, 10) },
       { a: cell(0, 5), b: cell(5, 5) },
     ]);
-    expect(odds.games).toBe(65);
+    expect(odds.games).toBe(50);
     expect(odds.minCell).toBe(10);
     expect(odds.oddsRatio).toBeGreaterThan(1);
     expect(odds.oddsRatio).toBeLessThan(2);
@@ -86,7 +96,7 @@ describe("combine", () => {
     expect(combine([]).shows).toBe(false);
   });
   it("shows a clear difference with enough games, not one with a thin cell", () => {
-    expect(combine([{ a: cell(10, 30), b: cell(30, 10) }]).shows).toBe(true);
+    expect(combine([{ a: cell(15, 45), b: cell(45, 15) }]).shows).toBe(true);
     expect(combine([{ a: cell(4, 30), b: cell(30, 10) }]).shows).toBe(false);
   });
 });
@@ -131,21 +141,27 @@ describe("fallbackSide", () => {
       ...Array.from({ length: 40 }, (_, i) => game({ won: i < 10, items: [[5, 19 * 60]], lead: ahead })),
     ];
     const odds = fallbackOdds(games, 5, late, isBig);
-    expect(odds.oddsRatio).toBeGreaterThan(3);
+    // 9x in the games, pulled toward 1 by the prior.
+    expect(odds.oddsRatio).toBeGreaterThan(2.5);
+    expect(odds.oddsRatio).toBeLessThan(9);
     expect(odds.shows).toBe(true);
   });
 });
 
 describe("the bar, simulated", () => {
+  const sample = { games: 400, inWindow: 0.6, bShare: 0.5 };
   it("rarely shows a line when the item makes no difference", () => {
-    expect(showRate(100, 1, 1000)).toBeLessThan(0.02);
+    expect(simulate(sample, 1, 1000).shows).toBeLessThan(0.03);
   });
   it("shows more lines for bigger samples and bigger differences", () => {
-    expect(showRate(100, 3, 500)).toBeGreaterThan(showRate(100, 1.5, 500));
-    expect(showRate(100, 3, 500)).toBeGreaterThan(showRate(50, 3, 500));
+    expect(simulate(sample, 3, 300).shows).toBeGreaterThan(simulate(sample, 1.5, 300).shows);
+    expect(simulate(sample, 3, 300).shows).toBeGreaterThan(simulate({ ...sample, games: 200 }, 3, 300).shows);
+  });
+  it("shows almost nothing for one draft's 100 games", () => {
+    expect(simulate({ ...sample, games: 100 }, 2, 500).shows).toBeLessThan(0.02);
   });
   it("makes the skewed samples the plan expects: wins mostly ahead", () => {
-    const games = simulateGames(1000, 1, seeded(3));
+    const games = simulateGames({ games: 1000, inWindow: 1, bShare: 0.5 }, 1, seeded(3));
     const ahead = (won: boolean) => games.filter((g) => g.won === won && leadBucket(g.lead, 15) === "ahead").length;
     expect(ahead(true) / 500).toBeGreaterThan(0.45);
     expect(ahead(false) / 500).toBeLessThan(0.25);
@@ -156,30 +172,15 @@ describe("placeboPassRates", () => {
   it("keeps shuffled questions near the no-difference rate", () => {
     const random = seeded(7);
     const questions = Array.from({ length: 20 }, () => ({
-      games: simulateGames(100, 3, random),
+      games: simulateGames({ games: 400, inWindow: 0.6, bShare: 0.5 }, 3, random),
       minute: 15,
       ask: (g: ItemGame[]) => slotOdds(g, { slot: 1, minute: 15, a: 1, b: 2 }, () => true),
     }));
     const rates = placeboPassRates(questions, 20, seeded(9));
     expect(rates).toHaveLength(20);
-    expect(Math.max(...rates)).toBeLessThanOrEqual(0.15);
+    expect(Math.max(...rates)).toBeLessThanOrEqual(0.2);
   });
   it("is 0 with no questions", () => {
     expect(placeboPassRates([], 3, seeded(1))).toEqual([0, 0, 0]);
-  });
-});
-
-describe("questionsFor", () => {
-  it("asks each slot against its most bought other item, and the first late item's fallback", () => {
-    const games = [
-      game({ items: [[1, 600], [3, 16 * 60]] }),
-      game({ items: [[2, 600], [3, 17 * 60]] }),
-      game({ items: [[2, 650], [4, 16 * 60]] }),
-    ];
-    const qs = questionsFor(games, [[3, 17, 17], [1, 10, 14]], isBig);
-    expect(qs.map((q) => [q.kind, q.minute])).toEqual([["slot", 7], ["slot", 14], ["fallback", 14]]);
-  });
-  it("asks nothing for a build with no games", () => {
-    expect(questionsFor([], [[1, 10, 14]], isBig).map((q) => q.kind)).toEqual(["fallback"]);
   });
 });

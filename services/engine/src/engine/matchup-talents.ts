@@ -27,7 +27,7 @@ export interface MatchupGame {
   items?: [number, number][];
   /** Game length in seconds. */
   duration?: number;
-  /** Networth lead of our hero's team per minute, negative when behind. */
+  /** Networth lead of our hero's team per minute, negative when behind; empty when STRATZ has none. */
   lead?: number[];
 }
 
