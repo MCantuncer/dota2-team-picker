@@ -8,7 +8,7 @@
  * STRATZ lets a token be used from 2 addresses per 15 minutes, and the hero data refresh uses the same
  * token. So while the refresh runs, for 15 minutes after, and after a 429 any lookup got, lookups leave
  * STRATZ alone and answer "stratz-busy" with a time to ask again (the database decides when, see
- * 20261104010000_stratz_refresh.sql).
+ * 20261104045500_stratz_refresh.sql).
  */
 import {
   guideListQuery,
