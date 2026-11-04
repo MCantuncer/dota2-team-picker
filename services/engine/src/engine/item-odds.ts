@@ -56,9 +56,16 @@ export function leadBucket(lead: number[], minute: number): Bucket | undefined {
   return v < -EVEN_LEAD ? "behind" : v > EVEN_LEAD ? "ahead" : "even";
 }
 
-/** Items a slot can be: core items (item-build.ts) except plain Boots of Speed, which every build passes through. */
-export function isBigItem(item: ItemInfo | undefined): boolean {
-  return isCoreItem(item) && item?.key !== "boots";
+/**
+ * Which item ids a slot can be: core items (item-build.ts) except plain Boots of Speed, which every build
+ * passes through, and parts of other items (Sacred Relic before Radiance), so a build path doesn't take a slot.
+ */
+export function bigItemCheck(items: Record<string, ItemInfo>): (id: number) => boolean {
+  const parts = new Set(Object.values(items).flatMap((i) => i.components));
+  return (id) => {
+    const item = items[String(id)];
+    return isCoreItem(item) && item?.key !== "boots" && !parts.has(id);
+  };
 }
 
 /** The game's big items, each once, at its first purchase: [item id, seconds]. */

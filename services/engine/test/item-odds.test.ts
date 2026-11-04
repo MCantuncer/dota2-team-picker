@@ -5,7 +5,7 @@ import {
   fallbackOdds,
   fallbackSide,
   hasItems,
-  isBigItem,
+  bigItemCheck,
   type ItemGame,
   leadBucket,
   placeboPassRates,
@@ -50,13 +50,21 @@ describe("leadBucket", () => {
   });
 });
 
-describe("isBigItem", () => {
-  it("leaves out plain boots and small items", () => {
-    const item = (key: string, cost: number) => ({ key, name: key, cost, img: "", components: [] });
-    expect(isBigItem(item("boots", 500))).toBe(false);
-    expect(isBigItem(item("power_treads", 1400))).toBe(true);
-    expect(isBigItem(item("radiance", 4700))).toBe(true);
-    expect(isBigItem(item("magic_wand", 450))).toBe(false);
+describe("bigItemCheck", () => {
+  const item = (key: string, cost: number, components: number[] = []) => ({ key, name: key, cost, img: "", components });
+  const isBig = bigItemCheck({
+    "29": item("boots", 500),
+    "63": item("power_treads", 1400, [29]),
+    "108": item("radiance", 4700, [109]),
+    "109": item("relic", 3750),
+    "36": item("magic_wand", 450),
+  });
+  it("leaves out plain boots, small items and parts of other items", () => {
+    expect([29, 63, 108, 109, 36].map(isBig)).toEqual([false, true, true, false, false]);
+  });
+  it("gives a Radiance game one slot, not two", () => {
+    const g = game({ items: [[109, 600], [108, 900]] });
+    expect(bigItems(g, isBig)).toEqual([[108, 900]]);
   });
 });
 

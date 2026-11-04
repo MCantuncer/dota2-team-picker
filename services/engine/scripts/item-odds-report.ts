@@ -6,17 +6,20 @@
  *
  * For each cached hero and position with at least 5 enemies, it draws random 5 enemy drafts, pools their
  * games as a card would (each match once, at most 2 wins and 2 losses per account), and asks the card's
- * questions (item-questions.ts). It prints the sample sizes, the show rate per question kind, the real lead
+ * questions (item-questions.ts) against the build the Story would show (the top rank group). It prints the sample sizes, the show rate per question kind, the real lead
  * bucket shares by result (to check the simulation's guess), the Phase Boots against Power Treads check, and
  * the placebo gate: item numbers may ship only if the real show rate beats the 95th percentile of shuffled
  * runs and under 20% of shown lines would be noise. Reads the cache only; makes no STRATZ calls.
  */
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
-import { hasItems, type ItemGame, isBigItem, leadBucket, placeboPassRates, seeded } from "../src/engine/item-odds";
+import { keyItem } from "../src/engine/game-plan";
+import { itemBuild } from "../src/engine/item-build";
+import { bigItemCheck, hasItems, type ItemGame, leadBucket, placeboPassRates, seeded } from "../src/engine/item-odds";
 import { fallbackQuestion, type ItemQuestion, slotQuestions } from "../src/engine/item-questions";
 import { type MatchupGame, poolGames } from "../src/engine/matchup-talents";
-import type { Snapshot } from "../src/engine/types";
+import { Engine } from "../src/engine/score";
+import type { Position, Snapshot } from "../src/engine/types";
 import { simulate } from "./item-odds-sim";
 
 const DRAFTS_PER_HERO = 20;
@@ -31,18 +34,22 @@ function env(name: string): string {
   return value;
 }
 
-/** Up to `count` random sets of `size` distinct entries, drawn with `random`. */
-export function drawSets<T>(xs: T[], size: number, count: number, random: () => number): T[][] {
+/** Up to `count` different random sets of `size` distinct numbers, drawn with `random`, each sorted. */
+export function drawSets(xs: number[], size: number, count: number, random: () => number): number[][] {
   if (xs.length < size) return [];
-  return Array.from({ length: count }, () => {
+  const sets = new Map<string, number[]>();
+  // Enough tries to find every different set when there are only a few (6 enemies give 6).
+  for (let tries = 0; tries < count * 20 && sets.size < count; tries++) {
     const pool = [...xs];
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(random() * (i + 1));
       // i and j are inside pool.
       [pool[i], pool[j]] = [pool[j]!, pool[i]!];
     }
-    return pool.slice(0, size);
-  });
+    const set = pool.slice(0, size).sort((x, y) => x - y);
+    sets.set(set.join(), set);
+  }
+  return [...sets.values()];
 }
 
 interface Row {
@@ -75,14 +82,23 @@ async function readCache(): Promise<Row[]> {
 async function main() {
   // The snapshot file is written by pull-data in the Snapshot shape.
   const snapshot = JSON.parse(readFileSync("data/snapshot.json", "utf8")) as Snapshot;
-  const { items, itemTimings } = snapshot;
-  if (!items || !itemTimings) throw new Error("data/snapshot.json has no items or item timings; run npm run pull-data");
-  const isBig = (id: number) => isBigItem(items[String(id)]);
+  const { items } = snapshot;
+  if (!items || !snapshot.itemTimings) throw new Error("data/snapshot.json has no items or item timings; run npm run pull-data");
+  const engine = new Engine(snapshot);
+  const isBig = bigItemCheck(items);
   const cost = (id: number) => items[String(id)]?.cost;
-  const keyOf = (key: string) => Number(Object.entries(items).find(([, i]) => i.key === key)?.[0]);
+  const idOf = (key: string) => {
+    const id = Object.entries(items).find(([, i]) => i.key === key)?.[0];
+    if (id === undefined) throw new Error(`No item ${key} in the snapshot`);
+    return Number(id);
+  };
 
   const all = await readCache();
-  const version = Math.max(0, ...all.map((r) => r.game_version));
+  const versions = new Map<number, number>();
+  for (const r of all) versions.set(r.game_version, (versions.get(r.game_version) ?? 0) + 1);
+  const version = Math.max(0, ...versions.keys());
+  console.log(`cache rows by version: ${[...versions].sort((x, y) => x[0] - y[0]).map(([v, n]) => `${v}: ${n}`).join(", ")}`);
+
   const byHero = new Map<string, Map<number, ItemGame[]>>();
   for (const r of all.filter((r) => r.game_version === version)) {
     // Written only by save_matchup_guides with games from toMatchupGame.
@@ -94,59 +110,63 @@ async function main() {
   }
 
   const random = seeded(1);
-  const asked: { q: ItemQuestion; games: ItemGame[] }[] = [];
+  /** Every draft's questions, and one draft per hero and position for the placebo (drafts overlap). */
+  const asked: { q: ItemQuestion; games: ItemGame[]; first: boolean }[] = [];
   const sizes: number[] = [];
   for (const [k, enemies] of byHero) {
-    const [hero, position] = k.split(":");
-    const timings = itemTimings[hero ?? ""]?.[position ?? ""];
-    const build = timings?.["4"] ?? timings?.all;
-    for (const set of drawSets([...enemies.keys()], ENEMIES, DRAFTS_PER_HERO, random)) {
+    const [hero, position] = k.split(":").map(Number);
+    if (hero === undefined || position === undefined || position < 1 || position > 5) continue;
+    drawSets([...enemies.keys()], ENEMIES, DRAFTS_PER_HERO, random).forEach((set, i) => {
       // Pooled as a card pools them.
       const games = poolGames(set.flatMap((e) => enemies.get(e) ?? []));
       sizes.push(games.length);
-      const fallback = fallbackQuestion(build, isBig);
-      for (const q of [...slotQuestions(games, isBig, cost), ...(fallback ? [fallback] : [])]) asked.push({ q, games });
-    }
+      // Bracket 8 is the top rank group, like the high-rank games the lookup returns; position checked above.
+      const build = itemBuild(snapshot, hero, position as Position, set, 8);
+      const fallback = fallbackQuestion(keyItem(engine, build, hero, position as Position), isBig);
+      for (const q of [...slotQuestions(games, isBig, cost), ...(fallback ? [fallback] : [])]) {
+        asked.push({ q, games, first: i === 0 });
+      }
+    });
   }
 
   const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
+  const share = (n: number, of: number) => pct(of ? n / of : 0);
   const sorted = [...sizes].sort((x, y) => x - y);
   const at = (p: number) => sorted[Math.floor((sorted.length - 1) * p)] ?? 0;
   console.log(`version ${version}: ${byHero.size} heroes and positions, ${sizes.length} drafts`);
   console.log(`games per draft: 10th ${at(0.1)}, median ${at(0.5)}, 90th ${at(0.9)}`);
 
-  const results = asked.map(({ q, games }) => ({ q, odds: q.ask(games) }));
+  const results = asked.map((a) => ({ ...a, odds: a.q.ask(a.games) }));
   for (const kind of ["slot", "fallback"] as const) {
     const mine = results.filter((r) => r.q.kind === kind);
     const shown = mine.filter((r) => r.odds.shows);
-    const printed = shown.length ? Math.exp(shown.reduce((s, r) => s + Math.log(r.odds.oddsRatio), 0) / shown.length) : NaN;
-    console.log(`${kind}: ${mine.length} questions, ${pct(mine.length ? shown.length / mine.length : 0)} show` +
+    const printed = Math.exp(shown.reduce((s, r) => s + Math.log(r.odds.oddsRatio), 0) / (shown.length || 1));
+    console.log(`${kind}: ${mine.length} questions, ${share(shown.length, mine.length)} show` +
       (shown.length ? `, shown lines print ${printed.toFixed(1)}x on average` : ""));
   }
 
-  const games = [...byHero.values()].flatMap((m) => [...m.values()].flat());
+  // Each match once: a game against two cached enemies came back for both.
+  const games = [...new Map([...byHero.values()].flatMap((m) => [...m.values()].flat()).map((g) => [g.match, g])).values()];
   for (const minute of [10, 15, 20]) {
-    const share = (won: boolean) => {
+    const shares = (won: boolean) => {
       const mine = games.filter((g) => g.won === won && leadBucket(g.lead, minute));
-      const n = (b: string) => mine.filter((g) => leadBucket(g.lead, minute) === b).length / (mine.length || 1);
-      return `ahead ${pct(n("ahead"))}, even ${pct(n("even"))}, behind ${pct(n("behind"))}`;
+      const n = (b: string) => share(mine.filter((g) => leadBucket(g.lead, minute) === b).length, mine.length);
+      return `ahead ${n("ahead")}, even ${n("even")}, behind ${n("behind")}`;
     };
-    console.log(`minute ${minute}: wins ${share(true)}; losses ${share(false)}`);
+    console.log(`minute ${minute}: wins ${shares(true)}; losses ${shares(false)}`);
   }
 
-  const phase = keyOf("phase_boots");
-  const treads = keyOf("power_treads");
-  const boots = results.filter((r) => r.q.kind === "slot" && [phase, treads].includes(r.q.a) && [phase, treads].includes(r.q.b));
-  console.log(`Phase Boots against Power Treads: ${boots.length} questions, ${pct(boots.length ? boots.filter((r) => r.odds.shows).length / boots.length : 0)} show`);
+  const boots = new Set([idOf("phase_boots"), idOf("power_treads")]);
+  const bootsQs = results.filter((r) => r.q.kind === "slot" && boots.has(r.q.a) && boots.has(r.q.b));
+  console.log(`Phase Boots against Power Treads: ${bootsQs.length} questions, ${share(bootsQs.filter((r) => r.odds.shows).length, bootsQs.length)} show`);
 
-  const slots = asked.filter(({ q }) => q.kind === "slot");
-  const real = slots.length ? slots.filter(({ q, games }) => q.ask(games).shows).length / slots.length : 0;
-  const shuffled = placeboPassRates(slots.map(({ q, games }) => ({ games, minute: q.minute, ask: q.ask })), PLACEBO_RUNS, seeded(2));
-  const sortedRuns = [...shuffled].sort((x, y) => x - y);
-  const p95 = sortedRuns[Math.floor(PLACEBO_RUNS * 0.95)] ?? 0;
-  const noise = shuffled.reduce((s, x) => s + x, 0) / PLACEBO_RUNS / (real || 1);
+  const gate = results.filter((r) => r.q.kind === "slot" && r.first);
+  const real = gate.length ? gate.filter((r) => r.odds.shows).length / gate.length : 0;
+  const shuffled = placeboPassRates(gate.map((r) => ({ games: r.games, minute: r.q.minute, ask: r.q.ask })), PLACEBO_RUNS, seeded(2));
+  const p95 = [...shuffled].sort((x, y) => x - y)[Math.floor(PLACEBO_RUNS * 0.95)] ?? 0;
+  const noise = real ? shuffled.reduce((s, x) => s + x, 0) / PLACEBO_RUNS / real : 1;
   const passes = real > p95 && noise < MAX_NOISE;
-  console.log(`placebo (slots): real ${pct(real)}, shuffled 95th percentile ${pct(p95)}, noise share ${pct(noise)}: ${passes ? "passes" : "fails"}`);
+  console.log(`placebo (one draft per hero, slots): real ${pct(real)}, shuffled 95th percentile ${pct(p95)}, noise share ${pct(noise)}: ${passes ? "passes" : "fails"}`);
 
   console.log("simulated, 100 games a draft, B in half: true 1x, 1.5x, 2x, 3x show");
   console.log(`  ${[1, 1.5, 2, 3].map((or) => pct(simulate({ games: 100, inWindow: 0.6, bShare: 0.5 }, or, 1000).shows)).join(", ")}`);

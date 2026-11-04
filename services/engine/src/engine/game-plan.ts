@@ -163,7 +163,7 @@ const KEY_ITEM_MIN_COST = 2000;
  * buys one (Tidehunter, Magnus, Lion start fights with it, whatever they buy first), else the first
  * big item of the build. A carry's timing stays its farming item (Wraith King's Radiance).
  */
-function keyItem(engine: Engine, build: ItemBuild | null, heroId: number | undefined, position: Position) {
+export function keyItem(engine: Engine, build: ItemBuild | null, heroId: number | undefined, position: Position) {
   const isBlink = (i: BuildItem) => engine.data.items?.[i.itemId]?.key === "blink";
   const startsFights = position !== 1 && heroId !== undefined && traitsOf(engine.hero(heroId)).has("initiation");
   const blink = startsFights ? build?.core.find(isBlink) : undefined;

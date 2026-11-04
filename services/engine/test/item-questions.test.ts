@@ -34,19 +34,27 @@ describe("slotQuestions", () => {
 });
 
 describe("fallbackQuestion", () => {
-  it("asks about the first big item with a late minute", () => {
-    const build = { games: 100, items: [[50, 5, 9], [1, 10, 10], [3, 17, 21]] as [number, number, number][] };
-    const q = fallbackQuestion(build, isBig);
-    expect([q?.kind, q?.a, q?.minute]).toEqual(["fallback", 3, 21]);
+  it("asks about the key item once it is late", () => {
+    const q = fallbackQuestion({ itemId: 3, lateMinute: 20.6 }, isBig);
+    expect([q?.kind, q?.kind === "fallback" ? q.key : 0, q?.minute]).toEqual(["fallback", 3, 21]);
+  });
+  it("asks nothing without a key item, its late minute, or a big key item", () => {
     expect(fallbackQuestion(undefined, isBig)).toBeUndefined();
+    expect(fallbackQuestion({ itemId: 3 }, isBig)).toBeUndefined();
+    expect(fallbackQuestion({ itemId: 50, lateMinute: 9 }, isBig)).toBeUndefined();
   });
 });
 
 describe("drawSets", () => {
-  it("draws sets of distinct entries, or none when too few", () => {
+  it("draws different sets of distinct entries, or none when too few", () => {
     const sets = drawSets([1, 2, 3, 4, 5, 6, 7], 5, 10, seeded(1));
     expect(sets).toHaveLength(10);
     expect(sets.every((s) => new Set(s).size === 5)).toBe(true);
+    expect(new Set(sets.map((s) => s.join())).size).toBe(10);
     expect(drawSets([1, 2], 5, 3, seeded(1))).toEqual([]);
+  });
+  it("stops at the number of different sets there are", () => {
+    expect(drawSets([1, 2, 3, 4, 5], 5, 20, seeded(1))).toHaveLength(1);
+    expect(drawSets([1, 2, 3, 4, 5, 6], 5, 20, seeded(1))).toHaveLength(6);
   });
 });
