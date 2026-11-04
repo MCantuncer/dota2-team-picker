@@ -30,6 +30,8 @@ export function hasItems(g: MatchupGame): g is ItemGame {
 
 /** The choice window after minute m, in minutes. */
 export const WINDOW = 6;
+/** A part built into a bigger item within this many minutes is a step on the way, not an item of its own. */
+export const PART_WINDOW = 10;
 /** Networth lead (toward our hero's team) past which a game is ahead or behind. */
 export const EVEN_LEAD = 3000;
 /**
@@ -77,13 +79,13 @@ export function bigItemCheck(items: Record<string, ItemInfo>): IsBig {
 
 /**
  * The game's big items, each once, at its first purchase: [item id, seconds]. An item the same game builds
- * into a bigger one within WINDOW minutes is a step on the way (Relic, then Radiance at 15) and left out;
+ * into a bigger one within PART_WINDOW minutes is a step on the way (Relic, then Radiance at 15) and left out;
  * one kept longer is an item in its own right (Blink at 12, Overwhelming Blink at 35).
  */
 export function bigItems(g: ItemGame, isBig: IsBig): [number, number][] {
   const seen = new Set<number>();
   const partSoon = (id: number, at: number) =>
-    g.items.some(([other, t]) => t >= at && t < at + WINDOW * 60 && (isBig.componentsOf?.(other) ?? []).includes(id));
+    g.items.some(([other, t]) => t >= at && t < at + PART_WINDOW * 60 && (isBig.componentsOf?.(other) ?? []).includes(id));
   return g.items.filter(([id, at]) => {
     if (!isBig(id) || seen.has(id) || partSoon(id, at)) return false;
     seen.add(id);
