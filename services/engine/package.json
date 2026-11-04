@@ -9,6 +9,7 @@
     "pull-data": "tsx src/data/pull.ts",
     "upload-data": "tsx src/data/upload.ts",
     "collect-matches": "tsx src/data/collect.ts",
+    "mark-refresh": "tsx src/data/mark-refresh.ts",
     "suggest": "tsx scripts/suggest.ts",
     "plan": "tsx scripts/plan.ts",
     "backtest": "tsx scripts/backtest.ts",

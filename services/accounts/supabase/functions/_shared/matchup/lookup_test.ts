@@ -1,6 +1,7 @@
-import { assertEquals } from "jsr:@std/assert@1";
+import { assertEquals, assertRejects } from "jsr:@std/assert@1";
 import { type CachedSlice, type LookupDeps, lookupMatchups, parseInput } from "./lookup.ts";
 import type { MatchupGame, Slice } from "./queries.ts";
+import { StratzBusy } from "./stratz.ts";
 
 const NOW = Date.parse("2026-11-03T00:00:00Z");
 const DAY = 24 * 60 * 60 * 1000;
@@ -52,6 +53,8 @@ function deps(over: Partial<LookupDeps> = {}, cache: CachedSlice[] = []) {
   const calls: string[] = [];
   const saved: Slice[] = [];
   const d: LookupDeps = {
+    freeAt: () => (calls.push("free?"), Promise.resolve(null)),
+    noteBusy: (until) => (calls.push(`busy until ${until - NOW}`), Promise.resolve()),
     readCache: () => Promise.resolve(cache),
     takeLookup: () => (calls.push("lookup"), Promise.resolve(true)),
     claim: (slices) => (calls.push(`claim ${slices.length}`), Promise.resolve(slices)),
@@ -70,7 +73,7 @@ function deps(over: Partial<LookupDeps> = {}, cache: CachedSlice[] = []) {
 Deno.test("fetches what the cache lacks, saves it and returns every slice", async () => {
   const { d, calls, saved } = deps();
   const result = await lookupMatchups(d, INPUT);
-  assertEquals(calls, ["lookup", "claim 2", "stratz 3", "post", "post"]);
+  assertEquals(calls, ["free?", "lookup", "claim 2", "stratz 3", "post", "post"]);
   assertEquals(saved.length, 2);
   assertEquals(result.pending, []);
   assertEquals(result.reasons, []);
@@ -149,4 +152,64 @@ Deno.test("checks the request", () => {
   assertEquals(typeof parseInput({ ...INPUT, ours: [{ hero: 18, position: 1 }, { hero: 2, position: 1 }] }), "string");
   assertEquals(typeof parseInput({ ...INPUT, version: "184" }), "string");
   assertEquals(typeof parseInput({ ...INPUT, theirs: [1, 2, 3, 4, 5, 6] }), "string");
+});
+
+const iso = (ms: number) => new Date(ms).toISOString();
+const MIN = 60 * 1000;
+const fresh = INPUT.theirs.map((enemy) => ({
+  hero: 18,
+  position: 1,
+  enemy,
+  games: [game(enemy, true)],
+  fetchedAt: iso(NOW - DAY),
+}));
+
+Deno.test("while STRATZ is held back nothing is taken or asked, and the answer says when to ask again", async () => {
+  const { d, calls } = deps({ freeAt: () => Promise.resolve(iso(NOW + 15 * MIN)) });
+  const out = await lookupMatchups(d, INPUT);
+  assertEquals(calls, []);
+  assertEquals(out.pending.length, 2);
+  assertEquals(out.reasons, ["stratz-busy"]);
+  assertEquals(out.retryAt, iso(NOW + 15 * MIN));
+  assertEquals(out.retryIn, 15 * 60);
+});
+
+Deno.test("a fresh cache answers without asking whether STRATZ is free", async () => {
+  const { d, calls } = deps({ freeAt: () => Promise.reject(new Error("not asked")) }, fresh);
+  const out = await lookupMatchups(d, INPUT);
+  assertEquals(calls, []);
+  assertEquals(out.reasons, []);
+  assertEquals(out.retryAt, undefined);
+  assertEquals(out.slices.length, 2);
+});
+
+Deno.test("an error reading when STRATZ is free fails the lookup before anything is taken", async () => {
+  const { d, calls } = deps({ freeAt: () => Promise.reject(new Error("db down")) });
+  await assertRejects(() => lookupMatchups(d, INPUT), Error, "db down");
+  assertEquals(calls, []);
+});
+
+Deno.test("a 429 answers stratz-busy with its wait and holds every lookup back", async () => {
+  const { d, calls } = deps({ post: () => Promise.reject(new StratzBusy(2 * MIN)) });
+  const out = await lookupMatchups(d, INPUT);
+  assertEquals(out.reasons, ["stratz-busy"]);
+  assertEquals(out.retryAt, iso(NOW + 2 * MIN));
+  assertEquals(out.pending.length, 2);
+  assertEquals(calls.at(-1), `busy until ${2 * MIN}`);
+});
+
+Deno.test("a 429 on a match query stops the other queries and saves nothing partial", async () => {
+  let matchQueries = 0;
+  const { d, saved } = deps({
+    post: <T>(query: string) => {
+      if (!query.includes("match(id:")) return Promise.resolve(stratzAnswer(query) as T);
+      matchQueries++;
+      return Promise.reject(new StratzBusy(MIN));
+    },
+  });
+  const out = await lookupMatchups(d, INPUT);
+  assertEquals(out.reasons, ["stratz-busy"]);
+  assertEquals(out.retryAt, iso(NOW + MIN));
+  assertEquals(saved, []);
+  assertEquals(matchQueries, 1);
 });

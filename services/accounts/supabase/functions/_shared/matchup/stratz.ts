@@ -6,7 +6,23 @@
 
 const URL = "https://api.stratz.com/graphql";
 
-/** Posts a query and returns its `data`. Throws on a timeout, an HTTP error or a GraphQL error. */
+/** How long to wait after a refusal that gives no Retry-After: STRATZ counts a token's addresses over 15 minutes. */
+export const BUSY_WAIT_MS = 15 * 60 * 1000;
+
+/** The longest wait taken from Retry-After. */
+const MAX_WAIT_MS = 60 * 60 * 1000;
+
+/** STRATZ refused the call (HTTP 429): too many calls, or the token was used from too many addresses. */
+export class StratzBusy extends Error {
+  constructor(readonly retryAfterMs: number) {
+    super(`STRATZ is busy, try again in ${Math.round(retryAfterMs / 1000)} s`);
+  }
+}
+
+/**
+ * Posts a query and returns its `data`. Throws StratzBusy on a 429, with the wait from Retry-After when
+ * STRATZ gives one, and an Error on a timeout, any other HTTP error or a GraphQL error.
+ */
 export async function postStratz<T>(
   token: string,
   query: string,
@@ -24,6 +40,12 @@ export async function postStratz<T>(
     body: JSON.stringify({ query }),
     signal: AbortSignal.timeout(timeoutMs),
   });
+  if (res.status === 429) {
+    const seconds = Number(res.headers.get("retry-after"));
+    throw new StratzBusy(
+      Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds * 1000, MAX_WAIT_MS) : BUSY_WAIT_MS,
+    );
+  }
   // The shape is checked right below; anything else is an error.
   const body = (await res.json().catch(() => ({}))) as { data?: T | null; errors?: { message?: string }[] };
   if (!res.ok || body.errors?.length || !body.data) {
