@@ -23,6 +23,12 @@ export interface MatchupGame {
   version: number;
   /** Skill points in order: ability, talent or attribute bonus ids. */
   points: number[];
+  /** Purchases in order, [item id, seconds]; missing on rows cached before 2026-11-04 (see item-odds.ts). */
+  items?: [number, number][];
+  /** Game length in seconds. */
+  duration?: number;
+  /** Networth lead of our hero's team per minute, negative when behind. */
+  lead?: number[];
 }
 
 /** How sure the comparison is that the other talent is better against these enemies. */
