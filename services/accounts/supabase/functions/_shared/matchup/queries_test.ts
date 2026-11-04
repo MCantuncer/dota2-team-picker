@@ -86,16 +86,24 @@ Deno.test("keeps H's game with points in time order", () => {
 Deno.test("turns the networth lead toward H when H is on Dire, and keeps a game without leads", () => {
   assertEquals(toMatchupGame(match({}, { isRadiant: false }), SVEN_VS_LION, true)?.lead, [0, -100, 50]);
   assertEquals(toMatchupGame(match({ radiantNetworthLeads: null }), SVEN_VS_LION, true)?.lead, []);
+  assertEquals(toMatchupGame(match({ radiantNetworthLeads: [0, null, 5] }), SVEN_VS_LION, true)?.lead, [], "a gap");
+  assertEquals(toMatchupGame(match({ radiantNetworthLeads: [0, 1.5] }), SVEN_VS_LION, true)?.lead, [], "not whole");
 });
 
-Deno.test("drops a game without H's purchases, a purchase without its time, or no length", () => {
+Deno.test("keeps a game with a purchase STRATZ can't name, without that purchase", () => {
+  const purchases = [{ itemId: 0, time: 100 }, { itemId: null, time: 200 }, { itemId: 1 }, { itemId: 2, time: 300 }];
+  const game = toMatchupGame(match({}, { stats: { itemPurchases: purchases } }), SVEN_VS_LION, true);
+  assertEquals(game?.items, [[2, 300]]);
+});
+
+Deno.test("keeps a point STRATZ sends as ability 0 in its place", () => {
+  const abilities = [{ abilityId: 1, time: 100 }, { abilityId: 0, time: 150 }, { abilityId: 3, time: 200 }];
+  assertEquals(toMatchupGame(match({}, { abilities }), SVEN_VS_LION, true)?.points, [1, 0, 3]);
+});
+
+Deno.test("drops a game without H's purchase list, side or length", () => {
   assertEquals(toMatchupGame(match({}, { stats: null }), SVEN_VS_LION, true), null, "not parsed");
   assertEquals(toMatchupGame(match({}, { stats: { itemPurchases: null } }), SVEN_VS_LION, true), null, "no purchases");
-  assertEquals(
-    toMatchupGame(match({}, { stats: { itemPurchases: [{ itemId: 1 }] } }), SVEN_VS_LION, true),
-    null,
-    "a purchase without its time",
-  );
   assertEquals(toMatchupGame(match({}, { isRadiant: null }), SVEN_VS_LION, true), null, "no side");
   assertEquals(toMatchupGame(match({ durationSeconds: null }), SVEN_VS_LION, true), null, "no length");
 });
@@ -106,11 +114,11 @@ const FIXTURE = JSON.parse(await Deno.readTextFile(new URL("./fixtures/match-907
 Deno.test("reads a real STRATZ match: Juggernaut's purchases, the length and the lead", () => {
   const jugg = toMatchupGame(FIXTURE.data.m0, { hero: 8, position: 1, enemy: 26 }, true);
   assertEquals(jugg?.duration, 1961);
-  assertEquals(jugg?.items.length, 21);
-  assertEquals(jugg?.items[0], [44, -43]);
-  assertEquals(jugg?.items.at(-1), [108, 1873]);
-  assertEquals(jugg?.lead.length, 34);
-  assertEquals(jugg?.lead.at(-1), 24868);
+  assertEquals(jugg?.items?.length, 21);
+  assertEquals(jugg?.items?.[0], [44, -43]);
+  assertEquals(jugg?.items?.at(-1), [108, 1873]);
+  assertEquals(jugg?.lead?.length, 34);
+  assertEquals(jugg?.lead?.at(-1), 24868);
   // One of the 18 points is STRATZ's ability 0; it is kept as 0.
   assertEquals(jugg?.points.length, 18);
   assertEquals(jugg?.points.filter((id) => id === 0).length, 1);
@@ -119,14 +127,13 @@ Deno.test("reads a real STRATZ match: Juggernaut's purchases, the length and the
 Deno.test("reads the same match from Lion's side, on Dire: the lead turns negative", () => {
   const lion = toMatchupGame(FIXTURE.data.m0, { hero: 26, position: 5, enemy: 8 }, false);
   assertEquals(lion?.won, false);
-  assertEquals(lion?.lead.at(-1), -24868);
-  assertEquals(lion?.items[0], [44, -89]);
+  assertEquals(lion?.lead?.at(-1), -24868);
+  assertEquals(lion?.items?.[0], [44, -89]);
 });
 
 Deno.test("knows games saved before the item fields", () => {
   const old = { match: 1, account: 1, won: true, level: 20, version: 184, points: [] };
-  // Cast: a cache row from before PR 8, which lacks the item fields the type now has.
-  assertEquals(hasItems(old as unknown as MatchupGame), false);
+  assertEquals(hasItems(old), false);
   assertEquals(hasItems({ ...old, items: [], duration: 1800, lead: [] }), true);
 });
 

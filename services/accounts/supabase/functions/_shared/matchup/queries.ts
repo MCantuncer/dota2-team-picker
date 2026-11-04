@@ -28,19 +28,25 @@ export interface MatchupGame {
   version: number;
   /** H's skill points in the order taken: ability, talent or attribute bonus ids. */
   points: number[];
-  /** H's purchases in order: [item id, seconds from the horn]. Components and consumables included. */
-  items: [number, number][];
+  /**
+   * H's purchases in order: [item id, seconds from the horn]. Components and consumables included.
+   * This and the next two are missing on rows saved before 2026-11-04 (they age out in 7 days).
+   */
+  items?: [number, number][];
   /** The game length in seconds. */
-  duration: number;
+  duration?: number;
   /** The networth lead of H's team at each minute (negative when behind); empty when STRATZ has none. */
-  lead: number[];
+  lead?: number[];
 }
 
+/** A game with the item fields, which the item odds need. */
+export type ItemGame = MatchupGame & Required<Pick<MatchupGame, "items" | "duration" | "lead">>;
+
 /**
- * Whether a cached game has the item fields. Games saved before PR 8 don't, so their slice counts as
- * stale and is fetched again when a lookup has budget, while still answering in the meantime.
+ * Whether a cached game has the item fields. Older rows don't; they still serve the talents and are
+ * not fetched again for this (that would charge users' lookups for a week), so the item odds skip them.
  */
-export function hasItems(g: MatchupGame): boolean {
+export function hasItems(g: MatchupGame): g is ItemGame {
   return Array.isArray(g.items) && typeof g.duration === "number" && Array.isArray(g.lead);
 }
 
@@ -101,7 +107,7 @@ export function matchesQuery(ids: number[]): string {
 /**
  * H's game in one match answer at position P, or null when H isn't there at P, E isn't on the
  * other team, the result doesn't match the list (`won`), or a field is missing. Points and items are
- * sorted by time. A game without H's purchases (STRATZ hasn't parsed it) is dropped; a missing networth
+ * sorted by time. A game without H's purchase list (STRATZ hasn't parsed it) is dropped; a missing networth
  * lead only leaves `lead` empty.
  */
 export function toMatchupGame(answer: unknown, s: Slice, won: boolean): MatchupGame | null {
@@ -129,8 +135,9 @@ export function toMatchupGame(answer: unknown, s: Slice, won: boolean): MatchupG
   } | undefined;
   if (!p || !enemyThere || p.position !== POSITION_NAMES[s.position - 1] || p.isVictory !== won) return null;
   if (!isId(p.steamAccountId) || !isId(p.level) || !Array.isArray(p.abilities)) return null;
-  // STRATZ sends some points as ability 0 (Juggernaut at 23:03 in match 9075559586). They stay as 0, so
-  // later points keep their order; 0 matches no talent.
+  // STRATZ sends some points as ability 0: Juggernaut's third talent at 23:03 in match 9075559586. They
+  // stay as 0 so later points keep their order; the talent tiers don't count a game where a 0 comes
+  // before the pair (it may be the hidden choice).
   const points = p.abilities.filter((a): a is { abilityId: number; time: number } =>
     (isId(a?.abilityId) || a?.abilityId === 0) && typeof a?.time === "number"
   );
@@ -138,11 +145,11 @@ export function toMatchupGame(answer: unknown, s: Slice, won: boolean): MatchupG
   if (points.length !== p.abilities.length) return null;
   const purchases = p.stats?.itemPurchases;
   if (!Array.isArray(purchases) || typeof p.isRadiant !== "boolean") return null;
+  // A purchase STRATZ can't name (item 0 or none, as with items new this patch) is left out; the
+  // talents can still use the game, and the item odds only lose that one purchase.
   const items = purchases.filter((b): b is { itemId: number; time: number } =>
     isId(b?.itemId) && Number.isInteger(b?.time)
   );
-  // A purchase without its item or time would misplace the build, so the game is dropped.
-  if (items.length !== purchases.length) return null;
   const leads = Array.isArray(match.radiantNetworthLeads) && match.radiantNetworthLeads.every(Number.isInteger)
     ? match.radiantNetworthLeads as number[]
     : [];

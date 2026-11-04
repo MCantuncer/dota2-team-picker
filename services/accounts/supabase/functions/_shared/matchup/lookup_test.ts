@@ -221,18 +221,18 @@ Deno.test("a 429 on a match query stops the other queries and saves nothing part
   assertEquals(matchQueries, 1);
 });
 
-Deno.test("fetches again a fresh row saved before the item fields, answering with it until then", async () => {
-  // Cast: cache rows from before PR 8 lack the item fields the type now has.
-  const old = fresh.map((c) => ({
-    ...c,
-    games: c.games.map(({ items: _i, duration: _d, lead: _l, ...g }) => g as unknown as MatchupGame),
-  }));
+Deno.test("answers from a fresh row saved before the item fields without charging a lookup", async () => {
+  const old = fresh.map((c) => ({ ...c, games: c.games.map(({ items: _i, duration: _d, lead: _l, ...g }) => g) }));
   const { d, calls } = deps({}, old);
   const out = await lookupMatchups(d, INPUT);
-  assertEquals(calls.includes("lookup"), true);
-  assertEquals(out.slices.every((s) => s.games.every((g) => Array.isArray(g.items))), true);
+  assertEquals(calls.includes("lookup"), false);
+  assertEquals(out.slices.map((s) => s.stale), [false, false]);
+  assertEquals(out.slices.every((s) => s.games.every((g) => g.items === undefined)), true);
+});
 
-  const limited = deps({ takeLookup: () => Promise.resolve(false) }, old);
-  const kept = await lookupMatchups(limited.d, INPUT);
-  assertEquals(kept.slices.map((s) => s.stale), [true, true]);
+Deno.test("keeps a fresh row with no games fresh", async () => {
+  const { d, calls } = deps({}, fresh.map((c) => ({ ...c, games: [] })));
+  const out = await lookupMatchups(d, INPUT);
+  assertEquals(calls.includes("lookup"), false);
+  assertEquals(out.slices.map((s) => s.stale), [false, false]);
 });

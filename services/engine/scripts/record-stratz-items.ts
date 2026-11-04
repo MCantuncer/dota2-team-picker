@@ -13,7 +13,7 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-const URL = "https://api.stratz.com/graphql";
+const STRATZ_URL = "https://api.stratz.com/graphql";
 const OUT = join(import.meta.dirname, "stratz-items-record.json");
 
 async function post(
@@ -21,7 +21,7 @@ async function post(
   query: string,
 ): Promise<{ ms: number; status: number; body: unknown }> {
   const started = performance.now();
-  const res = await fetch(URL, {
+  const res = await fetch(STRATZ_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,

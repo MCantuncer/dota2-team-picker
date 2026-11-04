@@ -7,6 +7,7 @@ import {
   oddsLabel,
   tierReason,
   type TierChoice,
+  tookFirst,
 } from "../src/engine/matchup-talents";
 import type { SkillBuildSlice } from "../src/engine/types";
 
@@ -197,5 +198,22 @@ describe("card lines", () => {
       return `${label}:\n${tierReason(c, name, ENEMIES, { share: 0.55, games: 110 })}${odds ? `\n${odds}` : ""}`;
     });
     await expect(lines.join("\n\n") + "\n").toMatchFileSnapshot("./golden/talent-lines.txt");
+  });
+});
+
+describe("tookFirst", () => {
+  const pair = new Set([10, 11]);
+  it("takes the first talent of the pair", () => {
+    expect(tookFirst([1, 2, 11, 3, 10], pair)).toBe(11);
+  });
+  it("doesn't count a game where a point STRATZ sent as 0 comes before the pair", () => {
+    // The 0 may be the real choice (10), with 11 learned past level 25.
+    expect(tookFirst([1, 0, 2, 11], pair)).toBeUndefined();
+  });
+  it("counts a game whose 0 comes after the pair", () => {
+    expect(tookFirst([1, 10, 0, 11], pair)).toBe(10);
+  });
+  it("is undefined when the game took neither", () => {
+    expect(tookFirst([1, 2, 0], pair)).toBeUndefined();
   });
 });
