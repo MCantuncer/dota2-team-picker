@@ -99,7 +99,10 @@ export interface GamePlan {
 export interface GamePlanInput {
   /** All five of our heroes with their positions. */
   ours: (AllyPick & { position: Position })[];
-  /** All five enemy heroes. */
+  /**
+   * The enemy heroes: all five, or four while their last pick is still hidden (Ranked All Pick shows it
+   * only at strategy time). The plan is rebuilt once the fifth is in.
+   */
   theirs: number[];
   rankBracket?: RankBracket;
   /**
@@ -201,9 +204,14 @@ function playerJob(
   }
 }
 
-/** The game plan for a finished draft. Needs all ten heroes. */
+/** Enemy heroes a game plan needs: their last pick may still be hidden. */
+export const PLAN_MIN_ENEMIES = 4;
+
+/** The game plan for a finished draft: all five of ours and at least PLAN_MIN_ENEMIES of theirs. */
 export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
-  if (input.ours.length !== 5 || input.theirs.length !== 5) throw new Error("A game plan needs all ten heroes");
+  if (input.ours.length !== 5) throw new Error("A game plan needs all five of our heroes");
+  if (input.theirs.length < PLAN_MIN_ENEMIES || input.theirs.length > 5)
+    throw new Error(`A game plan needs ${PLAN_MIN_ENEMIES} or 5 enemy heroes`);
   const bracket = input.rankBracket;
   const ourIds = input.ours.map((p) => p.heroId);
   const name = (id: number) => engine.hero(id).name;

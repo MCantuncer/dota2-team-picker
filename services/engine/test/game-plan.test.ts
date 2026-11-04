@@ -53,8 +53,16 @@ const ours = [
 const theirs = [1, 67, 109, 30, 31];
 
 describe("gamePlan", () => {
-  it("needs all ten heroes", () => {
-    expect(() => gamePlan(new Engine(data()), { ours: ours.slice(0, 4), theirs })).toThrow("all ten heroes");
+  it("needs all five of our heroes and at least four of theirs", () => {
+    expect(() => gamePlan(new Engine(data()), { ours: ours.slice(0, 4), theirs })).toThrow("all five of our heroes");
+    expect(() => gamePlan(new Engine(data()), { ours, theirs: theirs.slice(0, 3) })).toThrow("4 or 5 enemy heroes");
+  });
+
+  it("plans with four enemies while their last pick is hidden", () => {
+    const plan = gamePlan(new Engine(data()), { ours, theirs: theirs.slice(0, 4) });
+    expect(plan.lanes).toHaveLength(3);
+    expect(plan.lanes.flatMap((l) => l.theirs).every((id) => theirs.slice(0, 4).includes(id))).toBe(true);
+    expect(plan.story.headline).toBeTruthy();
   });
 
   it("guesses the lanes and calls a won lane", () => {
