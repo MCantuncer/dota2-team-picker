@@ -14,6 +14,9 @@ const game = (match: number, won: boolean): MatchupGame => ({
   level: 20,
   version: 184,
   points: [1, 2],
+  items: [[1, 600]],
+  duration: 1800,
+  lead: [0, 200],
 });
 
 /** A STRATZ stand-in: Sven (18) at pos 1 against Lion (26) and Crystal Maiden (5). */
@@ -33,6 +36,8 @@ function stratzAnswer(query: string): Record<string, unknown> {
     out[`m${i}`] = {
       id: Number(id),
       gameVersionId: 184,
+      durationSeconds: 1800,
+      radiantNetworthLeads: [0, 200],
       players: [
         {
           steamAccountId: 40 + Number(id),
@@ -40,7 +45,9 @@ function stratzAnswer(query: string): Record<string, unknown> {
           position: "POSITION_1",
           level: 20,
           isVictory: won,
+          isRadiant: true,
           abilities: [],
+          stats: { itemPurchases: [{ itemId: 1, time: 600 }] },
         },
         { steamAccountId: 9, heroId: enemy, position: "POSITION_5", level: 15, isVictory: !won, abilities: [] },
       ],
@@ -212,4 +219,20 @@ Deno.test("a 429 on a match query stops the other queries and saves nothing part
   assertEquals(out.retryAt, iso(NOW + MIN));
   assertEquals(saved, []);
   assertEquals(matchQueries, 1);
+});
+
+Deno.test("fetches again a fresh row saved before the item fields, answering with it until then", async () => {
+  // Cast: cache rows from before PR 8 lack the item fields the type now has.
+  const old = fresh.map((c) => ({
+    ...c,
+    games: c.games.map(({ items: _i, duration: _d, lead: _l, ...g }) => g as unknown as MatchupGame),
+  }));
+  const { d, calls } = deps({}, old);
+  const out = await lookupMatchups(d, INPUT);
+  assertEquals(calls.includes("lookup"), true);
+  assertEquals(out.slices.every((s) => s.games.every((g) => Array.isArray(g.items))), true);
+
+  const limited = deps({ takeLookup: () => Promise.resolve(false) }, old);
+  const kept = await lookupMatchups(limited.d, INPUT);
+  assertEquals(kept.slices.map((s) => s.stale), [true, true]);
 });

@@ -13,6 +13,7 @@
 import {
   guideListQuery,
   guideMatchIds,
+  hasItems,
   MATCHES_PER_QUERY,
   matchesQuery,
   type MatchupGame,
@@ -179,7 +180,9 @@ export async function lookupMatchups(deps: LookupDeps, input: LookupInput): Prom
   const cached = new Map(
     (await deps.readCache(input.ours.map((o) => o.hero), input.theirs, input.version)).map((c) => [key(c), c]),
   );
-  const isFresh = (c: CachedSlice | undefined) => !!c && deps.now() - Date.parse(c.fetchedAt) < FRESH_DAYS * DAY_MS;
+  // Rows saved before the item fields count as stale, so they are fetched again when there is budget.
+  const isFresh = (c: CachedSlice | undefined) =>
+    !!c && deps.now() - Date.parse(c.fetchedAt) < FRESH_DAYS * DAY_MS && c.games.every(hasItems);
   const fetched = new Map<string, MatchupGame[]>();
   const reasons = new Set<PendingReason>();
   let retryAt: number | undefined;

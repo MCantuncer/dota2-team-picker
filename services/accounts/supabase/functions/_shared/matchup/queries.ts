@@ -5,7 +5,9 @@
  * - losses: the latest guides of E against H, games E won, so H lost.
  * Both lists are "a high-rank player won", so comparing two talents within them is fair (the
  * plan's case-control design). Each game keeps H's skill points in order, for the build and
- * the talents.
+ * the talents, and H's item purchases, the game length and the networth lead, for the item odds
+ * (item journey plan, PR 8). Field names checked against a real STRATZ answer
+ * (fixtures/match-9075559586.json, 2026-11-04).
  */
 
 /** One hero, position and enemy: a cache row of matchup_guides. */
@@ -26,6 +28,20 @@ export interface MatchupGame {
   version: number;
   /** H's skill points in the order taken: ability, talent or attribute bonus ids. */
   points: number[];
+  /** H's purchases in order: [item id, seconds from the horn]. Components and consumables included. */
+  items: [number, number][];
+  /** The game length in seconds. */
+  duration: number;
+  /** The networth lead of H's team at each minute (negative when behind); empty when STRATZ has none. */
+  lead: number[];
+}
+
+/**
+ * Whether a cached game has the item fields. Games saved before PR 8 don't, so their slice counts as
+ * stale and is fetched again when a lookup has budget, while still answering in the meantime.
+ */
+export function hasItems(g: MatchupGame): boolean {
+  return Array.isArray(g.items) && typeof g.duration === "number" && Array.isArray(g.lead);
 }
 
 /** A guide list asks for this many games; STRATZ gives only the latest ones and ignores `skip`. */
@@ -77,19 +93,28 @@ export function matchesQuery(ids: number[]): string {
     throw new Error(`Expected 1 to ${MATCHES_PER_QUERY} match ids, got ${ids.length}`);
   }
   const lines = ids.map((id, i) =>
-    `  m${i}: match(id: ${id}) { id gameVersionId players { steamAccountId heroId position level isVictory abilities { abilityId time } } }`
+    `  m${i}: match(id: ${id}) { id gameVersionId durationSeconds radiantNetworthLeads players { steamAccountId heroId position level isVictory isRadiant abilities { abilityId time } stats { itemPurchases { time itemId } } } }`
   );
   return `{\n${lines.join("\n")}\n}`;
 }
 
 /**
  * H's game in one match answer at position P, or null when H isn't there at P, E isn't on the
- * other team, the result doesn't match the list (`won`), or a field is missing. Points are sorted by time.
+ * other team, the result doesn't match the list (`won`), or a field is missing. Points and items are
+ * sorted by time. A game without H's purchases (STRATZ hasn't parsed it) is dropped; a missing networth
+ * lead only leaves `lead` empty.
  */
 export function toMatchupGame(answer: unknown, s: Slice, won: boolean): MatchupGame | null {
   // Checked field by field below.
-  const match = answer as { id?: unknown; gameVersionId?: unknown; players?: unknown } | null;
+  const match = answer as {
+    id?: unknown;
+    gameVersionId?: unknown;
+    durationSeconds?: unknown;
+    radiantNetworthLeads?: unknown;
+    players?: unknown;
+  } | null;
   if (!match || !isId(match.id) || !isId(match.gameVersionId) || !Array.isArray(match.players)) return null;
+  if (!isId(match.durationSeconds)) return null;
   // The enemy must be on the other team: their result is the opposite of H's.
   const enemyThere = match.players.some((p) => p?.heroId === s.enemy && p?.isVictory === !won);
   // Checked field by field below.
@@ -98,15 +123,30 @@ export function toMatchupGame(answer: unknown, s: Slice, won: boolean): MatchupG
     position?: unknown;
     level?: unknown;
     isVictory?: unknown;
+    isRadiant?: unknown;
     abilities?: unknown;
+    stats?: { itemPurchases?: unknown } | null;
   } | undefined;
   if (!p || !enemyThere || p.position !== POSITION_NAMES[s.position - 1] || p.isVictory !== won) return null;
   if (!isId(p.steamAccountId) || !isId(p.level) || !Array.isArray(p.abilities)) return null;
+  // STRATZ sends some points as ability 0 (Juggernaut at 23:03 in match 9075559586). They stay as 0, so
+  // later points keep their order; 0 matches no talent.
   const points = p.abilities.filter((a): a is { abilityId: number; time: number } =>
-    isId(a?.abilityId) && typeof a?.time === "number"
+    (isId(a?.abilityId) || a?.abilityId === 0) && typeof a?.time === "number"
   );
   // A point without its id or time would shift every later level, so the game is dropped.
   if (points.length !== p.abilities.length) return null;
+  const purchases = p.stats?.itemPurchases;
+  if (!Array.isArray(purchases) || typeof p.isRadiant !== "boolean") return null;
+  const items = purchases.filter((b): b is { itemId: number; time: number } =>
+    isId(b?.itemId) && Number.isInteger(b?.time)
+  );
+  // A purchase without its item or time would misplace the build, so the game is dropped.
+  if (items.length !== purchases.length) return null;
+  const leads = Array.isArray(match.radiantNetworthLeads) && match.radiantNetworthLeads.every(Number.isInteger)
+    ? match.radiantNetworthLeads as number[]
+    : [];
+  const side = p.isRadiant ? 1 : -1;
   return {
     match: match.id,
     account: p.steamAccountId,
@@ -114,6 +154,10 @@ export function toMatchupGame(answer: unknown, s: Slice, won: boolean): MatchupG
     level: p.level,
     version: match.gameVersionId,
     points: [...points].sort((a, b) => a.time - b.time).map((a) => a.abilityId),
+    items: [...items].sort((a, b) => a.time - b.time).map((b): [number, number] => [b.itemId, b.time]),
+    duration: match.durationSeconds,
+    // `+ 0` turns a -0 from a zero lead on Dire into 0.
+    lead: leads.map((v) => side * v + 0),
   };
 }
 
