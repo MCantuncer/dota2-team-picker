@@ -73,9 +73,9 @@ async function main() {
     // Checked right below; a missing id stops the run.
     const found = (
       guide.body as {
-        data?: { heroStats?: { g?: { guides?: { matchId?: unknown }[] } } };
+        data?: { heroStats?: { g?: { guides?: { matchId?: unknown }[] }[] } };
       } | null
-    )?.data?.heroStats?.g?.guides?.[0]?.matchId;
+    )?.data?.heroStats?.g?.[0]?.guides?.[0]?.matchId;
     if (typeof found !== "number") {
       writeFileSync(OUT, JSON.stringify(record, null, 2));
       throw new Error(`No match id in the guide answer; see ${OUT}`);
