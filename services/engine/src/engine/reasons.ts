@@ -46,8 +46,11 @@ export const ordinal = (n: number) => {
 /** "A", "A and B", "A, B and C". */
 export const list = (items: string[]) => (items.length > 1 ? `${items.slice(0, -1).join(", ")} and ${items.at(-1)}` : (items[0] ?? ""));
 
-/** "Axe (+3.1, likely your lane)" for each hero, the biggest first, at most `max`. */
-export function namedPoints(items: { name: string; value: number; note?: string }[], max = 2): string {
+/**
+ * "Axe (+3.1, likely your lane)" for each hero, the biggest first, at most `max`. Every hero the caller passes is
+ * named by default (a team has at most five), so a line's points add up to everything it explains.
+ */
+export function namedPoints(items: { name: string; value: number; note?: string }[], max = 5): string {
   return list(
     [...items]
       .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))

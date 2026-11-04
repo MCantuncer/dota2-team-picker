@@ -11,13 +11,25 @@ describe("reason helpers", () => {
     expect([1, 2, 3, 4, 11, 12, 13, 21, 22].map(ordinal)).toEqual(["1st", "2nd", "3rd", "4th", "11th", "12th", "13th", "21st", "22nd"]);
   });
 
-  it("names the two biggest heroes with their points", () => {
+  it("names every hero, the biggest first, with their points", () => {
     const text = namedPoints([
       { name: "Lion", value: 0.6 },
       { name: "Axe", value: 3.1, note: "likely your lane" },
       { name: "Viper", value: 1.2 },
     ]);
-    expect(text).toBe("Axe (+3.1, likely your lane) and Viper (+1.2)");
+    expect(text).toBe("Axe (+3.1, likely your lane), Viper (+1.2) and Lion (+0.6)");
+  });
+
+  it("can still cap how many heroes it names", () => {
+    const text = namedPoints(
+      [
+        { name: "Lion", value: 0.6 },
+        { name: "Axe", value: 3.1 },
+        { name: "Viper", value: 1.2 },
+      ],
+      2,
+    );
+    expect(text).toBe("Axe (+3.1) and Viper (+1.2)");
   });
 
   it("puts draft lines first, keeps one base line, and ends with one warning", () => {
