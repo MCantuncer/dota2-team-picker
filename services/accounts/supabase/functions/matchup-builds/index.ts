@@ -1,6 +1,7 @@
 /**
  * The high-rank games of each of our heroes against each enemy, for the skill order and talent
- * tree on the Game Story cards (skill order plan, "Change 2 FINAL").
+ * tree on the Game Story cards (skill order plan, "Change 2 FINAL"), and their item purchases, length
+ * and networth lead for the item odds (item journey plan, PR 8).
  *
  *   POST /matchup-builds   (Authorization: Bearer <user's access token>)
  *   body: { ours: [{ hero, position }], theirs: [hero], version }

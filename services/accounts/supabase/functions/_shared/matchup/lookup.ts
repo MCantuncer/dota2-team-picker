@@ -179,6 +179,7 @@ export async function lookupMatchups(deps: LookupDeps, input: LookupInput): Prom
   const cached = new Map(
     (await deps.readCache(input.ours.map((o) => o.hero), input.theirs, input.version)).map((c) => [key(c), c]),
   );
+  // Rows saved before the item fields stay fresh: refetching them would charge users' lookups.
   const isFresh = (c: CachedSlice | undefined) => !!c && deps.now() - Date.parse(c.fetchedAt) < FRESH_DAYS * DAY_MS;
   const fetched = new Map<string, MatchupGame[]>();
   const reasons = new Set<PendingReason>();

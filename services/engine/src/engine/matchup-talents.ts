@@ -86,9 +86,15 @@ export function poolGames(games: MatchupGame[]): MatchupGame[] {
 
 /**
  * The talent a game took in this tier: the first of the pair in its points. Past level 25 players
- * learn the skipped talents too, so a long game has both; only the first was the choice.
+ * learn the skipped talents too, so a long game has both; only the first was the choice. STRATZ
+ * sends some points as 0 (a talent it couldn't name); one before the pair may have been the real
+ * choice, so the game doesn't count in this tier.
  */
-const tookFirst = (points: number[], pair: Set<number>) => points.find((id) => pair.has(id));
+export function tookFirst(points: number[], pair: Set<number>): number | undefined {
+  const at = points.findIndex((id) => pair.has(id));
+  if (at < 0 || points.slice(0, at).includes(0)) return undefined;
+  return points[at];
+}
 
 const logOdds = (wins: number, losses: number) => Math.log((wins + 0.5) / (losses + 0.5));
 

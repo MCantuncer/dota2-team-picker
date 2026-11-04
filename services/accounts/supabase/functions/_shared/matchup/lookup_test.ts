@@ -14,6 +14,9 @@ const game = (match: number, won: boolean): MatchupGame => ({
   level: 20,
   version: 184,
   points: [1, 2],
+  items: [[1, 600]],
+  duration: 1800,
+  lead: [0, 200],
 });
 
 /** A STRATZ stand-in: Sven (18) at pos 1 against Lion (26) and Crystal Maiden (5). */
@@ -33,6 +36,8 @@ function stratzAnswer(query: string): Record<string, unknown> {
     out[`m${i}`] = {
       id: Number(id),
       gameVersionId: 184,
+      durationSeconds: 1800,
+      radiantNetworthLeads: [0, 200],
       players: [
         {
           steamAccountId: 40 + Number(id),
@@ -40,7 +45,9 @@ function stratzAnswer(query: string): Record<string, unknown> {
           position: "POSITION_1",
           level: 20,
           isVictory: won,
+          isRadiant: true,
           abilities: [],
+          stats: { itemPurchases: [{ itemId: 1, time: 600 }] },
         },
         { steamAccountId: 9, heroId: enemy, position: "POSITION_5", level: 15, isVictory: !won, abilities: [] },
       ],
@@ -212,4 +219,20 @@ Deno.test("a 429 on a match query stops the other queries and saves nothing part
   assertEquals(out.retryAt, iso(NOW + MIN));
   assertEquals(saved, []);
   assertEquals(matchQueries, 1);
+});
+
+Deno.test("answers from a fresh row saved before the item fields without charging a lookup", async () => {
+  const old = fresh.map((c) => ({ ...c, games: c.games.map(({ items: _i, duration: _d, lead: _l, ...g }) => g) }));
+  const { d, calls } = deps({}, old);
+  const out = await lookupMatchups(d, INPUT);
+  assertEquals(calls.includes("lookup"), false);
+  assertEquals(out.slices.map((s) => s.stale), [false, false]);
+  assertEquals(out.slices.every((s) => s.games.every((g) => g.items === undefined)), true);
+});
+
+Deno.test("keeps a fresh row with no games fresh", async () => {
+  const { d, calls } = deps({}, fresh.map((c) => ({ ...c, games: [] })));
+  const out = await lookupMatchups(d, INPUT);
+  assertEquals(calls.includes("lookup"), false);
+  assertEquals(out.slices.map((s) => s.stale), [false, false]);
 });
