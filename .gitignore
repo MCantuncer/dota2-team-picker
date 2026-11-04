@@ -1,3 +1,6 @@
 node_modules/
 .env
 coverage/
+
+# One-off STRATZ answer from services/engine/scripts/record-stratz-items.ts (sent back by hand)
+services/engine/scripts/stratz-items-record.json
