@@ -23,6 +23,7 @@ import type { ItemInfo } from "./types";
 /** A game with the item fields (rows cached before 2026-11-04 have none). */
 export type ItemGame = MatchupGame & Required<Pick<MatchupGame, "items" | "duration" | "lead">>;
 
+/** Whether a game has the item fields; the item odds skip games that don't. */
 export function hasItems(g: MatchupGame): g is ItemGame {
   return Array.isArray(g.items) && typeof g.duration === "number" && Array.isArray(g.lead);
 }
@@ -105,15 +106,18 @@ export interface ItemOdds {
 
 /**
  * The buckets' log ORs combined by inverse variance, then pulled toward 0 by the prior. A bucket with an empty
- * cell has no finite log OR and is left out, games included; that can only pull the result toward 1.
+ * cell gets 0.5 added to each of its four cells (Haldane-Anscombe), so a bucket where B lost every game still
+ * counts against B. A bucket with no games on one side says nothing and is left out.
  */
 export function combine(all: Arms[]): ItemOdds {
-  const buckets = all.filter(({ a, b }) => a.wins && a.losses && b.wins && b.losses);
+  const buckets = all.filter(({ a, b }) => a.wins + a.losses > 0 && b.wins + b.losses > 0);
   let weight = 0;
   let sum = 0;
   for (const { a, b } of buckets) {
-    const variance = 1 / a.wins + 1 / a.losses + 1 / b.wins + 1 / b.losses;
-    sum += Math.log((b.wins / b.losses) / (a.wins / a.losses)) / variance;
+    const k = a.wins && a.losses && b.wins && b.losses ? 0 : 0.5;
+    const [aw, al, bw, bl] = [a.wins + k, a.losses + k, b.wins + k, b.losses + k];
+    const variance = 1 / aw + 1 / al + 1 / bw + 1 / bl;
+    sum += Math.log((bw / bl) / (aw / al)) / variance;
     weight += 1 / variance;
   }
   const precision = weight + 1 / PRIOR_SD ** 2;

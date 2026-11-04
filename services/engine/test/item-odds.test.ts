@@ -80,10 +80,17 @@ describe("slotItem", () => {
 });
 
 describe("combine", () => {
-  it("skips a bucket with an empty cell, games included", () => {
+  it("counts a bucket where B lost every game against B", () => {
+    const first = { a: cell(10, 14), b: cell(14, 8) };
+    const both = combine([first, { a: cell(6, 2), b: cell(0, 6) }]);
+    expect(both.oddsRatio).toBeLessThan(combine([first]).oddsRatio);
+    expect(both.games).toBe(60);
+    expect(both.minCell).toBe(14);
+  });
+  it("leaves out a bucket with no games on one side", () => {
     const odds = combine([
       { a: cell(10, 10), b: cell(20, 10) },
-      { a: cell(0, 5), b: cell(5, 5) },
+      { a: cell(0, 0), b: cell(5, 5) },
     ]);
     expect(odds.games).toBe(50);
     expect(odds.minCell).toBe(10);
