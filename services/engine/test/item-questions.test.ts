@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ItemGame } from "../src/engine/item-odds";
 import { fallbackQuestion, slotQuestions } from "../src/engine/item-questions";
 import { drawSets } from "../scripts/item-odds-report";
-import { seeded } from "../src/engine/item-odds";
+import { bigItemCheck, seeded } from "../src/engine/item-odds";
 
 // Ids under 10 are big items; costs by id.
 const isBig = (id: number) => id < 10;
@@ -37,6 +37,11 @@ describe("fallbackQuestion", () => {
   it("asks about the key item once it is late", () => {
     const q = fallbackQuestion({ itemId: 3, lateMinute: 20.6 }, isBig);
     expect([q?.kind, q?.kind === "fallback" ? q.key : 0, q?.minute]).toEqual(["fallback", 3, 21]);
+  });
+  it("asks about Blink for an initiator, a part of other items", () => {
+    const item = (key: string, cost: number, components: number[] = []) => ({ key, name: key, cost, img: "", components });
+    const check = bigItemCheck({ "1": item("blink", 2250), "600": item("overwhelming_blink", 6800, [1]) });
+    expect(fallbackQuestion({ itemId: 1, lateMinute: 14 }, check)?.minute).toBe(14);
   });
   it("asks nothing without a key item, its late minute, or a big key item", () => {
     expect(fallbackQuestion(undefined, isBig)).toBeUndefined();

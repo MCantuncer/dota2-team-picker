@@ -57,22 +57,35 @@ export function leadBucket(lead: number[], minute: number): Bucket | undefined {
 }
 
 /**
- * Which item ids a slot can be: core items (item-build.ts) except plain Boots of Speed, which every build
- * passes through, and parts of other items (Sacred Relic before Radiance), so a build path doesn't take a slot.
+ * Which item ids can take a slot. With `componentsOf`, a part bought on the way to a bigger item (Sacred
+ * Relic before Radiance) doesn't take a slot of its own; see bigItems.
  */
-export function bigItemCheck(items: Record<string, ItemInfo>): (id: number) => boolean {
-  const parts = new Set(Object.values(items).flatMap((i) => i.components));
-  return (id) => {
+export type IsBig = ((id: number) => boolean) & { componentsOf?: (id: number) => number[] };
+
+/**
+ * Core items (item-build.ts) except plain Boots of Speed, which every build passes through, and Aghanim's
+ * Shard, which is bought beside the build rather than instead of an item.
+ */
+export function bigItemCheck(items: Record<string, ItemInfo>): IsBig {
+  const isBig: IsBig = (id) => {
     const item = items[String(id)];
-    return isCoreItem(item) && item?.key !== "boots" && !parts.has(id);
+    return isCoreItem(item) && item?.key !== "boots" && item?.key !== "aghanims_shard";
   };
+  isBig.componentsOf = (id) => items[String(id)]?.components ?? [];
+  return isBig;
 }
 
-/** The game's big items, each once, at its first purchase: [item id, seconds]. */
-export function bigItems(g: ItemGame, isBig: (id: number) => boolean): [number, number][] {
+/**
+ * The game's big items, each once, at its first purchase: [item id, seconds]. An item the same game builds
+ * into a bigger one within WINDOW minutes is a step on the way (Relic, then Radiance at 15) and left out;
+ * one kept longer is an item in its own right (Blink at 12, Overwhelming Blink at 35).
+ */
+export function bigItems(g: ItemGame, isBig: IsBig): [number, number][] {
   const seen = new Set<number>();
-  return g.items.filter(([id]) => {
-    if (!isBig(id) || seen.has(id)) return false;
+  const partSoon = (id: number, at: number) =>
+    g.items.some(([other, t]) => t >= at && t < at + WINDOW * 60 && (isBig.componentsOf?.(other) ?? []).includes(id));
+  return g.items.filter(([id, at]) => {
+    if (!isBig(id) || seen.has(id) || partSoon(id, at)) return false;
     seen.add(id);
     return true;
   });
@@ -144,7 +157,7 @@ export function combine(all: Arms[]): ItemOdds {
 }
 
 /** The Nth big item (from 1) a game bought, when it bought it in [minute, minute + WINDOW) and was still running. */
-export function slotItem(g: ItemGame, slot: number, minute: number, isBig: (id: number) => boolean): number | undefined {
+export function slotItem(g: ItemGame, slot: number, minute: number, isBig: IsBig): number | undefined {
   if (g.duration <= minute * 60) return undefined;
   const nth = bigItems(g, isBig)[slot - 1];
   return nth && nth[1] >= minute * 60 && nth[1] < (minute + WINDOW) * 60 ? nth[0] : undefined;
@@ -154,7 +167,7 @@ export function slotItem(g: ItemGame, slot: number, minute: number, isBig: (id: 
 export function slotOdds(
   games: ItemGame[],
   q: { slot: number; minute: number; a: number; b: number },
-  isBig: (id: number) => boolean,
+  isBig: IsBig,
 ): ItemOdds {
   return combine(
     tally(games, q.minute, (g) => {
@@ -173,7 +186,7 @@ export function fallbackSide(
   g: ItemGame,
   key: number,
   late: number,
-  isBig: (id: number) => boolean,
+  isBig: IsBig,
 ): "kept" | "switched" | undefined {
   if (g.duration <= (late + WINDOW) * 60) return undefined;
   const big = bigItems(g, isBig);
@@ -184,7 +197,7 @@ export function fallbackSide(
 }
 
 /** "Switched" against "kept going" once the key item is late. */
-export function fallbackOdds(games: ItemGame[], key: number, late: number, isBig: (id: number) => boolean): ItemOdds {
+export function fallbackOdds(games: ItemGame[], key: number, late: number, isBig: IsBig): ItemOdds {
   return combine(
     tally(games, late, (g) => {
       const side = fallbackSide(g, key, late, isBig);

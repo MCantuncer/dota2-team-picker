@@ -7,7 +7,7 @@
  * mostly measure farm, not the item. The fallback asks about the Story's key item (game-plan.ts keyItem) once
  * it is late, so the card and the report ask the same thing.
  */
-import { bigItems, fallbackOdds, type ItemGame, type ItemOdds, slotItem, slotOdds, WINDOW } from "./item-odds";
+import { bigItems, fallbackOdds, type IsBig, type ItemGame, type ItemOdds, slotItem, slotOdds, WINDOW } from "./item-odds";
 
 /** Slots asked about: the first few big items, where builds still differ by draft. */
 export const SLOTS = 4;
@@ -51,7 +51,7 @@ function mostBought(counts: Map<number, number>): number | undefined {
 /** The slot questions the games can ask. Games without a lead are left out, as the odds can't use them. */
 export function slotQuestions(
   all: ItemGame[],
-  isBig: (id: number) => boolean,
+  isBig: IsBig,
   cost: (id: number) => number | undefined,
 ): SlotQuestion[] {
   const games = all.filter((g) => g.lead.length > 0);
@@ -84,7 +84,7 @@ export function slotQuestions(
 /** The fallback question for the Story's key item, when the build knows its late minute. */
 export function fallbackQuestion(
   key: { itemId: number; lateMinute?: number } | undefined,
-  isBig: (id: number) => boolean,
+  isBig: IsBig,
 ): FallbackQuestion | undefined {
   if (!key || key.lateMinute === undefined || !isBig(key.itemId)) return undefined;
   const late = Math.round(key.lateMinute);

@@ -145,8 +145,11 @@ async function main() {
       (shown.length ? `, shown lines print ${printed.toFixed(1)}x on average` : ""));
   }
 
-  // Each match once: a game against two cached enemies came back for both.
-  const games = [...new Map([...byHero.values()].flatMap((m) => [...m.values()].flat()).map((g) => [g.match, g])).values()];
+  // Each hero's match once: a game against two cached enemies came back for both. The same match under
+  // another hero is that hero's side of it, so it stays.
+  const games = [...byHero].flatMap(([k, m]) => [
+    ...new Map([...m.values()].flat().map((g) => [`${k}:${g.match}`, g])).values(),
+  ]);
   for (const minute of [10, 15, 20]) {
     const shares = (won: boolean) => {
       const mine = games.filter((g) => g.won === won && leadBucket(g.lead, minute));

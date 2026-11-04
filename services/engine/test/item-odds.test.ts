@@ -57,14 +57,19 @@ describe("bigItemCheck", () => {
     "63": item("power_treads", 1400, [29]),
     "108": item("radiance", 4700, [109]),
     "109": item("relic", 3750),
+    "1": item("blink", 2250),
+    "600": item("overwhelming_blink", 6800, [1]),
+    "609": item("aghanims_shard", 1400),
     "36": item("magic_wand", 450),
   });
-  it("leaves out plain boots, small items and parts of other items", () => {
-    expect([29, 63, 108, 109, 36].map(isBig)).toEqual([false, true, true, false, false]);
+  it("leaves out plain boots, the shard and small items", () => {
+    expect([29, 63, 108, 609, 36].map(isBig)).toEqual([false, true, true, false, false]);
   });
-  it("gives a Radiance game one slot, not two", () => {
-    const g = game({ items: [[109, 600], [108, 900]] });
-    expect(bigItems(g, isBig)).toEqual([[108, 900]]);
+  it("leaves out a part built into a bigger item soon after: a Radiance game takes one slot", () => {
+    expect(bigItems(game({ items: [[109, 600], [108, 900]] }), isBig)).toEqual([[108, 900]]);
+  });
+  it("keeps an item upgraded much later as its own slot: Blink at 12, Overwhelming Blink at 35", () => {
+    expect(bigItems(game({ items: [[1, 720], [600, 2100]] }), isBig)).toEqual([[1, 720], [600, 2100]]);
   });
 });
 
