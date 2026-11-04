@@ -11,9 +11,40 @@ export interface KeySpell {
   name: string;
   /** What it does to you, in a few words. */
   line: string;
+  /**
+   * How the spell hurts you: "attack" when it works through right clicks (Black King Bar does not stop
+   * it), "magic" when it is a spell or disable (armor does not stop it), "other" when neither answers it.
+   */
+  kind: SpellKind;
 }
 
-const spell = (key: string, name: string, line: string): KeySpell => ({ key, name, line });
+export type SpellKind = "attack" | "magic" | "other";
+
+/** Spells that work through right clicks. */
+const ATTACK = new Set([
+  "alchemist_chemical_rage", "chaos_knight_phantasm", "ember_spirit_sleight_of_fist", "clinkz_wind_walk", "drow_ranger_marksmanship",
+  "gyrocopter_flak_cannon", "juggernaut_omni_slash", "life_stealer_rage", "lone_druid_spirit_bear",
+  "lycan_shapeshift", "marci_unleash", "monkey_king_wukongs_command", "naga_siren_mirror_image",
+  "night_stalker_darkness", "phantom_assassin_coup_de_grace", "phantom_lancer_juxtapose", "riki_backstab",
+  "sven_gods_strength", "templar_assassin_refraction", "troll_warlord_battle_trance", "tusk_walrus_punch",
+  "ursa_fury_swipes",
+]);
+
+/** Spells neither Black King Bar nor armor answers: lives, saves, global presence. */
+const OTHER = new Set([
+  "abaddon_borrowed_time", "arc_warden_tempest_double", "bristleback_bristleback", "broodmother_spawn_spiderlings",
+  "chen_hand_of_god", "dazzle_shallow_grave", "furion_teleportation", "mirana_invis", "nyx_assassin_vendetta",
+  "oracle_false_promise", "slark_dark_pact", "spectre_haunt", "tinker_rearm", "weaver_time_lapse",
+  "skeleton_king_reincarnation", "wisp_relocate", "abyssal_underlord_dark_portal", "omniknight_guardian_angel",
+  "shadow_demon_disruption", "largo_amphibian_rhapsody", "techies_land_mines",
+]);
+
+const spell = (key: string, name: string, line: string): KeySpell => ({
+  key,
+  name,
+  line,
+  kind: ATTACK.has(key) ? "attack" : OTHER.has(key) ? "other" : "magic",
+});
 
 export const KEY_SPELLS: Record<string, KeySpell> = {
   Abaddon: spell("abaddon_borrowed_time", "Borrowed Time", "Your damage heals him for a few seconds"),

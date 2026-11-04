@@ -24,6 +24,18 @@ export interface EnemyNote {
   spell?: KeySpell;
 }
 
+/** Items that stop spells but not right clicks, and items that stop right clicks but not spells, by item art. */
+const SPELL_ONLY = ["black_king_bar", "lotus_orb", "pipe", "glimmer_cape"];
+const ATTACK_ONLY = ["ghost", "heavens_halberd", "crimson_guard", "assault", "shivas_guard", "blade_mail", "monkey_king_bar"];
+const itemKey = (img: string) => img.split("/").pop()?.replace(/\.png$/, "") ?? "";
+
+/** Whether an item can answer this kind of spell: Black King Bar does nothing against Marksmanship. */
+function fits(kind: KeySpell["kind"] | undefined, img: string): boolean {
+  if (kind === "attack") return !SPELL_ONLY.includes(itemKey(img));
+  if (kind === "magic") return !ATTACK_ONLY.includes(itemKey(img));
+  return true;
+}
+
 /** Answer items named per enemy; more would bury the first. */
 const MAX_ANSWERS = 3;
 
@@ -58,12 +70,13 @@ export function enemyList(build: ItemBuild | null, enemies: EnemyFacts[]): Enemy
   return [...enemies]
     .sort((a, b) => Number(b.inLane) - Number(a.inLane))
     .map(({ hero, inLane, laneSure }) => {
-      const answers = [...new Set(path.filter((i) => i.against?.includes(hero.id)).map((i) => i.itemId))].slice(0, MAX_ANSWERS);
+      const spell = KEY_SPELLS[hero.name];
+      // An answer must stop the hero's worst spell, or the row would pair Marksmanship with Black King Bar.
+      const answers = [...new Set(path.filter((i) => i.against?.includes(hero.id) && fits(spell?.kind, i.img)).map((i) => i.itemId))].slice(0, MAX_ANSWERS);
       const threats = threatsOf(hero);
       const first = THREAT_ORDER.find((t) => threats.has(t));
       const tank = threats.has("disable") ? INITIATOR_TANK : TANK;
       const line = DONT_FOCUS.has(hero.name) ? tank : first ? THREAT_LINE[first] : NOTHING;
-      const spell = KEY_SPELLS[hero.name];
       return {
         heroId: hero.id,
         inLane,

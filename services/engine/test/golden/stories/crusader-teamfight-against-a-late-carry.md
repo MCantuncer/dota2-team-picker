@@ -31,11 +31,12 @@ Job: Farm and carry the late game; join fights once your items are in. Your timi
 Vs Bristleback (lane): Tank who soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Nyx Assassin (lane): Goes invisible. buy Infused Raindrops, Black King Bar.
 Vs Spectre: Strong passives. Fight them when they are low, not head on.
-Vs Ember Spirit: Magic burst. buy Black King Bar.
+Vs Ember Spirit: Magic burst. Stay spread so one combo can't catch two.
 Vs Disruptor: Magic burst. buy Black King Bar.
 Watch Bristleback: Don't focus them: kill their damage dealers first.
-Watch Nyx Assassin, Ember Spirit, Disruptor: buy Black King Bar.
+Watch Nyx Assassin, Disruptor: buy Black King Bar.
 Watch Spectre: Fight them when they are low, not head on.
+Watch Ember Spirit: Stay spread so one combo can't catch two.
 If it goes wrong: Lane lost? Leave it at 5 to 6 min for the jungle and farm toward Battle Fury. Ask your supports to stack 2 camps.
 If it goes wrong: No Battle Fury by 18 min? Don't show on the map without it. Farm the side Bristleback is not on.
 
@@ -48,14 +49,15 @@ First: Meteor Hammer 12/14
 Next: Aghanim's Shard 26/33, Octarine Core 29/33
 Late: Aghanim's Scepter 31/41, Black King Bar 32/41 [Against Ember Spirit, Nyx Assassin and Disruptor: don't skip it] {Spell immunity for the big fights.}
 Job: Win your lane, then use runes to help the side lanes. Your timing is Meteor Hammer around minute 12. Set up Chronosphere into Sun Strike and Chaos Meteor with Faceless Void.
-Vs Ember Spirit (lane): Magic burst. buy Black King Bar.
+Vs Ember Spirit (lane): Magic burst. Stay spread so one combo can't catch two.
 Vs Spectre: Strong passives. Fight them when they are low, not head on.
 Vs Bristleback: Tank who soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Nyx Assassin: Goes invisible. buy Black King Bar.
 Vs Disruptor: Magic burst. buy Black King Bar.
-Watch Ember Spirit, Nyx Assassin, Disruptor: buy Black King Bar.
+Watch Ember Spirit: Stay spread so one combo can't catch two.
 Watch Spectre: Fight them when they are low, not head on.
 Watch Bristleback: Don't focus them: kill their damage dealers first.
+Watch Nyx Assassin, Disruptor: buy Black King Bar.
 If it goes wrong: No Meteor Hammer by 14 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Magnus
@@ -69,11 +71,12 @@ Late: Black King Bar 31/39 [Against Ember Spirit, Nyx Assassin and Disruptor: do
 Job: Make their carry's lane hard, then start the team's fights as Magnus. Your timing is Blink Dagger around minute 13.
 Vs Spectre (lane): Strong passives. Fight them when they are low, not head on.
 Vs Disruptor (lane): Magic burst. buy Black King Bar.
-Vs Ember Spirit: Magic burst. buy Black King Bar.
+Vs Ember Spirit: Magic burst. Stay spread so one combo can't catch two.
 Vs Bristleback: Tank who soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Nyx Assassin: Goes invisible. buy Black King Bar.
 Watch Spectre: Fight them when they are low, not head on.
-Watch Disruptor, Ember Spirit, Nyx Assassin: buy Black King Bar.
+Watch Disruptor, Nyx Assassin: buy Black King Bar.
+Watch Ember Spirit: Stay spread so one combo can't catch two.
 Watch Bristleback: Don't focus them: kill their damage dealers first.
 If it goes wrong: Lane lost? Stop contesting Spectre. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 16 min? Don't start fights without it. Stay behind your cores and soak damage.
@@ -112,10 +115,10 @@ Job: Keep your carry alive in lane and place vision; save your key spell for the
 Vs Bristleback (lane): Tank who soaks your damage. buy Magic Wand, Glimmer Cape, Ghost Scepter.
 Vs Nyx Assassin (lane): Goes invisible. buy Infused Raindrops, Glimmer Cape.
 Vs Spectre: Strong passives. buy Ghost Scepter, Force Staff.
-Vs Ember Spirit: Magic burst. buy Glimmer Cape, Ghost Scepter, Force Staff.
+Vs Ember Spirit: Magic burst. buy Ghost Scepter, Force Staff.
 Vs Disruptor: Magic burst. Stay spread so one combo can't catch two.
-Watch Bristleback, Nyx Assassin, Ember Spirit: buy Glimmer Cape.
-Watch Spectre: buy Ghost Scepter.
+Watch Bristleback, Spectre, Ember Spirit: buy Ghost Scepter.
+Watch Nyx Assassin: buy Glimmer Cape.
 Watch Disruptor: Stay spread so one combo can't catch two.
 If it goes wrong: Lane lost? Let Faceless Void take every last hit. Pull the near camp and keep a ward on the rune.
 If it goes wrong: Spectre is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.
