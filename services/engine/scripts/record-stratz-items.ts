@@ -16,15 +16,26 @@ import { join } from "node:path";
 const URL = "https://api.stratz.com/graphql";
 const OUT = join(import.meta.dirname, "stratz-items-record.json");
 
-async function post(token: string, query: string): Promise<{ ms: number; status: number; body: unknown }> {
+async function post(
+  token: string,
+  query: string,
+): Promise<{ ms: number; status: number; body: unknown }> {
   const started = performance.now();
   const res = await fetch(URL, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "User-Agent": "STRATZ_API" },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "User-Agent": "STRATZ_API",
+    },
     body: JSON.stringify({ query }),
   });
   const body: unknown = await res.json().catch(() => null);
-  return { ms: Math.round(performance.now() - started), status: res.status, body };
+  return {
+    ms: Math.round(performance.now() - started),
+    status: res.status,
+    body,
+  };
 }
 
 const SCHEMA_QUERY = `{
@@ -60,8 +71,11 @@ async function main() {
     const guide = await post(token, GUIDE_QUERY);
     record.guide = guide;
     // Checked right below; a missing id stops the run.
-    const found = (guide.body as { data?: { heroStats?: { g?: { guides?: { matchId?: unknown }[] } } } } | null)?.data
-      ?.heroStats?.g?.guides?.[0]?.matchId;
+    const found = (
+      guide.body as {
+        data?: { heroStats?: { g?: { guides?: { matchId?: unknown }[] } } };
+      } | null
+    )?.data?.heroStats?.g?.guides?.[0]?.matchId;
     if (typeof found !== "number") {
       writeFileSync(OUT, JSON.stringify(record, null, 2));
       throw new Error(`No match id in the guide answer; see ${OUT}`);
@@ -71,8 +85,12 @@ async function main() {
   record.match = await post(token, matchQuery(id));
   writeFileSync(OUT, JSON.stringify(record, null, 2));
   // Checked loosely: this only reports, the file has the whole answer.
-  const errors = (record.match as { body?: { errors?: { message?: string }[] } }).body?.errors ?? [];
-  console.log(`Match ${id}: ${errors.length ? `errors: ${errors.map((e) => e.message).join("; ")}` : "answered"}`);
+  const errors =
+    (record.match as { body?: { errors?: { message?: string }[] } }).body
+      ?.errors ?? [];
+  console.log(
+    `Match ${id}: ${errors.length ? `errors: ${errors.map((e) => e.message).join("; ")}` : "answered"}`,
+  );
   console.log(`Wrote ${OUT}. Send this file back (it holds no token).`);
 }
 
