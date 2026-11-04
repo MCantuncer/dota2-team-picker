@@ -1077,6 +1077,11 @@ isOneToOne: false
               "games": number,"id": string,"members": number,"my_request": string,"my_role": string,"name": string,"open_to_requests": boolean,"owner_name": string
             }[]
                            },
+"stack_player_stats":
+{ Args: { "team": string }; Returns: {
+              "display_name": string,"favorites": Json,"hero_stats": Json,"positions": (number)[],"rank_tier": number,"user_id": string
+            }[]
+                           },
 "stale_match_files":
 { Args: { "max_rows"?: number }; Returns: {
               "match_id": number
