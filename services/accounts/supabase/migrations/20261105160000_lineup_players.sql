@@ -62,7 +62,11 @@ set search_path = ''
 as $$
   with me as (select (select auth.uid()) as id),
   run as (
-    select t.id, t.name, t.owner_id from public.teams t where public.runs_team(t.id)
+    -- The same rule as runs_team(), without calling it for every Stack.
+    select t.id, t.name, t.owner_id from public.teams t
+    where t.owner_id = (select id from me)
+      or t.id in (select m.team_id from public.team_members m
+        where m.user_id = (select id from me) and m.role = 'co_captain')
   ),
   links as (
     -- Members of a Stack the caller runs.
