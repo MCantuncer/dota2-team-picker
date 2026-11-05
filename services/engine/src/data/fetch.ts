@@ -30,6 +30,7 @@ import { countPickPhases } from "./pick-phase";
 import { fetchSkillBuilds } from "./skill-builds";
 import { fetchPositions, postStratz } from "./stratz";
 import { applyStratzCounts, fetchStratzCounts } from "./stratz-matchups";
+import { fetchLaneOutcomes, lanesDue, MIN_LANE_GAMES } from "./stratz-lanes";
 import { rankGroup, type GamesWins, type HeroInfo, type RankBracket, type Snapshot } from "../engine/types";
 
 const SNAPSHOT_PATH = "data/snapshot.json";
@@ -330,6 +331,19 @@ async function main() {
       console.log(`STRATZ matchups: ${pairs} pairs, median ${games[Math.floor(games.length / 2)] ?? 0} games per pair.`);
     } catch (err) {
       // Keep the last counts, whichever source they came from, and go on.
+      console.warn(`::warning::${(err as Error).message}`);
+    }
+  }
+  if (stratzToken && lanesDue(snapshot, now)) {
+    console.log("Lane results from STRATZ...");
+    try {
+      const heroIds = Object.values(snapshot.heroes).map((h) => h.id).sort((a, b) => a - b);
+      snapshot.laneOutcomes = await fetchLaneOutcomes(heroIds, (query) => postStratz(stratzToken, query, "lanes"));
+      snapshot.laneOutcomesAt = now.toISOString();
+      const pairs = Object.values(snapshot.laneOutcomes["0"] ?? {}).reduce((n, row) => n + Object.keys(row).length, 0);
+      console.log(`STRATZ lanes: ${pairs} pairs with ${MIN_LANE_GAMES}+ games.`);
+    } catch (err) {
+      // Lane results are an extra; keep the last ones and go on.
       console.warn(`::warning::${(err as Error).message}`);
     }
   }
