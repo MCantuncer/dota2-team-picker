@@ -32,8 +32,15 @@ Deno.test("reads rank, profile and hero record", async () => {
     avatarUrl: "https://avatars.steamstatic.com/a_full.jpg",
     rankTier: 54,
     heroStats: { "53": { games: 13, wins: 10 }, "19": { games: 4, wins: 2 } },
+    // The fake answers every period alike; the real API filters by date.
+    heroStatsPeriods: Object.fromEntries(
+      ["7", "30", "90"].map((d) => [d, { "53": { games: 13, wins: 10 }, "19": { games: 4, wins: 2 } }]),
+    ),
   });
   assertEquals(api.requested[0], "POST https://api.opendota.com/api/players/86745912/refresh");
+  for (const days of [180, 7, 30, 90]) {
+    assertEquals(api.requested.includes(`GET https://api.opendota.com/api/players/86745912/heroes?date=${days}`), true);
+  }
 });
 
 Deno.test("hidden profiles have no rank", async () => {
@@ -41,5 +48,11 @@ Deno.test("hidden profiles have no rank", async () => {
     "/players/1": { profile: null, rank_tier: null },
     "/players/1/heroes": [],
   });
-  assertEquals(await fetchPlayer(1, api.fetchFn), { name: null, avatarUrl: null, rankTier: null, heroStats: {} });
+  assertEquals(await fetchPlayer(1, api.fetchFn), {
+    name: null,
+    avatarUrl: null,
+    rankTier: null,
+    heroStats: {},
+    heroStatsPeriods: { "7": {}, "30": {}, "90": {} },
+  });
 });

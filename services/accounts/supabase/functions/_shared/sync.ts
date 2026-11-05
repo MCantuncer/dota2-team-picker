@@ -25,6 +25,7 @@ export async function syncProfile(
   const update: Record<string, unknown> = {
     rank_tier: player.rankTier,
     hero_stats: player.heroStats,
+    hero_stats_periods: player.heroStatsPeriods,
     synced_at: new Date().toISOString(),
     // Put the player first in line for the trends job, so games show on Your Games within its
     // next run (every 30 minutes) instead of after the 12 hour wait.
