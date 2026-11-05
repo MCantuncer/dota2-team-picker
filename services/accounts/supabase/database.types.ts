@@ -609,14 +609,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"created_at": string,"display_name": string | null,"friend_code": string,"hero_stats": NonNullable<Json>,"id": string,"last_active_at": string | null,"pool_suggestions_off": boolean,"rank_tier": number | null,"steam_id": string | null,"steam_name": string | null,"synced_at": string | null,"trends_checked_at": string | null,"trends_state": string | null,"updated_at": string,"user_type": string,"rank_bracket": number | null
+                    "avatar_url": string | null,"created_at": string,"display_name": string | null,"friend_code": string,"hero_stats": NonNullable<Json>,"id": string,"last_active_at": string | null,"pool_suggestions_off": boolean,"rank_tier": number | null,"share_heroes_with_friends": boolean,"steam_id": string | null,"steam_name": string | null,"synced_at": string | null,"trends_checked_at": string | null,"trends_state": string | null,"updated_at": string,"user_type": string,"rank_bracket": number | null
                   }
                   ComputedFields: "rank_bracket"
                   Insert: {
-                    "avatar_url"?: string | null,"created_at"?: string,"display_name"?: string | null,"friend_code"?: string,"hero_stats"?: NonNullable<Json>,"id": string,"last_active_at"?: string | null,"pool_suggestions_off"?: boolean,"rank_tier"?: number | null,"steam_id"?: string | null,"steam_name"?: string | null,"synced_at"?: string | null,"trends_checked_at"?: string | null,"trends_state"?: string | null,"updated_at"?: string,"user_type"?: string
+                    "avatar_url"?: string | null,"created_at"?: string,"display_name"?: string | null,"friend_code"?: string,"hero_stats"?: NonNullable<Json>,"id": string,"last_active_at"?: string | null,"pool_suggestions_off"?: boolean,"rank_tier"?: number | null,"share_heroes_with_friends"?: boolean,"steam_id"?: string | null,"steam_name"?: string | null,"synced_at"?: string | null,"trends_checked_at"?: string | null,"trends_state"?: string | null,"updated_at"?: string,"user_type"?: string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"created_at"?: string,"display_name"?: string | null,"friend_code"?: string,"hero_stats"?: NonNullable<Json>,"id"?: string,"last_active_at"?: string | null,"pool_suggestions_off"?: boolean,"rank_tier"?: number | null,"steam_id"?: string | null,"steam_name"?: string | null,"synced_at"?: string | null,"trends_checked_at"?: string | null,"trends_state"?: string | null,"updated_at"?: string,"user_type"?: string
+                    "avatar_url"?: string | null,"created_at"?: string,"display_name"?: string | null,"friend_code"?: string,"hero_stats"?: NonNullable<Json>,"id"?: string,"last_active_at"?: string | null,"pool_suggestions_off"?: boolean,"rank_tier"?: number | null,"share_heroes_with_friends"?: boolean,"steam_id"?: string | null,"steam_name"?: string | null,"synced_at"?: string | null,"trends_checked_at"?: string | null,"trends_state"?: string | null,"updated_at"?: string,"user_type"?: string
                   }
                   Relationships: [
                     
@@ -991,6 +991,11 @@ isOneToOne: false
 "leave_party":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"lineup_players":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "avatar_url": string,"display_name": string,"favorites": Json,"hero_stats": Json,"is_friend": boolean,"positions": (number)[],"rank_tier": number,"shared": boolean,"stacks": Json,"user_id": string
+            }[]
+                           },
 "lock_my_party":
 { Args: Record<PropertyKey, never>; Returns: {
               "captain_id": string | null,
@@ -1148,6 +1153,9 @@ isOneToOne: false
                            },
 "set_pool_suggestions_off":
 { Args: { "is_off": boolean }; Returns: undefined
+                           },
+"set_share_heroes_with_friends":
+{ Args: { "is_on": boolean }; Returns: undefined
                            },
 "skip_check_in":
 { Args: { "check_in": string }; Returns: undefined
