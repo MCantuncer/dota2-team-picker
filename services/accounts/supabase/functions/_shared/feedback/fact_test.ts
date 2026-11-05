@@ -164,7 +164,7 @@ Deno.test("budget refusals and rate limits stop the run instead of counting as e
   await assertRejects(() => buildFact(item(), limited.deps, isBusy), Busy);
 });
 
-Deno.test("new games: the newest ten per player in the last 14 days without a row, newest first", () => {
+Deno.test("new games: the newest 20 per player in the last 30 days without a row, newest first", () => {
   const game = (user: string, matchId: number, hoursAgo: number) => ({
     user_id: user,
     account_id: 1,
@@ -175,17 +175,18 @@ Deno.test("new games: the newest ten per player in the last 14 days without a ro
     started_at: ago(hoursAgo * HOUR_MS),
   });
   const games = [
-    ...Array.from({ length: 12 }, (_, i) => game("a", 100 + i, i + 1)),
+    ...Array.from({ length: 22 }, (_, i) => game("a", 100 + i, i + 1)),
     game("b", 200, 5),
     game("b", 201, 15 * 24),
+    game("b", 202, 31 * 24),
   ];
   const picked = pickNewGames(games, (u, m) => u === "a" && m === 100, NOW);
   assertEquals(
     picked.map((g) => g.match_id),
-    [101, 102, 103, 104, 200, 105, 106, 107, 108, 109],
-    "a's newest is saved already, its 11th and 12th are past the cap, b's old game is out",
+    [101, 102, 103, 104, 200, ...Array.from({ length: 15 }, (_, i) => 105 + i), 201],
+    "a's newest is saved already, its 21st and 22nd are past the cap, b's 15 day old game comes, its 31 day old one doesn't",
   );
-  assertEquals(MAX_GAMES_PER_PLAYER, 10);
+  assertEquals(MAX_GAMES_PER_PLAYER, 20);
   assertEquals([picked[0].created_at, picked[0].attempts, picked[0].duration_s], [null, 0, null]);
 });
 

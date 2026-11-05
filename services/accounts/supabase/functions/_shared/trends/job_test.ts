@@ -60,6 +60,7 @@ const player = (over: Partial<TrendPlayer> = {}): TrendPlayer => ({
   pool: [],
   skip: [],
   has_recent_card: false,
+  cards_off: false,
   ...over,
 });
 
@@ -139,6 +140,15 @@ Deno.test("a card in the last days means no new card, but the pair still qualifi
   assertEquals(result.cards, 0);
   assertEquals(s.saved[0][1].newCard, null);
   assertEquals(s.saved[0][1].qualifying, [`${MONKEY_KING}:1`]);
+});
+
+Deno.test("suggestions off: the games are still saved, but no new card", async () => {
+  const s = stub([player({ cards_off: true })]);
+  const result = await runTrends(s.deps);
+  assertEquals(result.cards, 0);
+  assertEquals(s.saved[0][1].newCard, null);
+  assertEquals(s.saved[0][1].state, "ok");
+  assertEquals(s.saved[0][1].games.length > 0, true);
 });
 
 Deno.test("heroes in the pool or skipped get no card", async () => {

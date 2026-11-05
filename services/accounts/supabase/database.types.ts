@@ -913,7 +913,7 @@ isOneToOne: false
                            },
 "claim_trend_players":
 { Args: { "max_rows"?: number }; Returns: {
-              "account_id": number,"has_recent_card": boolean,"hero_stats": Json,"pool": Json,"skip": (string)[],"user_id": string
+              "account_id": number,"cards_off": boolean,"has_recent_card": boolean,"hero_stats": Json,"pool": Json,"skip": (string)[],"user_id": string
             }[]
                            },
 "claim_unattached_drafts":

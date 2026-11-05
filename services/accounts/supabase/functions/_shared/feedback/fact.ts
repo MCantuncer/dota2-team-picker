@@ -24,8 +24,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export const KEEP_DAYS = 60;
 /** Replays expire after one to two weeks: older games are only read, never parsed. */
 export const PARSE_MAX_AGE_DAYS = 14;
-/** Newest counted games per player that get a row, so the first backfill stays small. */
-export const MAX_GAMES_PER_PLAYER = 10;
+/** Newest counted games per player that get a row: the first backfill reads the last 20. */
+export const MAX_GAMES_PER_PLAYER = 20;
+/** New games this old or newer get a row; past PARSE_MAX_AGE_DAYS they are read but not parsed. */
+export const NEW_GAME_DAYS = 30;
 const ERROR_MAX_CHARS = 500;
 
 /** A game the job works on: a row already in player_game_facts, or a new one from player_games. */
@@ -190,14 +192,14 @@ export type NewGame = Pick<
 
 /**
  * Picks which games get a row: per player, the newest MAX_GAMES_PER_PLAYER counted games
- * started in the last PARSE_MAX_AGE_DAYS that have none yet, newest first.
+ * started in the last NEW_GAME_DAYS that have none yet, newest first.
  */
 export function pickNewGames(
   games: NewGame[],
   hasRow: (userId: string, matchId: number) => boolean,
   now: Date,
 ): FactItem[] {
-  const since = now.getTime() - PARSE_MAX_AGE_DAYS * DAY_MS;
+  const since = now.getTime() - NEW_GAME_DAYS * DAY_MS;
   const byUser = new Map<string, typeof games>();
   for (const g of games) {
     if (Date.parse(g.started_at) < since) continue;
