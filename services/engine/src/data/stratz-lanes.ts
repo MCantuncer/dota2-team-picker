@@ -20,7 +20,10 @@ const GROUPS = [0, 1, 2, 3, 4] as const;
 export const LANE_HEROES_PER_QUERY = 10;
 /** Pairs with fewer lane games than this are too noisy to name and are left out. */
 export const MIN_LANE_GAMES = 300;
-/** A slice needs pairs for at least this share of the other heroes, or the answer is incomplete. */
+/**
+ * All ranks together needs pairs for at least this share of all hero pairs, or the answer is incomplete. Checked
+ * over every hero, not per hero: a rarely played hero (Chen) has only a few pairs with MIN_LANE_GAMES lanes.
+ */
 const MIN_PAIR_SHARE = 0.5;
 
 interface LaneRow {
@@ -72,7 +75,6 @@ function toCounts(r: LaneRow): LaneCounts | undefined {
  */
 export function toLaneOutcomes(heroIds: number[], answers: Record<string, LaneRow[] | null | undefined>): LaneOutcomes {
   const out: LaneOutcomes = {};
-  const minPairs = Math.floor((heroIds.length - 1) * MIN_PAIR_SHARE);
   for (const id of heroIds) {
     for (const g of GROUPS) {
       const rows = answers[`l${id}_${g}`];
@@ -83,12 +85,13 @@ export function toLaneOutcomes(heroIds: number[], answers: Record<string, LaneRo
         const c = toCounts(r);
         if (c) pairs[String(r.heroId2)] = c;
       }
-      // Rank groups have fewer games, so only all ranks must cover most heroes.
-      const size = Object.keys(pairs).length;
-      if (g === 0 && size < minPairs) throw new Error(`STRATZ lanes: hero ${id} has ${size} pairs, expected ${minPairs}+`);
       (out[String(g)] ??= {})[String(id)] = pairs;
     }
   }
+  // Rank groups have fewer games, so only all ranks must cover most pairs.
+  const pairs = Object.values(out["0"] ?? {}).reduce((n, row) => n + Object.keys(row).length, 0);
+  const minPairs = Math.floor(heroIds.length * (heroIds.length - 1) * MIN_PAIR_SHARE);
+  if (pairs < minPairs) throw new Error(`STRATZ lanes: ${pairs} pairs over all ranks, expected ${minPairs}+`);
   return out;
 }
 
