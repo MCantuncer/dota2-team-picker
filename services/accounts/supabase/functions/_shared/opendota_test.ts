@@ -25,6 +25,16 @@ Deno.test("reads rank, profile and hero record", async () => {
       { hero_id: "19", games: 4, win: 2 },
       { hero_id: 1, games: 0, win: 0 },
     ],
+    "/players/86745912/matches": [
+      // Radiant slot, Radiant won: a win.
+      { hero_id: 53, start_time: 1_700_000_000, player_slot: 2, radiant_win: true },
+      // Dire slot, Radiant won: a loss. Newer, so it comes first.
+      { hero_id: "19", start_time: 1_700_100_000, player_slot: 130, radiant_win: true },
+      // Dire slot, Dire won: a win.
+      { hero_id: 53, start_time: 1_699_000_000, player_slot: 129, radiant_win: false },
+      // No result: left out.
+      { hero_id: 53, start_time: 1_698_000_000, player_slot: 0, radiant_win: null },
+    ],
   });
   const player = await fetchPlayer(86745912, api.fetchFn);
   assertEquals(player, {
@@ -32,27 +42,32 @@ Deno.test("reads rank, profile and hero record", async () => {
     avatarUrl: "https://avatars.steamstatic.com/a_full.jpg",
     rankTier: 54,
     heroStats: { "53": { games: 13, wins: 10 }, "19": { games: 4, wins: 2 } },
-    // The fake answers every period alike; the real API filters by date.
-    heroStatsPeriods: Object.fromEntries(
-      ["7", "30", "90"].map((d) => [d, { "53": { games: 13, wins: 10 }, "19": { games: 4, wins: 2 } }]),
-    ),
+    heroGames: [
+      [19, 0, 1_700_100_000],
+      [53, 1, 1_700_000_000],
+      [53, 1, 1_699_000_000],
+    ],
   });
   assertEquals(api.requested[0], "POST https://api.opendota.com/api/players/86745912/refresh");
-  for (const days of [180, 7, 30, 90]) {
-    assertEquals(api.requested.includes(`GET https://api.opendota.com/api/players/86745912/heroes?date=${days}`), true);
-  }
+  assertEquals(api.requested.includes("GET https://api.opendota.com/api/players/86745912/heroes?date=180"), true);
+  assertEquals(
+    api.requested.some((r) => r.startsWith("GET https://api.opendota.com/api/players/86745912/matches?date=180&")),
+    true,
+  );
+  assertEquals(api.requested.length, 4);
 });
 
 Deno.test("hidden profiles have no rank", async () => {
   const api = openDota({
     "/players/1": { profile: null, rank_tier: null },
     "/players/1/heroes": [],
+    "/players/1/matches": [],
   });
   assertEquals(await fetchPlayer(1, api.fetchFn), {
     name: null,
     avatarUrl: null,
     rankTier: null,
     heroStats: {},
-    heroStatsPeriods: { "7": {}, "30": {}, "90": {} },
+    heroGames: [],
   });
 });

@@ -31,8 +31,8 @@ select throws_ok(format('update public.profiles set user_type = %L where id = %L
   '42501', null, 'a user cannot make themselves admin');
 select throws_ok(format('update public.profiles set rank_tier = 80 where id = %L', :'ana'),
   '42501', null, 'a user cannot change their rank');
-select throws_ok(format('update public.profiles set hero_stats_periods = %L where id = %L', '{"7": {}}', :'ana'),
-  '42501', null, 'players cannot write their own per-period hero record');
+select throws_ok(format('update public.profiles set hero_games = %L where id = %L', '[[1, 1, 0]]', :'ana'),
+  '42501', null, 'players cannot write their own game list');
 select throws_ok(format('update public.profiles set steam_id = %L where id = %L', '76561198000000000', :'ana'),
   '42501', null, 'a user cannot set a Steam id');
 select throws_ok(format('delete from public.profiles where id = %L', :'ana'),

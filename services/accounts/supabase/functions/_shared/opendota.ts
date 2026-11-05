@@ -7,8 +7,6 @@
 const API = "https://api.opendota.com/api";
 /** Only count the last six months of games for the per-hero record. */
 const HERO_STATS_DAYS = 180;
-/** Shorter periods the Profile can switch to: a week, a month, three months. */
-export const HERO_STATS_PERIODS = [7, 30, 90] as const;
 
 export interface GamesWins {
   games: number;
@@ -22,13 +20,25 @@ export interface PlayerData {
   rankTier: number | null;
   /** Keyed by hero id. */
   heroStats: Record<string, GamesWins>;
-  /** The same record for each of HERO_STATS_PERIODS, keyed by days ("7", "30", "90"). */
-  heroStatsPeriods: Record<string, Record<string, GamesWins>>;
+  /**
+   * The same six months game by game, newest first, as [hero id, won (1 or 0), start time in
+   * Unix seconds], so a shorter period can be counted from it. Games with no result are left out.
+   */
+  heroGames: HeroGame[];
 }
 
 interface PlayerResponse {
   profile?: { personaname?: string | null; avatarfull?: string | null } | null;
   rank_tier?: number | null;
+}
+
+export type HeroGame = [heroId: number, won: 0 | 1, startTime: number];
+
+interface MatchRow {
+  hero_id: number | string;
+  start_time: number;
+  player_slot: number;
+  radiant_win: boolean | null;
 }
 
 interface HeroRow {
@@ -44,34 +54,37 @@ export async function fetchPlayer(accountId: number, fetchFn: typeof fetch = fet
     .then((res) => res.body?.cancel())
     .catch(() => {});
 
-  const heroesFor = (days: number) => getJson<HeroRow[]>(`${API}/players/${accountId}/heroes?date=${days}`, fetchFn);
-  const [player, heroes, ...periods] = await Promise.all([
+  // Same filters as the per-hero record, so the two count the same games.
+  const [player, heroes, matches] = await Promise.all([
     getJson<PlayerResponse>(`${API}/players/${accountId}`, fetchFn),
-    heroesFor(HERO_STATS_DAYS),
-    ...HERO_STATS_PERIODS.map(heroesFor),
+    getJson<HeroRow[]>(`${API}/players/${accountId}/heroes?date=${HERO_STATS_DAYS}`, fetchFn),
+    getJson<MatchRow[]>(
+      `${API}/players/${accountId}/matches?date=${HERO_STATS_DAYS}&project=hero_id&project=start_time&project=player_slot&project=radiant_win`,
+      fetchFn,
+    ),
   ]);
 
-  const heroStats = readHeroes(heroes);
-  const heroStatsPeriods: Record<string, Record<string, GamesWins>> = {};
-  HERO_STATS_PERIODS.forEach((days, i) => {
-    heroStatsPeriods[String(days)] = readHeroes(periods[i]);
-  });
+  const heroStats: Record<string, GamesWins> = {};
+  for (const row of heroes ?? []) {
+    if (row.games > 0) heroStats[String(row.hero_id)] = { games: row.games, wins: row.win };
+  }
+  const heroGames: HeroGame[] = [];
+  for (const m of matches ?? []) {
+    const heroId = Number(m.hero_id);
+    if (typeof m.radiant_win !== "boolean" || !(heroId > 0) || !Number.isFinite(m.start_time)) continue;
+    // Slots 0 to 127 are Radiant, 128 and up Dire.
+    const won = m.radiant_win === m.player_slot < 128;
+    heroGames.push([heroId, won ? 1 : 0, m.start_time]);
+  }
+  heroGames.sort((a, b) => b[2] - a[2]);
   const tier = player?.rank_tier;
   return {
     name: player?.profile?.personaname ?? null,
     avatarUrl: player?.profile?.avatarfull ?? null,
     rankTier: typeof tier === "number" && tier >= 10 && tier <= 80 ? tier : null,
     heroStats,
-    heroStatsPeriods,
+    heroGames,
   };
-}
-
-function readHeroes(rows: HeroRow[] | null): Record<string, GamesWins> {
-  const stats: Record<string, GamesWins> = {};
-  for (const row of rows ?? []) {
-    if (row.games > 0) stats[String(row.hero_id)] = { games: row.games, wins: row.win };
-  }
-  return stats;
 }
 
 async function getJson<T>(url: string, fetchFn: typeof fetch): Promise<T | null> {
