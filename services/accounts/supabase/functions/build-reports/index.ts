@@ -9,7 +9,8 @@
  */
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { json } from "../_shared/cors.ts";
-import { attachMatch, findDraftMatch } from "../_shared/attach.ts";
+import { attachMatch, findDraftMatch, type FoundMatch } from "../_shared/attach.ts";
+import { findCheckInMatch, type SoloCheckIn } from "../_shared/check_in.ts";
 import { fetchMatch, fetchRecentMatches, requestParse } from "../_shared/match.ts";
 import { sameSecret } from "../_shared/job_secret.ts";
 import { takeOpenDotaCalls } from "../_shared/opendota_budget.ts";
@@ -66,7 +67,27 @@ Deno.serve(async (req) => {
       const { error } = await admin.from("match_reports").update(update).eq("draft_id", draftId);
       if (error) throw error;
     },
+    claimCheckIns: async () => {
+      const { data, error } = await admin.rpc("claim_solo_check_ins");
+      if (error) throw error;
+      return data as SoloCheckIn[];
+    },
+    findCheckIn: (board) =>
+      findCheckInMatch(
+        { fetchRecentMatches: (id) => fetchRecentMatches(id, openDota), fetchMatch: (id) => fetchMatch(id, openDota) },
+        board,
+      ),
+    saveCheckIn: (id, found) => saveCheckIn(id, found),
+    noteNoGames: async (id) => {
+      const { error } = await admin.rpc("note_check_in_no_games", { check_in: id });
+      if (error) throw error;
+    },
     cleanFiles,
+    forgetCheckIns: async () => {
+      const { data, error } = await admin.rpc("forget_old_check_ins");
+      if (error) throw error;
+      return data as number;
+    },
     log: (message, err) => console.error(message, err),
   }).catch((err) => {
     console.error("The report run failed", err);
@@ -100,6 +121,18 @@ async function saveRawMatch(matchId: number, raw: unknown): Promise<void> {
     saved_at: new Date().toISOString(),
   });
   if (listError) throw listError;
+}
+
+/** Saves a solo board's game and asks OpenDota to parse it for the player's game feedback. */
+async function saveCheckIn(id: string, found: FoundMatch): Promise<boolean> {
+  const { data, error } = await admin.rpc("set_check_in_result", {
+    check_in: id,
+    match: found.side.matchId,
+    did_win: found.side.won,
+  });
+  if (error) throw error;
+  if (data) await requestParse(found.side.matchId, openDota);
+  return data === true;
 }
 
 /** Deletes saved matches older than 90 days or without a report, then drops them from the list. */

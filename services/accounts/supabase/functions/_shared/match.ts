@@ -18,7 +18,7 @@ export interface SideResult extends MatchResult {
   isRadiant: boolean;
 }
 
-interface RecentMatch {
+export interface RecentMatch {
   match_id: number;
   hero_id: number;
   start_time: number;
@@ -42,11 +42,20 @@ const isRadiant = (slot: number) => slot < 128;
  * one of the draft's heroes for our team. Matches without a result yet are skipped.
  */
 export function pickRecentMatch(recent: RecentMatch[], allies: number[], draftOpenedAt: Date): MatchResult | null {
-  const since = draftOpenedAt.getTime() / 1000 - EARLY_START_S;
-  const match = recent
-    .filter((m) => m.start_time >= since && allies.includes(m.hero_id) && typeof m.radiant_win === "boolean")
-    .sort((a, b) => a.start_time - b.start_time)[0];
-  return match ? { matchId: match.match_id, won: isRadiant(match.player_slot) === match.radiant_win } : null;
+  return pickRecentMatches(recent, allies, draftOpenedAt, 1)[0] ?? null;
+}
+
+/**
+ * Up to `limit` games from the player's recent matches that started at most 10 minutes before
+ * `since` and were played on one of `heroes`, oldest first. Matches without a result yet are skipped.
+ */
+export function pickRecentMatches(recent: RecentMatch[], heroes: number[], since: Date, limit: number): MatchResult[] {
+  const from = since.getTime() / 1000 - EARLY_START_S;
+  return recent
+    .filter((m) => m.start_time >= from && heroes.includes(m.hero_id) && typeof m.radiant_win === "boolean")
+    .sort((a, b) => a.start_time - b.start_time)
+    .slice(0, limit)
+    .map((m) => ({ matchId: m.match_id, won: isRadiant(m.player_slot) === m.radiant_win }));
 }
 
 /**

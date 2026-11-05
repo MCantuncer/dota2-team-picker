@@ -169,14 +169,14 @@ isOneToOne: false
                   ]
                 },"game_check_ins": {
                   Row: {
-                    "allies": (number)[],"ally_positions": (number)[],"answered_at": string | null,"bans": (number)[],"client_key": string | null,"enemies": (number)[],"filled_at": string,"find_tries": number,"id": string,"match_id": number | null,"my_hero": number | null,"my_position": number,"note": string | null,"party_draft_id": string | null,"picks_feel": string | null,"played": boolean | null,"player_won": boolean | null,"profile_hidden": boolean,"result_checked_at": string | null,"shown": (number)[],"skipped_at": string | null,"snoozes": number,"story_feel": string | null,"story_shown": boolean,"tags": (string)[],"updated_at": string,"user_id": string,"won": boolean | null
+                    "allies": (number)[],"ally_positions": (number)[],"answered_at": string | null,"bans": (number)[],"client_key": string | null,"empty_finds": number,"enemies": (number)[],"filled_at": string,"find_tries": number,"id": string,"match_id": number | null,"my_hero": number | null,"my_position": number,"note": string | null,"party_draft_id": string | null,"picks_feel": string | null,"played": boolean | null,"player_won": boolean | null,"profile_hidden": boolean,"result_checked_at": string | null,"shown": (number)[],"skipped_at": string | null,"snoozes": number,"started_at": string | null,"story_feel": string | null,"story_shown": boolean,"tags": (string)[],"updated_at": string,"user_id": string,"won": boolean | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "allies": (number)[],"ally_positions": (number)[],"answered_at"?: string | null,"bans"?: (number)[],"client_key"?: string | null,"enemies": (number)[],"filled_at"?: string,"find_tries"?: number,"id"?: string,"match_id"?: number | null,"my_hero"?: number | null,"my_position": number,"note"?: string | null,"party_draft_id"?: string | null,"picks_feel"?: string | null,"played"?: boolean | null,"player_won"?: boolean | null,"profile_hidden"?: boolean,"result_checked_at"?: string | null,"shown"?: (number)[],"skipped_at"?: string | null,"snoozes"?: number,"story_feel"?: string | null,"story_shown"?: boolean,"tags"?: (string)[],"updated_at"?: string,"user_id": string,"won"?: boolean | null
+                    "allies": (number)[],"ally_positions": (number)[],"answered_at"?: string | null,"bans"?: (number)[],"client_key"?: string | null,"empty_finds"?: number,"enemies": (number)[],"filled_at"?: string,"find_tries"?: number,"id"?: string,"match_id"?: number | null,"my_hero"?: number | null,"my_position": number,"note"?: string | null,"party_draft_id"?: string | null,"picks_feel"?: string | null,"played"?: boolean | null,"player_won"?: boolean | null,"profile_hidden"?: boolean,"result_checked_at"?: string | null,"shown"?: (number)[],"skipped_at"?: string | null,"snoozes"?: number,"started_at"?: string | null,"story_feel"?: string | null,"story_shown"?: boolean,"tags"?: (string)[],"updated_at"?: string,"user_id": string,"won"?: boolean | null
                   }
                   Update: {
-                    "allies"?: (number)[],"ally_positions"?: (number)[],"answered_at"?: string | null,"bans"?: (number)[],"client_key"?: string | null,"enemies"?: (number)[],"filled_at"?: string,"find_tries"?: number,"id"?: string,"match_id"?: number | null,"my_hero"?: number | null,"my_position"?: number,"note"?: string | null,"party_draft_id"?: string | null,"picks_feel"?: string | null,"played"?: boolean | null,"player_won"?: boolean | null,"profile_hidden"?: boolean,"result_checked_at"?: string | null,"shown"?: (number)[],"skipped_at"?: string | null,"snoozes"?: number,"story_feel"?: string | null,"story_shown"?: boolean,"tags"?: (string)[],"updated_at"?: string,"user_id"?: string,"won"?: boolean | null
+                    "allies"?: (number)[],"ally_positions"?: (number)[],"answered_at"?: string | null,"bans"?: (number)[],"client_key"?: string | null,"empty_finds"?: number,"enemies"?: (number)[],"filled_at"?: string,"find_tries"?: number,"id"?: string,"match_id"?: number | null,"my_hero"?: number | null,"my_position"?: number,"note"?: string | null,"party_draft_id"?: string | null,"picks_feel"?: string | null,"played"?: boolean | null,"player_won"?: boolean | null,"profile_hidden"?: boolean,"result_checked_at"?: string | null,"shown"?: (number)[],"skipped_at"?: string | null,"snoozes"?: number,"started_at"?: string | null,"story_feel"?: string | null,"story_shown"?: boolean,"tags"?: (string)[],"updated_at"?: string,"user_id"?: string,"won"?: boolean | null
                   }
                   Relationships: [
                     {
@@ -896,6 +896,11 @@ isOneToOne: false
 "claim_matchup_fetches":
 { Args: { "version": number,"wanted": Json }; Returns: Json
                            },
+"claim_solo_check_ins":
+{ Args: { "max_rows"?: number }; Returns: {
+              "account_id": number,"allies": (number)[],"id": string,"my_hero": number,"started_at": string
+            }[]
+                           },
 "claim_trend_players":
 { Args: { "max_rows"?: number }; Returns: {
               "account_id": number,"has_recent_card": boolean,"hero_stats": Json,"pool": Json,"skip": (string)[],"user_id": string
@@ -917,8 +922,14 @@ isOneToOne: false
 "end_party_draft":
 { Args: { "draft": string }; Returns: undefined
                            },
+"find_is_due":
+{ Args: { "base": string,"checked": string,"max_tries": number,"tries": number }; Returns: boolean
+                           },
 "forget_match_files":
 { Args: { "matches": (number)[] }; Returns: number
+                           },
+"forget_old_check_ins":
+{ Args: Record<PropertyKey, never>; Returns: number
                            },
 "forget_old_matchups":
 { Args: Record<PropertyKey, never>; Returns: undefined
@@ -1025,6 +1036,9 @@ isOneToOne: false
               "invite_id": string,"inviter_avatar_url": string,"inviter_name": string,"members": number,"sent_at": string,"team_id": string,"team_name": string
             }[]
                            },
+"note_check_in_no_games":
+{ Args: { "check_in": string }; Returns: undefined
+                           },
 "note_stratz_busy":
 { Args: { "until": string }; Returns: undefined
                            },
@@ -1101,6 +1115,12 @@ isOneToOne: false
                            },
 "send_friend_request":
 { Args: { "target": string }; Returns: string
+                           },
+"set_check_in_result":
+{ Args: { "check_in": string,"did_win": boolean,"match": number }; Returns: boolean
+                           },
+"set_game_started":
+{ Args: { "check_in": string,"started": boolean }; Returns: string
                            },
 "set_party_captain":
 { Args: { "party": string,"who": string }; Returns: undefined
