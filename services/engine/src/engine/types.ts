@@ -28,6 +28,12 @@ export interface GamesWins {
   wins: number;
 }
 
+/**
+ * One hero's lane against another: [games, won, drawn, lost], stomps counted in won and lost. A tuple, not
+ * an object, because the snapshot holds about 50,000 of them.
+ */
+export type LaneCounts = [games: number, won: number, drawn: number, lost: number];
+
 export interface HeroInfo {
   id: number;
   name: string;
@@ -61,6 +67,13 @@ export interface Snapshot {
   dataHardCounters?: { hero: number; counter: number; gap: number; names: string }[];
   /** Refreshes in a row each "hero-counter" pair has been past the line, for the hold. */
   hardCounterStreaks?: Record<string, number>;
+  /**
+   * Lane results from STRATZ: laneOutcomes[slice][a][b] is hero a's lane against hero b, slice "0" for
+   * every rank and "1" to "4" per RankGroup. Pairs under 300 games are left out (see stratz-lanes.ts).
+   */
+  laneOutcomes?: Record<string, Record<string, Record<string, LaneCounts>>>;
+  /** When lane results were last downloaded; they are refreshed weekly. */
+  laneOutcomesAt?: string;
   /** Games per lane role (1 safe, 2 mid, 3 off, 4 jungle). */
   laneRoles: Record<string, Partial<Record<"1" | "2" | "3" | "4", number>>>;
   /** When lane roles were last downloaded; they are refreshed weekly. */
