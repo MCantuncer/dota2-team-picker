@@ -12,6 +12,7 @@
     "mark-refresh": "tsx src/data/mark-refresh.ts",
     "item-odds-sim": "tsx scripts/item-odds-sim.ts",
     "item-odds-report": "tsx scripts/item-odds-report.ts",
+    "lead-report": "tsx scripts/lead-report.ts",
     "suggest": "tsx scripts/suggest.ts",
     "plan": "tsx scripts/plan.ts",
     "backtest": "tsx scripts/backtest.ts",
