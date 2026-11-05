@@ -3,6 +3,7 @@ import { pickFallbacks, type Scaling } from "./fallbacks";
 import { withEffects } from "./item-effects";
 import { enemyList, threatRows, type EnemyNote, type ThreatRow } from "./enemy-list";
 import { laneAdjusted } from "./lane-items";
+import { laneOdds, pairText } from "./lane-odds";
 import type { MatchupGame } from "./matchup-talents";
 import { skillPlan, type SkillPlan } from "./skill-plan";
 import { gameStory, ourWindow, type Story, type Timing } from "./story";
@@ -55,6 +56,8 @@ export interface LanePlan {
   theirs: number[];
   /** Our heroes' summed matchup edge against theirs, in win-rate points. */
   edge: number;
+  /** Lanes won minus lost against their likely laners, in points, when the snapshot has lane results (lane-odds.ts). */
+  laneNet?: number;
   verdict: LaneVerdict;
   text: string;
 }
@@ -228,8 +231,11 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     const ours = input.ours.filter((p) => lane.ours.includes(p.position)).map((p) => p.heroId);
     const theirs = lane.theirs.flatMap((p) => (theirByPos.has(p) ? [theirByPos.get(p)!] : [])); // has() checked.
     const edge = ours.reduce((s, o) => s + theirs.reduce((t, x) => t + engine.matchupEdge(o, x, bracket), 0), 0);
-    const verdict: LaneVerdict = edge >= LANE_CLEAR_EDGE ? "win" : edge <= -LANE_CLEAR_EDGE ? "hard" : "even";
-    return { name: lane.name, ours, theirs, edge: round(edge), verdict, text: laneText(verdict, listNames(theirs.map(name))) };
+    // Real lane results when the snapshot has them; the whole-game matchup edge otherwise.
+    const odds = laneOdds(engine.data, ours, input.theirs.map((id, i) => ({ id, odds: theirOdds[i] ?? {} })), lane.theirs, bracket);
+    const verdict: LaneVerdict = odds?.verdict ?? (edge >= LANE_CLEAR_EDGE ? "win" : edge <= -LANE_CLEAR_EDGE ? "hard" : "even");
+    const text = [laneText(verdict, listNames(theirs.map(name))), odds ? pairText(odds.key, name) : ""].filter(Boolean).join(" ");
+    return { name: lane.name, ours, theirs, edge: round(edge), verdict, text, ...(odds ? { laneNet: round(odds.net * 100) } : {}) };
   });
 
   // The enemy hero who beats the most of our heroes, by summed matchup edge.
