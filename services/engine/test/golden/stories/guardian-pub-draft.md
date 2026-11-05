@@ -1,27 +1,26 @@
 ## Guardian pub draft
 
-Headline: Survive their early pushes: we are stronger after 25 minutes.
+Headline: Fight from 17 min, before Drow Ranger has Manta Style at 24.
 
-- 0 to 10 min: Wraith King and Lion win the safe lane against Legion Commander and Shadow Shaman: take their tower. Sniper farms safely in the mid against Pudge: skip trades.
-- 10 to 20 min: Axe's Blink Dagger at 16 and Wraith King's Radiance at 17: fight back from 17. Their Legion Commander has Blink Dagger at 15. Their strongest time: defend towers together while Wraith King farms.
+- 0 to 10 min: Wraith King farms safely in the safe lane against Legion Commander and Shadow Shaman: skip trades. Lion wins 30% and loses 46% of 2,306 lanes against Legion Commander.
+- 10 to 20 min: Axe's Blink Dagger at 16 and Wraith King's Radiance at 17: ready to fight at 17. Their Legion Commander has Blink Dagger at 15.
 - 20 to 30 min: Sniper's Hurricane Pike at 26. Their Drow Ranger has Manta Style at 24. Roshan from 26 min, once three key items are in.
-- 30 min on: You are stronger now: take Roshan, then end with the Aegis.
 
 Danger heroes:
-- Drow Ranger: Manta Style at 24 min. Defend until your core items are in, then fight.
+- Drow Ranger: Manta Style at 24 min. Take fights and towers before then.
 - Legion Commander: Blink Dagger at 15 min. From then, spread out and watch the fog.
 
 If the game goes wrong:
-- Behind at 20? Defend high ground until Wraith King has Radiance. Catch their pos 4 and 5 out of position.
-- Ahead at 20? Keep vision in their jungle, take safe towers, and let Wraith King farm to full items.
+- Behind at 20? Defend towers together and only fight with your key spells ready.
+- Ahead at 20? Take Roshan and push one lane together with the Aegis.
 
-Lane Safe lane: Wraith King + Lion vs Legion Commander + Shadow Shaman, win
+Lane Safe lane: Wraith King + Lion vs Legion Commander + Shadow Shaman, hard
 Lane Mid: Sniper vs Pudge, hard
-Lane Off lane: Axe + Ogre Magi vs Drow Ranger + Crystal Maiden, even
+Lane Off lane: Axe + Ogre Magi vs Drow Ranger + Crystal Maiden, hard
 
 ### Pos 1 Wraith King
 Timings: all
-Start: Quelling Blade, Tango, 2 Iron Branch, Magic Stick, Gauntlets of Strength, Faerie Fire
+Start: Quelling Blade, 2 Tango [Hard lane against Legion Commander and Shadow Shaman: more sustain], 2 Iron Branch, Magic Stick, Healing Salve [Hard lane against Legion Commander and Shadow Shaman: more sustain]
 Lane: Bracer 2, Magic Wand 3
 Boots: Phase Boots 8 {Armor and a burst of speed.}
 First: Radiance 17/18 {Burns everything near you, and 25% evasion.}
@@ -36,6 +35,7 @@ Vs Crystal Maiden: Magic burst. Stay spread so one combo can't catch two.
 Watch Legion Commander, Shadow Shaman, Crystal Maiden: Stay spread so one combo can't catch two.
 Watch Drow Ranger: Keep distance until their disable is used.
 Watch Pudge: buy Black King Bar.
+If it goes wrong: Lane lost? Ask for a lane swap or a rotation before 7 min, and skip trades until Radiance.
 If it goes wrong: No Radiance by 18 min? Don't show on the map without it. Farm the side Legion Commander is not on.
 
 ### Pos 2 Sniper
@@ -61,7 +61,7 @@ If it goes wrong: No Hurricane Pike by 31 min? Stop rotating and farm mid and th
 
 ### Pos 3 Axe
 Timings: rank
-Start: Tango, 2 Iron Branch, Gauntlets of Strength, Quelling Blade, Circlet
+Start: 2 Tango [Hard lane against Drow Ranger and Crystal Maiden: more sustain], 2 Iron Branch, Quelling Blade, Healing Salve [Hard lane against Drow Ranger and Crystal Maiden: more sustain]
 Lane: Bracer 2, Magic Wand 3
 Boots: Phase Boots 9 {Armor and a burst of speed.}
 First: Vanguard 8/10
@@ -77,11 +77,12 @@ Vs Shadow Shaman: Magic burst. Stay spread so one combo can't catch two.
 Watch Drow Ranger: Keep distance until their disable is used.
 Watch Crystal Maiden, Legion Commander, Shadow Shaman: Stay spread so one combo can't catch two.
 Watch Pudge: buy Black King Bar.
+If it goes wrong: Lane lost? Stop contesting Drow Ranger. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 21 min? Don't start fights without it. Stay behind your cores and soak damage.
 
 ### Pos 4 Ogre Magi
 Timings: all
-Start: Tango, Blood Grenade, Magic Stick, Iron Branch, Enchanted Mango, Sentry Ward
+Start: 2 Tango [Hard lane against Drow Ranger and Crystal Maiden: more sustain], Blood Grenade, Magic Stick, Iron Branch, Sentry Ward, Healing Salve [Hard lane against Drow Ranger and Crystal Maiden: more sustain]
 Lane: Magic Wand 5, Ring of Basilius 7
 Boots: Arcane Boots 12
 First: Hand of Midas 18/21
@@ -97,10 +98,12 @@ Vs Shadow Shaman: Magic burst. buy Glimmer Cape.
 Watch Drow Ranger, Legion Commander: buy Force Staff.
 Watch Crystal Maiden: Stay spread so one combo can't catch two.
 Watch Pudge, Shadow Shaman: buy Glimmer Cape.
+If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Wraith King.
+If it goes wrong: Drow Ranger is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 
 ### Pos 5 Lion
 Timings: all
-Start: Tango, Blood Grenade, 2 Iron Branch, Magic Stick, Observer and Sentry Wards, Wind Lace
+Start: 2 Tango [Hard lane against Legion Commander and Shadow Shaman: more sustain], Blood Grenade, 2 Iron Branch, Magic Stick, Observer and Sentry Wards, Wind Lace, Healing Salve [Hard lane against Legion Commander and Shadow Shaman: more sustain]
 Lane: Magic Wand 5
 Boots: Tranquil Boots 7
 First: Blink Dagger 18/20 {Start fights from 1,200 range.}
@@ -115,3 +118,5 @@ Vs Crystal Maiden: Magic burst. Stay spread so one combo can't catch two.
 Watch Legion Commander, Drow Ranger: buy Force Staff.
 Watch Shadow Shaman, Pudge: buy Glimmer Cape.
 Watch Crystal Maiden: Stay spread so one combo can't catch two.
+If it goes wrong: Lane lost? Let Wraith King take every last hit. Pull the near camp and keep a ward on the rune.
+If it goes wrong: Drow Ranger is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.

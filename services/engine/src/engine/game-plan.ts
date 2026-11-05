@@ -58,6 +58,8 @@ export interface LanePlan {
   edge: number;
   /** Lanes won minus lost against their likely laners, in points, when the snapshot has lane results (lane-odds.ts). */
   laneNet?: number;
+  /** The lane result that decides the verdict, as a line ("Juggernaut wins 31% and loses 44% of ..."). */
+  pairLine?: string;
   verdict: LaneVerdict;
   text: string;
 }
@@ -134,10 +136,13 @@ function enemyPositions(theirs: number[], odds: PositionFit[]): Map<Position, nu
   return out;
 }
 
-/** When a team is strongest: late for farming styles, early for push and pick-off. */
-function timing(style: Style | undefined): "early" | "late" | null {
-  if (style === "lategame") return "late";
-  if (style === "push" || style === "pickoff") return "early";
+/**
+ * When a team is strongest, from its style: never claimed any more. Measured on 50,000 ranked games, drafts
+ * labelled early and late by the style lists win almost the same share of short and long games (1.5 points
+ * apart; richer Game Story research, 2026-11-04), so the Story, jobs and fallbacks no longer say "they
+ * outscale you". The item race and lane results carry the plan instead.
+ */
+function timing(_style: Style | undefined): Timing {
   return null;
 }
 
@@ -234,8 +239,9 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     // Real lane results when the snapshot has them; the whole-game matchup edge otherwise.
     const odds = laneOdds(engine.data, ours, input.theirs.map((id, i) => ({ id, odds: theirOdds[i] ?? {} })), lane.theirs, bracket);
     const verdict: LaneVerdict = odds?.verdict ?? (edge >= LANE_CLEAR_EDGE ? "win" : edge <= -LANE_CLEAR_EDGE ? "hard" : "even");
-    const text = [laneText(verdict, listNames(theirs.map(name))), odds ? pairText(odds.key, name) : ""].filter(Boolean).join(" ");
-    return { name: lane.name, ours, theirs, edge: round(edge), verdict, text, ...(odds ? { laneNet: round(odds.net * 100) } : {}) };
+    const pairLine = odds && pairText(odds.key, name);
+    const text = [laneText(verdict, listNames(theirs.map(name))), pairLine ?? ""].filter(Boolean).join(" ");
+    return { name: lane.name, ours, theirs, edge: round(edge), verdict, text, ...(odds ? { laneNet: round(odds.net * 100), pairLine } : {}) };
   });
 
   // The enemy hero who beats the most of our heroes, by summed matchup edge.
@@ -383,7 +389,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   const ourTiming = timing(ourStyle?.key);
   const theirTiming = timing(theirStyle?.key);
   const firstCombo = ourCombos[0];
-  const laneFact = (l: LanePlan) => ({ name: l.name.toLowerCase(), ours: l.ours.map(name), theirs: l.theirs.map(name) });
+  const laneFact = (l: LanePlan) => ({ name: l.name.toLowerCase(), ours: l.ours.map(name), theirs: l.theirs.map(name), ...(l.pairLine ? { fact: l.pairLine } : {}) });
   const roadmap = [
     {
       phase: "Laning (0 to 10 min)",

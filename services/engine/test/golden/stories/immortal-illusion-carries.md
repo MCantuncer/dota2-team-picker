@@ -1,11 +1,10 @@
 ## Immortal illusion carries
 
-Headline: Both teams are ready at 17 min: fight once your items are in, not before.
+Headline: Your safe lane to press: Disruptor wins 62% and loses 15% of 308 lanes against Primal Beast.
 
-- 0 to 10 min: Terrorblade farms safely in the safe lane against Primal Beast and Hoodwink: skip trades.
+- 0 to 10 min: Terrorblade and Disruptor win the safe lane against Primal Beast and Hoodwink: take their tower. Disruptor wins 62% and loses 15% of 308 lanes against Primal Beast.
 - 10 to 20 min: Mars's Blink Dagger at 15 and Templar Assassin's Desolator at 17: ready to fight at 17. Their Naga Siren has Manta Style around 18.
 - 20 to 30 min: Their Pangolier has Blink Dagger at 20. Roshan from 20 min, once three key items are in.
-- 30 min on: Catch Naga Siren first, then take high ground.
 
 Danger heroes:
 - Naga Siren: Manta Style around 18 min. Take fights and towers before then.
@@ -15,13 +14,13 @@ If the game goes wrong:
 - Behind at 20? Defend towers together and only fight with your key spells ready.
 - Ahead at 20? Take Roshan and push one lane together with the Aegis.
 
-Lane Safe lane: Terrorblade + Disruptor vs Primal Beast + Hoodwink, hard
-Lane Mid: Templar Assassin vs Pangolier, even
-Lane Off lane: Mars + Tusk vs Naga Siren + Treant Protector, hard
+Lane Safe lane: Terrorblade + Disruptor vs Primal Beast + Hoodwink, win
+Lane Mid: Templar Assassin vs Pangolier, win
+Lane Off lane: Mars + Tusk vs Naga Siren + Treant Protector, win
 
 ### Pos 1 Terrorblade
 Timings: all
-Start: 2 Iron Branch, 2 Tango [Hard lane against Primal Beast and Hoodwink: more sustain], Quelling Blade, Magic Stick, Healing Salve [Hard lane against Primal Beast and Hoodwink: more sustain]
+Start: 2 Iron Branch, Tango, Quelling Blade, Magic Stick, Faerie Fire, Circlet
 Lane: Magic Wand 3, Falcon Blade 7
 Boots: Power Treads 7 {Attack speed and a stat to switch.}
 First: Manta Style 19/20
@@ -36,7 +35,6 @@ Watch Primal Beast, Pangolier: buy Black King Bar.
 Watch Hoodwink: Stay spread so one combo can't catch two.
 Watch Naga Siren: Hit the real hero: it is the one their team protects.
 Watch Treant Protector: Ask your support for Dust and Sentries before fights.
-If it goes wrong: Lane lost? Leave it at 5 to 6 min for the jungle and farm toward Manta Style. Ask your supports to stack 2 camps.
 If it goes wrong: No Manta Style by 20 min? Don't show on the map without it. Farm the side Primal Beast is not on.
 
 ### Pos 2 Templar Assassin
@@ -61,7 +59,7 @@ If it goes wrong: No Desolator by 22 min? Stop rotating and farm mid and the nea
 
 ### Pos 3 Mars
 Timings: all
-Start: Gauntlets of Strength, 2 Iron Branch, 2 Tango [Hard lane against Naga Siren and Treant Protector: more sustain], Quelling Blade, Healing Salve [Hard lane against Naga Siren and Treant Protector: more sustain]
+Start: 2 Gauntlets of Strength, 2 Iron Branch, Tango, Quelling Blade, Circlet
 Lane: Bracer 2, Magic Wand 4, Soul Ring 5
 Boots: Phase Boots 10 {Armor and a burst of speed.}
 First: Blink Dagger 15/17 {Start fights from 1,200 range.}
@@ -76,12 +74,11 @@ Watch Naga Siren: Hit the real hero: it is the one their team protects.
 Watch Treant Protector: Ask your support for Dust and Sentries before fights.
 Watch Pangolier, Primal Beast: buy Black King Bar.
 Watch Hoodwink: Stay spread so one combo can't catch two.
-If it goes wrong: Lane lost? Stop contesting Naga Siren. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay behind your cores and soak damage.
 
 ### Pos 4 Tusk
 Timings: around
-Start: 2 Tango [Hard lane against Naga Siren and Treant Protector: more sustain], Blood Grenade, Iron Branch, Magic Stick, Sentry Ward, Healing Salve [Hard lane against Naga Siren and Treant Protector: more sustain]
+Start: Tango, Blood Grenade, Iron Branch, Magic Stick, Sentry Ward
 Boots: Tranquil Boots 8, or Arcane Boots 12
 First: Blink Dagger 19 {Start fights from 1,200 range.}
 Late: Eul's Scepter of Divinity 31, Black King Bar 32 {Stops disables from Pangolier, Hoodwink and Treant Protector.}, Force Staff 33 [Against Naga Siren and Pangolier: don't skip it] {Pushes you out of trouble.}, Aghanim's Scepter 34
@@ -95,12 +92,10 @@ Watch Naga Siren, Pangolier: buy Force Staff.
 Watch Treant Protector: Ask your support for Dust and Sentries before fights.
 Watch Primal Beast: Don't focus them: kill their damage dealers first.
 Watch Hoodwink: Stay spread so one combo can't catch two.
-If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Terrorblade.
-If it goes wrong: Naga Siren is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 
 ### Pos 5 Disruptor
 Timings: all
-Start: 2 Tango [Hard lane against Primal Beast and Hoodwink: more sustain], Blood Grenade, Magic Stick, Iron Branch, Sentry Ward, Observer and Sentry Wards, Healing Salve [Hard lane against Primal Beast and Hoodwink: more sustain]
+Start: Tango, Blood Grenade, Magic Stick, Iron Branch, Sentry Ward, Observer and Sentry Wards
 Lane: Magic Wand 5, Ring of Basilius 6
 Boots: Arcane Boots 11
 First: Glimmer Cape 24/30 [Against Pangolier and Hoodwink] {Invisibility and a magic damage barrier.}
@@ -116,5 +111,3 @@ Watch Primal Beast: Don't focus them: kill their damage dealers first.
 Watch Hoodwink, Pangolier: buy Glimmer Cape.
 Watch Naga Siren: Hit the real hero: it is the one their team protects.
 Watch Treant Protector: Ask your support for Dust and Sentries before fights.
-If it goes wrong: Lane lost? Let Terrorblade take every last hit. Pull the near camp and keep a ward on the rune.
-If it goes wrong: Naga Siren is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.

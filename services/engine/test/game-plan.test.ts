@@ -82,15 +82,16 @@ describe("gamePlan", () => {
     expect(safe.text).toContain("Medusa wins 30% and loses 45% of 5,000 lanes against Terrorblade.");
   });
 
-  it("names combos, hard counters and when to fight a late-game team", () => {
+  it("names combos and hard counters, and claims no window from the style lists", () => {
     const plan = gamePlan(new Engine(data()), { ours, theirs });
     expect(plan.ourCombos).toEqual(["Magnus + Sven: Reverse Polarity into Sven's God's Strength cleave"]);
     expect(plan.fears).toContain("Medusa is hard countered by Anti-Mage: play carefully around them");
     expect(plan.theirStyle?.key).toBe("lategame");
-    expect(plan.winCondition).toContain("take fights and towers before 30 minutes");
-    expect(plan.roadmap[1]!.text).toContain("This is your window");
-    // The same window shapes our carry's job: no "carry the late game" against a late-game team.
-    expect(plan.players[0]!.job).toMatch(/^Farm fast, then join every push/);
+    // Style labels barely change who wins short or long games (richer Game Story research), so no minute
+    // windows come from them.
+    expect(plan.winCondition).not.toContain("before 30 minutes");
+    expect(plan.roadmap[1]!.text).not.toContain("This is your window");
+    expect(plan.players[0]!.job).not.toMatch(/^Farm fast, then join every push/);
   });
 
   it("leaves their carry out of the danger heroes without a minute to race", () => {
@@ -101,20 +102,24 @@ describe("gamePlan", () => {
     const d = data();
     // Anti-Mage becomes a support: pos 1 is still filled by him, but he is rarely played there.
     d.positions![1] = [100, 0, 0, 450, 450];
+    d.matchups[18] = { 1: { games: 2000, wins: 600 } };
+    d.matchups[1] = { 18: { games: 2000, wins: 1400 } };
     const plan = gamePlan(new Engine(d), { ours, theirs });
     expect(plan.danger.join(" ")).not.toContain("Anti-Mage");
     expect(plan.players.flatMap((p) => p.fallbacks).join(" ")).not.toContain("Anti-Mage");
-    expect(JSON.stringify(plan.story)).not.toContain("Anti-Mage");
   });
 
   it("names a flex carry who is clearly their pos 1, like carry Vengeful Spirit", () => {
     const d = data();
     // Pos 1 in 1 game of 5, and nobody else in their lineup plays it.
     d.positions![1] = [200, 0, 0, 400, 400];
+    // With no sure minute to race, not a danger hero.
+    expect(gamePlan(new Engine(d), { ours, theirs }).danger).toEqual([]);
+    // Their safe lane beats our off lane, so our supports get a line naming him as their carry.
+    d.matchups[18] = { 1: { games: 2000, wins: 600 } };
+    d.matchups[1] = { 18: { games: 2000, wins: 1400 } };
     const plan = gamePlan(new Engine(d), { ours, theirs });
-    // Named as their carry; with no sure minute to race, not as a danger hero.
-    expect(JSON.stringify([plan.story, plan.teamFallbacks])).toContain("Anti-Mage");
-    expect(plan.danger).toEqual([]);
+    expect(plan.players.flatMap((p) => p.fallbacks).join(" ")).toContain("Anti-Mage is farming free?");
   });
 
   it("gives an enemy's item minute only when it comes from their position", () => {
@@ -154,13 +159,13 @@ describe("gamePlan", () => {
     // The won safe lane and the even mid get no lines, and no build means no item line.
     expect(lines(1)).toEqual([]);
     expect(lines(2)).toEqual([]);
-    // The story says when to fight: before their late-game carries are ready.
-    expect(plan.story.headline).toBe("Win before 30 minutes: their Anti-Mage outscales us.");
+    // No item race and no lane results in this snapshot: the plain headline, never a style claim.
+    expect(plan.story.headline).toBe("Win the fights around your item timings.");
     expect(plan.story.chapters[0]!.text).toBe("Medusa and Crystal Maiden win the safe lane against Terrorblade and Witch Doctor: take their tower. Survive the off lane against Anti-Mage and Lich: just get levels.");
-    // Their late-game style means they scale better.
+    // Their late-game style label no longer says they scale better.
     expect(plan.teamFallbacks).toEqual([
-      "Behind at 20? Don't wait for the late game. Smoke together and catch one hero before each objective.",
-      "Ahead at 20? Take Roshan, then siege with the Aegis before Anti-Mage is ready.",
+      "Behind at 20? Defend towers together and only fight with your key spells ready.",
+      "Ahead at 20? Take Roshan and push one lane together with the Aegis.",
     ]);
   });
 });

@@ -4,7 +4,7 @@ import { STORY_WORDS, gameStory, wordCount, type Chapter, type StoryFacts, type 
 const facts = (over: Partial<StoryFacts> = {}): StoryFacts => ({ ourTiming: null, theirTiming: null, spikes: [], ...over });
 
 describe("gameStory", () => {
-  it("tells four chapters and names our item spikes in their window", () => {
+  it("tells the chapters it has facts for and names our item spikes in their window", () => {
     const story = gameStory(
       facts({
         wonLane: { name: "safe lane", ours: ["Juggernaut", "Crystal Maiden"], theirs: ["Mars"] },
@@ -23,16 +23,39 @@ describe("gameStory", () => {
         enemyCarry: "Phantom Assassin",
       }),
     );
-    expect(story.chapters.map((c) => c.phase)).toEqual(["0 to 10 min", "10 to 20 min", "20 to 30 min", "30 min on"]);
+    // Nothing measured says how the late game goes, so there is no "30 min on" chapter.
+    expect(story.chapters.map((c) => c.phase)).toEqual(["0 to 10 min", "10 to 20 min", "20 to 30 min"]);
     expect(story.chapters[0]!.text).toBe("Juggernaut and Crystal Maiden win the safe lane against Mars: take their tower. Survive the off lane against Axe and Witch Doctor: just get levels.");
     // Our first two items are one moment, and the only one in their chapter; theirs is their carry's.
     expect(story.chapters[1]!.text).toBe(
       "Puck's Witch Blade at 12 and Magnus's Blink Dagger at 14: ready to fight at 14. Their Phantom Assassin has Battle Fury at 17. Open fights with Reverse Polarity into Sven's God's Strength cleave.",
     );
     expect(story.chapters[2]!.text).toBe("Sven's Black King Bar at 24. Roshan from 20 min, once three key items are in.");
-    expect(story.chapters[3]!.text).toBe("Catch Phantom Assassin first, then take high ground.");
     // Our second item at 14 beats their carry's at 17.
     expect(story.headline).toBe("Fight from 14 min, before Phantom Assassin has Battle Fury at 17.");
+  });
+
+  it("leads with the measured lane when no item race is clear, the hard lane first", () => {
+    const hard = { name: "off lane", ours: ["Sven"], theirs: ["Anti-Mage"], fact: "Sven wins 30% and loses 45% of 5,000 lanes against Anti-Mage." };
+    const won = { name: "safe lane", ours: ["Medusa"], theirs: ["Lich"], fact: "Medusa wins 46% and loses 32% of 4,100 lanes against Lich." };
+    const story = gameStory(facts({ hardLane: hard, wonLane: won }));
+    expect(story.headline).toBe("Hard off lane: Sven wins 30% and loses 45% of 5,000 lanes against Anti-Mage.");
+    // The lane chapter gives both results behind its verdicts.
+    expect(story.chapters[0]!.text).toContain("Medusa wins 46% and loses 32% of 4,100 lanes against Lich. Sven wins 30%");
+    expect(gameStory(facts({ wonLane: won })).headline).toBe("Your safe lane to press: Medusa wins 46% and loses 32% of 4,100 lanes against Lich.");
+    // An item race still comes first.
+    const race = gameStory(
+      facts({
+        hardLane: hard,
+        spikes: [
+          { hero: "Magnus", item: "Blink Dagger", minute: 13 },
+          { hero: "Sven", item: "Black King Bar", minute: 14 },
+        ],
+        theirSpikes: [{ hero: "Anti-Mage", item: "Battle Fury", minute: 18 }],
+        enemyCarry: "Anti-Mage",
+      }),
+    );
+    expect(race.headline).toBe("Fight from 14 min, before Anti-Mage has Battle Fury at 18.");
   });
 
   it("puts each item in the chapter of its own minute and never names their spike twice", () => {

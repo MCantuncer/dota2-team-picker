@@ -43,6 +43,8 @@ export interface LaneFact {
   name: string;
   ours: string[];
   theirs: string[];
+  /** The real lane result behind the verdict, when the snapshot has lane results (see lane-odds.ts). */
+  fact?: string;
 }
 
 /** One timed chapter: the items that land in it and what to do. */
@@ -113,14 +115,17 @@ function headline(f: StoryFacts): string {
     return ready !== undefined ? `End early: ready at ${ready}, take towers before 30 minutes.` : "End early: take towers before 30 minutes.";
   }
   if (f.theirTiming === "early") return "Survive their early pushes: we are stronger after 25 minutes.";
-  // No clear style: race our first two items against their carry's.
+  // No style claim: race our first two items against their carry's (or their first core's when they have
+  // no carry), else the clearest measured lane.
   const ready = nthMinute(f.spikes, READY_SPIKES);
-  const theirs = carrySpike(f);
+  const theirs = carrySpike(f) ?? byMinute(f.theirSpikes ?? [])[0];
   if (ready !== undefined && theirs) {
     if (ready + EVEN_MINUTES <= theirs.minute) return `Fight from ${ready} min, before ${theirs.hero} has ${theirs.item} ${atMinute(theirs)}.`;
     if (theirs.minute + EVEN_MINUTES <= ready) return `${theirs.hero} has ${theirs.item} ${atMinute(theirs)}: hold fights until ${ready} min.`;
-    return `Both teams are ready at ${ready} min: fight once your items are in, not before.`;
   }
+  const lane = [f.hardLane, f.wonLane].find((l) => l?.fact);
+  if (lane) return lane === f.hardLane ? `Hard ${lane.name}: ${lane.fact}` : `Your ${lane.name} to press: ${lane.fact}`;
+  if (ready !== undefined && theirs) return `Both teams are ready at ${ready} min: fight once your items are in, not before.`;
   return "Win the fights around your item timings.";
 }
 
@@ -165,7 +170,9 @@ function laneText(f: StoryFacts): string {
     (f.hardLane.name === "off lane"
       ? `Survive the off lane${against(f.hardLane)}: just get levels.`
       : `${f.hardLane.ours[0] ?? "Our core"} farms safely in the ${f.hardLane.name}${against(f.hardLane)}: skip trades.`);
-  return [won, hard].filter(Boolean).join(" ") || "Every lane is even: the better last hits win.";
+  // The real lane result behind each verdict, so the reason can be checked.
+  const facts = [f.wonLane?.fact, f.hardLane?.fact].filter(Boolean);
+  return [won, hard, ...facts].filter(Boolean).join(" ") || "Every lane is even: the better last hits win.";
 }
 
 /**
@@ -218,7 +225,8 @@ function action(chapter: number, f: StoryFacts, inWindow: (m: number) => boolean
     default:
       if (lateIsOurs) return same("You are stronger now: take Roshan, then end with the Aegis.");
       if (f.theirTiming === "late") return same("They are stronger: fight only with buyback and a big opening spell.");
-      return same(f.enemyCarry ? `Catch ${f.enemyCarry} first, then take high ground.` : "");
+      // Nothing measured says how the late game goes for this draft, so the chapter is left out.
+      return same("");
   }
 }
 
