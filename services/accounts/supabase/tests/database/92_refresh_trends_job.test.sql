@@ -29,9 +29,10 @@ insert into public.player_games (user_id, match_id, hero_id, position, position_
 values (:'active', 9, 14, 4, 'stratz', true, true, now() - interval '5 days', 22, 7);
 
 select results_eq(
-  'select user_id, account_id, pool, skip, has_recent_card from public.claim_trend_players()',
-  format($$values (%L::uuid, 10::bigint, '[{"heroId": 1, "position": 1}]'::jsonb, '{14:4}'::text[], false)$$, :'active'),
-  'only active Steam players with cards on come, with their pool and the pairs to skip');
+  'select user_id, account_id, pool, skip, has_recent_card, cards_off from public.claim_trend_players() order by cards_off',
+  format($$values (%L::uuid, 10::bigint, '[{"heroId": 1, "position": 1}]'::jsonb, '{14:4}'::text[], false, false),
+    (%L::uuid, 12::bigint, '[]'::jsonb, '{}'::text[], false, true)$$, :'active', :'stopped'),
+  'active Steam players come with their pool and the pairs to skip; suggestions off still comes, flagged');
 select is_empty('select * from public.claim_trend_players()', 'a claimed player waits 12 hours');
 select throws_ok('select * from public.claim_trend_players(0)', '22023', null, 'the batch size is checked');
 

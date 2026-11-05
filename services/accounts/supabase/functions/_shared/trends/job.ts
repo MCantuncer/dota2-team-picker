@@ -32,6 +32,8 @@ export interface TrendPlayer {
   pool: PoolEntry[];
   skip: string[];
   has_recent_card: boolean;
+  /** The player turned hero suggestions off: their games are still read, but no new card. */
+  cards_off: boolean;
 }
 
 /** A game row in the shape save_trend_check reads. */
@@ -253,7 +255,9 @@ async function checkPlayer(player: TrendPlayer, deps: TrendDeps, take: (n: numbe
     nowS,
   });
   const best = candidates[0];
-  const newCard = best && !player.has_recent_card ? toCard(best, deps.heroName(best.heroId)) : null;
+  const newCard = best && !player.has_recent_card && !player.cards_off
+    ? toCard(best, deps.heroName(best.heroId))
+    : null;
   return {
     state: "ok",
     games: games.map((g) => toRow(g, matches, stratz, drafts)),

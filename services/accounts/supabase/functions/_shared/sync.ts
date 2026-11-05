@@ -26,6 +26,9 @@ export async function syncProfile(
     rank_tier: player.rankTier,
     hero_stats: player.heroStats,
     synced_at: new Date().toISOString(),
+    // Put the player first in line for the trends job, so games show on Your Games within its
+    // next run (every 30 minutes) instead of after the 12 hour wait.
+    trends_checked_at: null,
   };
   if (player.name) update.steam_name = player.name.slice(0, 64);
   if (player.avatarUrl) update.avatar_url = player.avatarUrl;

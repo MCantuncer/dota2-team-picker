@@ -16,8 +16,8 @@ import {
   type FactRow,
   KEEP_DAYS,
   MAX_GAMES_PER_PLAYER,
+  NEW_GAME_DAYS,
   NEW_GAMES_SELECT,
-  PARSE_MAX_AGE_DAYS,
   pickNewGames,
   readDueRows,
   readNewGames,
@@ -240,7 +240,7 @@ function factsDeps(
       return readDueRows(data);
     },
     newGames: async () => {
-      const since = daysAgo(PARSE_MAX_AGE_DAYS);
+      const since = daysAgo(NEW_GAME_DAYS);
       const [games, rows] = await Promise.all([
         // Enough for the newest MAX_GAMES_PER_PLAYER of a few hundred players; later runs get the rest.
         admin.from("player_games").select(NEW_GAMES_SELECT).gte("started_at", since)
