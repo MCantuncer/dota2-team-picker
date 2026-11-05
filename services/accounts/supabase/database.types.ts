@@ -167,6 +167,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"game_check_ins": {
+                  Row: {
+                    "allies": (number)[],"ally_positions": (number)[],"answered_at": string | null,"bans": (number)[],"client_key": string | null,"enemies": (number)[],"filled_at": string,"find_tries": number,"id": string,"match_id": number | null,"my_hero": number | null,"my_position": number,"note": string | null,"party_draft_id": string | null,"picks_feel": string | null,"played": boolean | null,"player_won": boolean | null,"profile_hidden": boolean,"result_checked_at": string | null,"shown": (number)[],"skipped_at": string | null,"snoozes": number,"story_feel": string | null,"story_shown": boolean,"tags": (string)[],"updated_at": string,"user_id": string,"won": boolean | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "allies": (number)[],"ally_positions": (number)[],"answered_at"?: string | null,"bans"?: (number)[],"client_key"?: string | null,"enemies": (number)[],"filled_at"?: string,"find_tries"?: number,"id"?: string,"match_id"?: number | null,"my_hero"?: number | null,"my_position": number,"note"?: string | null,"party_draft_id"?: string | null,"picks_feel"?: string | null,"played"?: boolean | null,"player_won"?: boolean | null,"profile_hidden"?: boolean,"result_checked_at"?: string | null,"shown"?: (number)[],"skipped_at"?: string | null,"snoozes"?: number,"story_feel"?: string | null,"story_shown"?: boolean,"tags"?: (string)[],"updated_at"?: string,"user_id": string,"won"?: boolean | null
+                  }
+                  Update: {
+                    "allies"?: (number)[],"ally_positions"?: (number)[],"answered_at"?: string | null,"bans"?: (number)[],"client_key"?: string | null,"enemies"?: (number)[],"filled_at"?: string,"find_tries"?: number,"id"?: string,"match_id"?: number | null,"my_hero"?: number | null,"my_position"?: number,"note"?: string | null,"party_draft_id"?: string | null,"picks_feel"?: string | null,"played"?: boolean | null,"player_won"?: boolean | null,"profile_hidden"?: boolean,"result_checked_at"?: string | null,"shown"?: (number)[],"skipped_at"?: string | null,"snoozes"?: number,"story_feel"?: string | null,"story_shown"?: boolean,"tags"?: (string)[],"updated_at"?: string,"user_id"?: string,"won"?: boolean | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "game_check_ins_party_draft_id_fkey"
+      columns: ["party_draft_id"]
+isOneToOne: false
+      referencedRelation: "party_drafts"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "game_check_ins_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"hero_benchmarks": {
                   Row: {
                     "benchmarks": NonNullable<Json>,"fetched_at": string,"hero_id": number
@@ -880,6 +906,9 @@ isOneToOne: false
               "account_ids": (number)[],"allies": (number)[],"created_at": string,"draft_id": string
             }[]
                            },
+"distinct_heroes":
+{ Args: { "heroes": (number)[] }; Returns: boolean
+                           },
 "draft_state":
 { Args: { "draft": string }; Returns: {
               "hero_id": number,"kind": string,"position": number
@@ -1060,6 +1089,9 @@ isOneToOne: false
                            },
 "save_draft_suggestions":
 { Args: { "chance"?: number,"draft": string,"pos": number,"shown": (number)[],"shown_scores": (number)[] }; Returns: undefined
+                           },
+"save_game_check_in":
+{ Args: { "allies": (number)[],"ally_positions": (number)[],"bans": (number)[],"enemies": (number)[],"key": string,"my_hero": number,"my_position": number,"party_draft": string,"shown": (number)[],"story_shown": boolean }; Returns: string
                            },
 "save_matchup_guides":
 { Args: { "slices": Json,"version": number }; Returns: number
