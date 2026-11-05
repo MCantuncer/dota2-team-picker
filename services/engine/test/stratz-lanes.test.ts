@@ -59,13 +59,18 @@ describe("toLaneOutcomes", () => {
     expect(() => toLaneOutcomes(HEROES, a)).toThrow(/hero 3, slice 2/);
   });
 
-  it("throws when all ranks covers too few heroes, but not when a rank group does", () => {
+  it("keeps a rarely played hero with few pairs, but throws when all ranks covers too few pairs", () => {
     const thinGroup = answers();
     thinGroup["l1_1"] = [];
     expect(() => toLaneOutcomes(HEROES, thinGroup)).not.toThrow();
+    // One hero with no pairs of 300+ lanes (like Chen) still leaves 4 of 6 pairs.
+    const rareHero = answers();
+    rareHero["l1_0"] = [];
+    expect(toLaneOutcomes(HEROES, rareHero)["0"]!["1"]).toEqual({});
     const thinAll = answers();
     thinAll["l1_0"] = [];
-    expect(() => toLaneOutcomes(HEROES, thinAll)).toThrow(/hero 1 has 0 pairs/);
+    thinAll["l2_0"] = [];
+    expect(() => toLaneOutcomes(HEROES, thinAll)).toThrow(/2 pairs over all ranks, expected 3\+/);
   });
 });
 
