@@ -1,11 +1,10 @@
 ## Legend teamfight mirror
 
-Headline: Both teams are ready at 15 min: fight once your items are in, not before.
+Headline: Hard mid: Puck wins 19% and loses 52% of 534 lanes against Shadow Fiend.
 
-- 0 to 10 min: Survive the off lane against Phantom Assassin and Lich: just get levels.
+- 0 to 10 min: Puck farms safely in the mid against Shadow Fiend: skip trades. Puck wins 19% and loses 52% of 534 lanes against Shadow Fiend.
 - 10 to 20 min: Juggernaut's Battle Fury at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Their Phantom Assassin has Battle Fury at 15.
 - 20 to 30 min: Roshan from 20 min, once three key items are in.
-- 30 min on: Catch Phantom Assassin first, then take high ground.
 
 Danger heroes:
 - Phantom Assassin: Battle Fury at 15 min. Take fights and towers before then.
@@ -16,7 +15,7 @@ If the game goes wrong:
 - Ahead at 20? Take Roshan and push one lane together with the Aegis.
 
 Lane Safe lane: Juggernaut + Crystal Maiden vs Axe + Witch Doctor, even
-Lane Mid: Puck vs Shadow Fiend, even
+Lane Mid: Puck vs Shadow Fiend, hard
 Lane Off lane: Mars + Lion vs Phantom Assassin + Lich, hard
 
 ### Pos 1 Juggernaut
@@ -41,22 +40,24 @@ If it goes wrong: No Battle Fury by 16 min? Don't show on the map without it. Fa
 
 ### Pos 2 Puck
 Timings: all
-Start: Tango, 3 Iron Branch, Faerie Fire
-Lane: Null Talisman 4, Magic Wand 4
+Start: 2 Tango [Hard lane against Shadow Fiend: more sustain], 3 Iron Branch, Healing Salve [Hard lane against Shadow Fiend: more sustain]
+Lane: Null Talisman 4, Magic Wand 4, Infused Raindrops 4 [Against Shadow Fiend's magic burst]
 Boots: Power Treads 10 {Attack speed and a stat to switch.}
 First: Blink Dagger 19/20 {Start fights from 1,200 range.}
 Next: Eul's Scepter of Divinity 26/28, Parasma 29/32
 Late: Aghanim's Scepter 34/36, Octarine Core 35
 Job: Win your lane, then use runes to help the side lanes. Your timing is Blink Dagger around minute 19.
-Vs Shadow Fiend (lane): Magic burst. Stay spread so one combo can't catch two.
+Vs Shadow Fiend (lane): Magic burst. buy Infused Raindrops.
 Vs Phantom Assassin: Evasion: right clicks miss. Fight them with spells, not right clicks.
 Vs Axe: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
 Vs Lich: Magic burst. Stay spread so one combo can't catch two.
-Watch Shadow Fiend, Lich: Stay spread so one combo can't catch two.
+Watch Shadow Fiend: buy Infused Raindrops.
 Watch Phantom Assassin: Fight them with spells, not right clicks.
 Watch Axe: Don't focus them: kill their damage dealers first.
 Watch Witch Doctor: Kill them first or fight short and decisive.
+Watch Lich: Stay spread so one combo can't catch two.
+If it goes wrong: Lane lost? Stop contesting runes. Push the wave, farm the near jungle, and wait for your pos 4 to rotate.
 If it goes wrong: No Blink Dagger by 20 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Mars

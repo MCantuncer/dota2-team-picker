@@ -1,11 +1,10 @@
 ## Archon farm carry against early fights
 
-Headline: Both teams are ready at 16 min: fight once your items are in, not before.
+Headline: Hard off lane: Centaur Warrunner wins 30% and loses 44% of 964 lanes against Jakiro.
 
-- 0 to 10 min: Anti-Mage and Warlock win the safe lane against Dark Seer and Snapfire: take their tower.
+- 0 to 10 min: Anti-Mage and Warlock win the safe lane against Dark Seer and Snapfire: take their tower. Survive the off lane against Troll Warlord and Jakiro: just get levels. Warlock wins 51% and loses 24% of 416 lanes against Dark Seer. Centaur Warrunner wins 30% and loses 44% of 964 lanes against Jakiro.
 - 10 to 20 min: Anti-Mage's Battle Fury at 15 and Lina's Maelstrom at 16: ready to fight at 16. Their Troll Warlord has Battle Fury at 15.
 - 20 to 30 min: Their Dark Seer has Blink Dagger at 21. Roshan from 20 min, once three key items are in.
-- 30 min on: Catch Troll Warlord first, then take high ground.
 
 Danger heroes:
 - Huskar: Blink Dagger at 14 min. Lock them down first in every fight.
@@ -17,7 +16,7 @@ If the game goes wrong:
 
 Lane Safe lane: Anti-Mage + Warlock vs Dark Seer + Snapfire, win
 Lane Mid: Lina vs Huskar, even
-Lane Off lane: Centaur Warrunner + Mirana vs Troll Warlord + Jakiro, win
+Lane Off lane: Centaur Warrunner + Mirana vs Troll Warlord + Jakiro, hard
 
 ### Pos 1 Anti-Mage
 Timings: rank
@@ -62,7 +61,7 @@ If it goes wrong: No Maelstrom by 18 min? Stop rotating and farm mid and the nea
 
 ### Pos 3 Centaur Warrunner
 Timings: rank
-Start: 2 Gauntlets of Strength, Tango, Iron Branch, Ring of Protection, Quelling Blade
+Start: 2 Tango [Hard lane against Troll Warlord and Jakiro: more sustain], Iron Branch, Ring of Protection, Quelling Blade, Healing Salve [Hard lane against Troll Warlord and Jakiro: more sustain]
 Lane: Bracer 2, Magic Wand 3
 Boots: Phase Boots 12 {Armor and a burst of speed.}
 First: Vanguard 9/11
@@ -78,11 +77,12 @@ Watch Troll Warlord: Fight them with spells, not right clicks.
 Watch Jakiro: Stay spread so one combo can't catch two.
 Watch Huskar: Kill them first or fight short and decisive.
 Watch Dark Seer, Snapfire: buy Black King Bar.
+If it goes wrong: Lane lost? Stop contesting Troll Warlord. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 22 min? Don't start fights without it. Stay behind your cores and soak damage.
 
 ### Pos 4 Mirana
 Timings: all
-Start: Tango, Blood Grenade, Iron Branch, Circlet, Magic Stick, Sentry Ward
+Start: 2 Tango [Hard lane against Troll Warlord and Jakiro: more sustain], Blood Grenade, Iron Branch, Magic Stick, Sentry Ward, Healing Salve [Hard lane against Troll Warlord and Jakiro: more sustain]
 Lane: Magic Wand 3 [Against Jakiro's spells: get it early], Urn of Shadows 7, Ring of Basilius 8
 Boots: Arcane Boots 12
 First: Essence Distiller 14/17
@@ -99,6 +99,8 @@ Watch Troll Warlord, Huskar: buy Force Staff.
 Watch Jakiro: buy Magic Wand.
 Watch Dark Seer: Keep distance until their disable is used.
 Watch Snapfire: Stay spread so one combo can't catch two.
+If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Anti-Mage.
+If it goes wrong: Troll Warlord is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 
 ### Pos 5 Warlock
 Timings: all
@@ -118,3 +120,4 @@ Vs Jakiro: Magic burst. buy Glimmer Cape.
 Watch Dark Seer: Keep distance until their disable is used.
 Watch Snapfire, Jakiro: buy Glimmer Cape.
 Watch Troll Warlord, Huskar: buy Force Staff.
+If it goes wrong: Troll Warlord is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.

@@ -1,26 +1,24 @@
 ## Ancient against a lineup with no carry
 
-Headline: End early: ready at 15, push before Storm Spirit's Orchid Malevolence at 18.
+Headline: Fight from 15 min, before Storm Spirit has Orchid Malevolence at 18.
 
-- 0 to 10 min: Survive the off lane against Vengeful Spirit and Witch Doctor: just get levels.
-- 10 to 20 min: Ember Spirit's Spirit Vessel at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Their Storm Spirit has Orchid Malevolence at 18. Group up and take towers.
-- 20 to 30 min: Take Roshan and end with the Aegis before 30 minutes.
-- 30 min on: Catch Vengeful Spirit first, then take high ground.
+- 0 to 10 min: Ursa and Silencer win the safe lane against Tidehunter and Pudge: take their tower. Survive the off lane against Vengeful Spirit and Witch Doctor: just get levels. Ursa wins 62% and loses 18% of 4,234 lanes against Tidehunter. Mars wins 21% and loses 55% of 2,522 lanes against Witch Doctor.
+- 10 to 20 min: Ember Spirit's Spirit Vessel at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Their Storm Spirit has Orchid Malevolence at 18.
 
 Danger heroes:
 - Vengeful Spirit: Lock them down first in every fight.
 - Tidehunter: Blink Dagger at 19 min. From then, spread out and watch the fog.
 
 If the game goes wrong:
-- Behind at 20? Don't wait for the late game. Smoke together and catch one hero before each objective.
-- Ahead at 20? Take Roshan, then siege with the Aegis before Vengeful Spirit is ready.
+- Behind at 20? Defend towers together and only fight with your key spells ready.
+- Ahead at 20? Take Roshan and push one lane together with the Aegis.
 
-Lane Safe lane: Ursa + Silencer vs Tidehunter + Pudge, even
-Lane Mid: Ember Spirit vs Storm Spirit, even
+Lane Safe lane: Ursa + Silencer vs Tidehunter + Pudge, win
+Lane Mid: Ember Spirit vs Storm Spirit, win
 Lane Off lane: Mars + Shadow Shaman vs Vengeful Spirit + Witch Doctor, hard
 
 ### Pos 1 Ursa
-Job: Farm fast, then join every push: this game should end before 30 minutes.
+Job: Farm and carry the late game; join fights once your items are in.
 Vs Tidehunter (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Pudge (lane, guessed): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Vengeful Spirit: Magic burst. Stay spread so one combo can't catch two.

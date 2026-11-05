@@ -24,6 +24,9 @@ const pick = <T>(rec: Record<string, T> | undefined): Record<string, T> | undefi
  */
 const pickPairs = <T>(rec: Record<string, Record<string, T>> | undefined) =>
   rec && Object.fromEntries(Object.entries(rec).filter(([id]) => ids.has(id)));
+/** Lane results keyed hero, then enemy: the engine reads only pairs inside a draft, so both are golden heroes. */
+const pickLanes = <T>(rec: Record<string, Record<string, T>> | undefined) =>
+  rec && Object.fromEntries(Object.entries(rec).filter(([id]) => ids.has(id)).map(([id, row]) => [id, pick(row) ?? {}]));
 /** Synergy keyed "a-b": keeps pairs of golden heroes. */
 const pickSynergy = <T>(rec: Record<string, T> | undefined) =>
   rec && Object.fromEntries(Object.entries(rec).filter(([key]) => key.split("-").every((id) => ids.has(id))));
@@ -37,6 +40,7 @@ const fixture: Snapshot = {
   itemBuilds: pick(full.itemBuilds),
   itemTimings: pick(full.itemTimings),
   itemStarts: pick(full.itemStarts),
+  laneOutcomes: full.laneOutcomes && Object.fromEntries(Object.entries(full.laneOutcomes).map(([g, l]) => [g, pickLanes(l) ?? {}])),
 };
 writeFileSync(new URL("../test/fixtures/golden-snapshot.json", import.meta.url), `${JSON.stringify(fixture)}\n`);
 console.log(`Wrote the golden snapshot for ${ids.size} heroes.`);
