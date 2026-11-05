@@ -67,6 +67,21 @@ describe("gamePlan", () => {
     expect(plan.roadmap[0]!.text).toContain("Press your edge in the safe lane");
   });
 
+  it("calls the lane from real lane results when the snapshot has them, naming the pair", () => {
+    const d = data();
+    // Medusa wins the game against Terrorblade but loses the lane to him, the worst of the four pairs.
+    d.laneOutcomes = {
+      "0": {
+        94: { 109: [5000, 1500, 1250, 2250], 30: [3000, 900, 1000, 1100] },
+        5: { 109: [4000, 1100, 1400, 1500], 30: [4000, 1300, 1400, 1300] },
+      },
+    };
+    const safe = gamePlan(new Engine(d), { ours, theirs }).lanes.find((l) => l.name === "Safe lane")!;
+    expect(safe.verdict).toBe("hard");
+    expect(safe.laneNet).toBeLessThan(-5);
+    expect(safe.text).toContain("Medusa wins 30% and loses 45% of 5,000 lanes against Terrorblade.");
+  });
+
   it("names combos, hard counters and when to fight a late-game team", () => {
     const plan = gamePlan(new Engine(data()), { ours, theirs });
     expect(plan.ourCombos).toEqual(["Magnus + Sven: Reverse Polarity into Sven's God's Strength cleave"]);
