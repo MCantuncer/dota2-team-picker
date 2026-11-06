@@ -18,7 +18,7 @@ const base = summarizeGame({
   heroIdsByKey: {},
 })!;
 
-/** A parsed game `daysAgo` days back, with a deaths percentile (high is bad) and no other signal. */
+/** A parsed game `daysAgo` days back, with a deaths percentile (low means many deaths, as OpenDota flips it) and no other signal. */
 const game = (daysAgo: number, deathsPct: number, over: Partial<GameSummary> = {}): GameSummary => ({
   ...base,
   matchId: 1000 + daysAgo,
@@ -41,7 +41,7 @@ const game = (daysAgo: number, deathsPct: number, over: Partial<GameSummary> = {
 });
 
 Deno.test("sums up the last 14 days and leaves older games out", () => {
-  const fb = buildPlayerFeedback([game(1, 0.9), game(2, 0.9), game(3, 0.9), game(4, 0.9), game(20, 0.9)], names, NOW_S);
+  const fb = buildPlayerFeedback([game(1, 0.1), game(2, 0.1), game(3, 0.1), game(4, 0.1), game(20, 0.1)], names, NOW_S);
   assertEquals([fb.version, fb.games, fb.parsedGames], [FEEDBACK_VERSION, 4, 4]);
   assertEquals([fb.firstGameAt, fb.lastGameAt], [NOW_S - 4 * DAY_S, NOW_S - DAY_S]);
   assertEquals(fb.findings.map((f) => [f.kind, f.tone]), [["deaths", "problem"]]);
@@ -49,14 +49,14 @@ Deno.test("sums up the last 14 days and leaves older games out", () => {
 });
 
 Deno.test("a problem from last week that is gone this week shows as improved", () => {
-  const lastWeek = [8, 9, 10, 11].map((d) => game(d, 0.9));
+  const lastWeek = [8, 9, 10, 11].map((d) => game(d, 0.1));
   const thisWeek = [1, 2, 3, 4].map((d) => game(d, 0.5));
   const fb = buildPlayerFeedback([...thisWeek, ...lastWeek], names, NOW_S);
   assertEquals(fb.improved, [{ kind: "deaths", headline: "Too many deaths" }]);
 });
 
 Deno.test("improved needs enough parsed games in both weeks", () => {
-  const lastWeek = [8, 9, 10, 11].map((d) => game(d, 0.9));
+  const lastWeek = [8, 9, 10, 11].map((d) => game(d, 0.1));
   const thisWeek = [1, 2, 3].map((d) => game(d, 0.5)).concat(game(4, 0.5, { isParsed: false }));
   const fb = buildPlayerFeedback([...thisWeek, ...lastWeek], names, NOW_S);
   assertEquals([fb.improved, fb.parsedGames], [[], 7]);

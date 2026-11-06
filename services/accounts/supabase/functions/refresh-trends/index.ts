@@ -22,7 +22,7 @@ import {
   readDueRows,
   readNewGames,
 } from "../_shared/feedback/fact.ts";
-import { gameFindings, type Names } from "../_shared/feedback/findings.ts";
+import { FINDINGS_VERSION, gameFindings, type Names } from "../_shared/feedback/findings.ts";
 import { buildPlayerFeedback, WINDOW_DAYS } from "../_shared/feedback/profile.ts";
 import { type GameSummary, summarizeGame, SUMMARY_VERSION } from "../_shared/feedback/summary.ts";
 import { fetchMatch, fetchRecentMatches, requestParse } from "../_shared/match.ts";
@@ -48,6 +48,8 @@ const SNAPSHOT_URL = `${url}/storage/v1/object/public/hero-data/snapshot.json`;
 const OPENDOTA = "https://api.opendota.com/api";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const BENCHMARK_MAX_AGE_MS = 7 * DAY_MS;
+/** Saved games whose findings are worked out again per run; no OpenDota calls, so cheap. */
+const STALE_FINDINGS_PER_RUN = 500;
 /** Hero unit keys ("npc_dota_hero_lina") rarely change: read them once a day per worker. */
 let heroKeys: { ids: Record<string, number>; at: number } | null = null;
 
@@ -265,6 +267,25 @@ function factsDeps(
         heroIdsByKey,
       }),
     findingsOf: (summary) => gameFindings(summary, names),
+    staleFindings: async () => {
+      // Recent rows only: older ones fall out of the feedback window and are purged soon.
+      const { data, error } = await admin.from("player_game_facts").select("user_id, match_id, summary")
+        .eq("summary_version", SUMMARY_VERSION).lt("findings_version", FINDINGS_VERSION)
+        .gte("started_at", daysAgo(KEEP_DAYS)).limit(STALE_FINDINGS_PER_RUN);
+      if (error) throw error;
+      // Safe: rows with this summary_version hold a GameSummary the job wrote.
+      return data.map((r) => ({
+        user_id: r.user_id,
+        match_id: r.match_id,
+        summary: r.summary as unknown as GameSummary,
+      }));
+    },
+    saveFindings: async (row, findings) => {
+      const { error } = await admin.from("player_game_facts")
+        .update({ findings, findings_version: FINDINGS_VERSION })
+        .eq("user_id", row.user_id).eq("match_id", row.match_id);
+      if (error) throw error;
+    },
     save: async (row: FactRow) => {
       const { error } = await admin.from("player_game_facts").upsert(row, { onConflict: "user_id,match_id" });
       if (error) throw error;

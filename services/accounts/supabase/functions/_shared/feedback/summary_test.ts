@@ -63,7 +63,7 @@ Deno.test("an unknown killer key or a creep leaves the killer empty", () => {
   assertEquals(deaths.every((d) => d.killerHeroId === null && d.isKillerFromMid === null), true);
 });
 
-Deno.test("percentiles include deaths, where lower is better", () => {
+Deno.test("percentiles include deaths, as OpenDota gives them (higher is fewer deaths)", () => {
   const p = summarizeGame(input())?.percentiles;
   assertAlmostEquals(p?.deathsPerMin ?? -1, 0.3375, 0.001);
   assertEquals(p?.towerDamage !== null && p?.heroHealingPerMin !== null, true);

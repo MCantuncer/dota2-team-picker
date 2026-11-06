@@ -543,14 +543,14 @@ isOneToOne: true
                   ]
                 },"player_game_facts": {
                   Row: {
-                    "attempts": number,"created_at": string,"draft_id": string | null,"duration_s": number,"error": string | null,"findings": Json | null,"hero_id": number,"is_win": boolean,"match_id": number,"next_try_at": string,"parse_requested_at": string | null,"parse_requests": number,"position": number | null,"started_at": string,"status": string,"summary": Json | null,"summary_version": number | null,"updated_at": string,"user_id": string
+                    "attempts": number,"created_at": string,"draft_id": string | null,"duration_s": number,"error": string | null,"findings": Json | null,"findings_version": number,"hero_id": number,"is_win": boolean,"match_id": number,"next_try_at": string,"parse_requested_at": string | null,"parse_requests": number,"position": number | null,"started_at": string,"status": string,"summary": Json | null,"summary_version": number | null,"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "attempts"?: number,"created_at"?: string,"draft_id"?: string | null,"duration_s": number,"error"?: string | null,"findings"?: Json | null,"hero_id": number,"is_win": boolean,"match_id": number,"next_try_at"?: string,"parse_requested_at"?: string | null,"parse_requests"?: number,"position"?: number | null,"started_at": string,"status"?: string,"summary"?: Json | null,"summary_version"?: number | null,"updated_at"?: string,"user_id": string
+                    "attempts"?: number,"created_at"?: string,"draft_id"?: string | null,"duration_s": number,"error"?: string | null,"findings"?: Json | null,"findings_version"?: number,"hero_id": number,"is_win": boolean,"match_id": number,"next_try_at"?: string,"parse_requested_at"?: string | null,"parse_requests"?: number,"position"?: number | null,"started_at": string,"status"?: string,"summary"?: Json | null,"summary_version"?: number | null,"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "attempts"?: number,"created_at"?: string,"draft_id"?: string | null,"duration_s"?: number,"error"?: string | null,"findings"?: Json | null,"hero_id"?: number,"is_win"?: boolean,"match_id"?: number,"next_try_at"?: string,"parse_requested_at"?: string | null,"parse_requests"?: number,"position"?: number | null,"started_at"?: string,"status"?: string,"summary"?: Json | null,"summary_version"?: number | null,"updated_at"?: string,"user_id"?: string
+                    "attempts"?: number,"created_at"?: string,"draft_id"?: string | null,"duration_s"?: number,"error"?: string | null,"findings"?: Json | null,"findings_version"?: number,"hero_id"?: number,"is_win"?: boolean,"match_id"?: number,"next_try_at"?: string,"parse_requested_at"?: string | null,"parse_requests"?: number,"position"?: number | null,"started_at"?: string,"status"?: string,"summary"?: Json | null,"summary_version"?: number | null,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {

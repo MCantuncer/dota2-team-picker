@@ -1,7 +1,7 @@
 import { assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
 import type { HeroCard } from "../report/facts.ts";
 import type { Position } from "../trends/games.ts";
-import { type Finding, gameFindings, ordinal, runePattern, trendFindings } from "./findings.ts";
+import { clock, type Finding, gameFindings, ordinal, runePattern, trendFindings } from "./findings.ts";
 import type { DeathFact, GameSummary, Percentiles } from "./summary.ts";
 import { TIPS } from "./tips.ts";
 
@@ -62,7 +62,7 @@ Deno.test("strong farm over 6 games is a strength, explained with the player's n
   assertEquals(farm?.headline, "Strong farm");
   assertEquals(
     farm?.pattern,
-    "Across 6 games on Monkey King, you had higher farm (GPM and last hits) than 83% " +
+    "Across 6 games on Monkey King, you had more farm (GPM and last hits) than 83% " +
       "of games on these heroes on OpenDota (all ranks).",
   );
   assertEquals(farm?.change, null, "strengths get no tip");
@@ -70,13 +70,45 @@ Deno.test("strong farm over 6 games is a strength, explained with the player's n
 });
 
 Deno.test("many deaths is a problem with a tip, and few deaths a strength", () => {
-  const many = trendFindings(Array.from({ length: 5 }, () => game({ pct: { deathsPerMin: 0.8 } })), names);
+  // OpenDota flips deaths: a low percentile means more deaths than most games.
+  const many = trendFindings(Array.from({ length: 5 }, () => game({ pct: { deathsPerMin: 0.2 } })), names);
   assertEquals(tones(many), ["problem:deaths"]);
   assertEquals(many[0]?.headline, "Too many deaths");
+  assertStringIncludes(many[0]?.pattern ?? "", "more deaths per minute than 80%");
   assertStringIncludes(many[0]?.change ?? "", "You died about 5 times per game.");
-  const few = trendFindings(Array.from({ length: 5 }, () => game({ pct: { deathsPerMin: 0.2 } })), names);
+  const few = trendFindings(Array.from({ length: 5 }, () => game({ pct: { deathsPerMin: 0.8 } })), names);
   assertEquals(tones(few), ["strength:deaths"]);
   assertStringIncludes(few[0]?.pattern ?? "", "fewer deaths per minute than 80%");
+});
+
+Deno.test("Can's Sven game, 9/1/14 in 34 minutes, is a strength for deaths, not a problem", () => {
+  // OpenDota benchmarks of match 9074154178: deaths_per_min raw 0.0296, pct 0.956.
+  const sven = game({
+    heroId: 18,
+    position: 1,
+    card: { kills: 9, deaths: 1, assists: 14 } as HeroCard,
+    pct: {
+      goldPerMin: 0.546,
+      xpPerMin: 0.313,
+      lastHitsPerMin: 0.699,
+      heroDamagePerMin: 0.665,
+      deathsPerMin: 0.956,
+      towerDamage: 0.558,
+    },
+    laneNetWorthDiffAt10: 2136,
+  });
+  const found = gameFindings(sven, { hero: (id) => (id === 18 ? "Sven" : `Hero ${id}`) });
+  assertEquals(tones(found).sort(), ["strength:deaths", "strength:laning"]);
+  const deaths = found.find((f) => f.kind === "deaths");
+  assertEquals(deaths?.headline, "You stay alive");
+  assertEquals(deaths?.happened, ["Sven: fewer deaths per minute than 96% of Sven games"]);
+  assertEquals(deaths?.pattern, null, "one game says it in its own line");
+  assertEquals(deaths?.change, null);
+});
+
+Deno.test("one game with many deaths names the count in that game", () => {
+  const bad = game({ card: { deaths: 1 } as HeroCard, pct: { deathsPerMin: 0.1 } });
+  assertStringIncludes(gameFindings(bad, names)[0]?.change ?? "", "You died once in this game.");
 });
 
 Deno.test("needs 4 games and a 15 point gap", () => {
@@ -140,7 +172,7 @@ Deno.test("every tip shown comes from the reviewed set", () => {
       { length: 6 },
       () =>
         game({
-          pct: { deathsPerMin: 0.9, goldPerMin: 0.1, lastHitsPerMin: 0.1 },
+          pct: { deathsPerMin: 0.1, goldPerMin: 0.1, lastHitsPerMin: 0.1 },
           laneNetWorthDiffAt10: -900,
           deaths: [death(300)],
         }),
@@ -168,4 +200,8 @@ Deno.test("percentiles read as English ordinals", () => {
     "82nd",
     "100th",
   ]);
+});
+
+Deno.test("the game clock reads right before the horn", () => {
+  assertEquals([clock(-106), clock(0), clock(272), clock(3600)], ["-1:46", "0:00", "4:32", "60:00"]);
 });

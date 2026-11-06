@@ -8,6 +8,12 @@ import type { Position } from "../trends/games.ts";
 import type { DeathFact, GameSummary, Percentiles } from "./summary.ts";
 import { type FindingKind, type Role, tipFor } from "./tips.ts";
 
+/**
+ * Bump with any change to what the rules find or say. Saved game findings on an older version
+ * are worked out again from their summary. 2: deaths percentiles read the right way round
+ * (OpenDota already flips them).
+ */
+export const FINDINGS_VERSION = 2;
 /** Games a trend finding needs behind it. */
 export const MIN_TREND_GAMES = 4;
 /** How far from the middle (0.5) a percentile must sit: 15 points over games, 25 in one game. */
@@ -55,17 +61,25 @@ export function ordinal(n: number): string {
   const suffix = teen ? "th" : ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th";
   return `${n}${suffix}`;
 }
-const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+/** Game clock: "6:20", and "-1:46" before the horn. */
+export function clock(s: number): string {
+  const t = Math.floor(Math.abs(s));
+  return `${s < 0 ? "-" : ""}${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+}
 const average = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 
-/** A percentile stat a finding can be built on, and for which roles it is fair. */
+/**
+ * A percentile stat a finding can be built on, and for which roles it is fair. Every percentile
+ * reads "higher is better": OpenDota already flips deaths, so a game with few deaths has a high
+ * deaths percentile (1 death in 34 minutes is about 0.96).
+ */
 interface PercentileRule {
   kind: FindingKind;
   read: (p: Percentiles) => number | null;
-  /** True when a high percentile is bad (deaths). */
-  isLowerBetter?: boolean;
   roles: Role[];
-  label: string;
+  /** How the stat reads above and below the middle, e.g. "fewer deaths per minute". */
+  better: string;
+  worse: string;
   headlines: Record<Tone, string>;
   /** The habit a game is split on for the win % line, e.g. "below median farm". */
   weakHabit: string;
@@ -76,7 +90,8 @@ const PERCENTILE_RULES: PercentileRule[] = [
     kind: "farm",
     read: (p) => average([p.goldPerMin, p.lastHitsPerMin]),
     roles: ["core"],
-    label: "farm (GPM and last hits)",
+    better: "more farm (GPM and last hits)",
+    worse: "less farm (GPM and last hits)",
     headlines: { strength: "Strong farm", problem: "Low farm" },
     weakHabit: "below median farm",
   },
@@ -84,16 +99,17 @@ const PERCENTILE_RULES: PercentileRule[] = [
     kind: "damage",
     read: (p) => p.heroDamagePerMin,
     roles: ["core", "support"],
-    label: "hero damage per minute",
+    better: "more hero damage per minute",
+    worse: "less hero damage per minute",
     headlines: { strength: "High hero damage", problem: "Low hero damage" },
     weakHabit: "below median hero damage",
   },
   {
     kind: "deaths",
     read: (p) => p.deathsPerMin,
-    isLowerBetter: true,
     roles: ["core", "support"],
-    label: "deaths per minute",
+    better: "fewer deaths per minute",
+    worse: "more deaths per minute",
     headlines: { strength: "You stay alive", problem: "Too many deaths" },
     weakHabit: "above median deaths",
   },
@@ -101,7 +117,8 @@ const PERCENTILE_RULES: PercentileRule[] = [
     kind: "towers",
     read: (p) => p.towerDamage,
     roles: ["core"],
-    label: "tower damage",
+    better: "more tower damage",
+    worse: "less tower damage",
     headlines: { strength: "Strong tower pressure", problem: "Little tower damage" },
     weakHabit: "below median tower damage",
   },
@@ -163,34 +180,41 @@ function percentileFinding(
   });
   if (rows.length < minGames) return null;
   const mean = average(rows.map((r) => r.value));
-  const goodness = rule.isLowerBetter ? 1 - mean : mean;
-  if (Math.abs(goodness - 0.5) < gap) return null;
-  const tone: Tone = goodness > 0.5 ? "strength" : "problem";
+  if (Math.abs(mean - 0.5) < gap) return null;
+  const tone: Tone = mean > 0.5 ? "strength" : "problem";
   const heroes = [...new Set(rows.map((r) => names.hero(r.g.heroId)))].join(", ");
-  const where = rows.length === 1 ? `this ${heroes} game` : `${rows.length} games on ${heroes}`;
-  const comparison = !rule.isLowerBetter
-    ? `higher ${rule.label} than ${pct(mean)}% of games on these heroes`
-    : tone === "strength"
-    ? `fewer ${rule.label} than ${pct(1 - mean)}% of games on these heroes`
-    : `more ${rule.label} than ${pct(mean)}% of games on these heroes`;
+  // "fewer deaths per minute than 96%" above the middle, "more deaths per minute than 80%" below.
+  const compare = (p: number) => (p >= 0.5 ? `${rule.better} than ${pct(p)}%` : `${rule.worse} than ${pct(1 - p)}%`);
   const role = roleOf(rows[0]?.g.position ?? null);
   return {
     kind: rule.kind,
     tone,
-    score: Math.abs(goodness - 0.5) * rows.length,
+    score: Math.abs(mean - 0.5) * rows.length,
     headline: rule.headlines[tone],
-    happened: rows.map((r) => `${names.hero(r.g.heroId)}: ${ordinal(pct(r.value))} percentile for ${rule.label}`),
-    pattern: `Across ${where}, you had ${comparison} on OpenDota (all ranks).`,
+    happened: rows.map((r) => `${names.hero(r.g.heroId)}: ${compare(r.value)} of ${names.hero(r.g.heroId)} games`),
+    // One game already says it all in its line above.
+    pattern: rows.length === 1
+      ? null
+      : `Across ${rows.length} games on ${heroes}, you had ${
+        compare(mean)
+      } of games on these heroes on OpenDota (all ranks).`,
     cost: winSplit(
       rows.map((r) => r.g),
-      (g) => rows.some((r) => r.g === g && (rule.isLowerBetter ? r.value > 0.5 : r.value < 0.5)),
+      (g) => rows.some((r) => r.g === g && r.value < 0.5),
       rule.weakHabit,
     ),
     change: tone === "problem"
-      ? tipFor(rule.kind, role, { value: String(Math.round(average(rows.map((r) => r.g.card.deaths)))) })
+      ? tipFor(rule.kind, role, { deaths: deathCount(rows.map((r) => r.g.card.deaths)) })
       : null,
     matchIds: rows.map((r) => r.g.matchId),
   };
+}
+
+/** "6 times in this game" for one game, "about 6 times per game" over several. */
+function deathCount(deaths: number[]): string {
+  const n = Math.round(average(deaths));
+  const times = n === 1 ? "once" : `${n} times`;
+  return deaths.length === 1 ? `${times} in this game` : `about ${times} per game`;
 }
 
 function laningFinding(games: GameSummary[], gold: number, minGames: number, names: Names): Finding | null {
