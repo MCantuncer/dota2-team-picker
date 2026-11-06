@@ -932,9 +932,19 @@ isOneToOne: false
 "forget_old_matchups":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"friend_overview":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "games_together": number,"games_without": number,"last_game_at": string,"last_together": string,"party_size": number,"party_state": string,"user_id": string,"wins_together": number,"wins_without": number
+            }[]
+                           },
 "friend_suggestions":
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_url": string,"display_name": string,"team_name": string,"user_id": string
+            }[]
+                           },
+"games_with_friend":
+{ Args: { "friend": string }; Returns: {
+              "friend_hero_id": number,"friend_position": number,"game_mode": number,"is_win": boolean,"lobby_type": number,"match_id": number,"my_hero_id": number,"my_position": number,"started_at": string
             }[]
                            },
 "get_team_invite":
