@@ -25,14 +25,14 @@ export type Database = {
           Tables: {
             "draft_actions": {
                   Row: {
-                    "actor_id": string,"created_at": string,"draft_id": string,"hero_id": number,"id": number,"kind": string,"position": number | null
+                    "actor_id": string | null,"created_at": string,"draft_id": string,"hero_id": number,"id": number,"kind": string,"position": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "actor_id": string,"created_at"?: string,"draft_id": string,"hero_id": number,"id"?: never,"kind": string,"position"?: number | null
+                    "actor_id"?: string | null,"created_at"?: string,"draft_id": string,"hero_id": number,"id"?: never,"kind": string,"position"?: number | null
                   }
                   Update: {
-                    "actor_id"?: string,"created_at"?: string,"draft_id"?: string,"hero_id"?: number,"id"?: never,"kind"?: string,"position"?: number | null
+                    "actor_id"?: string | null,"created_at"?: string,"draft_id"?: string,"hero_id"?: number,"id"?: never,"kind"?: string,"position"?: number | null
                   }
                   Relationships: [
                     {
@@ -335,14 +335,14 @@ isOneToOne: true
                   ]
                 },"parties": {
                   Row: {
-                    "captain_id": string | null,"captain_request_at": string | null,"captain_request_by": string | null,"closed_at": string | null,"created_at": string,"id": string,"leader_id": string,"rank_bracket": number | null,"team_id": string | null
+                    "captain_id": string | null,"captain_request_at": string | null,"captain_request_by": string | null,"closed_at": string | null,"created_at": string,"id": string,"leader_id": string | null,"rank_bracket": number | null,"team_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "captain_id"?: string | null,"captain_request_at"?: string | null,"captain_request_by"?: string | null,"closed_at"?: string | null,"created_at"?: string,"id"?: string,"leader_id": string,"rank_bracket"?: number | null,"team_id"?: string | null
+                    "captain_id"?: string | null,"captain_request_at"?: string | null,"captain_request_by"?: string | null,"closed_at"?: string | null,"created_at"?: string,"id"?: string,"leader_id"?: string | null,"rank_bracket"?: number | null,"team_id"?: string | null
                   }
                   Update: {
-                    "captain_id"?: string | null,"captain_request_at"?: string | null,"captain_request_by"?: string | null,"closed_at"?: string | null,"created_at"?: string,"id"?: string,"leader_id"?: string,"rank_bracket"?: number | null,"team_id"?: string | null
+                    "captain_id"?: string | null,"captain_request_at"?: string | null,"captain_request_by"?: string | null,"closed_at"?: string | null,"created_at"?: string,"id"?: string,"leader_id"?: string | null,"rank_bracket"?: number | null,"team_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -651,14 +651,14 @@ isOneToOne: false
                   ]
                 },"team_game_plans": {
                   Row: {
-                    "bans": (number)[],"created_at": string,"enemies": (number)[],"id": string,"picks": (number)[],"players": (string)[],"rank_bracket": number | null,"sent_by": string,"team_id": string
+                    "bans": (number)[],"created_at": string,"enemies": (number)[],"id": string,"picks": (number)[],"players": (string)[],"rank_bracket": number | null,"sent_by": string | null,"team_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "bans"?: (number)[],"created_at"?: string,"enemies": (number)[],"id"?: string,"picks": (number)[],"players"?: (string)[],"rank_bracket"?: number | null,"sent_by": string,"team_id": string
+                    "bans"?: (number)[],"created_at"?: string,"enemies": (number)[],"id"?: string,"picks": (number)[],"players"?: (string)[],"rank_bracket"?: number | null,"sent_by"?: string | null,"team_id": string
                   }
                   Update: {
-                    "bans"?: (number)[],"created_at"?: string,"enemies"?: (number)[],"id"?: string,"picks"?: (number)[],"players"?: (string)[],"rank_bracket"?: number | null,"sent_by"?: string,"team_id"?: string
+                    "bans"?: (number)[],"created_at"?: string,"enemies"?: (number)[],"id"?: string,"picks"?: (number)[],"players"?: (string)[],"rank_bracket"?: number | null,"sent_by"?: string | null,"team_id"?: string
                   }
                   Relationships: [
                     {
@@ -901,6 +901,9 @@ isOneToOne: false
               "account_ids": (number)[],"allies": (number)[],"created_at": string,"draft_id": string
             }[]
                            },
+"delete_my_account":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
 "distinct_heroes":
 { Args: { "heroes": (number)[] }; Returns: boolean
                            },
@@ -984,7 +987,7 @@ isOneToOne: false
 "closed_at": string | null,
 "created_at": string,
 "id": string,
-"leader_id": string,
+"leader_id": string | null,
 "rank_bracket": number | null,
 "team_id": string | null
             }
