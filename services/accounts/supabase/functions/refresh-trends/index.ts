@@ -28,7 +28,6 @@ import { type GameSummary, summarizeGame, SUMMARY_VERSION } from "../_shared/fee
 import { fetchMatch, fetchRecentMatches, requestParse } from "../_shared/match.ts";
 import type { ItemCost } from "../_shared/report/facts.ts";
 import { takeOpenDotaCalls } from "../_shared/opendota_budget.ts";
-import { type HeroBenchmarks, readHeroBenchmarks } from "../_shared/trends/benchmarks.ts";
 import { type CountedDraftGame, DRAFT_GAMES_SELECT, readDraftGames } from "../_shared/trends/drafts.ts";
 import {
   type FactsDeps,
@@ -38,7 +37,8 @@ import {
   type TrendPlayer,
   TRENDS_BUDGET,
 } from "../_shared/trends/job.ts";
-import { type CountedStratzGame, playerMatchesQuery, readStratzGames, STRATZ_URL } from "../_shared/trends/stratz.ts";
+import { cachedBenchmarks, fetchBenchmarks, queryStratz } from "../_shared/trends/sources.ts";
+import { type CountedStratzGame, playerMatchesQuery, readStratzGames } from "../_shared/trends/stratz.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
 const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
@@ -47,7 +47,6 @@ const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
 const SNAPSHOT_URL = `${url}/storage/v1/object/public/hero-data/snapshot.json`;
 const OPENDOTA = "https://api.opendota.com/api";
 const DAY_MS = 24 * 60 * 60 * 1000;
-const BENCHMARK_MAX_AGE_MS = 7 * DAY_MS;
 /** Saved games whose findings are worked out again per run; no OpenDota calls, so cheap. */
 const STALE_FINDINGS_PER_RUN = 500;
 /** Hero unit keys ("npc_dota_hero_lina") rarely change: read them once a day per worker. */
@@ -77,8 +76,8 @@ Deno.serve(async (req) => {
     fetchStratzGames,
     fetchDraftGames,
     fetchRecentMatches: (accountId) => fetchRecentMatches(accountId, openDota),
-    cachedBenchmarks,
-    fetchBenchmarks,
+    cachedBenchmarks: (heroIds) => cachedBenchmarks(admin, heroIds),
+    fetchBenchmarks: (heroId) => fetchBenchmarks(admin, heroId, openDota),
     heroName: (id) => names.get(id) ?? `Hero ${id}`,
     save: async (userId, check) => {
       const { error } = await admin.rpc("save_trend_check", {
@@ -120,45 +119,8 @@ async function fetchDraftGames(userId: string): Promise<CountedDraftGame[]> {
 
 /** The player's counted STRATZ games, or null when no STRATZ_TOKEN is set. */
 async function fetchStratzGames(accountId: number): Promise<CountedStratzGame[] | null> {
-  const token = Deno.env.get("STRATZ_TOKEN");
-  if (!token) return null;
-  const res = await fetch(STRATZ_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      // STRATZ asks API clients to send this user agent.
-      "User-Agent": "STRATZ_API",
-    },
-    body: JSON.stringify({ query: playerMatchesQuery(accountId) }),
-    signal: AbortSignal.timeout(10_000),
-  });
-  const body = await res.json().catch(() => ({})) as { data?: unknown; errors?: { message?: string }[] };
-  if (!res.ok || body.errors?.length || !body.data) {
-    throw new Error(`STRATZ: ${body.errors?.map((e) => e.message).join("; ") || `HTTP ${res.status}`}`);
-  }
-  return readStratzGames(body.data, Date.now() / 1000);
-}
-
-async function cachedBenchmarks(heroIds: number[]): Promise<Map<number, HeroBenchmarks>> {
-  const since = new Date(Date.now() - BENCHMARK_MAX_AGE_MS).toISOString();
-  const { data, error } = await admin.from("hero_benchmarks").select("hero_id, benchmarks").in("hero_id", heroIds)
-    .gte("fetched_at", since);
-  if (error) throw error;
-  return new Map(data.map((row) => [row.hero_id, readHeroBenchmarks({ result: row.benchmarks })]));
-}
-
-async function fetchBenchmarks(heroId: number): Promise<HeroBenchmarks> {
-  const res = await openDota(`${OPENDOTA}/benchmarks?hero_id=${heroId}`);
-  if (!res.ok) throw new Error(`OpenDota benchmarks: HTTP ${res.status}`);
-  const benchmarks = readHeroBenchmarks(await res.json());
-  const { error } = await admin.from("hero_benchmarks").upsert({
-    hero_id: heroId,
-    benchmarks,
-    fetched_at: new Date().toISOString(),
-  });
-  if (error) throw error;
-  return benchmarks;
+  const data = await queryStratz(playerMatchesQuery(accountId), AbortSignal.timeout(10_000));
+  return data === null ? null : readStratzGames(data, Date.now() / 1000);
 }
 
 type Snapshot = {

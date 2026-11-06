@@ -55,6 +55,7 @@ Deno.test("counts draft modes in normal and ranked lobbies only", () => {
   assertEquals(isCountedGame(read({ leaver_status: 2 }), NOW_S), false, "the player left");
   assertEquals(isCountedGame(read({ duration: 11 * 60 }), NOW_S), false, "remake length");
   assertEquals(isCountedGame(read({ start_time: NOW_S - 31 * DAY_S }), NOW_S), false, "older than 30 days");
+  assertEquals(isCountedGame(read({ start_time: NOW_S - 31 * DAY_S }), NOW_S, 180), true, "inside a 180 day window");
 });
 
 Deno.test("guesses the position from the lane and farm, leaving the middle ground unknown", () => {

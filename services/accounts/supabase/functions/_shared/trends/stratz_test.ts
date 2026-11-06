@@ -21,6 +21,19 @@ Deno.test("the query asks for one player's own rows", () => {
   assertThrows(() => playerMatchesQuery(-1));
 });
 
+Deno.test("the query pages further back with take and skip", () => {
+  assertEquals(playerMatchesQuery(1001).includes("take: 20, skip: 0"), true);
+  assertEquals(playerMatchesQuery(1001, 100, 300).includes("take: 100, skip: 300"), true);
+  assertThrows(() => playerMatchesQuery(1001, 101));
+  assertThrows(() => playerMatchesQuery(1001, 100, -1));
+});
+
+Deno.test("reads games inside a longer window when asked", () => {
+  const old = data(match(24 * 100));
+  assertEquals(readStratzGames(old, NOW_S).length, 0);
+  assertEquals(readStratzGames(old, NOW_S, 180).length, 1);
+});
+
 Deno.test("reads position, result and IMP", () => {
   assertEquals(readStratzGames(data(match(1)), NOW_S), [
     { matchId: 1, heroId: 114, startTime: NOW_S - 3600, isWin: true, position: 1, imp: 31, gameMode: 22, lobbyType: 7 },
