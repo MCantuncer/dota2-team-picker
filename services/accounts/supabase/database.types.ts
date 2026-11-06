@@ -621,26 +621,6 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
-                },"steam_link_requests": {
-                  Row: {
-                    "created_at": string,"id": string,"next": string,"user_id": string
-                  }
-                  ComputedFields: never
-                  Insert: {
-                    "created_at"?: string,"id"?: string,"next"?: string,"user_id": string
-                  }
-                  Update: {
-                    "created_at"?: string,"id"?: string,"next"?: string,"user_id"?: string
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "steam_link_requests_user_id_fkey"
-      columns: ["user_id"]
-isOneToOne: false
-      referencedRelation: "profiles"
-      referencedColumns: ["id"]
-    }
-                  ]
                 },"stratz_calls": {
                   Row: {
                     "calls": number,"hour": string

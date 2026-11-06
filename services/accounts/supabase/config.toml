@@ -173,8 +173,11 @@ enable_refresh_token_rotation = true
 # Allows refresh tokens to be reused after expiry, up to the specified interval in seconds.
 # Requires enable_refresh_token_rotation = true.
 refresh_token_reuse_interval = 10
-# Allow/disallow new user signups to your project.
-enable_signup = true
+# Allow/disallow new user signups to your project. Off: Steam is the only way in, and steam-login makes
+# accounts with the admin API, which ignores this. Production matches it (Authentication > Sign In / Providers >
+# Allow new users to sign up). Not [auth.email] enable_signup below: that turns the Email provider off, and
+# Steam sign-in finishes with a one-time email-type token.
+enable_signup = false
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
@@ -243,32 +246,6 @@ otp_expiry = 3600
 # pass = "env(SENDGRID_API_KEY)"
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
-
-# Auth emails. Built from supabase/emails/build.ts (npm run emails); the subjects must match it.
-# The invite, magic link and confirm links go through the website's /auth/confirm page.
-[auth.email.template.invite]
-subject = "You're invited to a team on Dota 2 Team Picker"
-content_path = "./supabase/templates/invite.html"
-
-[auth.email.template.magic_link]
-subject = "Your Dota 2 Team Picker link"
-content_path = "./supabase/templates/magic_link.html"
-
-[auth.email.template.confirmation]
-subject = "Confirm your email for Dota 2 Team Picker"
-content_path = "./supabase/templates/confirmation.html"
-
-[auth.email.template.recovery]
-subject = "Reset your Dota 2 Team Picker password"
-content_path = "./supabase/templates/recovery.html"
-
-[auth.email.template.email_change]
-subject = "Confirm your new email for Dota 2 Team Picker"
-content_path = "./supabase/templates/email_change.html"
-
-[auth.email.template.reauthentication]
-subject = "Your Dota 2 Team Picker verification code"
-content_path = "./supabase/templates/reauthentication.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
