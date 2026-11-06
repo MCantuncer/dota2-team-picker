@@ -1,0 +1,111 @@
+name: Engine backtest
+
+# Scores this PR's engine and main's on the same saved games and writes both to the job summary and the
+# job log, so the win lift can be read from the log too. It reports numbers only; a lower score does not
+# fail the PR.
+#
+# It only runs when a change can move the numbers: the engine (its code, scripts and snapshot), the
+# dependencies, or this workflow. On any other PR both sides would run the same engine and print the same
+# tables. It is not a required check, so a PR it skips is not left waiting on it.
+on:
+  pull_request:
+    paths:
+      - "services/engine/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/backtest.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backtest-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backtest:
+    name: Engine backtest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GAMES_URL: https://odigcdwsvajkbvcxeskj.supabase.co/storage/v1/object/public/hero-data/eval
+      LIMIT: 1500
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Download the saved games
+        run: |
+          for month in "$(date -u -d '-1 month' +%Y-%m)" "$(date -u +%Y-%m)"; do
+            curl -fsS -o "$RUNNER_TEMP/matches-$month.json" "$GAMES_URL/matches-$month.json" ||
+              echo "No saved games for $month"
+          done
+          ls "$RUNNER_TEMP"/matches-*.json > "$RUNNER_TEMP/games.txt" 2>/dev/null || true
+      # The three runs don't depend on each other and each uses one CPU core, so they run side by side on
+      # the runner's cores and the tables are printed in order once all three are done.
+      - name: Score this PR and main
+        run: |
+          games=$(paste -sd, "$RUNNER_TEMP/games.txt")
+          tsx="$GITHUB_WORKSPACE/node_modules/.bin/tsx"
+          out="$RUNNER_TEMP/backtest"
+          mkdir -p "$out"
+          if [ -n "$games" ]; then
+            (cd services/engine && "$tsx" scripts/backtest.ts --matches "$games" --limit "$LIMIT" > "$out/pr.md" 2>&1) &
+            (cd services/engine && "$tsx" scripts/backtest.ts --matches "$games" --limit "$LIMIT" --pick-phase > "$out/pick-phase.md" 2>&1) &
+            if [ -f base/services/engine/scripts/backtest.ts ]; then
+              (cd base/services/engine && "$tsx" scripts/backtest.ts --matches "$games" --limit "$LIMIT" > "$out/main.md" 2>&1) &
+            else
+              echo "main has no backtest yet." > "$out/main.md"
+            fi
+            wait
+          fi
+          {
+            echo "## Engine backtest"
+            echo
+            if [ -z "$games" ]; then
+              echo "No saved games to score yet."
+              exit 0
+            fi
+            echo "### This PR"
+            cat "$out/pr.md"
+            echo
+            echo "### This PR with pick phase counts from the older half of the games"
+            cat "$out/pick-phase.md"
+            echo
+            echo "### main"
+            cat "$out/main.md"
+            echo
+            echo "Each side uses its own data/snapshot.json and only games played after it was built."
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+      # The same fixed drafts on the live hero data, main's suggestions beside this PR's, so a
+      # change shows which heroes and reasons it moves.
+      - name: Compare suggestions on fixed drafts
+        run: |
+          tsx="$GITHUB_WORKSPACE/node_modules/.bin/tsx"
+          snapshot="$RUNNER_TEMP/live-snapshot.json"
+          {
+            echo "## Suggestions on fixed drafts (live hero data)"
+            echo
+            if ! curl -fsS -o "$snapshot" "$SNAPSHOT_URL"; then
+              echo "Could not download the live hero data."
+              exit 0
+            fi
+            before=()
+            if [ -f base/services/engine/scripts/compare-drafts.ts ]; then
+              (cd base/services/engine && "$tsx" scripts/compare-drafts.ts --snapshot "$snapshot" --json "$RUNNER_TEMP/main-drafts.json" > /dev/null) &&
+                before=(--before "$RUNNER_TEMP/main-drafts.json")
+            else
+              echo "main has no compare-drafts yet, so this shows the PR only."
+              echo
+            fi
+            (cd services/engine && "$tsx" scripts/compare-drafts.ts --snapshot "$snapshot" "${before[@]}" 2>&1) || true
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+        env:
+          SNAPSHOT_URL: https://odigcdwsvajkbvcxeskj.supabase.co/storage/v1/object/public/hero-data/snapshot.json

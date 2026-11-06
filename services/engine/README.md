@@ -119,8 +119,10 @@ npm run backtest -w services/engine -- --limit 500
 `--pick-phase` counts pick phases from the older half of the games and scores the newer half, with
 an "Engine with pick phase" row to compare. CI runs it too.
 
-On every pull request, CI scores the PR's engine and main's on the same saved games and puts both
-tables in the "Engine backtest" job summary, so an engine change shows its effect before it merges.
+On every pull request that changes the engine, CI scores the PR's engine and main's on the same
+saved games and puts both tables in the "Engine backtest" job summary, so an engine change shows
+its effect before it merges. PRs that don't touch the engine skip it, since both sides would print
+the same tables.
 
 ## Fixed drafts
 
@@ -134,8 +136,9 @@ npm run compare-drafts -w services/engine -- --json before.json   # on main
 npm run compare-drafts -w services/engine -- --before before.json # on your branch
 ```
 
-On every pull request, CI runs both on the live hero data and puts main's list beside the PR's in
-the "Engine backtest" job summary, with how many heroes changed in each draft.
+On every pull request that changes the engine, CI runs both on the live hero data and puts main's
+list beside the PR's in the "Engine backtest" job summary, with how many heroes changed in each
+draft.
 
 ## Win chance
 
