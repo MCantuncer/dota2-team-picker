@@ -2,18 +2,17 @@
   "name": "@dota2-team-picker/accounts",
   "version": "0.1.0",
   "private": true,
-  "description": "User accounts on Supabase: database schema, Steam login and profile sync.",
+  "description": "User accounts on Supabase: database schema, Steam sign-in and profile sync.",
   "scripts": {
     "lint": "deno lint && deno fmt --check",
     "format": "deno fmt",
-    "typecheck": "deno check --node-modules-dir=none --no-lock supabase/functions supabase/emails",
-    "test": "deno test --node-modules-dir=none --no-lock --allow-read supabase/functions supabase/emails",
+    "typecheck": "deno check --node-modules-dir=none --no-lock supabase/functions",
+    "test": "deno test --node-modules-dir=none --no-lock --allow-read supabase/functions",
     "db:start": "supabase db start",
     "db:stop": "supabase stop --no-backup",
     "db:lint": "supabase db lint --local --level warning --fail-on warning",
     "test:db": "supabase test db",
-    "db:types": "supabase gen types typescript --local > supabase/database.types.ts",
-    "emails": "deno run --node-modules-dir=none --no-lock --allow-write=supabase/templates supabase/emails/build.ts"
+    "db:types": "supabase gen types typescript --local > supabase/database.types.ts"
   },
   "devDependencies": {
     "deno": "^2.0.0",

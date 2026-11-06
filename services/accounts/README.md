@@ -2,17 +2,13 @@
 
 User accounts for the Dota 2 Team Picker, hosted on [Supabase](https://supabase.com) (free plan).
 
-- **Email sign up and login** use Supabase Auth directly from the website.
 - **Profiles**: one row per user with their name, picture and, for Steam users, SteamID,
   rank and per-hero record.
 - **Favorite positions and heroes**: the positions each user likes and their heroes for each one.
-- **Teams** for Captain mode: a captain invites friends by email (`team-invite` function), and
-  picks the current team of 1 to 5 members, each on a position, per game.
-- **Steam login** (`steam-login` function): signs users in through Steam, no Steam API key needed.
+- **Teams** (Stacks on the site): saved groups of friends, each on a position, per game.
+- **Steam sign-in** (`steam-login` function): the only way to sign in, no Steam API key needed.
 - **Profile sync** (`sync-profile` function): reads a Steam user's rank, name, picture and per-hero
   record from OpenDota.
-- **Steam linking** (`steam-link` function): a user who signed up by email connects their Steam
-  account later.
 
 Every user can read and change only their own rows (row level security). The one exception: a
 captain can read the name, rank, positions and favorite heroes of their own team's members. Users can edit their
@@ -29,7 +25,6 @@ name and picture; Steam and rank fields are written only by the server.
 | `team_members`    | `team_id`, `user_id`, `role` (`player` or `co_captain`, set by the owner): added only by accepting an invite (`accept_team_invite`) |
 | `team_invites`    | `id` (the secret in the join link), `team_id`, `email`, `sent_at` (expires 7 days later), `sent_by`, `accepted_at` |
 | `team_lineups`    | `team_id`, `slots` (member id per position, null = not in the team), `rank_bracket`             |
-| `steam_link_requests` | pending Steam links, used only by `steam-link`                                               |
 | `friendships`     | `requester_id`, `addressee_id`, `status` (pending, accepted): one row per pair, made only through `send_friend_request` |
 | `parties`         | `id`, `leader_id`, `team_id` (optional), `created_at`, `closed_at` (set when the last player leaves) |
 | `party_members`   | `party_id`, `user_id`, `position` (1–5 this game, null = any), `joined_at`: 5 at most, one open party per player |
@@ -80,40 +75,19 @@ All run on Supabase Edge Functions (Deno) and share code in `supabase/functions/
 `<SUPABASE_URL>/functions/v1/steam-login?next=/profile`. The function sends the user to Steam,
 checks Steam's answer, creates the Supabase user on first login, syncs the profile, and sends the
 browser to `<SITE_URL>/auth/confirm` with a one-time token that the website turns into a normal
-session. Steam users get a placeholder email `<SteamID64>@steam.invalid` that never receives mail.
+session. Every account gets a placeholder email `<SteamID64>@steam.invalid` that never receives mail,
+so one SteamID is always one account.
 
 **`sync-profile`**: the website calls `supabase.functions.invoke("sync-profile")` for a signed-in
 Steam user. It refreshes at most every 10 minutes. Rank and hero record only show if the user has
 **Expose Public Match Data** turned on in Dota 2 (Settings > Options > Social).
 
-**`team-invite`**: the captain's page calls `supabase.functions.invoke("team-invite", {body: {teamId,
-email}})`. It saves the invite and emails a link. A friend without an account gets the **Invite**
-email, one with an account gets the **Magic link** email. Both name the captain and the team (the
-function puts them in the user's metadata, which the templates read), and both links open
-`<SITE_URL>/join/<invite id>`, where the friend picks a name and password and accepts.
-`get_team_invite(id)` returns what the join page shows; `accept_team_invite(id)` joins the team if
-the signed-in user's email is the invited one and the invite was sent in the last 7 days.
-
-Any user can create teams (shown as Stacks on the site), up to 10 each. Owners and co-captains can send invites. Every
-email is logged in `invite_sends`, and `claim_invite_send` checks the limits before it goes out: 30 a day per sender, 5 on
-an account's first day, 3 a day per address across all teams, 300 a day for the whole site, and one a minute per team and
-address.
-
-**`steam-link`**: the profile page calls `supabase.functions.invoke("steam-link", {body: {next}})`
-and sends the browser to the returned Steam address. Steam sends it back to the function, which
-saves the SteamID on the user's profile, syncs it, and returns to `next?steam=linked` (or `taken`
-when another account already uses that Steam account, `failed`, `expired`). From then on "Sign in
-with Steam" opens the same account.
-
-**`steam-unlink`**: the My heroes page's **Disconnect** button calls it (POST, with the user's
-token). It removes the SteamID and everything copied from Steam and OpenDota (Steam name, rank,
-hero record, and the picture if it came from Steam). Accounts made by "Sign in with Steam" have no
-other way to sign in, so they get `409` and keep their Steam account.
+Any user can create teams (shown as Stacks on the site), up to 10 each, and invite friends to them.
 
 **`draft-result`**: the draft screen's after-game card calls `supabase.functions.invoke("draft-result",
 {body: {draftId, matchId?}})` for a party draft. Without `matchId` it looks for a match that started
 after the draft in the recent OpenDota matches of the party's Steam players, played with one of the
-draft's heroes. With `matchId` (players without Steam, or with a hidden profile) it checks that every
+draft's heroes. With `matchId` (players with a hidden profile) it checks that every
 hero entered for the team played on one side of that match. It saves `match_id` and `won` on the
 draft, asks OpenDota to parse the replay (replays expire after one to two weeks), and looks at most
 once every 20 seconds per draft. Returns `{matchId, won}`, or `{matchId: null}` when nothing was found yet.
@@ -126,7 +100,7 @@ teams and send invites; the value goes away once the site's Captain page is remo
 the dashboard's **SQL Editor**:
 
 ```sql
-update public.profiles set user_type = 'admin' where id = '<user id from Authentication > Users>';
+update public.profiles set user_type = 'admin' where steam_id = '<your SteamID64>';
 ```
 
 A team's owner can also make any member a **co-captain** (`team_members.role`). Co-captains can run the draft, send and cancel invites, and remove players on that
@@ -147,41 +121,11 @@ team. Only the owner can rename or delete the team, change roles, or remove a co
 3. In the dashboard, under **Authentication > URL Configuration**, set **Site URL** to the
    website's address (for example `https://your-site.vercel.app`) and add
    `http://localhost:3000/**` to **Redirect URLs** for local development.
-4. Team invites send email, and Supabase's built-in sender only mails your own Supabase team and
-   a few per hour. Send through [Resend](https://resend.com) from your own domain, so inboxes can
-   check the mail is genuine (SPF, DKIM, DMARC) and don't file it as spam:
-   - In Resend, add the domain and add the DNS records it lists (`resend._domainkey` TXT, `send`
-     MX and `send` TXT), plus a `_dmarc` TXT record such as `v=DMARC1; p=none; rua=mailto:you@example.com`.
-     Verify the domain.
-   - Create an API key with **Sending access** for that domain only.
-   - Under **Authentication > Emails > SMTP Settings**, turn on custom SMTP: sender email
-     `noreply@<your domain>`, sender name `Dota 2 Team Picker`, host `smtp.resend.com`, port `465`,
-     user `resend`, password the API key.
-
-   Resend's **Emails** page shows whether each email was delivered or bounced. A personal Gmail
-   account with an [app password](https://myaccount.google.com/apppasswords) (host
-   `smtp.gmail.com`, port `465`) also works for local testing, but its invites often land in spam.
-5. Under **Authentication > Emails > Templates**, set each template's **Subject** and paste its
-   file as the body (open the file, copy everything, paste over the old body, **Save changes**):
-
-   | Template             | Subject                                           | File                                    |
-   | -------------------- | ------------------------------------------------- | --------------------------------------- |
-   | Confirm signup       | Confirm your email for Dota 2 Team Picker         | `supabase/templates/confirmation.html`  |
-   | Invite user          | You're invited to a team on Dota 2 Team Picker    | `supabase/templates/invite.html`        |
-   | Magic link           | Your Dota 2 Team Picker link                      | `supabase/templates/magic_link.html`    |
-   | Change email address | Confirm your new email for Dota 2 Team Picker     | `supabase/templates/email_change.html`  |
-   | Reset password       | Reset your Dota 2 Team Picker password            | `supabase/templates/recovery.html`      |
-   | Reauthentication     | Your Dota 2 Team Picker verification code         | `supabase/templates/reauthentication.html` |
-
-   The invite, magic link and confirm signup links go through the website's `/auth/confirm` page,
-   so they work even when the email is opened on another device. The emails load the logo from
-   `<Site URL>/email/logo.png` (the website's `public/email/logo.png`) and say the link expires in
-   1 hour, which is the default **Email OTP Expiration**.
-
-   The templates are built from `supabase/emails/build.ts`: change that file, run
-   `npm run emails -w services/accounts`, and paste the changed files again. The tests fail if the
-   files and `build.ts` (or the subjects in `config.toml`) don't match.
-6. Deploy the functions and tell them where the website is:
+4. Under **Authentication > Sign In / Providers**, turn off **Allow new users to sign up**. Steam is
+   the only way in, and `steam-login` makes accounts with the admin API, which this setting doesn't
+   block. Leave the **Email** provider on: Steam sign-in finishes with a one-time email-type token.
+   No email is sent, so custom SMTP and email templates aren't needed.
+5. Deploy the functions and tell them where the website is:
 
    ```sh
    npx supabase secrets set SITE_URL=https://your-site.vercel.app
