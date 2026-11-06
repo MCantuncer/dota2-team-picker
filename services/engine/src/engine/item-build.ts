@@ -21,10 +21,10 @@ export type Threat =
   | "invisible"
   | "passives"
   | "physicalCarry"
-  | "buffs";
+  | "unattackable";
 
 /** Threats OpenDota roles cannot see, by hero display name. */
-const THREAT_HEROES: Record<Exclude<Threat, "disable" | "magicBurst" | "physicalCarry" | "buffs">, string[]> = {
+const THREAT_HEROES: Record<Exclude<Threat, "disable" | "magicBurst" | "physicalCarry" | "unattackable">, string[]> = {
   heal: [
     "Lifestealer", "Necrophos", "Huskar", "Alchemist", "Omniknight", "Oracle", "Dazzle", "Warlock",
     "Chen", "Witch Doctor", "Morphling", "Abaddon", "Wraith King", "Undying", "Treant Protector", "Bristleback",
@@ -49,15 +49,15 @@ const THREAT_HEROES: Record<Exclude<Threat, "disable" | "magicBurst" | "physical
 const MAGIC_CORES = new Set(["Storm Spirit", "Zeus", "Leshrac", "Tinker", "Lina", "Outworld Devourer", "Death Prophet"]);
 
 /**
- * The threats each enemy hero brings. Disables and magic burst come from OpenDota roles, buffs from the
- * spell facts (dispel.ts), the rest from THREAT_HEROES.
+ * The threats each enemy hero brings. Disables and magic burst come from OpenDota roles, buffs that stop
+ * attacks from the spell facts (dispel.ts), the rest from THREAT_HEROES.
  */
 export function threatsOf(hero: HeroInfo): Set<Threat> {
   const t = new Set<Threat>();
   if (hero.roles.includes("Disabler")) t.add("disable");
   if (hero.roles.includes("Nuker")) t.add("magicBurst");
   if (hero.roles.includes("Carry") && !MAGIC_CORES.has(hero.name)) t.add("physicalCarry");
-  if (dispellableBuffs(hero).length) t.add("buffs");
+  if (dispellableBuffs(hero, "unattackable").length) t.add("unattackable");
   // Object.entries loses the key type; the keys are THREAT_HEROES keys, all Threats.
   for (const [threat, names] of Object.entries(THREAT_HEROES)) if (names.includes(hero.name)) t.add(threat as Threat);
   return t;
@@ -85,7 +85,7 @@ export const COUNTER_ITEMS: readonly CounterItem[] = [
   { key: "silver_edge", answers: ["passives"], minEnemies: 1, buyer: "core" },
   { key: "spirit_vessel", answers: ["heal"], minEnemies: 2, buyer: "any" },
   { key: "skadi", answers: ["heal"], minEnemies: 2, buyer: "core" },
-  { key: "nullifier", answers: ["buffs"], minEnemies: 1, buyer: "core", reason: (named) => `Dispels ${listNames(buffsFrom(named))}` },
+  { key: "nullifier", answers: ["unattackable"], minEnemies: 1, buyer: "core", reason: (named) => `Removes ${listNames(buffsFrom(named, "unattackable"))}, which stop your attacks` },
   { key: "mjollnir", answers: ["illusions"], minEnemies: 1, buyer: "core" },
   { key: "bfury", answers: ["illusions"], minEnemies: 1, buyer: "core" },
   { key: "crimson_guard", answers: ["illusions", "physicalCarry"], minEnemies: 2, buyer: "core" },

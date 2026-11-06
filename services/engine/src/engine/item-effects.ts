@@ -38,7 +38,7 @@ const EFFECTS: Record<string, Effect> = {
   silver_edge: { answers: { threat: "passives", line: (n) => `Breaks passives on ${n}.` }, plain: "Invisibility to start fights." },
   spirit_vessel: { answers: { threat: "heal", line: (n) => `Cuts the healing from ${n}.` }, plain: "Cuts healing in fights." },
   skadi: { answers: { threat: "heal", line: (n) => `Cuts the healing from ${n}; your hits slow.` }, plain: "Health and a slow on every hit." },
-  nullifier: { answers: { threat: "buffs", line: (n) => `Dispels the buffs on ${n}.` }, plain: "Dispels buffs on your target and slows it." },
+  nullifier: { answers: { threat: "unattackable", line: (n) => `Dispels ${n}.` }, plain: "Dispels buffs on your target and slows it." },
   mjollnir: { answers: { threat: "illusions", line: (n) => `Chain lightning clears illusions from ${n}.` }, plain: "Attack speed and chain lightning." },
   bfury: { answers: { threat: "illusions", line: (n) => `Cleave hits illusions from ${n}.` }, plain: "Cleave for fast farm." },
   crimson_guard: { answers: { threat: "physicalCarry", line: (n) => `Blocks hits from ${n} for your team.` }, plain: "Blocks hits for your team." },
@@ -69,8 +69,8 @@ export function itemEffect(key: string, enemies: HeroInfo[], name = true): { lin
   const named = (h: HeroInfo) => !bkb || !beatsBkb(h);
   const hit = answers && name ? enemies.filter((h) => threatsOf(h).has(answers.threat) && named(h)).slice(0, MAX_NAMES) : [];
   let line = answers && hit.length ? answers.line(listNames(hit.map((h) => h.name))) : effect.plain;
-  // Nullifier names the buff it removes from each hero: "Dispels Decrepify from Pugna."
-  if (key === "nullifier" && hit.length) line = `Dispels ${listNames(buffsFrom(hit))}.`;
+  // A dispel names the buff it removes from each hero: "Dispels Decrepify from Pugna."
+  if (answers?.threat === "unattackable" && hit.length) line = answers.line(listNames(buffsFrom(hit, "unattackable")));
   if (bkb) {
     const pierce = enemies.flatMap((h) => piercingSpell(h) ?? []);
     if (pierce.length) line += ` ${listNames(pierce)} still ${pierce.length > 1 ? "go" : "goes"} through it.`;

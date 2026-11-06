@@ -45,17 +45,17 @@ function fits(kind: KeySpell["kind"] | undefined, img: string): boolean {
 const MAX_ANSWERS = 3;
 
 /**
- * Most telling threat first: an illusion carry is an illusion problem before a right-click one. Buffs come
- * last: Legion Commander and Lich have a buff Nullifier removes, but it is not what makes them dangerous.
+ * Most telling threat first: an illusion carry is an illusion problem before a right-click one. A buff that
+ * stops attacks comes last: Necrophos heals and bursts before his Ghost Shroud matters.
  */
-const THREAT_ORDER: Threat[] = ["illusions", "evasion", "invisible", "heal", "passives", "magicBurst", "disable", "physicalCarry", "buffs"];
+const THREAT_ORDER: Threat[] = ["illusions", "evasion", "invisible", "heal", "passives", "magicBurst", "disable", "physicalCarry", "unattackable"];
 
 const THREAT_LINE: Record<Threat, { threat: string; tip: string }> = {
   illusions: { threat: "Illusions split your damage", tip: "Hit the real hero: it is the one their team protects" },
   evasion: { threat: "Evasion: right clicks miss", tip: "Fight them with spells, not right clicks" },
   invisible: { threat: "Goes invisible", tip: "Ask your support for Dust and Sentries before fights" },
   heal: { threat: "Heals their team through fights", tip: "Kill them first or fight short and decisive" },
-  buffs: { threat: "Protects allies with buffs", tip: "Wait for the buff to end, then commit" },
+  unattackable: { threat: "Makes heroes unable to be attacked", tip: "Dispel it, or wait it out before you commit" },
   passives: { threat: "Strong passives", tip: "Fight them when they are low, not head on" },
   magicBurst: { threat: "Magic burst", tip: "Stay spread so one combo can't catch two" },
   disable: { threat: "Locks you down", tip: "Keep distance until their disable is used" },
