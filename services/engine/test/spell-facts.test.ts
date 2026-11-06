@@ -35,6 +35,23 @@ describe("toSpellFacts", () => {
   it("throws on constants that are not objects", () => {
     expect(() => toSpellFacts([], heroAbilities, heroes)).toThrow();
   });
+
+  it("reads which team the cast targets and whether an upgrade makes it undispellable", () => {
+    const facts = toSpellFacts(
+      {
+        necrolyte_death_pulse: { dname: "Death Pulse", target_team: ["Enemy", "Friendly"] },
+        necrolyte_ghost_shroud: { dname: "Ghost Shroud", dispellable: "Yes", attrib: [{ key: "cannot_be_dispelled" }] },
+        necrolyte_reapers_scythe: { dname: "Reaper's Scythe", target_team: "Enemy", dispellable: "No", attrib: [{ key: "undispellable" }] },
+      },
+      heroAbilities,
+      heroes,
+    );
+    expect(facts.Necrophos).toEqual([
+      { key: "necrolyte_death_pulse", name: "Death Pulse", target: "both" },
+      { key: "necrolyte_ghost_shroud", name: "Ghost Shroud", removedBy: "basic", unlessUpgraded: true },
+      { key: "necrolyte_reapers_scythe", name: "Reaper's Scythe", removedBy: "none", target: "enemies" },
+    ]);
+  });
 });
 
 describe("spell facts", () => {
