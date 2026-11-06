@@ -27,14 +27,15 @@ Next: Butterfly 26/27
 Late: Eye of Skadi 33/34 {Cuts the healing from Chen; your hits slow.}, Daedalus 38/41, Aghanim's Blessing 46/48
 If needed: Black King Bar 32 [Against Leshrac, Underlord and Shadow Shaman] instead of Eye of Skadi
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Manta Style around minute 18.
-Vs Underlord (lane): Starts fights and soaks your damage. buy Black King Bar.
+Vs Underlord (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Chen (lane, guessed): Heals their team through fights. Kill them first or fight short and decisive.
 Vs Lycan: Right-click carry who grows late. Fight before their big item, not after.
 Vs Leshrac: Magic burst. buy Black King Bar.
 Vs Shadow Shaman: Magic burst. buy Black King Bar.
-Watch Underlord, Leshrac, Shadow Shaman: buy Black King Bar.
+Watch Underlord: Don't focus them: kill their damage dealers first.
 Watch Chen: Kill them first or fight short and decisive.
 Watch Lycan: Fight before their big item, not after.
+Watch Leshrac, Shadow Shaman: buy Black King Bar.
 If it goes wrong: No Manta Style by 19 min? Don't show on the map without it. Farm the side Underlord is not on.
 
 ### Pos 2 Storm Spirit
@@ -48,11 +49,12 @@ Late: Parasma 35/39, Aghanim's Scepter 40/45
 Job: Win your lane, then use runes to help the side lanes. Your timing is Orchid Malevolence around minute 20.
 Vs Leshrac (lane): Magic burst. buy Magic Wand, Infused Raindrops, Black King Bar.
 Vs Lycan: Right-click carry who grows late. Fight before their big item, not after.
-Vs Underlord: Starts fights and soaks your damage. buy Black King Bar.
+Vs Underlord: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Shadow Shaman: Magic burst. buy Black King Bar.
 Vs Chen: Heals their team through fights. Kill them first or fight short and decisive.
-Watch Leshrac, Underlord, Shadow Shaman: buy Black King Bar.
+Watch Leshrac, Shadow Shaman: buy Black King Bar.
 Watch Lycan: Fight before their big item, not after.
+Watch Underlord: Don't focus them: kill their damage dealers first.
 Watch Chen: Kill them first or fight short and decisive.
 If it goes wrong: Lane lost? Stop contesting runes. Push the wave, farm the near jungle, and wait for your pos 4 to rotate.
 If it goes wrong: No Orchid Malevolence by 24 min? Stop rotating and farm mid and the near camps until it is done.
@@ -70,10 +72,11 @@ Job: Make their carry's lane hard, then start the team's fights as Tidehunter. Y
 Vs Lycan (lane, guessed): Right-click carry who grows late. Fight before their big item, not after.
 Vs Shadow Shaman (lane, guessed): Magic burst. buy Black King Bar.
 Vs Leshrac: Magic burst. buy Black King Bar.
-Vs Underlord: Starts fights and soaks your damage. buy Black King Bar.
+Vs Underlord: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Chen: Heals their team through fights. Kill them first or fight short and decisive.
 Watch Lycan: Fight before their big item, not after.
-Watch Shadow Shaman, Leshrac, Underlord: buy Black King Bar.
+Watch Shadow Shaman, Leshrac: buy Black King Bar.
+Watch Underlord: Don't focus them: kill their damage dealers first.
 Watch Chen: Kill them first or fight short and decisive.
 If it goes wrong: Lane lost? Stop contesting Lycan. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 25 min? Don't start fights without it. Stay behind your cores and soak damage.
@@ -107,12 +110,13 @@ Boots: Arcane Boots 12
 First: Holy Locket 20/22
 Next: Mekansm 26/32, Glimmer Cape 27/30 [Against Leshrac, Underlord and Shadow Shaman: don't skip it] {Invisibility and a magic damage barrier.}, Aether Lens 28/37, Force Staff 29/32 {Pushes you away from Lycan.}
 Job: Keep your carry alive in lane and place vision; save your key spell for their dive. Your timing is Holy Locket around minute 20.
-Vs Underlord (lane): Starts fights and soaks your damage. buy Glimmer Cape.
+Vs Underlord (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Chen (lane, guessed): Heals their team through fights. Kill them first or fight short and decisive.
 Vs Lycan: Right-click carry who grows late. Fight before their big item, not after.
 Vs Leshrac: Magic burst. buy Glimmer Cape.
 Vs Shadow Shaman: Magic burst. buy Glimmer Cape.
-Watch Underlord, Leshrac, Shadow Shaman: buy Glimmer Cape.
+Watch Underlord: Don't focus them: kill their damage dealers first.
 Watch Chen: Kill them first or fight short and decisive.
 Watch Lycan: Fight before their big item, not after.
+Watch Leshrac, Shadow Shaman: buy Glimmer Cape.
 If it goes wrong: Lycan is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.

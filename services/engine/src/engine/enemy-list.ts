@@ -29,10 +29,15 @@ const SPELL_ONLY = ["black_king_bar", "lotus_orb", "pipe", "glimmer_cape"];
 const ATTACK_ONLY = ["ghost", "heavens_halberd", "crimson_guard", "assault", "shivas_guard", "blade_mail", "monkey_king_bar"];
 const itemKey = (img: string) => img.split("/").pop()?.replace(/\.png$/, "") ?? "";
 
-/** Whether an item can answer this kind of spell: Black King Bar does nothing against Marksmanship. */
+/**
+ * Whether an item can answer this kind of spell: Black King Bar does nothing against Marksmanship, and
+ * neither it nor armor answers Black Hole.
+ */
 function fits(kind: KeySpell["kind"] | undefined, img: string): boolean {
-  if (kind === "attack") return !SPELL_ONLY.includes(itemKey(img));
-  if (kind === "magic") return !ATTACK_ONLY.includes(itemKey(img));
+  const key = itemKey(img);
+  if (kind === "attack") return !SPELL_ONLY.includes(key);
+  if (kind === "magic") return !ATTACK_ONLY.includes(key);
+  if (kind === "other") return !SPELL_ONLY.includes(key) && !ATTACK_ONLY.includes(key);
   return true;
 }
 

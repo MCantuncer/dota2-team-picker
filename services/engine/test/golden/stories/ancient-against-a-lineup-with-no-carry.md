@@ -35,15 +35,16 @@ Lane: Magic Wand 3 [Against Storm Spirit's spells: get it early], Urn of Shadows
 Boots: Phase Boots 10 {Armor and a burst of speed.}
 First: Spirit Vessel 14/15 {Cuts the healing from Witch Doctor.}
 Next: Mage Slayer 18/22
-Late: Black King Bar 30/34 [Against Vengeful Spirit, Witch Doctor and Tidehunter: don't skip it] {Spell immunity for the big fights.}, Kaya and Sange 31/35, Aghanim's Scepter 32/35
+Late: Black King Bar 30/34 [Against Witch Doctor, Tidehunter and Storm Spirit: don't skip it] {Spell immunity for the big fights. Nether Swap, Death Ward and Meat Hook still go through it.}, Kaya and Sange 31/35, Aghanim's Scepter 32/35
 Job: Win your lane, then use runes to help the side lanes. Your timing is Spirit Vessel around minute 14.
-Vs Storm Spirit (lane): Magic burst. buy Magic Wand.
-Vs Vengeful Spirit: Magic burst. buy Black King Bar.
-Vs Witch Doctor: Heals their team through fights. buy Black King Bar.
+Vs Storm Spirit (lane): Magic burst. buy Magic Wand, Black King Bar.
+Vs Vengeful Spirit: Magic burst. Stay spread so one combo can't catch two.
+Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
 Vs Tidehunter: Starts fights and soaks your damage. buy Black King Bar.
 Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
-Watch Storm Spirit: buy Magic Wand.
-Watch Vengeful Spirit, Witch Doctor, Tidehunter: buy Black King Bar.
+Watch Storm Spirit, Tidehunter: buy Black King Bar.
+Watch Vengeful Spirit: Stay spread so one combo can't catch two.
+Watch Witch Doctor: Kill them first or fight short and decisive.
 Watch Pudge: Don't focus them: kill their damage dealers first.
 If it goes wrong: No Spirit Vessel by 15 min? Stop rotating and farm mid and the near camps until it is done.
 
@@ -53,16 +54,17 @@ Start: Gauntlets of Strength, 2 Iron Branch, 2 Tango [Hard lane against Vengeful
 Lane: Bracer 2, Magic Wand 3 [Against Witch Doctor's spells: get it early], Soul Ring 5
 Boots: Phase Boots 10 {Armor and a burst of speed.}
 First: Blink Dagger 15/17 {Start fights from 1,200 range.}
-Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24 {-6 armor on your target.}, Black King Bar 29/31 [Against Vengeful Spirit, Witch Doctor and Tidehunter: don't skip it] {Spell immunity for the big fights.}
+Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24 {-6 armor on your target.}, Black King Bar 29/31 [Against Witch Doctor, Tidehunter and Storm Spirit: don't skip it] {Spell immunity for the big fights. Nether Swap, Death Ward and Meat Hook still go through it.}
 Job: Make their carry's lane hard, then start the team's fights as Mars. Your timing is Blink Dagger around minute 15.
-Vs Vengeful Spirit (lane): Magic burst. buy Black King Bar.
-Vs Witch Doctor (lane): Heals their team through fights. buy Magic Wand, Black King Bar.
+Vs Vengeful Spirit (lane): Magic burst. Stay spread so one combo can't catch two.
+Vs Witch Doctor (lane): Heals their team through fights. buy Magic Wand.
 Vs Tidehunter: Starts fights and soaks your damage. buy Black King Bar.
 Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
-Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
-Watch Vengeful Spirit, Witch Doctor, Tidehunter: buy Black King Bar.
+Vs Storm Spirit: Magic burst. buy Black King Bar.
+Watch Vengeful Spirit: Stay spread so one combo can't catch two.
+Watch Witch Doctor: buy Magic Wand.
+Watch Tidehunter, Storm Spirit: buy Black King Bar.
 Watch Pudge: Don't focus them: kill their damage dealers first.
-Watch Storm Spirit: Stay spread so one combo can't catch two.
 If it goes wrong: Lane lost? Stop contesting Vengeful Spirit. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay behind your cores and soak damage.
 
@@ -76,14 +78,15 @@ Next: Aether Lens 25/31, Glimmer Cape 28/35 [Against Vengeful Spirit, Witch Doct
 Late: Aghanim's Scepter 36/42
 If needed: Force Staff 31/34 [Against Tidehunter] instead of Aghanim's Shard
 Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Blink Dagger around minute 20.
-Vs Vengeful Spirit (lane): Magic burst. buy Glimmer Cape.
-Vs Witch Doctor (lane): Heals their team through fights. buy Magic Wand, Glimmer Cape.
+Vs Vengeful Spirit (lane): Magic burst. Stay spread so one combo can't catch two.
+Vs Witch Doctor (lane): Heals their team through fights. buy Magic Wand.
 Vs Tidehunter: Starts fights and soaks your damage. buy Glimmer Cape, Force Staff.
 Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
-Watch Vengeful Spirit, Witch Doctor, Tidehunter: buy Glimmer Cape.
+Watch Vengeful Spirit, Storm Spirit: Stay spread so one combo can't catch two.
+Watch Witch Doctor: buy Magic Wand.
+Watch Tidehunter: buy Glimmer Cape.
 Watch Pudge: Don't focus them: kill their damage dealers first.
-Watch Storm Spirit: Stay spread so one combo can't catch two.
 If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Ursa.
 If it goes wrong: Vengeful Spirit is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 

@@ -25,16 +25,17 @@ Lane: Bracer 2, Magic Wand 3
 Boots: Phase Boots 8 {Armor and a burst of speed.}
 First: Radiance 17/18 {Burns everything near you, and 25% evasion.}
 Next: Blink Dagger 21/22 {Start fights from 1,200 range.}, Desolator 23/30 {-6 armor on your target.}
-Late: Black King Bar 32/36 [Against Drow Ranger, Pudge and Legion Commander: don't skip it] {Spell immunity for the big fights. Duel still goes through it.}, Assault Cuirass 33/36 {Armor for you and your team against Drow Ranger and Legion Commander.}
+Late: Black King Bar 32/36 [Against Drow Ranger, Shadow Shaman and Crystal Maiden: don't skip it] {Spell immunity for the big fights. Meat Hook and Duel still go through it.}, Assault Cuirass 33/36 {Armor for you and your team against Drow Ranger and Legion Commander.}
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Radiance around minute 17.
 Vs Legion Commander (lane): Magic burst. Stay spread so one combo can't catch two.
-Vs Shadow Shaman (lane, guessed): Magic burst. Stay spread so one combo can't catch two.
+Vs Shadow Shaman (lane, guessed): Magic burst. buy Black King Bar.
 Vs Drow Ranger: Locks you down. Keep distance until their disable is used.
-Vs Pudge: Starts fights and soaks your damage. buy Black King Bar.
-Vs Crystal Maiden: Magic burst. Stay spread so one combo can't catch two.
-Watch Legion Commander, Shadow Shaman, Crystal Maiden: Stay spread so one combo can't catch two.
+Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Crystal Maiden: Magic burst. buy Black King Bar.
+Watch Legion Commander: Stay spread so one combo can't catch two.
+Watch Shadow Shaman, Crystal Maiden: buy Black King Bar.
 Watch Drow Ranger: Keep distance until their disable is used.
-Watch Pudge: buy Black King Bar.
+Watch Pudge: Don't focus them: kill their damage dealers first.
 If it goes wrong: Lane lost? Ask for a lane swap or a rotation before 7 min, and skip trades until Radiance.
 If it goes wrong: No Radiance by 18 min? Don't show on the map without it. Farm the side Legion Commander is not on.
 
@@ -46,16 +47,17 @@ Boots: Power Treads 8 {Attack speed and a stat to switch.}
 First: Hurricane Pike 26/31
 Next: Specialist's Array 27/32, Mjollnir 28/33 {Attack speed and chain lightning.}, Shadow Blade 29/33
 Late: Daedalus 36/41
-If needed: Black King Bar 32 [Against Drow Ranger, Pudge and Legion Commander] instead of Shadow Blade
+If needed: Black King Bar 32 [Against Drow Ranger, Shadow Shaman and Crystal Maiden] instead of Shadow Blade
 Job: Win your lane, then use runes to help the side lanes. Your timing is Hurricane Pike around minute 26.
-Vs Pudge (lane): Starts fights and soaks your damage. buy Black King Bar.
+Vs Pudge (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Drow Ranger: Locks you down. Keep distance until their disable is used.
 Vs Legion Commander: Magic burst. Stay spread so one combo can't catch two.
-Vs Shadow Shaman: Magic burst. Stay spread so one combo can't catch two.
-Vs Crystal Maiden: Magic burst. Stay spread so one combo can't catch two.
-Watch Pudge: buy Black King Bar.
+Vs Shadow Shaman: Magic burst. buy Black King Bar.
+Vs Crystal Maiden: Magic burst. buy Black King Bar.
+Watch Pudge: Don't focus them: kill their damage dealers first.
 Watch Drow Ranger: Keep distance until their disable is used.
-Watch Legion Commander, Shadow Shaman, Crystal Maiden: Stay spread so one combo can't catch two.
+Watch Legion Commander: Stay spread so one combo can't catch two.
+Watch Shadow Shaman, Crystal Maiden: buy Black King Bar.
 If it goes wrong: Lane lost? Stop contesting runes. Push the wave, farm the near jungle, and wait for your pos 4 to rotate.
 If it goes wrong: No Hurricane Pike by 31 min? Stop rotating and farm mid and the near camps until it is done.
 
@@ -66,17 +68,18 @@ Lane: Bracer 2, Magic Wand 3
 Boots: Phase Boots 9 {Armor and a burst of speed.}
 First: Vanguard 8/10
 Next: Blink Dagger 16/21 {Start fights from 1,200 range.}, Blade Mail 18/22
-Late: Black King Bar 30/31 [Against Drow Ranger, Pudge and Legion Commander: don't skip it] {Spell immunity for the big fights. Duel still goes through it.}, Kaya 34/35
+Late: Black King Bar 30/31 [Against Drow Ranger, Shadow Shaman and Crystal Maiden: don't skip it] {Spell immunity for the big fights. Meat Hook and Duel still go through it.}, Kaya 34/35
 If needed: Lotus Orb 32 [Against Drow Ranger, Pudge and Legion Commander] instead of Kaya
 Job: Make their carry's lane hard, then start the team's fights as Axe. Your timing is Blink Dagger around minute 16.
 Vs Drow Ranger (lane): Locks you down. Keep distance until their disable is used.
-Vs Crystal Maiden (lane, guessed): Magic burst. Stay spread so one combo can't catch two.
-Vs Pudge: Starts fights and soaks your damage. buy Black King Bar, Lotus Orb.
+Vs Crystal Maiden (lane, guessed): Magic burst. buy Black King Bar.
+Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Legion Commander: Magic burst. Stay spread so one combo can't catch two.
-Vs Shadow Shaman: Magic burst. Stay spread so one combo can't catch two.
+Vs Shadow Shaman: Magic burst. buy Black King Bar.
 Watch Drow Ranger: Keep distance until their disable is used.
-Watch Crystal Maiden, Legion Commander, Shadow Shaman: Stay spread so one combo can't catch two.
-Watch Pudge: buy Black King Bar.
+Watch Crystal Maiden, Shadow Shaman: buy Black King Bar.
+Watch Pudge: Don't focus them: kill their damage dealers first.
+Watch Legion Commander: Stay spread so one combo can't catch two.
 If it goes wrong: Lane lost? Stop contesting Drow Ranger. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 21 min? Don't start fights without it. Stay behind your cores and soak damage.
 
@@ -92,12 +95,13 @@ If needed: Glimmer Cape 25/26 [Against Pudge, Legion Commander and Shadow Shaman
 Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Blink Dagger around minute 25.
 Vs Drow Ranger (lane): Locks you down. buy Force Staff.
 Vs Crystal Maiden (lane, guessed): Magic burst. Stay spread so one combo can't catch two.
-Vs Pudge: Starts fights and soaks your damage. buy Glimmer Cape.
+Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Legion Commander: Magic burst. buy Force Staff.
 Vs Shadow Shaman: Magic burst. buy Glimmer Cape.
 Watch Drow Ranger, Legion Commander: buy Force Staff.
 Watch Crystal Maiden: Stay spread so one combo can't catch two.
-Watch Pudge, Shadow Shaman: buy Glimmer Cape.
+Watch Pudge: Don't focus them: kill their damage dealers first.
+Watch Shadow Shaman: buy Glimmer Cape.
 If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Wraith King.
 If it goes wrong: Drow Ranger is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 
@@ -113,10 +117,11 @@ Job: Keep your carry alive in lane and place vision; save your key spell for the
 Vs Legion Commander (lane): Magic burst. buy Force Staff.
 Vs Shadow Shaman (lane, guessed): Magic burst. buy Glimmer Cape.
 Vs Drow Ranger: Locks you down. buy Force Staff.
-Vs Pudge: Starts fights and soaks your damage. buy Glimmer Cape.
+Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Crystal Maiden: Magic burst. Stay spread so one combo can't catch two.
 Watch Legion Commander, Drow Ranger: buy Force Staff.
-Watch Shadow Shaman, Pudge: buy Glimmer Cape.
+Watch Shadow Shaman: buy Glimmer Cape.
+Watch Pudge: Don't focus them: kill their damage dealers first.
 Watch Crystal Maiden: Stay spread so one combo can't catch two.
 If it goes wrong: Lane lost? Let Wraith King take every last hit. Pull the near camp and keep a ward on the rune.
 If it goes wrong: Drow Ranger is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.

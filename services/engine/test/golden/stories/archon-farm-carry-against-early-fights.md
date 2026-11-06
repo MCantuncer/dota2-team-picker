@@ -26,17 +26,16 @@ Boots: Power Treads 8 {Attack speed and a stat to switch.}
 First: Battle Fury 15/17 {Cleave for fast farm.}
 Next: Manta Style 23/24
 Late: Butterfly 31/32, Eye of Skadi 35/41 {Cuts the healing from Huskar; your hits slow.}, Abyssal Blade 38/41
-If needed: Black King Bar 36/40 [Against Troll Warlord, Dark Seer and Snapfire] instead of Eye of Skadi
+If needed: Black King Bar 36/40 [Against Dark Seer, Snapfire and Jakiro] instead of Eye of Skadi
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Battle Fury around minute 15.
 Vs Dark Seer (lane): Locks you down. buy Black King Bar.
 Vs Snapfire (lane, guessed): Magic burst. buy Black King Bar.
 Vs Troll Warlord: Evasion: right clicks miss. Fight them with spells, not right clicks.
 Vs Huskar: Heals their team through fights. Kill them first or fight short and decisive.
-Vs Jakiro: Magic burst. Stay spread so one combo can't catch two.
-Watch Dark Seer, Snapfire: buy Black King Bar.
+Vs Jakiro: Magic burst. buy Black King Bar.
+Watch Dark Seer, Snapfire, Jakiro: buy Black King Bar.
 Watch Troll Warlord: Fight them with spells, not right clicks.
 Watch Huskar: Kill them first or fight short and decisive.
-Watch Jakiro: Stay spread so one combo can't catch two.
 If it goes wrong: No Battle Fury by 17 min? Don't show on the map without it. Farm the side Dark Seer is not on.
 
 ### Pos 2 Lina
@@ -46,17 +45,16 @@ Lane: Null Talisman 3, Magic Wand 3 [Against Huskar's spells: get it early]
 Boots: Boots of Travel 15
 First: Maelstrom 16/18
 Next: Yasha and Kaya 24/31, Aghanim's Scepter 25, Shadow Blade 26/29
-Late: Black King Bar 32/36 [Against Troll Warlord, Dark Seer and Snapfire: don't skip it] {Spell immunity for the big fights. Troll Warlord's bash still goes through it.}
+Late: Black King Bar 32/36 [Against Dark Seer, Snapfire and Jakiro: don't skip it] {Spell immunity for the big fights. Troll Warlord's bash and Life Break still go through it.}
 Job: Win your lane, then use runes to help the side lanes. Your timing is Maelstrom around minute 16.
 Vs Huskar (lane): Heals their team through fights. buy Magic Wand.
 Vs Troll Warlord: Evasion: right clicks miss. Fight them with spells, not right clicks.
 Vs Dark Seer: Locks you down. buy Black King Bar.
 Vs Snapfire: Magic burst. buy Black King Bar.
-Vs Jakiro: Magic burst. Stay spread so one combo can't catch two.
+Vs Jakiro: Magic burst. buy Black King Bar.
 Watch Huskar: buy Magic Wand.
 Watch Troll Warlord: Fight them with spells, not right clicks.
-Watch Dark Seer, Snapfire: buy Black King Bar.
-Watch Jakiro: Stay spread so one combo can't catch two.
+Watch Dark Seer, Snapfire, Jakiro: buy Black King Bar.
 If it goes wrong: No Maelstrom by 18 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Centaur Warrunner
@@ -66,17 +64,16 @@ Lane: Bracer 2, Magic Wand 3
 Boots: Phase Boots 12 {Armor and a burst of speed.}
 First: Vanguard 9/11
 Next: Blink Dagger 18/22 {Start fights from 1,200 range.}, Blade Mail 19/24, Heart of Tarrasque 27/32, Pipe of Insight 28/30 {Blocks magic burst from Snapfire and Jakiro for your team.}
-If needed: Black King Bar 31 [Against Troll Warlord, Dark Seer and Snapfire] instead of Pipe of Insight, Lotus Orb 23 [Against Troll Warlord, Dark Seer and Snapfire] instead of Blade Mail
+If needed: Black King Bar 31 [Against Dark Seer, Snapfire and Jakiro] instead of Pipe of Insight, Lotus Orb 23 [Against Troll Warlord, Dark Seer and Snapfire] instead of Blade Mail
 Job: Make their carry's lane hard, then start the team's fights as Centaur Warrunner. Your timing is Blink Dagger around minute 18.
 Vs Troll Warlord (lane): Evasion: right clicks miss. Fight them with spells, not right clicks.
-Vs Jakiro (lane): Magic burst. Stay spread so one combo can't catch two.
+Vs Jakiro (lane): Magic burst. buy Black King Bar.
 Vs Huskar: Heals their team through fights. Kill them first or fight short and decisive.
 Vs Dark Seer: Locks you down. buy Black King Bar, Lotus Orb.
 Vs Snapfire: Magic burst. buy Black King Bar, Lotus Orb.
 Watch Troll Warlord: Fight them with spells, not right clicks.
-Watch Jakiro: Stay spread so one combo can't catch two.
+Watch Jakiro, Dark Seer, Snapfire: buy Black King Bar.
 Watch Huskar: Kill them first or fight short and decisive.
-Watch Dark Seer, Snapfire: buy Black King Bar.
 If it goes wrong: Lane lost? Stop contesting Troll Warlord. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 22 min? Don't start fights without it. Stay behind your cores and soak damage.
 

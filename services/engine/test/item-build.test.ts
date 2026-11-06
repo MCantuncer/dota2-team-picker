@@ -10,7 +10,7 @@ function data(): Snapshot {
   const heroes = [
     hero(1, "Wraith King", ["Carry", "Durable", "Disabler"]),
     hero(2, "Lion", ["Support", "Disabler", "Nuker"]),
-    hero(3, "Primal Beast", ["Initiator", "Disabler"]),
+    hero(3, "Earthshaker", ["Initiator", "Disabler"]),
     hero(4, "Lich", ["Support", "Nuker"]),
     hero(5, "Lifestealer", ["Carry", "Durable"]),
     hero(6, "Crystal Maiden", ["Support", "Disabler", "Nuker"]),
@@ -62,8 +62,17 @@ describe("itemBuild", () => {
   it("names the stunners BKB answers and keeps it where players buy it", () => {
     const build = itemBuild(data(), 1, 1, [2, 3, 6, 4, 5])!;
     expect(build.core.map((i) => i.name)).toEqual(["Phase Boots", "Armlet of Mordiggian", "Radiance", "Black King Bar"]);
-    expect(build.core[3]!.reason).toBe("Against Lion, Primal Beast and Crystal Maiden: don't skip it");
-    expect(build.core[3]!.against?.map((id) => data().heroes[id]?.name)).toEqual(["Lion", "Primal Beast", "Crystal Maiden"]);
+    expect(build.core[3]!.reason).toBe("Against Lion, Earthshaker and Crystal Maiden: don't skip it");
+    expect(build.core[3]!.against?.map((id) => data().heroes[id]?.name)).toEqual(["Lion", "Earthshaker", "Crystal Maiden"]);
+  });
+
+  it("doesn't count stunners whose lock goes through Black King Bar", () => {
+    const base = data();
+    const enigma = hero(33, "Enigma", ["Disabler", "Initiator", "Pusher"]);
+    const withEnigma = { ...base, heroes: { ...base.heroes, 3: { ...enigma, id: 3 } } };
+    const build = itemBuild(withEnigma, 1, 1, [2, 3, 6])!;
+    // Lion and Crystal Maiden are two stunners, under the three Black King Bar needs; Black Hole goes through it.
+    expect(build.core[3]!.reason).toBeUndefined();
   });
 
   it("never adds an item players do not buy on the hero", () => {

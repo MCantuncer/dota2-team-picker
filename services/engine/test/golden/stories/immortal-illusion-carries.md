@@ -24,17 +24,16 @@ Start: 2 Iron Branch, Tango, Quelling Blade, Magic Stick, Faerie Fire, Circlet
 Lane: Magic Wand 3, Falcon Blade 7
 Boots: Power Treads 7 {Attack speed and a stat to switch.}
 First: Manta Style 19/20
-Late: Eye of Skadi 30/31 {Cuts the healing from Treant Protector; your hits slow.}, Hurricane Pike 32/41, Butterfly 33/41, Black King Bar 35/39 [Against Naga Siren, Pangolier and Primal Beast: don't skip it] {Spell immunity for the big fights.}
+Late: Eye of Skadi 30/31 {Cuts the healing from Treant Protector; your hits slow.}, Hurricane Pike 32/41, Butterfly 33/41, Black King Bar 35/39 [Against Pangolier, Hoodwink and Treant Protector: don't skip it] {Spell immunity for the big fights. Pulverize still goes through it.}
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Manta Style around minute 19.
-Vs Primal Beast (lane): Starts fights and soaks your damage. buy Black King Bar.
-Vs Hoodwink (lane): Magic burst. Stay spread so one combo can't catch two.
+Vs Primal Beast (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Hoodwink (lane): Magic burst. buy Black King Bar.
 Vs Naga Siren: Illusions split your damage. Hit the real hero: it is the one their team protects.
 Vs Pangolier: Magic burst. buy Black King Bar.
-Vs Treant Protector: Goes invisible. Ask your support for Dust and Sentries before fights.
-Watch Primal Beast, Pangolier: buy Black King Bar.
-Watch Hoodwink: Stay spread so one combo can't catch two.
+Vs Treant Protector: Goes invisible. buy Black King Bar.
+Watch Primal Beast: Don't focus them: kill their damage dealers first.
+Watch Hoodwink, Pangolier, Treant Protector: buy Black King Bar.
 Watch Naga Siren: Hit the real hero: it is the one their team protects.
-Watch Treant Protector: Ask your support for Dust and Sentries before fights.
 If it goes wrong: No Manta Style by 20 min? Don't show on the map without it. Farm the side Primal Beast is not on.
 
 ### Pos 2 Templar Assassin
@@ -44,17 +43,16 @@ Lane: Magic Wand 3
 Boots: Power Treads 8 {Attack speed and a stat to switch.}
 First: Desolator 17/22 {-6 armor on your target.}
 Next: Blink Dagger 18/21 {Start fights from 1,200 range.}, Hurricane Pike 29/32
-Late: Black King Bar 31/36 [Against Naga Siren, Pangolier and Primal Beast: don't skip it] {Spell immunity for the big fights.}, Daedalus 32/34
+Late: Black King Bar 31/36 [Against Pangolier, Hoodwink and Treant Protector: don't skip it] {Spell immunity for the big fights. Pulverize still goes through it.}, Daedalus 32/34
 Job: Win your lane, then use runes to help the side lanes. Your timing is Desolator around minute 17.
 Vs Pangolier (lane): Magic burst. buy Black King Bar.
 Vs Naga Siren: Illusions split your damage. Hit the real hero: it is the one their team protects.
-Vs Primal Beast: Starts fights and soaks your damage. buy Black King Bar.
-Vs Hoodwink: Magic burst. Stay spread so one combo can't catch two.
-Vs Treant Protector: Goes invisible. Ask your support for Dust and Sentries before fights.
-Watch Pangolier, Primal Beast: buy Black King Bar.
+Vs Primal Beast: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Hoodwink: Magic burst. buy Black King Bar.
+Vs Treant Protector: Goes invisible. buy Black King Bar.
+Watch Pangolier, Hoodwink, Treant Protector: buy Black King Bar.
 Watch Naga Siren: Hit the real hero: it is the one their team protects.
-Watch Hoodwink: Stay spread so one combo can't catch two.
-Watch Treant Protector: Ask your support for Dust and Sentries before fights.
+Watch Primal Beast: Don't focus them: kill their damage dealers first.
 If it goes wrong: No Desolator by 22 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Mars
@@ -63,17 +61,16 @@ Start: 2 Gauntlets of Strength, 2 Iron Branch, Tango, Quelling Blade, Circlet
 Lane: Bracer 2, Magic Wand 4, Soul Ring 5
 Boots: Phase Boots 10 {Armor and a burst of speed.}
 First: Blink Dagger 15/17 {Start fights from 1,200 range.}
-Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24 {-6 armor on your target.}, Black King Bar 29/31 [Against Naga Siren, Pangolier and Primal Beast: don't skip it] {Spell immunity for the big fights.}
+Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24 {-6 armor on your target.}, Black King Bar 29/31 [Against Pangolier, Hoodwink and Treant Protector: don't skip it] {Spell immunity for the big fights. Pulverize still goes through it.}
 Job: Make their carry's lane hard, then start the team's fights as Mars. Your timing is Blink Dagger around minute 15.
 Vs Naga Siren (lane): Illusions split your damage. Hit the real hero: it is the one their team protects.
-Vs Treant Protector (lane): Goes invisible. Ask your support for Dust and Sentries before fights.
+Vs Treant Protector (lane): Goes invisible. buy Black King Bar.
 Vs Pangolier: Magic burst. buy Black King Bar.
-Vs Primal Beast: Starts fights and soaks your damage. buy Black King Bar.
-Vs Hoodwink: Magic burst. Stay spread so one combo can't catch two.
+Vs Primal Beast: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Hoodwink: Magic burst. buy Black King Bar.
 Watch Naga Siren: Hit the real hero: it is the one their team protects.
-Watch Treant Protector: Ask your support for Dust and Sentries before fights.
-Watch Pangolier, Primal Beast: buy Black King Bar.
-Watch Hoodwink: Stay spread so one combo can't catch two.
+Watch Treant Protector, Pangolier, Hoodwink: buy Black King Bar.
+Watch Primal Beast: Don't focus them: kill their damage dealers first.
 If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay behind your cores and soak damage.
 
 ### Pos 4 Tusk
@@ -81,7 +78,7 @@ Timings: around
 Start: Tango, Blood Grenade, Iron Branch, Magic Stick, Sentry Ward
 Boots: Tranquil Boots 8, or Arcane Boots 12
 First: Blink Dagger 19 {Start fights from 1,200 range.}
-Late: Eul's Scepter of Divinity 31, Black King Bar 32 {Stops disables from Pangolier, Hoodwink and Treant Protector.}, Force Staff 33 [Against Naga Siren and Pangolier: don't skip it] {Pushes you out of trouble.}, Aghanim's Scepter 34
+Late: Eul's Scepter of Divinity 31, Black King Bar 32 {Stops disables from Pangolier, Hoodwink and Treant Protector. Pulverize still goes through it.}, Force Staff 33 [Against Naga Siren and Pangolier: don't skip it] {Pushes you out of trouble.}, Aghanim's Scepter 34
 Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Blink Dagger around minute 19.
 Vs Naga Siren (lane): Illusions split your damage. buy Force Staff.
 Vs Treant Protector (lane): Goes invisible. Ask your support for Dust and Sentries before fights.

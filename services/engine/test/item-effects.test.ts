@@ -39,8 +39,21 @@ describe("itemEffect", () => {
   });
 
   it("leaves out heroes whose disable may go through Black King Bar", () => {
+    const NAGA = hero(89, "Naga Siren", ["Carry", "Support", "Pusher", "Disabler", "Initiator", "Escape"]);
+    expect(itemEffect("black_king_bar", [NAGA, LION])?.line).toBe("Stops disables from Lion.");
+  });
+
+  it("warns that Pulverize goes through, and doesn't name Primal Beast as a hero it stops", () => {
     const PB = hero(137, "Primal Beast", ["Initiator", "Durable", "Disabler"]);
-    expect(itemEffect("black_king_bar", [PB, LION])?.line).toBe("Stops disables from Lion.");
+    expect(itemEffect("black_king_bar", [PB, LION])?.line).toBe("Stops disables from Lion. Pulverize still goes through it.");
+  });
+
+  it("still names Death Prophet, whose Silence it stops, and warns that Exorcism goes through", () => {
+    const DP = hero(43, "Death Prophet", ["Carry", "Pusher", "Nuker", "Disabler"]);
+    expect(itemEffect("black_king_bar", [DP, LION])).toEqual({
+      line: "Stops disables from Death Prophet and Lion. Exorcism still goes through it.",
+      against: [43, 26],
+    });
   });
 
   it("names a list of heroes without a possessive", () => {
