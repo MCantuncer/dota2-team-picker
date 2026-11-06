@@ -11,6 +11,7 @@
 import { beatsBkb, piercingSpell } from "./bkb";
 import { buffsFrom } from "./dispel";
 import { listNames, threatsOf, type ItemBuild, type Threat } from "./item-build";
+import { dispelsEnemy } from "./item-facts";
 import type { HeroInfo, ItemInfo } from "./types";
 
 /** Enemy heroes named in one line; more would bury it. */
@@ -38,7 +39,7 @@ const EFFECTS: Record<string, Effect> = {
   silver_edge: { answers: { threat: "passives", line: (n) => `Breaks passives on ${n}.` }, plain: "Invisibility to start fights." },
   spirit_vessel: { answers: { threat: "heal", line: (n) => `Cuts the healing from ${n}.` }, plain: "Cuts healing in fights." },
   skadi: { answers: { threat: "heal", line: (n) => `Cuts the healing from ${n}; your hits slow.` }, plain: "Health and a slow on every hit." },
-  nullifier: { answers: { threat: "unattackable", line: (n) => `Dispels ${n}.` }, plain: "Dispels buffs on your target and slows it." },
+  nullifier: { plain: "Dispels buffs on your target and slows it." },
   mjollnir: { answers: { threat: "illusions", line: (n) => `Chain lightning clears illusions from ${n}.` }, plain: "Attack speed and chain lightning." },
   bfury: { answers: { threat: "illusions", line: (n) => `Cleave hits illusions from ${n}.` }, plain: "Cleave for fast farm." },
   crimson_guard: { answers: { threat: "physicalCarry", line: (n) => `Blocks hits from ${n} for your team.` }, plain: "Blocks hits for your team." },
@@ -62,6 +63,9 @@ const EFFECTS: Record<string, Effect> = {
  * With `name` false the line names no heroes, but still warns of disables that go through Black King Bar.
  */
 export function itemEffect(key: string, enemies: HeroInfo[], name = true): { line: string; against: number[] } | null {
+  // Any item that dispels an enemy you can still hit names the buffs it removes: "Dispels Decrepify from Pugna."
+  const buffed = name && dispelsEnemy(key) ? enemies.filter((h) => threatsOf(h).has("unattackable")).slice(0, MAX_NAMES) : [];
+  if (buffed.length) return { line: `Dispels ${listNames(buffsFrom(buffed, "unattackable"))}.`, against: buffed.map((h) => h.id) };
   const effect = EFFECTS[key];
   if (!effect) return null;
   const bkb = key === "black_king_bar";
@@ -69,8 +73,6 @@ export function itemEffect(key: string, enemies: HeroInfo[], name = true): { lin
   const named = (h: HeroInfo) => !bkb || !beatsBkb(h);
   const hit = answers && name ? enemies.filter((h) => threatsOf(h).has(answers.threat) && named(h)).slice(0, MAX_NAMES) : [];
   let line = answers && hit.length ? answers.line(listNames(hit.map((h) => h.name))) : effect.plain;
-  // A dispel names the buff it removes from each hero: "Dispels Decrepify from Pugna."
-  if (answers?.threat === "unattackable" && hit.length) line = answers.line(listNames(buffsFrom(hit, "unattackable")));
   if (bkb) {
     const pierce = enemies.flatMap((h) => piercingSpell(h) ?? []);
     if (pierce.length) line += ` ${listNames(pierce)} still ${pierce.length > 1 ? "go" : "goes"} through it.`;
