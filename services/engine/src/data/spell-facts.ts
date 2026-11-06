@@ -1,12 +1,13 @@
 /**
  * Facts about every hero's spells from OpenDota's game constants: whether a dispel removes the spell's
- * effect, and whether it goes through Black King Bar. The engine reads them (src/engine/spell-facts.ts) so
+ * effect, whether it goes through Black King Bar, which team the cast targets, and whether an upgrade
+ * makes it undispellable. The engine reads them (src/engine/spell-facts.ts) so
  * an answer item is chosen from what a spell does, not from a hand-typed list of hero names.
  *
  * The constants come from the game files and change with each patch, so the facts are written to a
  * committed file (scripts/spell-facts.ts) and the diff is reviewed in a pull request.
  */
-import type { RemovedBy, SpellFact, SpellFacts } from "../engine/spell-facts";
+import type { RemovedBy, SpellFact, SpellFacts, Target } from "../engine/spell-facts";
 import { getOpenDota } from "./opendota";
 
 /** The parts of OpenDota's constants/abilities rows that the facts use. */
@@ -14,12 +15,29 @@ interface RawAbility {
   dname?: unknown;
   dispellable?: unknown;
   bkbpierce?: unknown;
+  target_team?: unknown;
+  attrib?: unknown;
 }
 
 const REMOVED_BY: Record<string, RemovedBy> = { Yes: "basic", "Strong Dispels Only": "strong", No: "none" };
 const PIERCES: Record<string, boolean> = { Yes: true, No: false };
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+
+/** OpenDota's target_team: a string, a list of strings, or empty. */
+function toTarget(team: unknown): Target | undefined {
+  const teams = new Set(Array.isArray(team) ? team : [team]);
+  const enemy = teams.has("Enemy") || teams.has("Both");
+  const friendly = teams.has("Friendly") || teams.has("Both");
+  return enemy && friendly ? "both" : enemy ? "enemies" : friendly ? "allies" : undefined;
+}
+
+/** Attribute keys that mean a talent, facet or shard makes the spell's effect undispellable. */
+const UNDISPELLABLE_KEYS = new Set(["cannot_be_dispelled", "undispellable"]);
+
+function hasUndispellableUpgrade(attrib: unknown): boolean {
+  return Array.isArray(attrib) && attrib.some((a) => isRecord(a) && typeof a.key === "string" && UNDISPELLABLE_KEYS.has(a.key));
+}
 
 /** Ability names in a hero's list, which OpenDota sometimes nests one level (alternate forms). */
 function abilityKeys(list: unknown): string[] {
@@ -45,11 +63,21 @@ export function toSpellFacts(abilities: unknown, heroAbilities: unknown, heroes:
     const spells = abilityKeys(entry.abilities).flatMap((key): SpellFact[] => {
       const raw = abilities[key];
       if (!isRecord(raw)) return [];
-      const { dname, dispellable, bkbpierce } = raw as RawAbility;
+      const { dname, dispellable, bkbpierce, target_team, attrib } = raw as RawAbility;
       if (typeof dname !== "string" || !dname) return [];
       const removedBy = typeof dispellable === "string" ? REMOVED_BY[dispellable] : undefined;
       const piercesBkb = typeof bkbpierce === "string" ? PIERCES[bkbpierce] : undefined;
-      return [{ key, name: dname, ...(removedBy ? { removedBy } : {}), ...(piercesBkb !== undefined ? { piercesBkb } : {}) }];
+      const target = toTarget(target_team);
+      return [
+        {
+          key,
+          name: dname,
+          ...(removedBy ? { removedBy } : {}),
+          ...(piercesBkb !== undefined ? { piercesBkb } : {}),
+          ...(target ? { target } : {}),
+          ...(removedBy && removedBy !== "none" && hasUndispellableUpgrade(attrib) ? { unlessUpgraded: true } : {}),
+        },
+      ];
     });
     if (spells.length) facts[hero] = spells;
   }

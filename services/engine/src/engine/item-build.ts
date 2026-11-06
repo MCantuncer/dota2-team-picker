@@ -1,4 +1,5 @@
 import { beatsBkb } from "./bkb";
+import { buffsFrom, dispellableBuffs } from "./dispel";
 import { chooseTimingSlice, finishedItems } from "./item-timing-slice";
 import type { HeroInfo, ItemInfo, ItemPhases, Position, RankBracket, Snapshot } from "./types";
 
@@ -20,10 +21,10 @@ export type Threat =
   | "invisible"
   | "passives"
   | "physicalCarry"
-  | "buffs";
+  | "unattackable";
 
 /** Threats OpenDota roles cannot see, by hero display name. */
-const THREAT_HEROES: Record<Exclude<Threat, "disable" | "magicBurst" | "physicalCarry">, string[]> = {
+const THREAT_HEROES: Record<Exclude<Threat, "disable" | "magicBurst" | "physicalCarry" | "unattackable">, string[]> = {
   heal: [
     "Lifestealer", "Necrophos", "Huskar", "Alchemist", "Omniknight", "Oracle", "Dazzle", "Warlock",
     "Chen", "Witch Doctor", "Morphling", "Abaddon", "Wraith King", "Undying", "Treant Protector", "Bristleback",
@@ -42,18 +43,21 @@ const THREAT_HEROES: Record<Exclude<Threat, "disable" | "magicBurst" | "physical
     "Lifestealer", "Phantom Assassin", "Bristleback", "Spectre", "Slardar", "Huskar", "Faceless Void",
     "Troll Warlord", "Templar Assassin", "Tiny", "Sniper", "Ursa", "Medusa", "Necrophos", "Timbersaw",
   ],
-  buffs: ["Omniknight", "Oracle", "Dazzle", "Ogre Magi", "Templar Assassin", "Abaddon", "Wraith King"],
 };
 
 /** Carries whose damage is mostly spells, so supports need no armour or Ghost Scepter against them. */
 const MAGIC_CORES = new Set(["Storm Spirit", "Zeus", "Leshrac", "Tinker", "Lina", "Outworld Devourer", "Death Prophet"]);
 
-/** The threats each enemy hero brings. Disables and magic burst come from OpenDota roles. */
+/**
+ * The threats each enemy hero brings. Disables and magic burst come from OpenDota roles, buffs that stop
+ * attacks from the spell facts (dispel.ts), the rest from THREAT_HEROES.
+ */
 export function threatsOf(hero: HeroInfo): Set<Threat> {
   const t = new Set<Threat>();
   if (hero.roles.includes("Disabler")) t.add("disable");
   if (hero.roles.includes("Nuker")) t.add("magicBurst");
   if (hero.roles.includes("Carry") && !MAGIC_CORES.has(hero.name)) t.add("physicalCarry");
+  if (dispellableBuffs(hero, "unattackable").length) t.add("unattackable");
   // Object.entries loses the key type; the keys are THREAT_HEROES keys, all Threats.
   for (const [threat, names] of Object.entries(THREAT_HEROES)) if (names.includes(hero.name)) t.add(threat as Threat);
   return t;
@@ -70,6 +74,8 @@ interface CounterItem {
   buyer: Buyer;
   /** Enemies the item does nothing against even though they bring the threat, like Enigma for Black King Bar. */
   skips?: (hero: HeroInfo) => boolean;
+  /** The reason naming what the item does to the named enemies, instead of "Against Pugna". */
+  reason?: (named: HeroInfo[]) => string;
 }
 
 /** Items that answer threats, best answer first within each threat. Matched by OpenDota item key. */
@@ -79,7 +85,7 @@ export const COUNTER_ITEMS: readonly CounterItem[] = [
   { key: "silver_edge", answers: ["passives"], minEnemies: 1, buyer: "core" },
   { key: "spirit_vessel", answers: ["heal"], minEnemies: 2, buyer: "any" },
   { key: "skadi", answers: ["heal"], minEnemies: 2, buyer: "core" },
-  { key: "nullifier", answers: ["buffs"], minEnemies: 1, buyer: "core" },
+  { key: "nullifier", answers: ["unattackable"], minEnemies: 1, buyer: "core", reason: (named) => `Removes ${listNames(buffsFrom(named, "unattackable"))}, which stop your attacks` },
   { key: "mjollnir", answers: ["illusions"], minEnemies: 1, buyer: "core" },
   { key: "bfury", answers: ["illusions"], minEnemies: 1, buyer: "core" },
   { key: "crimson_guard", answers: ["illusions", "physicalCarry"], minEnemies: 2, buyer: "core" },
@@ -277,7 +283,7 @@ export function itemBuild(
     const answered = enemyHeroes.filter((h) => matches(h) > 0 && !rule.skips?.(h)).sort((a, b) => matches(b) - matches(a));
     if (answered.length < rule.minEnemies) continue;
     const named = answered.slice(0, REASON_NAMES);
-    const reason = `Against ${listNames(named.map((h) => h.name))}`;
+    const reason = rule.reason?.(named) ?? `Against ${listNames(named.map((h) => h.name))}`;
     const against = named.map((h) => h.id);
     const inCore = core.findIndex((c) => c.itemId === Number(id));
     if (inCore >= 0) {
