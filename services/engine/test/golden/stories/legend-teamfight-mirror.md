@@ -66,7 +66,7 @@ Start: Gauntlets of Strength, 2 Iron Branch, 2 Tango [Hard lane against Phantom 
 Lane: Bracer 2, Magic Wand 4, Infused Raindrops 4 [Against Lich's magic burst], Soul Ring 5
 Boots: Phase Boots 10 {Armor and a burst of speed.}
 First: Blink Dagger 15/17 {Start fights from 1,200 range.}
-Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24 {-6 armor on your target.}, Black King Bar 29/31 {Stops disables from Witch Doctor. Berserker's Call still goes through it.}
+Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24 {-6 armor on your target.}, Black King Bar 29/31 {Stops disables from Witch Doctor. Berserker's Call and Death Ward still go through it.}
 Job: Make their carry's lane hard, then start the team's fights as Mars. Your timing is Blink Dagger around minute 15.
 Vs Phantom Assassin (lane): Evasion: right clicks miss. Fight them with spells, not right clicks.
 Vs Lich (lane, guessed): Magic burst. buy Infused Raindrops.
@@ -94,9 +94,10 @@ Vs Phantom Assassin (lane): Evasion: right clicks miss. buy Force Staff.
 Vs Lich (lane, guessed): Magic burst. buy Infused Raindrops, Glimmer Cape.
 Vs Shadow Fiend: Magic burst. buy Glimmer Cape, Force Staff.
 Vs Axe: Starts fights and soaks your damage. buy Force Staff.
-Vs Witch Doctor: Heals their team through fights. buy Glimmer Cape.
-Watch Phantom Assassin, Axe: buy Force Staff.
-Watch Lich, Shadow Fiend, Witch Doctor: buy Glimmer Cape.
+Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
+Watch Phantom Assassin, Shadow Fiend, Axe: buy Force Staff.
+Watch Lich: buy Glimmer Cape.
+Watch Witch Doctor: Kill them first or fight short and decisive.
 If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Juggernaut.
 If it goes wrong: Phantom Assassin is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 
@@ -107,13 +108,14 @@ Lane: Magic Wand 3 [Against Witch Doctor's spells: get it early]
 Boots: Tranquil Boots 8
 First: Blink Dagger 23/26 {Start fights from 1,200 range.}
 Next: Glimmer Cape 24/31 [Against Shadow Fiend, Witch Doctor and Lich: don't skip it] {Invisibility and a magic damage barrier.}, Force Staff 25/31 [Against Phantom Assassin, Shadow Fiend and Axe: don't skip it] {Pushes you out of trouble.}
-Late: Black King Bar 35/42 {Stops disables from Witch Doctor. Berserker's Call still goes through it.}, Aghanim's Scepter 37/42
+Late: Black King Bar 35/42 {Stops disables from Witch Doctor. Berserker's Call and Death Ward still go through it.}, Aghanim's Scepter 37/42
 Job: Keep your carry alive in lane and place vision; save your key spell for their dive. Your timing is Blink Dagger around minute 23.
 Vs Axe (lane): Starts fights and soaks your damage. buy Force Staff.
-Vs Witch Doctor (lane, guessed): Heals their team through fights. buy Magic Wand, Glimmer Cape.
+Vs Witch Doctor (lane, guessed): Heals their team through fights. buy Magic Wand.
 Vs Phantom Assassin: Evasion: right clicks miss. buy Force Staff.
 Vs Shadow Fiend: Magic burst. buy Glimmer Cape, Force Staff.
 Vs Lich: Magic burst. buy Glimmer Cape.
-Watch Axe, Phantom Assassin: buy Force Staff.
-Watch Witch Doctor, Shadow Fiend, Lich: buy Glimmer Cape.
+Watch Axe, Phantom Assassin, Shadow Fiend: buy Force Staff.
+Watch Witch Doctor: buy Magic Wand.
+Watch Lich: buy Glimmer Cape.
 If it goes wrong: Phantom Assassin is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.

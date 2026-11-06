@@ -50,6 +50,24 @@ describe("enemyList", () => {
     expect(enemyList(items, [{ hero: drow, inLane: false, laneSure: true }])[0]?.answers).toEqual([112]);
   });
 
+  it("never pairs Black King Bar with a spell that goes through it", () => {
+    const dp = hero(43, "Death Prophet", ["Carry", "Pusher", "Nuker", "Disabler"]);
+    const enigma = hero(33, "Enigma", ["Disabler", "Initiator", "Pusher"]);
+    const lion = hero(26, "Lion", ["Support", "Disabler", "Nuker"]);
+    const items: ItemBuild = {
+      ...build(),
+      core: [
+        { itemId: 116, name: "Black King Bar", img: "/apps/dota2/images/dota_react/items/black_king_bar.png", minute: 25, phase: "late", draft: true, against: [43, 33, 26] },
+      ],
+    };
+    const notes = enemyList(items, [dp, enigma, lion].map((h) => ({ hero: h, inLane: false, laneSure: true })));
+    expect(notes.map((n) => [n.heroId, n.answers])).toEqual([
+      [43, []],
+      [33, []],
+      [26, [116]],
+    ]);
+  });
+
   it("names the items that answer a hero, and a tip when none does", () => {
     const pa = list().find((e) => e.heroId === 44)!;
     expect(pa).toMatchObject({ threat: "Evasion: right clicks miss", answers: [145] });

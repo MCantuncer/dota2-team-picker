@@ -8,6 +8,7 @@
  * An item with no enemy it works on gets its plain effect, so the step still says why it is there.
  * Items missing from the table get no line.
  */
+import { beatsBkb, piercingSpell } from "./bkb";
 import { listNames, threatsOf, type ItemBuild, type Threat } from "./item-build";
 import type { HeroInfo, ItemInfo } from "./types";
 
@@ -20,26 +21,6 @@ interface Effect {
   /** The line when no enemy brings that threat, or for an item that answers none. */
   plain: string;
 }
-
-/**
- * Disables that go through Black King Bar, by hero, so it never reads as the answer to them. Kept to the
- * certain ones; a wrong "it still goes through" is worse than none.
- */
-const PIERCING_DISABLES: Record<string, string> = {
-  Enigma: "Black Hole",
-  "Faceless Void": "Chronosphere",
-  "Legion Commander": "Duel",
-  Doom: "Doom",
-  Axe: "Berserker's Call",
-  Bane: "Fiend's Grip",
-  "Troll Warlord": "Troll Warlord's bash",
-};
-
-/**
- * Heroes whose main disable may go through Black King Bar in this patch, but not surely enough to say so.
- * Black King Bar doesn't name them as heroes it stops, and doesn't warn about them either.
- */
-const UNSURE_VS_BKB = new Set(["Primal Beast", "Naga Siren", "Magnus"]);
 
 /**
  * By OpenDota item key. Lines name the heroes after a preposition, never with a possessive, so a list of
@@ -84,11 +65,11 @@ export function itemEffect(key: string, enemies: HeroInfo[], name = true): { lin
   if (!effect) return null;
   const bkb = key === "black_king_bar";
   const answers = effect.answers;
-  const named = (h: HeroInfo) => !bkb || (!PIERCING_DISABLES[h.name] && !UNSURE_VS_BKB.has(h.name));
+  const named = (h: HeroInfo) => !bkb || !beatsBkb(h);
   const hit = answers && name ? enemies.filter((h) => threatsOf(h).has(answers.threat) && named(h)).slice(0, MAX_NAMES) : [];
   let line = answers && hit.length ? answers.line(listNames(hit.map((h) => h.name))) : effect.plain;
   if (bkb) {
-    const pierce = enemies.flatMap((h) => PIERCING_DISABLES[h.name] ?? []);
+    const pierce = enemies.flatMap((h) => piercingSpell(h) ?? []);
     if (pierce.length) line += ` ${listNames(pierce)} still ${pierce.length > 1 ? "go" : "goes"} through it.`;
   }
   return { line, against: hit.map((h) => h.id) };

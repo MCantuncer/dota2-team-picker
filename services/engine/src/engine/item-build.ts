@@ -1,3 +1,4 @@
+import { beatsBkb } from "./bkb";
 import { chooseTimingSlice, finishedItems } from "./item-timing-slice";
 import type { HeroInfo, ItemInfo, ItemPhases, Position, RankBracket, Snapshot } from "./types";
 
@@ -67,11 +68,13 @@ interface CounterItem {
   /** Enemy heroes with one of `answers` needed before the item is worth suggesting. */
   minEnemies: number;
   buyer: Buyer;
+  /** Enemies the item does nothing against even though they bring the threat, like Enigma for Black King Bar. */
+  skips?: (hero: HeroInfo) => boolean;
 }
 
 /** Items that answer threats, best answer first within each threat. Matched by OpenDota item key. */
 export const COUNTER_ITEMS: readonly CounterItem[] = [
-  { key: "black_king_bar", answers: ["disable"], minEnemies: 3, buyer: "core" },
+  { key: "black_king_bar", answers: ["disable"], minEnemies: 3, buyer: "core", skips: beatsBkb },
   { key: "monkey_king_bar", answers: ["evasion"], minEnemies: 1, buyer: "core" },
   { key: "silver_edge", answers: ["passives"], minEnemies: 1, buyer: "core" },
   { key: "spirit_vessel", answers: ["heal"], minEnemies: 2, buyer: "any" },
@@ -271,7 +274,7 @@ export function itemBuild(
     const id = idByKey.get(rule.key);
     if (!id || !popular(id)) continue;
     const matches = (h: HeroInfo) => rule.answers.filter((t) => threatsOf(h).has(t)).length;
-    const answered = enemyHeroes.filter((h) => matches(h) > 0).sort((a, b) => matches(b) - matches(a));
+    const answered = enemyHeroes.filter((h) => matches(h) > 0 && !rule.skips?.(h)).sort((a, b) => matches(b) - matches(a));
     if (answered.length < rule.minEnemies) continue;
     const named = answered.slice(0, REASON_NAMES);
     const reason = `Against ${listNames(named.map((h) => h.name))}`;

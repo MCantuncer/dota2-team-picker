@@ -28,6 +28,8 @@ const ATTACK = new Set([
   "night_stalker_darkness", "phantom_assassin_coup_de_grace", "phantom_lancer_juxtapose", "riki_backstab",
   "sven_gods_strength", "templar_assassin_refraction", "troll_warlord_battle_trance", "tusk_walrus_punch",
   "ursa_fury_swipes",
+  // Physical damage that goes through Black King Bar: armor and Ghost Scepter answer it, spell immunity does not.
+  "death_prophet_exorcism", "witch_doctor_death_ward",
 ]);
 
 /** Spells neither Black King Bar nor armor answers: lives, saves, global presence, and disables that go
@@ -35,12 +37,49 @@ const ATTACK = new Set([
 const OTHER = new Set([
   "enigma_black_hole", "faceless_void_chronosphere", "magnataur_reverse_polarity", "bane_fiends_grip",
   "doom_bringer_doom", "beastmaster_primal_roar", "axe_berserkers_call",
+  "ancient_apparition_ice_blast", "batrider_flaming_lasso", "bloodseeker_rupture", "bounty_hunter_track",
+  "huskar_life_break", "phoenix_supernova", "primal_beast_pulverize", "pudge_meat_hook", "queenofpain_sonic_wave",
+  "razor_static_link", "silencer_global_silence", "vengefulspirit_nether_swap", "viper_viper_strike",
+  "winter_wyvern_winters_curse",
   "abaddon_borrowed_time", "arc_warden_tempest_double", "bristleback_bristleback", "broodmother_spawn_spiderlings",
   "chen_hand_of_god", "dazzle_shallow_grave", "furion_teleportation", "mirana_invis", "nyx_assassin_vendetta",
   "oracle_false_promise", "slark_dark_pact", "spectre_haunt", "tinker_rearm", "weaver_time_lapse",
   "skeleton_king_reincarnation", "wisp_relocate", "abyssal_underlord_dark_portal", "omniknight_guardian_angel",
   "shadow_demon_disruption", "largo_amphibian_rhapsody", "techies_land_mines",
 ]);
+
+/**
+ * Key spells that go through Black King Bar, so it is never named as their answer and its line warns about
+ * them: "lock" when the spell holds you in place (Black Hole, Duel), "damage" when it only hurts (Exorcism,
+ * Rupture). Kept by hand and checked against the game facts: OpenDota's flag also says yes for saves cast
+ * on spell-immune allies (Shallow Grave) and passives (Fury Swipes), which are not what this list means.
+ */
+export const PIERCES_BKB: Readonly<Record<string, "lock" | "damage">> = {
+  enigma_black_hole: "lock",
+  faceless_void_chronosphere: "lock",
+  magnataur_reverse_polarity: "lock",
+  bane_fiends_grip: "lock",
+  doom_bringer_doom: "lock",
+  beastmaster_primal_roar: "lock",
+  axe_berserkers_call: "lock",
+  legion_commander_duel: "lock",
+  batrider_flaming_lasso: "lock",
+  primal_beast_pulverize: "lock",
+  pudge_meat_hook: "lock",
+  vengefulspirit_nether_swap: "lock",
+  winter_wyvern_winters_curse: "lock",
+  phoenix_supernova: "lock",
+  silencer_global_silence: "lock",
+  viper_viper_strike: "lock",
+  juggernaut_omni_slash: "damage",
+  death_prophet_exorcism: "damage",
+  witch_doctor_death_ward: "damage",
+  ancient_apparition_ice_blast: "damage",
+  bloodseeker_rupture: "damage",
+  huskar_life_break: "damage",
+  queenofpain_sonic_wave: "damage",
+  razor_static_link: "damage",
+};
 
 const spell = (key: string, name: string, line: string): KeySpell => ({
   key,
