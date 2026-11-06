@@ -208,13 +208,18 @@ export class Engine {
   ): number {
     // Against each other, each hero's win rate leaves out the games between them, so the matchup
     // itself does not move the number it is compared with.
-    const other = (id: number) => (sign === -1 ? (id === a ? b : a) : undefined);
-    const wr = (id: number) => this.sampleWinRate(id, other(id), 0, 0.5);
-    const expected = 0.5 + (wr(a) - 0.5) + sign * (wr(b) - 0.5);
+    // Plain locals, not small helper functions: this runs for every pair of heroes in every
+    // suggestion, and closures here made the backtest about 3 times slower under tsx.
+    const withoutA = sign === -1 ? b : undefined;
+    const withoutB = sign === -1 ? a : undefined;
+    const wrA = this.sampleWinRate(a, withoutA, 0, 0.5);
+    const wrB = this.sampleWinRate(b, withoutB, 0, 0.5);
+    const expected = 0.5 + (wrA - 0.5) + sign * (wrB - 0.5);
     const edge = shrink(all, expected, PRIOR_GAMES.matchup) - expected;
     if (!group) return edge * 100;
-    const gwr = (id: number) => this.sampleWinRate(id, other(id), group, wr(id));
-    const groupExpected = 0.5 + (gwr(a) - 0.5) + sign * (gwr(b) - 0.5);
+    const groupA = this.sampleWinRate(a, withoutA, group, wrA);
+    const groupB = this.sampleWinRate(b, withoutB, group, wrB);
+    const groupExpected = 0.5 + (groupA - 0.5) + sign * (groupB - 0.5);
     return (shrink(inGroup, groupExpected + edge, PRIOR_GAMES.rankMatchup) - groupExpected) * 100;
   }
 
