@@ -15,7 +15,7 @@ export interface DeathLogEntry {
 /** Percentiles (0 to 1) for the benchmarks beyond the four every parsed match has. */
 export interface OtherBenchmarks {
   killsPerMin: number | null;
-  /** A high percentile means many deaths: lower is better. */
+  /** OpenDota flips this one: a high percentile means fewer deaths than most games. */
   deathsPerMin: number | null;
   assistsPerMin: number | null;
   deniesPerMin: number | null;

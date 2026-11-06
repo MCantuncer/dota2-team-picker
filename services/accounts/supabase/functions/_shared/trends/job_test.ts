@@ -3,7 +3,7 @@ import type { HeroBenchmarks } from "./benchmarks.ts";
 import type { CountedDraftGame } from "./drafts.ts";
 import type { CountedStratzGame } from "./stratz.ts";
 import type { FactItem, FactRow } from "../feedback/fact.ts";
-import { summarizeGame } from "../feedback/summary.ts";
+import { type GameSummary, summarizeGame } from "../feedback/summary.ts";
 import {
   type FactsDeps,
   MAX_FACT_CALLS,
@@ -15,7 +15,7 @@ import {
 } from "./job.ts";
 
 const NOW_S = 1_800_000_000;
-const NO_FACTS = { facts: 0, feedback: 0, factCalls: 0, factsStopped: null };
+const NO_FACTS = { facts: 0, feedback: 0, refound: 0, factCalls: 0, factsStopped: null };
 const HOUR_S = 3600;
 const MONKEY_KING = 114;
 
@@ -349,6 +349,8 @@ function factsStub(items: FactItem[], over: Partial<FactsDeps> = {}) {
       saved.push(row);
       return Promise.resolve();
     },
+    staleFindings: () => Promise.resolve([]),
+    saveFindings: () => Promise.resolve(),
     now: () => new Date(NOW_S * 1000),
     ...over,
   };
@@ -411,4 +413,26 @@ Deno.test("feedback is worked out again once for each player with a new summary"
   assertEquals([result.facts, result.feedback], [3, 1]);
   assertEquals(f.order, ["purge", "feedback u1", "feedback u2"]);
   assertEquals(s.logged, ["Feedback for u2 failed"]);
+});
+
+Deno.test("findings saved under older rules are worked out again, and that player's feedback too", async () => {
+  const summary = { matchId: 7 } as unknown as GameSummary;
+  const refound: string[] = [];
+  const f = factsStub([], {
+    dueRows: () => Promise.resolve([]),
+    newGames: () => Promise.resolve([]),
+    staleFindings: () =>
+      Promise.resolve([{ user_id: "u1", match_id: 7, summary }, { user_id: "u2", match_id: 8, summary }]),
+    findingsOf: () => [],
+    saveFindings: (row) => {
+      refound.push(`${row.user_id}:${row.match_id}`);
+      return row.user_id === "u2" ? Promise.reject(new Error("db")) : Promise.resolve();
+    },
+  });
+  const s = stub([], { facts: f.facts });
+  const result = await runTrends(s.deps);
+  assertEquals(refound, ["u1:7", "u2:8"]);
+  assertEquals([result.refound, result.feedback, result.factCalls], [1, 1, 0], "no OpenDota calls");
+  assertEquals(f.order, ["purge", "feedback u1"]);
+  assertEquals(s.logged, ["Findings for game 8 of u2 failed"]);
 });

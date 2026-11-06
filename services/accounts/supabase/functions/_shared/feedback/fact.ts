@@ -16,7 +16,7 @@
 import { MAX_ERRORS, MAX_PARSE_REQUESTS, PARSE_WAIT_MS, retryGapMs } from "../report/build.ts";
 import { type Match, readOpenDotaMatch } from "../report/match.ts";
 import type { Position } from "../trends/games.ts";
-import type { Finding } from "./findings.ts";
+import { type Finding, FINDINGS_VERSION } from "./findings.ts";
 import { type GameSummary, SUMMARY_VERSION } from "./summary.ts";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -71,6 +71,8 @@ export interface FactRow {
   next_try_at: string;
   /** This game's strengths and problems; left out after a failed try, so the saved ones stay. */
   findings?: Finding[];
+  /** The FINDINGS_VERSION that wrote `findings`, set together with them. */
+  findings_version?: number;
 }
 
 export interface FactDeps {
@@ -109,6 +111,7 @@ export async function buildFact(item: FactItem, deps: FactDeps, isStop: IsStop):
       summary,
       summary_version: SUMMARY_VERSION,
       findings: deps.findingsOf(summary),
+      findings_version: FINDINGS_VERSION,
       parse_requests: item.parse_requests,
       parse_requested_at: item.parse_requested_at,
       attempts: 0,

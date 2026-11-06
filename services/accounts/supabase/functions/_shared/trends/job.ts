@@ -93,6 +93,12 @@ export interface TrendDeps {
   facts?: FactsDeps;
 }
 
+export interface StaleFindings {
+  user_id: string;
+  match_id: number;
+  summary: GameSummary;
+}
+
 export interface FactsDeps {
   /** Removes rows older than KEEP_DAYS. */
   purge: () => Promise<void>;
@@ -106,6 +112,10 @@ export interface FactsDeps {
   findingsOf: (summary: GameSummary) => Finding[];
   /** Upserts the row on (user_id, match_id). */
   save: (row: FactRow) => Promise<void>;
+  /** Saved rows whose findings an older FINDINGS_VERSION wrote, with the summary to work them out from. */
+  staleFindings: () => Promise<StaleFindings[]>;
+  /** Saves findings worked out again, with the current FINDINGS_VERSION. */
+  saveFindings: (row: StaleFindings, findings: Finding[]) => Promise<void>;
   /** Works out and saves the player's feedback over their recent games again (no OpenDota calls). */
   refreshFeedback: (userId: string) => Promise<void>;
   now: () => Date;
@@ -120,6 +130,8 @@ export interface TrendRunResult {
   stopped: StopReason | null;
   /** Game feedback rows saved, and the calls they used (also counted in `calls`). */
   facts: number;
+  /** Saved games whose findings were worked out again under the current rules. */
+  refound: number;
   /** Players whose feedback was worked out again. */
   feedback: number;
   factCalls: number;
@@ -143,6 +155,7 @@ export async function runTrends(deps: TrendDeps, maxCalls = MAX_RUN_CALLS): Prom
     stopped: null,
     facts: 0,
     feedback: 0,
+    refound: 0,
     factCalls: 0,
     factsStopped: null,
   };
@@ -192,6 +205,20 @@ async function runFacts(facts: FactsDeps, deps: TrendDeps, result: TrendRunResul
     result.calls += n;
   };
   const changed = new Set<string>();
+  // Findings a fixed rule would now say differently: no OpenDota calls, so before the budget.
+  try {
+    for (const row of await facts.staleFindings()) {
+      try {
+        await facts.saveFindings(row, facts.findingsOf(row.summary));
+        result.refound++;
+        changed.add(row.user_id);
+      } catch (err) {
+        deps.log(`Findings for game ${row.match_id} of ${row.user_id} failed`, err);
+      }
+    }
+  } catch (err) {
+    deps.log("Reading old findings failed", err);
+  }
   try {
     await facts.purge();
     const items = [...await facts.dueRows(), ...await facts.newGames()];

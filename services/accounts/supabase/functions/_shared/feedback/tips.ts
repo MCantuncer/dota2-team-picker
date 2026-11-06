@@ -7,7 +7,10 @@
 export type FindingKind = "early_deaths" | "deaths" | "laning" | "farm" | "damage" | "healing" | "towers";
 export type Role = "core" | "support";
 
-/** {killer} is a hero name, {minute} a game minute, {value} a number from the player's games. */
+/**
+ * {killer} is a hero name, {minute} a game minute, {value} a number from the player's games,
+ * {deaths} how often they died ("6 times in this game", "about 4 times per game").
+ */
 export const TIPS: Record<FindingKind, Record<Role, string>> = {
   early_deaths: {
     core: "Most early deaths came from {killer}. Before minute {minute}, keep a Town Portal Scroll, stand behind " +
@@ -16,9 +19,9 @@ export const TIPS: Record<FindingKind, Record<Role, string>> = {
       "and pull or stack from the side your carry stands on, not alone.",
   },
   deaths: {
-    core: "You died about {value} times per game. Check the minimap before farming a lane past the river, and " +
+    core: "You died {deaths}. Check the minimap before farming a lane past the river, and " +
       "buy a defensive item before your next damage item when you die twice in a row.",
-    support: "You died about {value} times per game. Ward in pairs with a teammate, and move to the next ward spot " +
+    support: "You died {deaths}. Ward in pairs with a teammate, and move to the next ward spot " +
       "through your own jungle, not the river.",
   },
   laning: {

@@ -20,7 +20,7 @@ export interface Percentiles {
   lastHitsPerMin: number;
   heroDamagePerMin: number;
   killsPerMin: number | null;
-  /** Lower is better: a high percentile means more deaths than most. */
+  /** OpenDota flips this one: a high percentile means fewer deaths than most games. */
   deathsPerMin: number | null;
   assistsPerMin: number | null;
   deniesPerMin: number | null;
