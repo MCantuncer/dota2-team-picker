@@ -25,9 +25,9 @@ const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFin
 const one = (v: unknown): Obj | null => (Array.isArray(v) ? (isObj(v[0]) ? v[0] : null) : isObj(v) ? v : null);
 
 /** Reads the rows into counted draft games inside the window. Odd rows are skipped. */
-export function readDraftGames(rows: unknown, nowS: number): CountedDraftGame[] {
+export function readDraftGames(rows: unknown, nowS: number, windowDays = TREND_WINDOW_DAYS): CountedDraftGame[] {
   if (!Array.isArray(rows)) return [];
-  const since = nowS - TREND_WINDOW_DAYS * DAY_S;
+  const since = nowS - windowDays * DAY_S;
   return rows.flatMap((row): CountedDraftGame[] => {
     if (!isObj(row) || !isNum(row.hero_id) || row.hero_id <= 0 || !isNum(row.position)) return [];
     if (row.position < 1 || row.position > 5) return [];

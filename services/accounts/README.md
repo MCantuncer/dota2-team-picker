@@ -92,6 +92,13 @@ hero entered for the team played on one side of that match. It saves `match_id` 
 draft, asks OpenDota to parse the replay (replays expire after one to two weeks), and looks at most
 once every 20 seconds per draft. Returns `{matchId, won}`, or `{matchId: null}` when nothing was found yet.
 
+**`fill-heroes`** (admins only, a dry run for now): `supabase.functions.invoke("fill-heroes",
+{body: {dry_run: true, user_id?}})` reads a player's last 6 months (the admin's own without `user_id`)
+from STRATZ (up to 10 pages of 100 games), OpenDota (one call from its own `fill` share of the budget,
+plus up to 20 benchmark calls) and our drafts, and returns which heroes the My Heroes fill rules
+(`_shared/fill/rules.ts`) would add per position, the near misses, and where each game's position and
+strength came from. It saves nothing.
+
 ## Account types
 
 `profiles.user_type` is `user` (the default), `captain` (no longer needed: every user can create

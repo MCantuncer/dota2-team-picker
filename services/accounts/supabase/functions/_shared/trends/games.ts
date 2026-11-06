@@ -100,13 +100,13 @@ export function readRecentMatch(raw: unknown): RecentMatch | null {
 }
 
 /** True for a normal or ranked game in a draft mode, with no leaver, long enough and inside the window. */
-export function isCountedGame(match: RecentMatch, nowS: number): boolean {
+export function isCountedGame(match: RecentMatch, nowS: number, windowDays = TREND_WINDOW_DAYS): boolean {
   return (
     COUNTED_GAME_MODES.includes(match.gameMode) &&
     COUNTED_LOBBY_TYPES.includes(match.lobbyType) &&
     !match.hasLeaver &&
     match.durationS >= MIN_GAME_DURATION_S &&
-    match.startTime >= nowS - TREND_WINDOW_DAYS * DAY_S
+    match.startTime >= nowS - windowDays * DAY_S
   );
 }
 

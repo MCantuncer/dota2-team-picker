@@ -49,3 +49,9 @@ Deno.test("skips games outside the rules", () => {
   assertEquals(readDraftGames(rows, NOW_S), []);
   assertEquals(readDraftGames(null, NOW_S), []);
 });
+
+Deno.test("reads older drafts inside a longer window when asked", () => {
+  const old = [row({}, { ended_at: "2026-07-01T20:00:00Z" })];
+  assertEquals(readDraftGames(old, NOW_S).length, 0);
+  assertEquals(readDraftGames(old, NOW_S, 180).length, 1);
+});

@@ -28,10 +28,13 @@ export interface CountedStratzGame extends StratzGame {
   lobbyType: number;
 }
 
-/** The GraphQL query for one player's recent games. */
-export function playerMatchesQuery(accountId: number): string {
+/** The GraphQL query for one player's recent games, newest first; `skip` pages further back. */
+export function playerMatchesQuery(accountId: number, take = STRATZ_TAKE, skip = 0): string {
   if (!Number.isSafeInteger(accountId) || accountId <= 0) throw new Error(`Bad account id ${accountId}`);
-  return `{ player(steamAccountId: ${accountId}) { matches(request: { take: ${STRATZ_TAKE} }) { ` +
+  if (!Number.isSafeInteger(take) || take < 1 || take > 100 || !Number.isSafeInteger(skip) || skip < 0) {
+    throw new Error(`Bad page ${take} from ${skip}`);
+  }
+  return `{ player(steamAccountId: ${accountId}) { matches(request: { take: ${take}, skip: ${skip} }) { ` +
     `id startDateTime durationSeconds gameMode lobbyType ` +
     `players(steamAccountId: ${accountId}) { heroId position isVictory imp leaverStatus } } } }`;
 }
@@ -44,10 +47,10 @@ const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFin
  * Reads the query's `data`. Keeps counted games only (draft modes, normal or ranked, long
  * enough, no leaver, inside the window). Odd rows are skipped, never thrown on.
  */
-export function readStratzGames(data: unknown, nowS: number): CountedStratzGame[] {
+export function readStratzGames(data: unknown, nowS: number, windowDays = TREND_WINDOW_DAYS): CountedStratzGame[] {
   const player = isObj(data) && isObj(data.player) ? data.player : null;
   const matches = player && Array.isArray(player.matches) ? player.matches : [];
-  const since = nowS - TREND_WINDOW_DAYS * DAY_S;
+  const since = nowS - windowDays * DAY_S;
   return matches.flatMap((m): CountedStratzGame[] => {
     if (!isObj(m) || !isNum(m.id) || !isNum(m.startDateTime) || !isNum(m.durationSeconds)) return [];
     const p = Array.isArray(m.players) && isObj(m.players[0]) ? m.players[0] : null;
