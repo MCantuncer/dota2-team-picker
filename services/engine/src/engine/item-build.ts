@@ -1,5 +1,6 @@
 import { beatsBkb } from "./bkb";
 import { buffsFrom, dispellableBuffs } from "./dispel";
+import { dispelsEnemy, itemFact } from "./item-facts";
 import { chooseTimingSlice, finishedItems } from "./item-timing-slice";
 import type { HeroInfo, ItemInfo, ItemPhases, Position, RankBracket, Snapshot } from "./types";
 
@@ -85,7 +86,6 @@ export const COUNTER_ITEMS: readonly CounterItem[] = [
   { key: "silver_edge", answers: ["passives"], minEnemies: 1, buyer: "core" },
   { key: "spirit_vessel", answers: ["heal"], minEnemies: 2, buyer: "any" },
   { key: "skadi", answers: ["heal"], minEnemies: 2, buyer: "core" },
-  { key: "nullifier", answers: ["unattackable"], minEnemies: 1, buyer: "core", reason: (named) => `Removes ${listNames(buffsFrom(named, "unattackable"))}, which stop your attacks` },
   { key: "mjollnir", answers: ["illusions"], minEnemies: 1, buyer: "core" },
   { key: "bfury", answers: ["illusions"], minEnemies: 1, buyer: "core" },
   { key: "crimson_guard", answers: ["illusions", "physicalCarry"], minEnemies: 2, buyer: "core" },
@@ -129,6 +129,8 @@ const CORE_ITEMS = 6;
 const START_ITEMS = 5;
 const LANE_ITEMS = 2;
 const SITUATIONAL_ITEMS = 3;
+/** A hero is a right-click hero when more than this share of its core item buys add to attacks. */
+const RIGHT_CLICK_SHARE = 0.5;
 /** Rough minute each phase's items are bought by, for the order and the timings shown. */
 const PHASE_MINUTE = { start: 0, early: 8, mid: 18, late: 32 } as const;
 
@@ -273,7 +275,7 @@ export function itemBuild(
 
   const isCore = position <= 3;
   const enemyHeroes = enemies.flatMap((id) => (data.heroes[id] ? [data.heroes[id]] : []));
-  const situational: BuildItem[] = [];
+  const situational: (BuildItem & { added?: true })[] = [];
   const idByKey = new Map(Object.entries(items).map(([id, item]) => [item.key, id]));
   for (const rule of COUNTER_ITEMS) {
     if (rule.buyer !== "any" && (rule.buyer === "core") !== isCore) continue;
@@ -301,6 +303,25 @@ export function itemBuild(
       });
     }
   }
+  if (isCore && situational.length < SITUATIONAL_ITEMS && isRightClick(bought, items)) {
+    const answer = dispelAnswer(enemyHeroes, items, bought, popular);
+    if (answer && !situational.some((s) => s.itemId === Number(answer.id))) {
+      const hero = data.heroes[heroId]?.name ?? "this hero";
+      const rare = !popular(answer.id);
+      const reason = `Removes ${listNames(buffsFrom(answer.against, "unattackable"))}, which stop your attacks${rare ? `. Few ${hero} players buy it` : ""}`;
+      const against = answer.against.map((h) => h.id);
+      const inCore = core.findIndex((c) => c.itemId === Number(answer.id));
+      if (inCore >= 0) {
+        const item = core[inCore]!; // inCore is a valid index.
+        if (!item.reason) core[inCore] = { ...item, reason, against };
+      } else {
+        const timing = timed.get(answer.id);
+        // Rarely bought items have no minute of their own: a late one, so it never jumps the usual core.
+        const minute = timing?.minute ?? bought.get(answer.id)?.minute ?? PHASE_MINUTE.late;
+        situational.push({ ...toItem(answer.id, minute, reason), ...(timing ? { lateMinute: timing.lateMinute } : {}), against, ...(rare ? { added: true } : {}) });
+      }
+    }
+  }
   const bootsId = boots === undefined ? undefined : Number(boots);
   const firstBig = core.find((c) => c.itemId !== bootsId);
   const laterPhase = (i: BuildItem): ItemPhase => (i.minute >= LATE_MINUTE ? "late" : "next");
@@ -312,24 +333,26 @@ export function itemBuild(
     lane: lane.map((i) => ({ ...i, phase: "lane" as const })),
     core: core.map(withCounter),
     ...(stratzOr ? { bootsOr: { ...toItem(String(stratzOr[0]), stratzOr[1]), phase: "lane" as const } } : {}),
-    situational: swapFor(situational, core, firstBig, bootsId, (i) => items[i.itemId]?.key === "blink").map((i) => ({ ...i, phase: laterPhase(i), draft: true as const })),
+    situational: swapFor(situational, core, firstBig, bootsId, (i) => items[i.itemId]?.key === "blink").map(({ added: _, ...i }) => ({ ...i, phase: laterPhase(i), draft: true as const })),
   };
 }
 
 /**
  * Each counter item is bought instead of a usual core item: the one nearest its minute that answers
  * nothing, and each usual item at most once. Never the boots, the first big item or a Blink Dagger,
- * which starts an initiator's fights.
+ * which starts an initiator's fights. An item few players of the hero buy is added, not swapped in: its
+ * minute is a guess, so it must not push out an item players really buy.
  */
-function swapFor(
-  situational: BuildItem[],
+function swapFor<T extends BuildItem & { added?: true }>(
+  situational: T[],
   core: BuildItem[],
   firstBig: BuildItem | undefined,
   bootsId: number | undefined,
   isBlink: (i: BuildItem) => boolean,
-): BuildItem[] {
+): T[] {
   const free = core.filter((c) => c !== firstBig && c.itemId !== bootsId && !c.reason && !isBlink(c));
   return situational.map((s) => {
+    if (s.added) return s;
     const nearest = [...free].sort((a, b) => Math.abs(a.minute - s.minute) - Math.abs(b.minute - s.minute))[0];
     if (!nearest) return s;
     free.splice(free.indexOf(nearest), 1);
@@ -357,4 +380,47 @@ function oneAfterAnother(core: BuildItem[]): void {
 export function listNames(names: string[]): string {
   if (names.length <= 1) return names.join("");
   return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+}
+
+/**
+ * Whether players of the hero mostly buy attack items: of their core item buys (boots and big items, see
+ * isCoreItem), more than RIGHT_CLICK_SHARE add damage, attack speed, crits or bashes (item-facts.ts).
+ * Black King Bar and Radiance count, since they carry bonus damage.
+ */
+export function isRightClick(bought: Map<string, { count: number }>, items: Record<string, ItemInfo>): boolean {
+  let all = 0;
+  let attack = 0;
+  for (const [id, b] of bought) {
+    const item = items[id];
+    if (!item || !isCoreItem(item)) continue;
+    all += b.count;
+    if (itemFact(item.key).attack) attack += b.count;
+  }
+  return all > 0 && attack / all > RIGHT_CLICK_SHARE;
+}
+
+/**
+ * The item that answers enemy buffs which stop attacks, chosen from item facts alone: it dispels an enemy
+ * you aim it at and leaves them hittable, and it adds to attacks. One that keeps dispelling comes first,
+ * since a single dispel loses to a recast; then the one players of the hero buy more. Null when no enemy
+ * has such a buff.
+ */
+function dispelAnswer(
+  enemies: HeroInfo[],
+  items: Record<string, ItemInfo>,
+  bought: Map<string, { count: number }>,
+  popular: (id: string) => boolean,
+): { id: string; against: HeroInfo[] } | null {
+  const against = enemies.filter((h) => threatsOf(h).has("unattackable")).slice(0, REASON_NAMES);
+  if (!against.length) return null;
+  const options = Object.entries(items)
+    .filter(([, item]) => dispelsEnemy(item.key) && itemFact(item.key).attack)
+    .sort(([a, x], [b, y]) =>
+      Number(itemFact(y.key).repeats ?? false) - Number(itemFact(x.key).repeats ?? false) ||
+      Number(popular(b)) - Number(popular(a)) ||
+      (bought.get(b)?.count ?? 0) - (bought.get(a)?.count ?? 0) ||
+      x.cost - y.cost,
+    );
+  const best = options[0];
+  return best ? { id: best[0], against } : null;
 }

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { PIERCES_BKB } from "../src/engine/data-key-spells";
 import { SPELL_FACTS } from "../src/engine/data-spell-facts";
@@ -107,8 +108,25 @@ describe("Nullifier in the item build", () => {
   it("offers Nullifier against Pugna and Necrophos, naming the buffs it removes", () => {
     const build = itemBuild(data(), 1, 1, [36, 45])!;
     const nullifier = [...build.core, ...build.situational].find((i) => i.name === "Nullifier");
-    expect(nullifier?.reason).toMatch(/^Removes Ghost Shroud from Necrophos and Decrepify from Pugna, which stop your attacks/);
+    expect(nullifier?.reason).toBe("Removes Ghost Shroud from Necrophos and Decrepify from Pugna, which stop your attacks");
     expect(nullifier?.against).toEqual([36, 45]);
+  });
+
+  it("offers it even when few players of the hero buy it, says so, and adds it without pushing out a usual item", () => {
+    const d = data();
+    d.itemBuilds![1] = { start: {}, early: { 63: 100 }, mid: { 145: 100, 147: 90 }, late: { 225: 1 } };
+    const nullifier = itemBuild(d, 1, 1, [36, 45])!.situational.find((i) => i.name === "Nullifier");
+    expect(nullifier?.reason).toBe("Removes Ghost Shroud from Necrophos and Decrepify from Pugna, which stop your attacks. Few Anti-Mage players buy it");
+    expect(nullifier?.replaces).toBeUndefined();
+  });
+
+  it("offers it to no support and no hero whose players mostly buy spell items", () => {
+    expect(itemBuild(data(), 1, 5, [36, 45])!.situational.find((i) => i.name === "Nullifier")).toBeUndefined();
+    const d = data();
+    d.items![180] = item("aether_lens", "Aether Lens", 2275);
+    d.items![108] = item("ultimate_scepter", "Aghanim's Scepter", 4200);
+    d.itemBuilds![1] = { start: {}, early: { 63: 100 }, mid: { 180: 100, 108: 90 }, late: { 225: 20 } };
+    expect(itemBuild(d, 1, 2, [36, 45])!.situational.find((i) => i.name === "Nullifier")).toBeUndefined();
   });
 
   it("doesn't offer it against Dazzle and Templar Assassin, whose saves no dispel removes", () => {
@@ -121,5 +139,26 @@ describe("Nullifier in the item build", () => {
     for (const h of [OGRE, LICH, ABADDON, TREANT]) d.heroes[h.id] = h;
     const build = itemBuild(d, 1, 1, [84, 31, 102, 83])!;
     expect([...build.core, ...build.situational].find((i) => i.name === "Nullifier")?.reason).toBeUndefined();
+  });
+});
+
+describe("dispel answers on real data", () => {
+  const snapshot = JSON.parse(readFileSync(new URL("./fixtures/golden-snapshot.json", import.meta.url), "utf8")) as Snapshot;
+  const id = (name: string) => Number(Object.values(snapshot.heroes).find((h) => h.name === name)?.id);
+  const enemies = ["Necrophos", "Pugna", "Ogre Magi", "Templar Assassin", "Death Prophet"].map(id);
+  const answer = (hero: string, position: 1 | 2 | 5, against = enemies) =>
+    itemBuild(snapshot, id(hero), position, against)?.situational.find((i) => i.reason?.startsWith("Removes"));
+
+  it("gives Anti-Mage Nullifier against Necrophos and Pugna, the game it was missed in", () => {
+    expect(answer("Anti-Mage", 1)?.name).toBe("Nullifier");
+  });
+
+  it("gives no dispel to a caster mid or a support", () => {
+    expect(answer("Storm Spirit", 2)).toBeUndefined();
+    expect(answer("Crystal Maiden", 5)).toBeUndefined();
+  });
+
+  it("gives no dispel against buffs that don't stop attacks", () => {
+    expect(answer("Anti-Mage", 1, ["Ogre Magi", "Lich", "Abaddon", "Treant Protector", "Windranger"].map(id))).toBeUndefined();
   });
 });
