@@ -20,6 +20,9 @@ update public.profiles set steam_id = '76561198000000003', created_at = (:'today
 -- Not linked to Steam: never counted.
 update public.profiles set created_at = now() where id = :'nosteam';
 
+-- Read as the test runner: profiles' row security hides other players' rows from the admin's own queries.
+select created_at as new_at from public.profiles where id = :'new' \gset
+
 insert into public.favorite_heroes (user_id, position, hero_id) values (:'new', 1, 1), (:'new', 2, 1), (:'new', 2, 74);
 
 -- Only admins.
@@ -45,8 +48,7 @@ select results_eq('select user_id from public.admin_newest_players()',
 select is((select hero_count from public.admin_newest_players() where user_id = :'new'), 2,
   'a hero in two positions counts once');
 select results_eq(
-  format('select user_id from public.admin_newest_players(1, %L, %L)',
-    (select created_at from public.profiles where id = :'new'), :'new'),
+  format('select user_id from public.admin_newest_players(1, %L, %L)', :'new_at', :'new'),
   format('values (%L::uuid)', :'old'), 'the next page starts after the last row');
 select throws_ok('select * from public.admin_newest_players(0)', '22023', null, 'a page needs at least one row');
 select throws_ok('select * from public.admin_newest_players(51)', '22023', null, 'a page has at most 50 rows');
