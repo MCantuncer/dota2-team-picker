@@ -125,11 +125,16 @@ team. Only the owner can rename or delete the team, change roles, or remove a co
 2. Link this folder to it and apply the schema:
 
    ```sh
+   npm install              # from the repo root, so npx runs the pinned Supabase CLI (3.x)
    cd services/accounts
    npx supabase login
    npx supabase link --project-ref <your project ref>
-   npx supabase db push
+   npx supabase db push --remote
    ```
+
+   CLI 3 runs `db push`, `migration list` and `gen types` against the local stack unless you add
+   `--remote` (the linked project). Commands that change the hosted project ask first, and pressing
+   Enter answers No: type `y`.
 
 3. In the dashboard, under **Authentication > URL Configuration**, set **Site URL** to the
    website's address (for example `https://your-site.vercel.app`) and add
