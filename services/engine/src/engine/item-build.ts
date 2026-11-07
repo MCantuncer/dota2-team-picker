@@ -108,6 +108,9 @@ const CONSUMABLES = new Set([
 const CORE_MIN_COST = 1500;
 const BOOTS = new Set(["phase_boots", "power_treads", "arcane_boots", "tranquil_boots", "boots", "travel_boots", "guardian_greaves", "boots_of_bearing"]);
 
+/** Items under this cost don't change a fight, so they are not named as a timing (game-plan.ts keyItem, item-paths.ts). */
+export const KEY_ITEM_MIN_COST = 2000;
+
 /** Whether an item is a pair of boots past Boots of Speed, like Power Treads. */
 export const isUpgradedBoots = (item: ItemInfo | undefined) => item !== undefined && item.key !== "boots" && BOOTS.has(item.key);
 
