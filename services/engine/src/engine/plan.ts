@@ -21,6 +21,8 @@ export interface PlanSlot {
   playerId?: string;
   /** The player's favorite heroes for this position. Planned first. */
   favorites?: number[];
+  /** The player's Top 3 for this position. Only heroes also in `favorites` count. */
+  top?: number[];
   /** The player's own record per hero id, from their Steam match history. */
   personal?: Record<number, GamesWins>;
   /** The player's rank, if their Steam account is linked. */
@@ -84,6 +86,8 @@ const WEIGHTS = {
    * them, so a hero from outside the pool only makes it when clearly better.
    */
   inPool: 8,
+  /** Extra for one of the player's Top 3, on top of `inPool`: the same 1 to 3 ratio as the draft score's 0.5 to 1.5. */
+  top: 2.5,
   /**
    * Share of each pair's synergy that counts. A team has 10 pairs and their
    * edges overlap, so adding them all in full overstates synergy and lets
@@ -293,7 +297,7 @@ function gamePlan(style: Style | undefined, combos: TeamPlan["combos"]): string 
 function rate(
   engine: Engine,
   hero: HeroInfo,
-  slot: Pick<PlanSlot, "position" | "favorites" | "personal" | "rankBracket">,
+  slot: Pick<PlanSlot, "position" | "favorites" | "top" | "personal" | "rankBracket">,
   enemies: number[],
 ): Candidate {
   const reasons: Candidate["reasons"] = [];
@@ -311,6 +315,10 @@ function rate(
 
   let comfort = inPool ? WEIGHTS.inPool : 0;
   if (inPool) reasons.push({ text: "From the player's hero pool", value: WEIGHTS.inPool });
+  if (inPool && slot.top?.includes(hero.id)) {
+    comfort += WEIGHTS.top;
+    reasons.push({ text: "One of the player's Top 3", value: WEIGHTS.top });
+  }
   const mine = slot.personal?.[hero.id];
   if (mine && mine.games > 0) {
     const personal = personalScore(mine);

@@ -33,6 +33,35 @@ describe("Engine.suggest", () => {
     expect(first!.tags).toContain("Favorite (+1.5)");
   });
 
+  describe("Top 3", () => {
+    const engine = new Engine(fixture());
+    const card = (input: Partial<Parameters<Engine["suggest"]>[0]>, id = 2) =>
+      engine.suggest({ myPosition: 2, allies: [], enemies: [], count: 20, ...input }).find((s) => s.heroId === id)!;
+
+    it("adds a small push on top of the favorite boost and says why", () => {
+      const fav = card({ favorites: [2] });
+      const top = card({ favorites: [2], top: [2] });
+      expect(top.breakdown.comfort - fav.breakdown.comfort).toBeCloseTo(0.5);
+      expect(top.score - fav.score).toBeCloseTo(0.5);
+      expect(top.tags).toEqual(["Favorite (+1.5)", "Top 3 (+0.5)"]);
+    });
+
+    it("changes nothing without a Top 3", () => {
+      const before = engine.suggest({ myPosition: 2, allies: [], enemies: [5], favorites: [2] });
+      expect(engine.suggest({ myPosition: 2, allies: [], enemies: [5], favorites: [2], top: [] })).toEqual(before);
+    });
+
+    it("never lifts a hero outside the pool", () => {
+      expect(card({ top: [2] })).toEqual(card({}));
+      expect(card({ favorites: [3], top: [2] })).toEqual(card({ favorites: [3] }));
+    });
+
+    it("loses to a favorite with a clear counter edge", () => {
+      const [first] = engine.suggest({ myPosition: 2, allies: [], enemies: [5], favorites: [2, 3], top: [2] });
+      expect(first!.name).toBe("Mid Three");
+    });
+  });
+
   it("respects bans and the count", () => {
     const engine = new Engine(fixture());
     expect(engine.suggest({ myPosition: 5, allies: [], enemies: [], count: 1 })).toHaveLength(1);

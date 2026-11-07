@@ -278,6 +278,8 @@ export interface DraftInput {
   /** Only known for Steam users; omit to use all ranks. */
   rankBracket?: RankBracket;
   favorites?: number[];
+  /** The user's Top 3 for this position (hero ids, best first). Only heroes also in `favorites` count. */
+  top?: number[];
   /** The user's own record per hero id, from their Steam match history. */
   personal?: Record<number, GamesWins>;
   /** How many heroes to return. Default 8. */
