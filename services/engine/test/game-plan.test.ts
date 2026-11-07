@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { gamePlan } from "../src/engine/game-plan";
 import { Engine } from "../src/engine/score";
-import type { HeroInfo, Snapshot } from "../src/engine/types";
+import type { HeroInfo, ItemInfo, KeyPaths, Snapshot } from "../src/engine/types";
 
 const hero = (id: number, name: string, roles: string[]): HeroInfo => ({ id, name, roles, attackType: "Melee", primaryAttr: "str" });
 
@@ -237,5 +237,58 @@ describe("gamePlan skills", () => {
     // A hero whose lookup didn't finish, while the others did.
     expect(svenSkills({ matchups: { 18: null, 94: [] } }).live).toBe("unavailable");
     expect(svenSkills({ matchups: "sign-in" }).live).toBe("sign-in");
+  });
+});
+
+describe("gamePlan item journey", () => {
+  const item = (key: string, name: string, cost: number): ItemInfo => ({ key, name, cost, img: "", components: [] });
+  /** Medusa pos 1 with real minutes: Radiance at 16 (slower than most after 18) is her key item. */
+  const withTimings = (itemPaths?: Record<string, KeyPaths>): Snapshot => ({
+    ...data(),
+    items: {
+      50: item("phase_boots", "Phase Boots", 1500),
+      151: item("armlet", "Armlet of Mordiggian", 2500),
+      137: item("radiance", "Radiance", 4700),
+      116: item("black_king_bar", "Black King Bar", 4050),
+      200: item("assault", "Assault Cuirass", 5125),
+      201: item("heart", "Heart of Tarrasque", 5000),
+      202: item("satanic", "Satanic", 5050),
+    },
+    itemBuilds: { 94: { start: {}, early: { 50: 100 }, mid: { 137: 50 }, late: {} } },
+    itemTimings: {
+      94: {
+        1: {
+          all: {
+            games: 500,
+            items: [
+              [137, 16, 18],
+              [116, 22, 25],
+              [200, 26, 30],
+              [201, 30, 34],
+              [202, 33, 37],
+              [151, 35, 38],
+            ],
+          },
+        },
+      },
+    },
+    ...(itemPaths
+      ? { skillBuilds: { 94: { 1: { at: "", gameVersionId: 184, matches: 60, talents: [], itemPaths } } } }
+      : {}),
+  });
+  const medusa = (d: Snapshot) => gamePlan(new Engine(d), { ours, theirs }).players.find((p) => p.heroId === 94)!; // Medusa is in `ours`.
+
+  it("keeps the build's late minute without a journey", () => {
+    const plan = medusa(withTimings());
+    expect(plan.journey).toBeUndefined();
+    expect(plan.fallbacks.join(" ")).toContain("No Radiance by 18 min?");
+  });
+
+  it("attaches the late path and uses its late minute in the Story's line", () => {
+    const plan = medusa(
+      withTimings({ 137: { late: 20, running: 50, onTime: 36, path: { games: 14, steps: [[151, 19, 8], [137, 26, 9]], keyLater: 9 } } }),
+    );
+    expect(plan.journey).toMatchObject({ itemId: 137, late: 20, games: 14, steps: [[151, 19, 8], [137, 26, 9]] });
+    expect(plan.fallbacks.join(" ")).toContain("No Radiance by 20 min?");
   });
 });

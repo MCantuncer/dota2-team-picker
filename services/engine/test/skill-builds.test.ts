@@ -293,9 +293,19 @@ describe("refresh", () => {
     expect(counts.largestMatchAnswer).toBeGreaterThan(0);
     expect(snap.skillBuilds?.[18]?.[1]?.build?.levels).toEqual(SVEN_BUILD);
     expect(snap.heroAbilities?.[18]?.abilities).toHaveLength(4);
-    // No purchases in the answers: the slice is saved with no paths, so it isn't due again until next week.
+    // No item data in the snapshot (its refresh failed): the paths stay unset, so the next run tries again.
+    expect(snap.skillBuilds?.[18]?.[1]?.itemPaths).toBeUndefined();
+    expect(counts.paths).toEqual([]);
+  });
+
+  it("saves empty paths when the answers have no purchases, so the slice isn't due again until next week", async () => {
+    const snap = snapshot();
+    snap.items = {};
+    snap.itemTimings = {};
+    const counts = await fetchSkillBuilds(snap, stratz([], () => svenGame()), now);
     expect(snap.skillBuilds?.[18]?.[1]?.itemPaths).toEqual({});
     expect(counts.paths).toEqual(["hero 18 pos 1: 0 wins with purchases; no key item passes"]);
+    expect(skillRequests(snap, 181, now)).not.toContainEqual({ heroId: 18, position: 1 });
   });
 
   it("saves the late paths from the guide wins' purchases", async () => {
@@ -332,11 +342,11 @@ describe("refresh", () => {
     // Matches 1 to 12: Radiance late (Armlet at 17, Radiance at 28). 13 to 22: Radiance at 16. 23: a loss,
     // 24: no purchases, 25: another position. Only the 22 wins with purchases at pos 1 count.
     const match = (id: number) => {
-      const purchases =
+      const purchases: [number, number][] =
         id <= 12
           ? [[151, 17], [137, 28]]
           : [[137, 16], [116, 25]];
-      const stats = { itemPurchases: purchases.map(([itemId, minute]) => ({ itemId, time: m(minute!) })) };
+      const stats = { itemPurchases: purchases.map(([itemId, minute]) => ({ itemId, time: m(minute) })) };
       if (id === 24) return svenGame({ durationSeconds: m(40) }, { isVictory: true });
       if (id === 25) return svenGame({ durationSeconds: m(40) }, { isVictory: true, stats, position: "POSITION_3" });
       return svenGame({ durationSeconds: m(40) }, { isVictory: id !== 23, stats });

@@ -60,10 +60,20 @@ describe("itemJourney", () => {
     expect(itemJourney(engine({ 116: { ...radiance } }), build, 42, 1)).toBeUndefined();
     const { path: _, ...noPath } = radiance;
     expect(itemJourney(engine({ 137: noPath }), build, 42, 1)).toBeUndefined();
-    // A build with Radiance at 19 (another rank's minutes) against a late minute of 18.
-    const slow = { ...build, core: core([[50, 8], [137, 19], [116, 22]]) };
-    expect(itemJourney(engine({ 137: radiance }), slow, 42, 1)).toBeUndefined();
+    // A build with Radiance at 19 or 18 (another rank's minutes) against a late minute of 18.
+    for (const minute of [19, 18]) {
+      const slow = { ...build, core: core([[50, 8], [137, minute], [116, 22]]) };
+      expect(itemJourney(engine({ 137: radiance }), slow, 42, 1)).toBeUndefined();
+    }
+    // A rough OpenDota build has no real minute to compare.
+    expect(itemJourney(engine({ 137: radiance }), { ...build, timings: "around" }, 42, 1)).toBeUndefined();
     expect(itemJourney(engine({ 137: radiance }), null, 42, 1)).toBeUndefined();
+  });
+
+  it("drops only the leading steps the build has: a later one stays", () => {
+    // The late group went Armlet, then Phase Boots, then Radiance: Phase stays, as it comes after the split.
+    const odd: KeyPaths = { ...radiance, path: { games: 14, steps: [[151, 17, 9], [50, 19, 7], [137, 24, 8]], keyLater: 11 } };
+    expect(itemJourney(engine({ 137: odd }), build, 42, 1)?.steps).toEqual([[151, 17, 9], [50, 19, 7], [137, 24, 8]]);
   });
 
   it("is nothing when every step is one the build has before the key item", () => {

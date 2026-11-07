@@ -197,9 +197,9 @@ export function keyItem(engine: Engine, build: ItemBuild | null, heroId: number 
 }
 
 /**
- * The late path for the key item `keyItem` picks from this build, when the guide games have one. Nothing when
- * the path's late minute isn't after the build's key minute (a lower rank build can put the key past it), or
- * when every step is one the build already has before the key item.
+ * The late path for the key item `keyItem` picks from this build, when the guide games have one. Nothing for a
+ * build without real minutes, when the path's late minute isn't after the build's key minute (a lower rank
+ * build can put the key past it), or when every step is one the build already has before the key item.
  */
 export function itemJourney(
   engine: Engine,
@@ -208,7 +208,8 @@ export function itemJourney(
   position: Position,
 ): ItemJourney | undefined {
   const key = keyItem(engine, build, heroId, position);
-  if (!key || !build) return undefined;
+  // A rough OpenDota minute ("around") can't be compared with the late minute.
+  if (!key || !build || build.timings === "around") return undefined;
   const paths = engine.data.skillBuilds?.[heroId]?.[position]?.itemPaths?.[key.itemId];
   if (!paths?.path || paths.late <= key.minute) return undefined;
   const before = new Set(build.core.slice(0, build.core.indexOf(key)).map((i) => i.itemId));

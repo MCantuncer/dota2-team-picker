@@ -207,6 +207,7 @@ export function toGuidePlayer(answer: unknown, heroId: number): GuidePlayer | nu
 /**
  * The guide player's purchases and the game's length from one match answer, for the late paths. Null when
  * either is missing: the game still counts for the skill build. A purchase without its id or time is left out.
+ * Call it only on an answer toGuidePlayer accepted, which checked the one player is the guide's hero.
  */
 export function toPathGame(answer: unknown): PathGame | null {
   // Checked field by field below.
@@ -300,9 +301,13 @@ export async function fetchSkillBuilds(snapshot: Snapshot, post: Post, now: Date
       const wins = games.flatMap(({ player, path }) =>
         path && player.won === true && player.position === r.position && player.gameVersionId >= versionId ? [path] : [],
       );
-      const timings = chooseTimingSlice(snapshot, r.heroId, r.position, PATHS_BRACKET)?.slice;
-      slice.itemPaths = itemPaths(wins, timings, items, isBig);
-      paths.push(pathsLine(r, wins.length, slice.itemPaths));
+      // Without item data or timings at all (their refresh failed), the paths stay unset so the next run
+      // tries again; with them, the slice always gets its paths, `{}` when none passes, so it isn't fetched again.
+      if (snapshot.items && snapshot.itemTimings) {
+        const timings = chooseTimingSlice(snapshot, r.heroId, r.position, PATHS_BRACKET)?.slice;
+        slice.itemPaths = itemPaths(wins, timings, items, isBig);
+        paths.push(pathsLine(r, wins.length, slice.itemPaths));
+      }
       ((snapshot.skillBuilds ??= {})[r.heroId] ??= {})[r.position] = slice;
       done++;
     });

@@ -177,16 +177,19 @@ export function updateDataHardCounters(snapshot: Snapshot) {
   console.log(`Hard counters from the data: ${found.length} past the line, ${list.length} held for ${HOLD_RUNS} runs.`);
 }
 
-/** Prints games per position and the heroes whose main position STRATZ corrects, as a sanity check. */
 /** Item paths above this many KB gzipped get a warning; they are never dropped for size (two-path plan). */
 const ITEM_PATHS_WARN_KB = 60;
 
 /** Each refreshed slice's late paths, the largest match answer, and the coverage and size of all paths. */
 function logItemPaths(snapshot: Snapshot, counts: { largestMatchAnswer: number; paths: string[] }) {
   for (const line of counts.paths) console.log(`  Item paths, ${line}`);
-  console.log(`Largest skill build match answer: ${(counts.largestMatchAnswer / 1024).toFixed(1)} KB.`);
-  const all = Object.values(snapshot.skillBuilds ?? {}).map((byPosition) =>
-    Object.values(byPosition).map((s) => s?.itemPaths ?? null),
+  console.log(`Largest skill build match answer: about ${(counts.largestMatchAnswer / 1024).toFixed(1)} KB.`);
+  // Shaped as the snapshot holds them, hero then position, so the size is what ships.
+  const all = Object.fromEntries(
+    Object.entries(snapshot.skillBuilds ?? {}).map(([hero, byPosition]) => [
+      hero,
+      Object.fromEntries(Object.entries(byPosition).map(([position, s]) => [position, s?.itemPaths])),
+    ]),
   );
   const kb = gzipSync(JSON.stringify(all)).length / 1024;
   const { slices, withPath } = pathsCoverage(snapshot);
@@ -194,6 +197,7 @@ function logItemPaths(snapshot: Snapshot, counts: { largestMatchAnswer: number; 
   if (kb > ITEM_PATHS_WARN_KB) console.warn(`::warning::Item paths are ${kb.toFixed(1)} KB gzipped, over ${ITEM_PATHS_WARN_KB} KB.`);
 }
 
+/** Prints games per position and the heroes whose main position STRATZ corrects, as a sanity check. */
 function logPositions(snapshot: Snapshot) {
   const positions = snapshot.positions ?? {};
   const totals = [0, 0, 0, 0, 0];
