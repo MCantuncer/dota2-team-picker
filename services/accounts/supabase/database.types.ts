@@ -1051,7 +1051,7 @@ isOneToOne: false
                            },
 "lineup_players":
 { Args: Record<PropertyKey, never>; Returns: {
-              "avatar_url": string,"display_name": string,"favorites": Json,"hero_stats": Json,"is_friend": boolean,"positions": (number)[],"rank_tier": number,"shared": boolean,"stacks": Json,"user_id": string
+              "avatar_url": string,"display_name": string,"favorites": Json,"hero_stats": Json,"is_friend": boolean,"positions": (number)[],"rank_tier": number,"shared": boolean,"stacks": Json,"top": Json,"user_id": string
             }[]
                            },
 "lock_my_party":
@@ -1140,7 +1140,7 @@ isOneToOne: false
                            },
 "party_player_stats":
 { Args: Record<PropertyKey, never>; Returns: {
-              "display_name": string,"favorites": Json,"hero_stats": Json,"positions": (number)[],"rank_tier": number,"user_id": string
+              "display_name": string,"favorites": Json,"hero_stats": Json,"positions": (number)[],"rank_tier": number,"top": Json,"user_id": string
             }[]
                            },
 "party_view":
@@ -1247,7 +1247,7 @@ isOneToOne: false
                            },
 "stack_player_stats":
 { Args: { "team": string }; Returns: {
-              "display_name": string,"favorites": Json,"hero_stats": Json,"positions": (number)[],"rank_tier": number,"user_id": string
+              "display_name": string,"favorites": Json,"hero_stats": Json,"positions": (number)[],"rank_tier": number,"top": Json,"user_id": string
             }[]
                            },
 "stale_match_files":
@@ -1286,6 +1286,9 @@ isOneToOne: false
 { Args: { "team": string }; Returns: {
               "avatar_url": string,"created_at": string,"display_name": string,"rank_tier": number,"request_id": string,"user_id": string
             }[]
+                           },
+"top_by_position":
+{ Args: { "player": string }; Returns: Json
                            },
 "top_heroes":
 { Args: { "hero_position": number,"player": string }; Returns: Json
