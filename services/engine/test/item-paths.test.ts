@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bigItemCheck, seeded } from "../src/engine/item-odds";
+import { bigItemCheck } from "../src/engine/item-odds";
 import { candidateKeys, itemPaths, keyPaths, latePath, MIN_GROUP, type PathGame } from "../src/engine/item-paths";
 import type { ItemInfo } from "../src/engine/types";
 
@@ -42,6 +42,26 @@ describe("candidateKeys", () => {
       { id: 8, late: 29 },
     ]);
   });
+
+  it("leaves out an early item few players buy, so the build's key stays a candidate", () => {
+    // Desolator at 12 is the slice's 7th most bought item: past the build's slots, so not a candidate.
+    const slice = {
+      games: 500,
+      items: [
+        [6, 8, 10],
+        [1, 16, 18],
+        [4, 25, 30],
+        [5, 30, 36],
+        [2, 20, 24],
+        [3, 22, 26],
+        [9, 33, 40],
+        [8, 12, 15],
+      ] as [number, number, number][],
+    };
+    const ids = candidateKeys(slice, { ...ITEMS, "9": item("butterfly", 5450) }, isBig).map((k) => k.id);
+    expect(ids).toContain(1);
+    expect(ids).not.toContain(8);
+  });
 });
 
 describe("latePath", () => {
@@ -58,7 +78,7 @@ describe("latePath", () => {
       [4, 25, 10],
     ]);
   });
-  it("takes each step's median minute and never goes back in time", () => {
+  it("takes each step's median minute and stops rather than go back in time", () => {
     const games = [...times(5, () => game([[2, 20], [4, 30]])), ...times(5, () => game([[4, 15], [2, 25]]))];
     // Tie on 5 games: Armlet's median 20 against BKB's 15, so BKB first at 15, then Armlet (20 and 25: 22.5).
     expect(latePath(games, isBig)).toEqual([
@@ -71,16 +91,13 @@ describe("latePath", () => {
       [2, 25, 6],
       [4, 30, 10],
     ]);
-    // Mixed orders never give a step earlier than the one before it.
-    const random = seeded(4);
-    const ids = [1, 2, 3, 4, 5, 8];
-    const mixed = times(40, () => {
-      const order = [...ids].sort(() => random() - 0.5).slice(0, 4);
-      let t = 10;
-      return game(order.map((id) => [id, (t += 1 + Math.floor(random() * 8))]));
-    });
-    const minutes = latePath(mixed, isBig).map(([, minute]) => minute);
-    expect(minutes).toEqual([...minutes].sort((x, y) => x - y));
+    // Phase wins step 2 with games that bought it at 15, before any Armlet: the path stops, not Phase at 25.
+    const out = [
+      ...times(3, () => game([[2, 25], [3, 40]])),
+      ...times(3, () => game([[2, 25], [4, 40]])),
+      ...times(4, () => game([[6, 15]])),
+    ];
+    expect(latePath(out, isBig)).toEqual([[2, 25, 6]]);
   });
   it("stops when under 40% of the games buy the same item next", () => {
     const games = [

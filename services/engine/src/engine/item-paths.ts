@@ -7,9 +7,8 @@
  * by L). The late group's path is the most common next big item at each step; no single game has to match it.
  * The main path on the card stays today's build list, so it agrees with the Story.
  */
-import { isUpgradedBoots, KEY_ITEM_MIN_COST } from "./item-build";
+import { CORE_ITEMS, coreTimingItems, isUpgradedBoots, KEY_ITEM_MIN_COST } from "./item-build";
 import { bigItems, type IsBig } from "./item-odds";
-import { finishedItems } from "./item-timing-slice";
 import type { ItemInfo, ItemTimingSlice } from "./types";
 
 /** One guide game's purchases: [item id, seconds], and its length in seconds. */
@@ -54,15 +53,16 @@ function median(xs: number[]): number {
 }
 
 /**
- * Candidate key items with their late minute: Blink when the slice has it, plus the first COSTLY_KEYS big
- * items by minute that cost at least KEY_ITEM_MIN_COST and aren't upgraded boots.
+ * Candidate key items with their late minute, from the items the build takes (coreTimingItems, with one slot
+ * for boots): Blink when there, plus the first COSTLY_KEYS by minute that cost at least KEY_ITEM_MIN_COST and
+ * aren't upgraded boots, as game-plan.ts keyItem picks.
  */
 export function candidateKeys(
   slice: ItemTimingSlice,
   items: Record<string, ItemInfo>,
   isBig: IsBig,
 ): { id: number; late: number }[] {
-  const byMinute = [...finishedItems(slice, items)].sort((a, b) => a[1] - b[1]);
+  const byMinute = [...coreTimingItems(slice, items, CORE_ITEMS - 1)].sort((a, b) => a[1] - b[1]);
   const blink = byMinute.filter(([id]) => items[String(id)]?.key === "blink");
   const costly = byMinute
     .filter(([id]) => {
@@ -73,12 +73,17 @@ export function candidateKeys(
   return [...blink, ...costly].map(([id, , late]) => ({ id, late: Math.round(late) }));
 }
 
-/** The most common next big item at each step of `games`, following each game's own order. */
+/**
+ * The most common next big item at each step of `games`, following each game's own order. The path stops at a
+ * step whose median minute is earlier than the last step's: that item mostly came before, so the order would
+ * be made up. The first steps can be items bought before the late minute; the draft-time journey drops the
+ * leading ones the build already has before the key item.
+ */
 export function latePath(games: PathGame[], isBig: IsBig): PathStep[] {
   const lists = games.map((g) => bigItems(g, isBig));
   const cursor = lists.map(() => 0);
   const steps: PathStep[] = [];
-  let floor = 0;
+  let last = 0;
   while (steps.length < MAX_STEPS) {
     const used = new Set(steps.map(([id]) => id));
     const next = lists.map((list, g) => list.slice(cursor[g]).find(([id]) => !used.has(id)));
@@ -90,9 +95,9 @@ export function latePath(games: PathGame[], isBig: IsBig): PathStep[] {
     const best = [...counts].sort((x, y) => y[1].length - x[1].length || median(x[1]) - median(y[1]) || x[0] - y[0])[0];
     if (!best || best[1].length < STEP_SHARE * games.length) break;
     const [id, times] = best;
-    // Each step's median comes from different games, so a later step could come out earlier; it is held at the last.
-    const minute = Math.max(Math.round(median(times) / 60), floor);
-    floor = minute;
+    const minute = Math.round(median(times) / 60);
+    if (minute < last) break;
+    last = minute;
     steps.push([id, minute, times.length]);
     lists.forEach((list, g) => {
       if (next[g]?.[0] === id) cursor[g] = list.findIndex(([x]) => x === id) + 1;
@@ -106,8 +111,9 @@ export function keyPaths(games: PathGame[], key: number, late: number, isBig: Is
   const running = games.filter((g) => g.duration > late * 60);
   const buysKey = (g: PathGame) => g.items.some(([id]) => id === key);
   if (running.length === 0 || running.filter(buysKey).length < KEY_SHARE * running.length) return undefined;
-  const onTime = running.filter((g) => g.items.some(([id, t]) => id === key && t < late * 60));
-  const lateGames = running.filter((g) => !onTime.includes(g));
+  const isOnTime = (g: PathGame) => g.items.some(([id, t]) => id === key && t < late * 60);
+  const onTime = running.filter(isOnTime);
+  const lateGames = running.filter((g) => !isOnTime(g));
   const out: KeyPaths = { late, running: running.length, onTime: onTime.length };
   if (lateGames.length < MIN_GROUP) return out;
   const steps = latePath(lateGames, isBig);
