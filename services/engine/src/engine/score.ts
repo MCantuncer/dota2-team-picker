@@ -35,6 +35,8 @@ const WEIGHTS = {
   /** Points per unmet team need the hero covers, once your team is complete. */
   teamNeed: 1.2,
   favorite: 1.5,
+  /** Extra comfort for one of the user's Top 3 on this position, on top of `favorite`. Small on purpose. */
+  top: 0.5,
   /** Share of the user's own win rate gap (after shrinking) that counts. */
   personal: 0.5,
   /** Points per extra position the hero can play, on the first pick. */
@@ -301,6 +303,8 @@ export class Engine {
     /** 1 on the first pick of the game, 0 on the last. */
     const earliness = Math.max(0, 1 - picksSoFar / 9);
     const favorites = new Set(input.favorites ?? []);
+    // Top 3 only counts for heroes in the pool, so it can never lift a hero from outside it.
+    const top = new Set((input.top ?? []).filter((id) => favorites.has(id)));
 
     const laneChance = this.laneChances(input.enemies, pos);
 
@@ -375,6 +379,10 @@ export class Engine {
       if (favorites.has(hero.id)) {
         comfort += WEIGHTS.favorite;
         tags.push(`Favorite (${points(WEIGHTS.favorite)})`);
+      }
+      if (top.has(hero.id)) {
+        comfort += WEIGHTS.top;
+        tags.push(`Top 3 (${points(WEIGHTS.top)})`);
       }
       const mine = input.personal?.[hero.id];
       if (mine && mine.games > 0) {
