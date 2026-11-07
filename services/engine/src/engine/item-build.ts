@@ -2,7 +2,7 @@ import { beatsBkb } from "./bkb";
 import { buffsFrom, dispellableBuffs } from "./dispel";
 import { dispelsEnemy, itemFact } from "./item-facts";
 import { chooseTimingSlice, finishedItems } from "./item-timing-slice";
-import type { HeroInfo, ItemInfo, ItemPhases, Position, RankBracket, Snapshot } from "./types";
+import type { HeroInfo, ItemInfo, ItemPhases, ItemTimingSlice, Position, RankBracket, Snapshot } from "./types";
 
 /**
  * Item builds for one hero against one enemy lineup: the build players really buy on the hero,
@@ -108,6 +108,9 @@ const CONSUMABLES = new Set([
 const CORE_MIN_COST = 1500;
 const BOOTS = new Set(["phase_boots", "power_treads", "arcane_boots", "tranquil_boots", "boots", "travel_boots", "guardian_greaves", "boots_of_bearing"]);
 
+/** Items under this cost don't change a fight, so they are not named as a timing (game-plan.ts keyItem, item-paths.ts). */
+export const KEY_ITEM_MIN_COST = 2000;
+
 /** Whether an item is a pair of boots past Boots of Speed, like Power Treads. */
 export const isUpgradedBoots = (item: ItemInfo | undefined) => item !== undefined && item.key !== "boots" && BOOTS.has(item.key);
 
@@ -120,12 +123,27 @@ export function isCoreItem(item: ItemInfo | undefined): boolean {
   return BOOTS.has(item.key) || item.key === "aghanims_shard" || item.cost >= CORE_MIN_COST;
 }
 
+/**
+ * The slice's core items past boots, most bought first, as the build takes them: finished items (no parts of
+ * another item in the slice), big, not boots, at most `slots`. Shared with item-paths.ts so its key items are
+ * the ones game-plan.ts keyItem can pick.
+ */
+export function coreTimingItems(
+  slice: ItemTimingSlice,
+  items: Record<string, ItemInfo>,
+  slots: number,
+): ItemTimingSlice["items"] {
+  return finishedItems(slice, items)
+    .filter(([id]) => isCoreItem(items[String(id)]) && !BOOTS.has(items[String(id)]?.key ?? ""))
+    .slice(0, slots);
+}
+
 /** Enemy heroes named in one reason, those with the most matching threats first. */
 const REASON_NAMES = 3;
 
 /** An item counts as bought on a hero when it reaches this share of the hero's most bought item. */
 const MIN_POPULARITY = 0.1;
-const CORE_ITEMS = 6;
+export const CORE_ITEMS = 6;
 const START_ITEMS = 5;
 const LANE_ITEMS = 2;
 const SITUATIONAL_ITEMS = 3;
@@ -248,9 +266,7 @@ export function itemBuild(
     ? [
         // STRATZ keeps boots out of its item timings, so they still come from OpenDota.
         ...(boots ? [toItem(boots, bootsMinute)] : []),
-        ...finishedItems(chosen.slice, items)
-          .filter(([id]) => isBig(String(id)) && !isBoots(String(id)))
-          .slice(0, CORE_ITEMS - (boots ? 1 : 0))
+        ...coreTimingItems(chosen.slice, items, CORE_ITEMS - (boots ? 1 : 0))
           .map(([id, minute, lateMinute]) => ({ ...toItem(String(id), minute), lateMinute })),
       ].sort((a, b) => a.minute - b.minute)
     : [

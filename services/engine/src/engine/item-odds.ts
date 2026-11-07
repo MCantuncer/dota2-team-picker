@@ -82,7 +82,7 @@ export function bigItemCheck(items: Record<string, ItemInfo>): IsBig {
  * into a bigger one within PART_WINDOW minutes is a step on the way (Relic, then Radiance at 15) and left out;
  * one kept longer is an item in its own right (Blink at 12, Overwhelming Blink at 35).
  */
-export function bigItems(g: ItemGame, isBig: IsBig): [number, number][] {
+export function bigItems(g: Pick<ItemGame, "items">, isBig: IsBig): [number, number][] {
   const seen = new Set<number>();
   const partSoon = (id: number, at: number) =>
     g.items.some(([other, t]) => t >= at && t < at + PART_WINDOW * 60 && (isBig.componentsOf?.(other) ?? []).includes(id));

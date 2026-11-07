@@ -8,7 +8,7 @@ import type { MatchupGame } from "./matchup-talents";
 import { skillPlan, type SkillPlan } from "./skill-plan";
 import { gameStory, ourWindow, type Story, type Timing } from "./story";
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
-import { isUpgradedBoots, itemBuild, listNames, type BuildItem, type ItemBuild } from "./item-build";
+import { isUpgradedBoots, itemBuild, KEY_ITEM_MIN_COST, listNames, type BuildItem, type ItemBuild } from "./item-build";
 import { guessEnemyPositions, type PositionFit } from "./positions";
 import type { Engine } from "./score";
 import { traitsOf } from "./traits";
@@ -162,9 +162,6 @@ function laneText(verdict: LaneVerdict, theirNames: string): string {
   if (verdict === "hard") return `Hard lane against ${theirNames}: farm safely, give up kills less than you give up creeps.`;
   return `Even lane against ${theirNames}: the better last hits win it.`;
 }
-
-/** Items under this cost don't change a fight, so they are not named as a timing. */
-const KEY_ITEM_MIN_COST = 2000;
 
 /**
  * The item that decides the player's timing: Blink Dagger for a non-carry who starts fights and
