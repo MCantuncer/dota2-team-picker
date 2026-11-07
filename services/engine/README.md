@@ -40,7 +40,7 @@ Every part of the score is in win-rate percentage points, so `+2.0` roughly mean
   there are left out.
 - **Team needs**: covers something your team lacks (stuns, initiation, a save, a frontliner,
   pushing, magic or physical damage). Counts more as your team fills up.
-- **Comfort**: your favorites, and your own record on the hero when known.
+- **Comfort**: your favorites, a small extra push for your Top 3 on the position (only heroes in your pool), and your own record on the hero when known.
 - **Flex**: early in the draft, a hero that can play several positions hides your plan.
 - **Pick safety**: blind pick risk ([`src/engine/risk.ts`](src/engine/risk.ts)). For each enemy position
   not picked yet, every hero still in the pool gets a chance of being their pick there (pick rate times
@@ -94,7 +94,7 @@ warning (two when it loses a matchup):
 `place`), then splits the score into what this draft adds (counter, synergy, team needs, pick
 safety) and what holds in any draft (meta, position fit, comfort, flex): "Score -3.4, 31st of 47
 carries here: -5.5 from this draft, +2.1 from meta, role and comfort". Favorites and your own record go
-in `tags` ("Favorite (+1.5)", "Your record 12-8 (+0.9)").
+in `tags` ("Favorite (+1.5)", "Top 3 (+0.5)", "Your record 12-8 (+0.9)").
 ## Backtest
 
 `npm run backtest` scores the engine on real ranked games saved by the refresh Action (see

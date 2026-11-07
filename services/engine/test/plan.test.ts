@@ -24,6 +24,19 @@ describe("planTeam", () => {
     expect(mid.alternatives[0]!.scoreDelta).toBeLessThan(0);
   });
 
+  it("gives the player's Top 3 a small push inside the pool", () => {
+    const plan = (slot: { favorites?: number[]; top?: number[] }, enemies: number[] = []) =>
+      planTeam(new Engine(fixture()), { slots: [{ position: 2, playerId: "can", ...slot }], enemies });
+    const fav = plan({ favorites: [2, 3] }, [5]);
+    const top = plan({ favorites: [2, 3], top: [3] }, [5]);
+    expect(top.slots[1]!.name).toBe("Mid Three");
+    expect(top.score - fav.score).toBeCloseTo(2.5);
+    expect(top.slots[1]!.reasons).toContain("One of the player's Top 3");
+    // A hero outside the pool gets nothing, and a Top 3 hero still loses to a clear counter edge.
+    expect(plan({ top: [2] })).toEqual(plan({}));
+    expect(plan({ favorites: [2, 3], top: [2] }, [5]).slots[1]!.name).toBe("Mid Three");
+  });
+
   it("keeps picked heroes and re-plans the rest around the enemy picks", () => {
     const plan = planTeam(new Engine(fixture()), {
       slots: [{ position: 1, heroId: 1 }],
