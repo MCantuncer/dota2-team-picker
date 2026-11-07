@@ -10,9 +10,9 @@
     "test": "deno test --node-modules-dir=none --no-lock --allow-read supabase/functions",
     "db:start": "supabase db start",
     "db:stop": "supabase stop --no-backup",
-    "db:lint": "supabase db lint --local --level warning --fail-on warning",
+    "db:lint": "supabase db lint --level warning --fail-on warning",
     "test:db": "supabase test db",
-    "db:types": "supabase gen types typescript --local > supabase/database.types.ts"
+    "db:types": "supabase gen types typescript > supabase/database.types.ts"
   },
   "devDependencies": {
     "deno": "^2.0.0",
