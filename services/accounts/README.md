@@ -92,12 +92,18 @@ hero entered for the team played on one side of that match. It saves `match_id` 
 draft, asks OpenDota to parse the replay (replays expire after one to two weeks), and looks at most
 once every 20 seconds per draft. Returns `{matchId, won}`, or `{matchId: null}` when nothing was found yet.
 
-**`fill-heroes`** (admins only, a dry run for now): `supabase.functions.invoke("fill-heroes",
-{body: {dry_run: true, user_id?}})` reads a player's last 6 months (the admin's own without `user_id`)
-from STRATZ (up to 10 pages of 100 games), OpenDota (one call from its own `fill` share of the budget,
-plus up to 20 benchmark calls) and our drafts, and returns which heroes the My Heroes fill rules
-(`_shared/fill/rules.ts`) would add per position, the near misses, and where each game's position and
-strength came from. It saves nothing.
+**`fill-heroes`**: fills My Heroes from the signed-in player's own games.
+`supabase.functions.invoke("fill-heroes", {body: {by: "welcome" | "button"}})` (the first My Heroes
+visit, or Fill From My Games) runs for the token's user only. `claim_hero_fill` decides whether a fill
+may start now; the function then reads the player's last 6 months from STRATZ (up to 10 pages of 100
+games), OpenDota (one call from its own `fill` share of the budget, plus up to 20 benchmark calls) and
+our drafts, runs the rules in `_shared/fill/rules.ts` and saves the picks with `save_hero_fill` (state
+`done`, `no_games` or `too_few`). A STRATZ failure or cut-off read, or a failed OpenDota read without
+STRATZ, is not saved: `fail_hero_fill` marks it `waiting`, and the `refresh-trends` job retries it after
+30 minutes, 2 hours and 8 hours before it stops at `failed`. Returns `{claimed: false}` or
+`{claimed: true, state, added}`. Admins can also send `{dry_run: true, user_id?}` (the admin's own
+account without `user_id`) to see which heroes the rules would add per position, the near misses, and
+where each game's position and strength came from. A dry run saves nothing.
 
 ## Account types
 
