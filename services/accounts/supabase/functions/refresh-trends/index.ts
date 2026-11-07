@@ -6,7 +6,8 @@
  * Reads the recent games of active Steam players whose check is due (from STRATZ when
  * STRATZ_TOKEN is set, and OpenDota) and opens hero pool cards (see _shared/trends/job.ts).
  * Then builds game feedback rows (player_game_facts, see _shared/feedback/fact.ts) for their
- * recent games. Returns what the run did.
+ * recent games. Last, while the run is still short, retries up to two My Heroes fills that
+ * failed before (due_hero_fills, see _shared/fill/run.ts). Returns what the run did.
  */
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { json } from "../_shared/cors.ts";
@@ -23,6 +24,8 @@ import {
   readNewGames,
 } from "../_shared/feedback/fact.ts";
 import { FINDINGS_VERSION, gameFindings, type Names } from "../_shared/feedback/findings.ts";
+import { RETRY_FILLS_PER_RUN, retryDueFills, runFill } from "../_shared/fill/run.ts";
+import { fillReadDeps, fillStore } from "../_shared/fill/supabase.ts";
 import { buildPlayerFeedback, WINDOW_DAYS } from "../_shared/feedback/profile.ts";
 import { type GameSummary, summarizeGame, SUMMARY_VERSION } from "../_shared/feedback/summary.ts";
 import { fetchMatch, fetchRecentMatches, requestParse } from "../_shared/match.ts";
@@ -49,6 +52,9 @@ const OPENDOTA = "https://api.opendota.com/api";
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Saved games whose findings are worked out again per run; no OpenDota calls, so cheap. */
 const STALE_FINDINGS_PER_RUN = 500;
+/** Fill retries start only while the run is younger than this, and all of them stop at the deadline. */
+const RETRY_FILLS_BEFORE_MS = 60_000;
+const RETRY_FILLS_DEADLINE_MS = 45_000;
 /** Hero unit keys ("npc_dota_hero_lina") rarely change: read them once a day per worker. */
 let heroKeys: { ids: Record<string, number>; at: number } | null = null;
 
@@ -61,6 +67,7 @@ Deno.serve(async (req) => {
   }
   if (!(await sameSecret(req.headers.get("X-Job-Secret") ?? "", secret))) return json({ error: "Forbidden" }, 401);
 
+  const startedAt = Date.now();
   const snapshot = await loadSnapshot();
   const names = heroNamesOf(snapshot);
   const items = itemCostsOf(snapshot);
@@ -96,8 +103,27 @@ Deno.serve(async (req) => {
     console.error("The trends run failed", err);
     return null;
   });
-  return result ? json(result) : json({ error: "The run failed" }, 500);
+  const fills = Date.now() - startedAt < RETRY_FILLS_BEFORE_MS ? await retryFills() : null;
+  return result ? json({ ...result, fills }) : json({ error: "The run failed" }, 500);
 });
+
+/** Retries My Heroes fills whose last try failed, so a STRATZ or OpenDota outage heals itself. */
+async function retryFills() {
+  const endAt = Date.now() + RETRY_FILLS_DEADLINE_MS;
+  const deadline = AbortSignal.timeout(RETRY_FILLS_DEADLINE_MS);
+  const { data, error } = await admin.rpc("due_hero_fills", { max_fills: RETRY_FILLS_PER_RUN });
+  if (error) {
+    console.error("Reading due fills failed", error);
+    return null;
+  }
+  const store = fillStore(admin);
+  return await retryDueFills(
+    data ?? [],
+    (userId) => runFill(userId, "job", store, fillReadDeps(admin, deadline)),
+    () => endAt - Date.now(),
+    (message, err) => console.error(message, err),
+  );
+}
 
 /** fetch for OpenDota: HTTP 429 stops the run instead of counting against a player. */
 async function openDota(input: string | URL | Request, init?: RequestInit): Promise<Response> {
