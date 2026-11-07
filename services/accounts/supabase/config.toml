@@ -175,7 +175,7 @@ enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project. Off: Steam is the only way in, and steam-login makes
 # accounts with the admin API, which ignores this. Production matches it (Authentication > Sign In / Providers >
-# Allow new users to sign up). Not [auth.email] enable_signup below: that turns the Email provider off, and
+# Allow new users to sign up). Not [auth.email] enabled below: that turns the Email provider off, and
 # Steam sign-in finishes with a one-time email-type token.
 enable_signup = false
 # Allow/disallow anonymous sign-ins to your project.
@@ -221,8 +221,8 @@ web3 = 30
 # secret = ""
 
 [auth.email]
-# Allow/disallow new user signups via email to your project.
-enable_signup = true
+# Turn the Email provider on or off (CLI v3 name for enable_signup).
+enabled = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
@@ -254,8 +254,8 @@ otp_expiry = 3600
 # content_path = "./supabase/templates/password_changed_notification.html"
 
 [auth.sms]
-# Allow/disallow new user signups via SMS to your project.
-enable_signup = false
+# Turn the SMS provider on or off (CLI v3 name for enable_signup).
+enabled = false
 # If enabled, users need to confirm their phone number before signing in.
 enable_confirmations = false
 # Template for sending OTP to users
