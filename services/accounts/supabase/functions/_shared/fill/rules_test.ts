@@ -120,6 +120,14 @@ Deno.test("positions under 10% of games or 15 games are not the player's", () =>
   assertEquals(result.positions, [2]);
 });
 
+Deno.test("a position with 50 games counts even under 10% of games", () => {
+  const result = fillHeroes({
+    games: [...filler(2, 600), ...filler(5, 50), ...filler(3, 49)],
+    nowS: NOW_S,
+  });
+  assertEquals(result.positions, [2, 5]);
+});
+
 Deno.test("removed heroes and positions stay out", () => {
   const input = [...filler(1, 100), ...filler(5, 100), ...games(MEDUSA, 1, 30, 15, 10), ...games(DAZZLE, 5, 30, 15, 5)];
   const result = fillHeroes({ games: input, nowS: NOW_S, removed: new Set([`${MEDUSA}:1`, "0:5"]) });

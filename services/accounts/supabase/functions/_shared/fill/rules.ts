@@ -14,6 +14,8 @@ export const RECENT_DAYS = 90;
 /** A position is the player's from this share of their positioned games and this many games. */
 export const POSITION_SHARE = 0.1;
 export const POSITION_MIN_GAMES = 15;
+/** Or from this many games whatever the share, so a busy player's second support role counts (Can, 2026-11-07). */
+export const POSITION_ALWAYS_GAMES = 50;
 /** With no position over the bar, the most played one counts from this many games. */
 export const POSITION_FALLBACK_MIN_GAMES = 5;
 /** Fewer positioned games than this fill nothing. */
@@ -130,7 +132,10 @@ export function fillHeroes({ games, nowS, removed = new Set() }: FillInput): Fil
 }
 
 function playerPositions(byPosition: Record<Position, number>, total: number): Position[] {
-  const mine = POSITIONS.filter((p) => byPosition[p] >= POSITION_MIN_GAMES && byPosition[p] / total >= POSITION_SHARE);
+  const mine = POSITIONS.filter((p) =>
+    byPosition[p] >= POSITION_ALWAYS_GAMES ||
+    (byPosition[p] >= POSITION_MIN_GAMES && byPosition[p] / total >= POSITION_SHARE)
+  );
   if (mine.length > 0) return mine;
   const top = [...POSITIONS].sort((a, b) => byPosition[b] - byPosition[a])[0];
   return top && byPosition[top] >= POSITION_FALLBACK_MIN_GAMES ? [top] : [];
