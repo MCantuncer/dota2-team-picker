@@ -860,6 +860,16 @@ isOneToOne: false
 "add_draft_action":
 { Args: { "action": string,"draft": string,"hero": number,"pos"?: number }; Returns: undefined
                            },
+"admin_newest_players":
+{ Args: { "before_at"?: string,"before_id"?: string,"max_rows"?: number }; Returns: {
+              "avatar_url": string,"display_name": string,"hero_count": number,"joined_at": string,"rank_tier": number,"steam_id": string,"user_id": string
+            }[]
+                           },
+"admin_signup_stats":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "first_day": string,"last_7_days": number,"per_day": (number)[],"today": number,"total": number
+            }[]
+                           },
 "answer_captain_request":
 { Args: { "accept": boolean }; Returns: undefined
                            },
