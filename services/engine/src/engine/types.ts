@@ -219,6 +219,30 @@ export interface SkillBuildSlice {
     level: number;
     sides?: { id: number; games: number; wins: number }[];
   }[];
+  /**
+   * What these guide games (all wins) bought when a key item was late, by key item id (see item-paths.ts).
+   * `{}` when no key item passes; missing in slices saved before it existed, which makes the slice due again.
+   */
+  itemPaths?: Record<string, KeyPaths>;
+}
+
+/** One step of a late path: the item, its minute, and how many late games bought it next. */
+export type PathStep = [itemId: number, minute: number, games: number];
+
+/** One key item's split of the guide games still running at its late minute (see item-paths.ts). */
+export interface KeyPaths {
+  /** The minute after which the key item counts as late. */
+  late: number;
+  /** Games still running at `late`, and how many of them had the key item by then. */
+  running: number;
+  onTime: number;
+  /** The late group's path, when the group has enough games and a first step passes. */
+  path?: {
+    games: number;
+    steps: PathStep[];
+    /** Late games that bought the key item after `late`. */
+    keyLater: number;
+  };
 }
 
 export interface ItemInfo {

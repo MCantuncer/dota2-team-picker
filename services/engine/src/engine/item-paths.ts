@@ -9,30 +9,14 @@
  */
 import { CORE_ITEMS, coreTimingItems, isUpgradedBoots, KEY_ITEM_MIN_COST } from "./item-build";
 import { bigItems, type IsBig } from "./item-odds";
-import type { ItemInfo, ItemTimingSlice } from "./types";
+import type { ItemInfo, ItemTimingSlice, KeyPaths, PathStep } from "./types";
+
+export type { KeyPaths, PathStep } from "./types";
 
 /** One guide game's purchases: [item id, seconds], and its length in seconds. */
 export interface PathGame {
   duration: number;
   items: [number, number][];
-}
-
-/** One step of the late path: the item, its minute, and how many late games bought it next. */
-export type PathStep = [itemId: number, minute: number, games: number];
-
-export interface KeyPaths {
-  /** The minute after which the key item counts as late. */
-  late: number;
-  /** Games still running at `late`, and how many of them had the key item by then. */
-  running: number;
-  onTime: number;
-  /** The late group's path, when the group has MIN_GROUP games and a first step passes. */
-  path?: {
-    games: number;
-    steps: PathStep[];
-    /** Late games that bought the key item after `late`. */
-    keyLater: number;
-  };
 }
 
 /** The late group needs this many games for a path. */

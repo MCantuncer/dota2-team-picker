@@ -6,8 +6,14 @@
  * About 310 hero and position slices take about 52 list queries and 930 match queries a week, plus one
  * constants query per run, so the refresh is spread over runs: each run does at most `maxQueries` and
  * the oldest slices go first. Each slice is saved as it finishes, so a cut keeps the work done.
+ *
+ * The same match answers carry the guide player's item purchases and the game's length, for what high-rank
+ * winners bought when a key item was late (item-paths.ts). No extra queries.
  */
-import type { Position, Snapshot } from "../engine/types";
+import { bigItemCheck } from "../engine/item-odds";
+import { itemPaths, type PathGame } from "../engine/item-paths";
+import { chooseTimingSlice } from "../engine/item-timing-slice";
+import type { KeyPaths, Position, Snapshot } from "../engine/types";
 import { toSkillSlice, type LevelRow, type SliceTotals, type TalentRow } from "./skill-build-choice";
 import type { GuidePlayer } from "./skill-sequence";
 import { startRequests } from "./item-starts";
@@ -36,6 +42,8 @@ export const GUIDES_PER_SLICE = GUIDES_PER_LIST * GUIDE_LISTS;
 export const SLICES_PER_LIST_QUERY = 6;
 /** Match aliases per query. */
 export const MATCHES_PER_QUERY = 20;
+/** Rank bracket of the item timings the late paths' key items come from: Immortal, as guide players are. */
+const PATHS_BRACKET = 8;
 /** Queries per refresh run, so one run stays well under the STRATZ hourly limit. */
 export const DEFAULT_MAX_QUERIES = 100;
 
@@ -49,12 +57,12 @@ const POSITION_NAMES = ["POSITION_1", "POSITION_2", "POSITION_3", "POSITION_4", 
 
 // ---------------------------------------------------------------- what to refresh
 
-/** Slices that are missing, older than a week or from an older patch, oldest first. */
+/** Slices that are missing, older than a week, from an older patch or saved before item paths, oldest first. */
 export function skillRequests(snapshot: Snapshot, versionId: number, now: Date): SkillRequest[] {
   if (!snapshot.positions) return [];
   const age = (r: SkillRequest) => {
     const slice = snapshot.skillBuilds?.[r.heroId]?.[r.position];
-    if (!slice || slice.gameVersionId !== versionId) return Infinity;
+    if (!slice || slice.gameVersionId !== versionId || !slice.itemPaths) return Infinity;
     return now.getTime() - Date.parse(slice.at);
   };
   return startRequests(snapshot.positions)
@@ -114,7 +122,7 @@ export interface GuideRef {
   steamAccountId: number;
 }
 
-/** One alias per match: m0, m1, ... with the game version and the guide player. */
+/** One alias per match: m0, m1, ... with the game version, its length and the guide player with their purchases. */
 export function matchesQuery(matches: GuideRef[]): string {
   if (matches.length === 0 || matches.length > MATCHES_PER_QUERY) {
     throw new Error(`Expected 1 to ${MATCHES_PER_QUERY} matches, got ${matches.length}`);
@@ -122,7 +130,7 @@ export function matchesQuery(matches: GuideRef[]): string {
   const lines = matches.map((m, i) => {
     checkId(m.matchId);
     checkId(m.steamAccountId);
-    return `  m${i}: match(id: ${m.matchId}) { gameVersionId players(steamAccountId: ${m.steamAccountId}) { heroId position level isVictory abilities { abilityId time } } }`;
+    return `  m${i}: match(id: ${m.matchId}) { gameVersionId durationSeconds players(steamAccountId: ${m.steamAccountId}) { heroId position level isVictory abilities { abilityId time } stats { itemPurchases { time itemId } } } }`;
   });
   return `{\n${lines.join("\n")}\n}`;
 }
@@ -196,13 +204,31 @@ export function toGuidePlayer(answer: unknown, heroId: number): GuidePlayer | nu
   };
 }
 
+/**
+ * The guide player's purchases and the game's length from one match answer, for the late paths. Null when
+ * either is missing: the game still counts for the skill build. A purchase without its id or time is left out.
+ */
+export function toPathGame(answer: unknown): PathGame | null {
+  // Checked field by field below.
+  const match = answer as { durationSeconds?: unknown; players?: unknown } | null;
+  if (!match || !isNumber(match.durationSeconds) || !Array.isArray(match.players)) return null;
+  // Checked field by field below.
+  const stats = (match.players[0] as { stats?: { itemPurchases?: unknown } } | undefined)?.stats;
+  if (!Array.isArray(stats?.itemPurchases)) return null;
+  const items = stats.itemPurchases
+    .filter((p): p is { itemId: number; time: number } => isNumber(p?.itemId) && isNumber(p?.time))
+    .sort((a, b) => a.time - b.time)
+    .map((p): [number, number] => [p.itemId, p.time]);
+  return { duration: match.durationSeconds, items };
+}
+
 // ---------------------------------------------------------------- refresh
 
 type Post = (query: string) => Promise<Record<string, unknown>>;
 
 /**
  * Refreshes the oldest skill build slices, at most `maxQueries` STRATZ queries, writing each slice as
- * it finishes so a cut keeps the work done. Returns the counts for the log.
+ * it finishes so a cut keeps the work done. Returns the counts and a line per slice's late paths for the log.
  */
 export async function fetchSkillBuilds(snapshot: Snapshot, post: Post, now: Date, maxQueries = DEFAULT_MAX_QUERIES) {
   if (!snapshot.patch) throw new Error("Skill builds need the patch first");
@@ -220,6 +246,10 @@ export async function fetchSkillBuilds(snapshot: Snapshot, post: Post, now: Date
   const opponents = mostPicked(snapshot);
   let done = 0;
   let matchQueries = 0;
+  let largestMatchAnswer = 0;
+  const paths: string[] = [];
+  const items = snapshot.items ?? {};
+  const isBig = bigItemCheck(items);
   for (let i = 0; i < due.length; i += SLICES_PER_LIST_QUERY) {
     const batch = due.slice(i, i + SLICES_PER_LIST_QUERY);
     // Each slice needs about GUIDES_PER_SLICE / MATCHES_PER_QUERY match queries after its list query.
@@ -241,15 +271,17 @@ export async function fetchSkillBuilds(snapshot: Snapshot, post: Post, now: Date
         slice: j,
       }));
     });
-    const players = new Map<number, GuidePlayer[]>();
+    const players = new Map<number, { player: GuidePlayer; path: PathGame | null }[]>();
     for (let k = 0; k < wanted.length; k += MATCHES_PER_QUERY) {
       const chunk = wanted.slice(k, k + MATCHES_PER_QUERY);
       const answer = await post(matchesQuery(chunk));
       queries++;
       matchQueries++;
+      largestMatchAnswer = Math.max(largestMatchAnswer, JSON.stringify(answer).length);
       chunk.forEach((m, j) => {
         const player = toGuidePlayer(answer[`m${j}`], m.heroId);
-        if (player) players.set(m.slice, [...(players.get(m.slice) ?? []), player]);
+        const entry = player && { player, path: toPathGame(answer[`m${j}`]) };
+        if (entry) players.set(m.slice, [...(players.get(m.slice) ?? []), entry]);
       });
     }
 
@@ -262,10 +294,36 @@ export async function fetchSkillBuilds(snapshot: Snapshot, post: Post, now: Date
       const hero = snapshot.heroAbilities?.[r.heroId];
       if (!hero) return;
       hero.talents = fillMissingTalent(hero, totals.talents, names);
-      const slice = toSkillSlice(players.get(j) ?? [], r.position, totals, hero, versionId, now);
+      const games = players.get(j) ?? [];
+      const slice = toSkillSlice(games.map((g) => g.player), r.position, totals, hero, versionId, now);
+      // The same games the build uses (this position and patch), wins only: the paths say "high-rank wins".
+      const wins = games.flatMap(({ player, path }) =>
+        path && player.won === true && player.position === r.position && player.gameVersionId >= versionId ? [path] : [],
+      );
+      const timings = chooseTimingSlice(snapshot, r.heroId, r.position, PATHS_BRACKET)?.slice;
+      slice.itemPaths = itemPaths(wins, timings, items, isBig);
+      paths.push(pathsLine(r, wins.length, slice.itemPaths));
       ((snapshot.skillBuilds ??= {})[r.heroId] ??= {})[r.position] = slice;
       done++;
     });
   }
-  return { done, due: due.length, queries, matchQueries };
+  return { done, due: due.length, queries, matchQueries, largestMatchAnswer, paths };
+}
+
+/** One slice's late paths for the log: each candidate key with its groups, for the coverage check. */
+export function pathsLine(r: SkillRequest, wins: number, paths: Record<string, KeyPaths>): string {
+  const keys = Object.entries(paths).map(([id, k]) => {
+    const late = k.running - k.onTime;
+    const path = k.path ? `path ${k.path.steps.length} steps` : "no path";
+    return `${id} late ${k.late}: ${k.running} running, ${k.onTime} on time, ${late} late, ${path}`;
+  });
+  return `hero ${r.heroId} pos ${r.position}: ${wins} wins with purchases; ${keys.length ? keys.join("; ") : "no key item passes"}`;
+}
+
+/** How many slices have item paths saved, and how many of them have a late path for any key item. */
+export function pathsCoverage(snapshot: Pick<Snapshot, "skillBuilds">): { slices: number; withPath: number } {
+  const slices = Object.values(snapshot.skillBuilds ?? {}).flatMap((byPosition) =>
+    Object.values(byPosition).flatMap((s) => (s?.itemPaths ? [s.itemPaths] : [])),
+  );
+  return { slices: slices.length, withPath: slices.filter((p) => Object.values(p).some((k) => k.path)).length };
 }

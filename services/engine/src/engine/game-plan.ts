@@ -12,7 +12,7 @@ import { isUpgradedBoots, itemBuild, KEY_ITEM_MIN_COST, listNames, type BuildIte
 import { guessEnemyPositions, type PositionFit } from "./positions";
 import type { Engine } from "./score";
 import { traitsOf } from "./traits";
-import { POSITIONS, type AllyPick, type Position, type RankBracket } from "./types";
+import { POSITIONS, type AllyPick, type PathStep, type Position, type RankBracket } from "./types";
 import { draftEdge } from "./win-chance";
 
 /**
@@ -78,6 +78,26 @@ export interface PlayerPlan {
   threatRows: ThreatRow[];
   /** Skill order and talent tree with reasons, when the snapshot has this hero's abilities. */
   skills?: SkillPlan;
+  /** What high-rank wins this patch bought when the key item was late (see itemJourney). */
+  journey?: ItemJourney;
+}
+
+/**
+ * The "If X Is Late" path for a player's key item, from the hero and position's guide games (all wins).
+ * `steps` start where the path leaves the build: steps the build already has before the key item are dropped.
+ */
+export interface ItemJourney {
+  itemId: number;
+  /** The minute after which the key item counts as late; the Story's late line uses it too. */
+  late: number;
+  /** Games still running at `late`, and how many had the key item by then. */
+  running: number;
+  onTime: number;
+  /** The late group: games still running without the key item. */
+  games: number;
+  steps: PathStep[];
+  /** Late games that bought the key item after `late`. */
+  keyLater: number;
 }
 
 export interface GamePlan {
@@ -174,6 +194,28 @@ export function keyItem(engine: Engine, build: ItemBuild | null, heroId: number 
   const blink = startsFights ? build?.core.find(isBlink) : undefined;
   // Boots of Travel costs enough, but it moves a hero; it doesn't win fights.
   return blink ?? build?.core.find((i) => (engine.data.items?.[i.itemId]?.cost ?? 0) >= KEY_ITEM_MIN_COST && !isUpgradedBoots(engine.data.items?.[i.itemId]));
+}
+
+/**
+ * The late path for the key item `keyItem` picks from this build, when the guide games have one. Nothing when
+ * the path's late minute isn't after the build's key minute (a lower rank build can put the key past it), or
+ * when every step is one the build already has before the key item.
+ */
+export function itemJourney(
+  engine: Engine,
+  build: ItemBuild | null,
+  heroId: number,
+  position: Position,
+): ItemJourney | undefined {
+  const key = keyItem(engine, build, heroId, position);
+  if (!key || !build) return undefined;
+  const paths = engine.data.skillBuilds?.[heroId]?.[position]?.itemPaths?.[key.itemId];
+  if (!paths?.path || paths.late <= key.minute) return undefined;
+  const before = new Set(build.core.slice(0, build.core.indexOf(key)).map((i) => i.itemId));
+  const first = paths.path.steps.findIndex(([id]) => !before.has(id));
+  if (first < 0) return undefined;
+  const { games, steps, keyLater } = paths.path;
+  return { itemId: key.itemId, late: paths.late, running: paths.running, onTime: paths.onTime, games, steps: steps.slice(first), keyLater };
 }
 
 function playerJob(
@@ -326,6 +368,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     const answered = typeof matchups === "object" && matchups !== null;
     const games = answered ? (matchups[p.heroId] === undefined ? [] : matchups[p.heroId]) : matchups;
     const skills = skillPlan(engine.data, p.heroId, p.position, input.theirs.map(name), games);
+    const journey = itemJourney(engine, build, p.heroId, p.position);
     const enemies = enemyList(
       build,
       input.theirs.map((id, i) => {
@@ -354,6 +397,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       enemies,
       threatRows: threatRows(enemies),
       ...(skills ? { skills } : {}),
+      ...(journey ? { journey } : {}),
     };
   });
 
@@ -365,11 +409,13 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   const picked = pickFallbacks({
     players: players.map((p) => {
       const item = keyItem(engine, p.build, p.heroId, p.position);
+      // With a journey, the Story's late minute is the map's, so both say the same "late after".
+      const lateMinute = p.journey?.late ?? item?.lateMinute;
       return {
         position: p.position,
         hero: name(p.heroId),
         lane: laneOf(p.heroId).verdict,
-        ...(item ? { keyItem: { name: item.name, lateMinute: item.lateMinute } } : {}),
+        ...(item ? { keyItem: { name: item.name, lateMinute } } : {}),
       };
     }),
     offLaneHard: lanes[2]!.verdict === "hard", // LANES has three entries, the off lane last.
