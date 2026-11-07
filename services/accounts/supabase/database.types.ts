@@ -209,6 +209,26 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"hero_fill_picks": {
+                  Row: {
+                    "filled_at": string,"games": number,"games_needed": number | null,"hero_id": number,"judged_games": number,"kind": string,"last_played": string,"position": number,"strong_games": number,"user_id": string,"wins": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "filled_at"?: string,"games": number,"games_needed"?: number | null,"hero_id": number,"judged_games": number,"kind": string,"last_played": string,"position": number,"strong_games": number,"user_id": string,"wins": number
+                  }
+                  Update: {
+                    "filled_at"?: string,"games"?: number,"games_needed"?: number | null,"hero_id"?: number,"judged_games"?: number,"kind"?: string,"last_played"?: string,"position"?: number,"strong_games"?: number,"user_id"?: string,"wins"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "hero_fill_picks_user_id_position_hero_id_fkey"
+      columns: ["user_id","position","hero_id"]
+isOneToOne: true
+      referencedRelation: "favorite_heroes"
+      referencedColumns: ["user_id","position","hero_id"]
+    }
+                  ]
                 },"invite_sends": {
                   Row: {
                     "email": string,"id": number,"sender_id": string,"sent_at": string,"team_id": string | null
@@ -629,14 +649,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"created_at": string,"display_name": string | null,"friend_code": string,"hero_games": NonNullable<Json>,"hero_stats": NonNullable<Json>,"id": string,"last_active_at": string | null,"pool_suggestions_off": boolean,"rank_tier": number | null,"share_heroes_with_friends": boolean,"steam_id": string | null,"steam_name": string | null,"support_copy": string | null,"support_copy_from": number | null,"synced_at": string | null,"trends_checked_at": string | null,"trends_state": string | null,"updated_at": string,"user_type": string,"rank_bracket": number | null
+                    "avatar_url": string | null,"created_at": string,"display_name": string | null,"friend_code": string,"hero_fill_at": string | null,"hero_fill_games": number | null,"hero_fill_next_at": string | null,"hero_fill_state": string | null,"hero_fill_tries": number,"hero_games": NonNullable<Json>,"hero_stats": NonNullable<Json>,"id": string,"last_active_at": string | null,"pool_suggestions_off": boolean,"rank_tier": number | null,"share_heroes_with_friends": boolean,"steam_id": string | null,"steam_name": string | null,"support_copy": string | null,"support_copy_from": number | null,"synced_at": string | null,"trends_checked_at": string | null,"trends_state": string | null,"updated_at": string,"user_type": string,"rank_bracket": number | null
                   }
                   ComputedFields: "rank_bracket"
                   Insert: {
-                    "avatar_url"?: string | null,"created_at"?: string,"display_name"?: string | null,"friend_code"?: string,"hero_games"?: NonNullable<Json>,"hero_stats"?: NonNullable<Json>,"id": string,"last_active_at"?: string | null,"pool_suggestions_off"?: boolean,"rank_tier"?: number | null,"share_heroes_with_friends"?: boolean,"steam_id"?: string | null,"steam_name"?: string | null,"support_copy"?: string | null,"support_copy_from"?: number | null,"synced_at"?: string | null,"trends_checked_at"?: string | null,"trends_state"?: string | null,"updated_at"?: string,"user_type"?: string
+                    "avatar_url"?: string | null,"created_at"?: string,"display_name"?: string | null,"friend_code"?: string,"hero_fill_at"?: string | null,"hero_fill_games"?: number | null,"hero_fill_next_at"?: string | null,"hero_fill_state"?: string | null,"hero_fill_tries"?: number,"hero_games"?: NonNullable<Json>,"hero_stats"?: NonNullable<Json>,"id": string,"last_active_at"?: string | null,"pool_suggestions_off"?: boolean,"rank_tier"?: number | null,"share_heroes_with_friends"?: boolean,"steam_id"?: string | null,"steam_name"?: string | null,"support_copy"?: string | null,"support_copy_from"?: number | null,"synced_at"?: string | null,"trends_checked_at"?: string | null,"trends_state"?: string | null,"updated_at"?: string,"user_type"?: string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"created_at"?: string,"display_name"?: string | null,"friend_code"?: string,"hero_games"?: NonNullable<Json>,"hero_stats"?: NonNullable<Json>,"id"?: string,"last_active_at"?: string | null,"pool_suggestions_off"?: boolean,"rank_tier"?: number | null,"share_heroes_with_friends"?: boolean,"steam_id"?: string | null,"steam_name"?: string | null,"support_copy"?: string | null,"support_copy_from"?: number | null,"synced_at"?: string | null,"trends_checked_at"?: string | null,"trends_state"?: string | null,"updated_at"?: string,"user_type"?: string
+                    "avatar_url"?: string | null,"created_at"?: string,"display_name"?: string | null,"friend_code"?: string,"hero_fill_at"?: string | null,"hero_fill_games"?: number | null,"hero_fill_next_at"?: string | null,"hero_fill_state"?: string | null,"hero_fill_tries"?: number,"hero_games"?: NonNullable<Json>,"hero_stats"?: NonNullable<Json>,"id"?: string,"last_active_at"?: string | null,"pool_suggestions_off"?: boolean,"rank_tier"?: number | null,"share_heroes_with_friends"?: boolean,"steam_id"?: string | null,"steam_name"?: string | null,"support_copy"?: string | null,"support_copy_from"?: number | null,"synced_at"?: string | null,"trends_checked_at"?: string | null,"trends_state"?: string | null,"updated_at"?: string,"user_type"?: string
                   }
                   Relationships: [
                     
@@ -898,6 +918,9 @@ isOneToOne: false
               "match_id": number,"won": boolean
             }[]
                            },
+"claim_hero_fill":
+{ Args: { "by": string,"player": string }; Returns: boolean
+                           },
 "claim_invite_send":
 { Args: { "address": string,"sender": string,"team": string }; Returns: string
                            },
@@ -940,8 +963,14 @@ isOneToOne: false
               "allies": (number)[],"enemies": (number)[],"id": string,"match_id": number,"my_hero": number,"my_position": number,"party_draft_id": string,"started_at": string,"story_shown": boolean,"won": boolean
             }[]
                            },
+"due_hero_fills":
+{ Args: { "max_fills": number }; Returns: string[]
+                           },
 "end_party_draft":
 { Args: { "draft": string }; Returns: undefined
+                           },
+"fail_hero_fill":
+{ Args: { "player": string }; Returns: string
                            },
 "find_is_due":
 { Args: { "base": string,"checked": string,"max_tries": number,"tries": number }; Returns: boolean
@@ -974,6 +1003,9 @@ isOneToOne: false
 { Args: { "invite": string }; Returns: {
               "accepted": boolean,"captain_name": string,"email": string,"expired": boolean,"team_name": string
             }[]
+                           },
+"hero_fill_backoff":
+{ Args: { "tries": number }; Returns: string
                            },
 "hot_stacks":
 { Args: Record<PropertyKey, never>; Returns: {
@@ -1142,6 +1174,9 @@ isOneToOne: false
                            },
 "save_game_check_in":
 { Args: { "allies": (number)[],"ally_positions": (number)[],"bans": (number)[],"enemies": (number)[],"key": string,"my_hero": number,"my_position": number,"party_draft": string,"shown": (number)[],"story_shown": boolean }; Returns: string
+                           },
+"save_hero_fill":
+{ Args: { "fill_positions": (number)[],"picks": Json,"player": string,"positioned_games": number,"result": string }; Returns: number
                            },
 "save_matchup_guides":
 { Args: { "slices": Json,"version": number }; Returns: number

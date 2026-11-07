@@ -78,8 +78,15 @@ export interface DryRunReport {
   fill: FillResult;
 }
 
-/** Runs the fill rules on one player's games without saving anything. */
-export async function dryRun(userId: string, accountId: number, deps: DryRunDeps): Promise<DryRunReport> {
+/** One player's games of the look-back from every source, judged by the fill rules. */
+export interface FillRead {
+  games: TrendGame[];
+  sources: DryRunReport["sources"];
+  fill: FillResult;
+}
+
+/** Reads the player's games from STRATZ, OpenDota and our drafts and runs the fill rules on them. */
+export async function readAndJudge(userId: string, accountId: number, deps: DryRunDeps): Promise<FillRead> {
   const nowS = deps.nowS();
   const stratz = await stratzGames(accountId, nowS, deps);
   const openDota = await openDotaGames(accountId, nowS, deps);
@@ -102,16 +109,26 @@ export async function dryRun(userId: string, accountId: number, deps: DryRunDeps
     nowS,
     removed,
   });
-  const coverage = coverageOf(games);
   return {
-    accountId,
-    lookbackDays: LOOKBACK_DAYS,
+    games,
     sources: {
       stratz: { status: stratz.status, games: stratz.games.length, pages: stratz.pages },
       openDota: { status: openDota.status, games: openDota.matches.length },
       drafts: { status: drafts.status, games: drafts.games.length },
       benchmarks: { cached: benchmarks.cached, fetched: benchmarks.fetched, missing: benchmarks.missing },
     },
+    fill,
+  };
+}
+
+/** Runs the fill rules on one player's games without saving anything. */
+export async function dryRun(userId: string, accountId: number, deps: DryRunDeps): Promise<DryRunReport> {
+  const { games, sources, fill } = await readAndJudge(userId, accountId, deps);
+  const coverage = coverageOf(games);
+  return {
+    accountId,
+    lookbackDays: LOOKBACK_DAYS,
+    sources,
     coverage,
     verdict: coverage.positionedShare >= GO_POSITIONED_SHARE ? "go" : "back_to_can",
     strong: strongCounts(games),
