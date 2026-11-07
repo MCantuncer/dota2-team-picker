@@ -53,8 +53,8 @@ function median(xs: number[]): number {
 }
 
 /**
- * Candidate key items with their late minute, from the items the build takes (coreTimingItems, with one slot
- * for boots): Blink when there, plus the first COSTLY_KEYS by minute that cost at least KEY_ITEM_MIN_COST and
+ * Candidate key items with their late minute, from the items the build can take (coreTimingItems, all
+ * CORE_ITEMS slots, so a build without boots is covered too): Blink when there, plus the first COSTLY_KEYS by minute that cost at least KEY_ITEM_MIN_COST and
  * aren't upgraded boots, as game-plan.ts keyItem picks.
  */
 export function candidateKeys(
@@ -62,7 +62,7 @@ export function candidateKeys(
   items: Record<string, ItemInfo>,
   isBig: IsBig,
 ): { id: number; late: number }[] {
-  const byMinute = [...coreTimingItems(slice, items, CORE_ITEMS - 1)].sort((a, b) => a[1] - b[1]);
+  const byMinute = [...coreTimingItems(slice, items, CORE_ITEMS)].sort((a, b) => a[1] - b[1]);
   const blink = byMinute.filter(([id]) => items[String(id)]?.key === "blink");
   const costly = byMinute
     .filter(([id]) => {
