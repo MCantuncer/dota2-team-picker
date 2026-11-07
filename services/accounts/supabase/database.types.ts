@@ -103,14 +103,14 @@ isOneToOne: false
                   ]
                 },"favorite_heroes": {
                   Row: {
-                    "copied_from": number | null,"created_at": string,"hero_id": number,"position": number,"user_id": string
+                    "copied_from": number | null,"created_at": string,"hero_id": number,"position": number,"top_slot": number | null,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "copied_from"?: number | null,"created_at"?: string,"hero_id": number,"position"?: number,"user_id": string
+                    "copied_from"?: number | null,"created_at"?: string,"hero_id": number,"position"?: number,"top_slot"?: number | null,"user_id": string
                   }
                   Update: {
-                    "copied_from"?: number | null,"created_at"?: string,"hero_id"?: number,"position"?: number,"user_id"?: string
+                    "copied_from"?: number | null,"created_at"?: string,"hero_id"?: number,"position"?: number,"top_slot"?: number | null,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -1211,6 +1211,9 @@ isOneToOne: false
 "set_share_heroes_with_friends":
 { Args: { "is_on": boolean }; Returns: undefined
                            },
+"set_top_hero":
+{ Args: { "hero": number,"hero_position": number,"is_top": boolean,"replace_hero"?: number }; Returns: Json
+                           },
 "skip_check_in":
 { Args: { "check_in": string }; Returns: undefined
                            },
@@ -1273,6 +1276,9 @@ isOneToOne: false
 { Args: { "team": string }; Returns: {
               "avatar_url": string,"created_at": string,"display_name": string,"rank_tier": number,"request_id": string,"user_id": string
             }[]
+                           },
+"top_heroes":
+{ Args: { "hero_position": number,"player": string }; Returns: Json
                            },
 "user_id_by_email":
 { Args: { "address": string }; Returns: string
