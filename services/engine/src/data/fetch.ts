@@ -27,7 +27,7 @@ import { fetchItemStarts } from "./item-starts";
 import { fetchItemTimings, itemTimingsDue } from "./item-timings";
 import { fetchItems, itemsDue } from "./items";
 import { countPickPhases } from "./pick-phase";
-import { fetchSkillBuilds } from "./skill-builds";
+import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
 import { fetchPositions, postStratz } from "./stratz";
 import { applyStratzCounts, fetchStratzCounts } from "./stratz-matchups";
 import { fetchLaneOutcomes, lanesDue, MIN_LANE_GAMES } from "./stratz-lanes";
@@ -177,6 +177,26 @@ export function updateDataHardCounters(snapshot: Snapshot) {
   console.log(`Hard counters from the data: ${found.length} past the line, ${list.length} held for ${HOLD_RUNS} runs.`);
 }
 
+/** Item paths above this many KB gzipped get a warning; they are never dropped for size (two-path plan). */
+const ITEM_PATHS_WARN_KB = 60;
+
+/** Each refreshed slice's late paths, the largest match answer, and the coverage and size of all paths. */
+function logItemPaths(snapshot: Snapshot, counts: { largestMatchAnswer: number; paths: string[] }) {
+  for (const line of counts.paths) console.log(`  Item paths, ${line}`);
+  console.log(`Largest skill build match answer: about ${(counts.largestMatchAnswer / 1024).toFixed(1)} KB.`);
+  // Shaped as the snapshot holds them, hero then position, so the size is what ships.
+  const all = Object.fromEntries(
+    Object.entries(snapshot.skillBuilds ?? {}).map(([hero, byPosition]) => [
+      hero,
+      Object.fromEntries(Object.entries(byPosition).map(([position, s]) => [position, s?.itemPaths])),
+    ]),
+  );
+  const kb = gzipSync(JSON.stringify(all)).length / 1024;
+  const { slices, withPath } = pathsCoverage(snapshot);
+  console.log(`Item paths: ${withPath} of ${slices} slices have a late path, ${kb.toFixed(1)} KB gzipped.`);
+  if (kb > ITEM_PATHS_WARN_KB) console.warn(`::warning::Item paths are ${kb.toFixed(1)} KB gzipped, over ${ITEM_PATHS_WARN_KB} KB.`);
+}
+
 /** Prints games per position and the heroes whose main position STRATZ corrects, as a sanity check. */
 function logPositions(snapshot: Snapshot) {
   const positions = snapshot.positions ?? {};
@@ -301,6 +321,7 @@ async function main() {
       console.log(
         `Skill builds: ${counts.done} of ${counts.due} due slices refreshed in ${counts.queries} queries (${counts.matchQueries} for matches), ${kb} KB gzipped.`,
       );
+      logItemPaths(snapshot, counts);
     } catch (err) {
       // Skill builds are an extra; keep the slices done so far and go on. The next run resumes.
       console.warn(`::warning::${err instanceof Error ? err.message : String(err)}`);

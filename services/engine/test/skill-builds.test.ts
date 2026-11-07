@@ -5,11 +5,14 @@ import {
   listQuery,
   mostPicked,
   matchesQuery,
+  pathsCoverage,
+  pathsLine,
   skillRequests,
   toGuidePlayer,
+  toPathGame,
   validTalentRows,
 } from "../src/data/skill-builds";
-import type { Snapshot } from "../src/engine/types";
+import type { ItemInfo, Snapshot } from "../src/engine/types";
 import { points, Q, SVEN, SVEN_BUILD, TOTALS, W } from "./skill-build-fixture";
 
 describe("queries and answers", () => {
@@ -33,7 +36,10 @@ describe("queries and answers", () => {
     expect(q).toContain("n0: abilityMinLevel(");
     expect(q).toContain("t0: talent(");
     expect(matchesQuery([{ matchId: 5, steamAccountId: 77 }])).toContain(
-      "m0: match(id: 5) { gameVersionId players(steamAccountId: 77) { heroId position level",
+      "m0: match(id: 5) { gameVersionId durationSeconds players(steamAccountId: 77) { heroId position level",
+    );
+    expect(matchesQuery([{ matchId: 5, steamAccountId: 77 }])).toContain(
+      "abilities { abilityId time } stats { itemPurchases { time itemId } } } }",
     );
     expect(() => listQuery([], [])).toThrow();
     expect(() => listQuery([{ heroId: 18, position: 1 }], [0])).toThrow();
@@ -109,6 +115,44 @@ describe("queries and answers", () => {
   });
 });
 
+describe("toPathGame", () => {
+  const answer = (purchases: unknown, durationSeconds: unknown = 2400) => ({
+    gameVersionId: 181,
+    durationSeconds,
+    players: [{ heroId: 42, stats: { itemPurchases: purchases } }],
+  });
+  it("reads the purchases in time order and the game's length", () => {
+    const purchases = [
+      { itemId: 137, time: 1000 },
+      { itemId: 50, time: 480 },
+    ];
+    expect(toPathGame(answer(purchases))).toEqual({
+      duration: 2400,
+      items: [
+        [50, 480],
+        [137, 1000],
+      ],
+    });
+  });
+  it("leaves out a purchase without its id or time, keeping the game", () => {
+    expect(toPathGame(answer([{ itemId: 50, time: 480 }, { itemId: 137 }, null]))?.items).toEqual([[50, 480]]);
+  });
+  it("is null without purchases or the game's length, so the game counts only for the skill build", () => {
+    expect(toPathGame(answer(undefined))).toBeNull();
+    expect(toPathGame(answer([], null))).toBeNull();
+    expect(toPathGame({ gameVersionId: 181, durationSeconds: 2400, players: [{ heroId: 42 }] })).toBeNull();
+    expect(toPathGame(null)).toBeNull();
+  });
+});
+
+describe("pathsLine", () => {
+  it("names each key item's groups, with or without a path", () => {
+    expect(pathsLine({ heroId: 42, position: 1 }, 30, { 137: { late: 18, running: 25, onTime: 20 } })).toBe(
+      "hero 42 pos 1: 30 wins with purchases; 137 late 18: 25 running, 20 on time, 5 late, no path",
+    );
+  });
+});
+
 describe("refresh", () => {
   const now = new Date("2026-11-02T00:00:00Z");
   const snapshot = (): Snapshot =>
@@ -127,6 +171,7 @@ describe("refresh", () => {
           gameVersionId: 181,
           matches: 30,
           talents: [],
+          itemPaths: {},
         },
       },
       70: {
@@ -135,12 +180,14 @@ describe("refresh", () => {
           gameVersionId: 181,
           matches: 30,
           talents: [],
+          itemPaths: {},
         },
         3: {
           at: "2026-11-01T00:00:00Z",
           gameVersionId: 180,
           matches: 30,
           talents: [],
+          itemPaths: {},
         },
       },
     };
@@ -148,12 +195,19 @@ describe("refresh", () => {
       { heroId: 70, position: 3 },
       { heroId: 70, position: 1 },
     ]);
+    // A fresh slice saved before item paths is due, with the missing ones.
+    delete snap.skillBuilds[18]![1]!.itemPaths; // Set above.
+    expect(skillRequests(snap, 181, now)).toEqual([
+      { heroId: 18, position: 1 },
+      { heroId: 70, position: 3 },
+      { heroId: 70, position: 1 },
+    ]);
   });
 
-  it("fetches constants, lists and matches, and writes each slice", async () => {
-    const snap = snapshot();
-    const queries: string[] = [];
-    const post = async (query: string): Promise<Record<string, unknown>> => {
+  /** STRATZ answers: Sven's constants, 25 guides for Sven pos 1, and each match from `match` by its id. */
+  const stratz =
+    (queries: string[], match: (id: number) => unknown) =>
+    async (query: string): Promise<Record<string, unknown>> => {
       queries.push(query);
       if (query.includes("constants")) {
         return {
@@ -211,31 +265,102 @@ describe("refresh", () => {
           },
         };
       }
-      const count = (query.match(/ m\d+:/g) ?? []).length;
-      return Object.fromEntries(
-        [...Array(count)].map((_, i) => [
-          `m${i}`,
-          {
-            gameVersionId: 181,
-            players: [
-              {
-                heroId: 18,
-                position: "POSITION_1",
-                level: 18,
-                abilities: points(SVEN_BUILD).map((abilityId, time) => ({
-                  abilityId,
-                  time,
-                })),
-              },
-            ],
-          },
-        ]),
-      );
+      const ids = [...query.matchAll(/ m\d+: match\(id: (\d+)\)/g)].map((m) => Number(m[1]));
+      return Object.fromEntries(ids.map((id, i) => [`m${i}`, match(id)]));
     };
-    const counts = await fetchSkillBuilds(snap, post, now);
-    expect(counts).toEqual({ done: 1, due: 1, queries: 4, matchQueries: 2 });
+  const svenGame = (extra: Record<string, unknown> = {}, player: Record<string, unknown> = {}) => ({
+    gameVersionId: 181,
+    ...extra,
+    players: [
+      {
+        heroId: 18,
+        position: "POSITION_1",
+        level: 18,
+        abilities: points(SVEN_BUILD).map((abilityId, time) => ({
+          abilityId,
+          time,
+        })),
+        ...player,
+      },
+    ],
+  });
+
+  it("fetches constants, lists and matches, and writes each slice", async () => {
+    const snap = snapshot();
+    const queries: string[] = [];
+    const counts = await fetchSkillBuilds(snap, stratz(queries, () => svenGame()), now);
+    expect(counts).toMatchObject({ done: 1, due: 1, queries: 4, matchQueries: 2 });
+    expect(counts.largestMatchAnswer).toBeGreaterThan(0);
     expect(snap.skillBuilds?.[18]?.[1]?.build?.levels).toEqual(SVEN_BUILD);
     expect(snap.heroAbilities?.[18]?.abilities).toHaveLength(4);
+    // No item data in the snapshot (its refresh failed): the paths stay unset, so the next run tries again.
+    expect(snap.skillBuilds?.[18]?.[1]?.itemPaths).toBeUndefined();
+    expect(counts.paths).toEqual([]);
+  });
+
+  it("saves empty paths when the answers have no purchases, so the slice isn't due again until next week", async () => {
+    const snap = snapshot();
+    snap.items = {};
+    snap.itemTimings = {};
+    const counts = await fetchSkillBuilds(snap, stratz([], () => svenGame()), now);
+    expect(snap.skillBuilds?.[18]?.[1]?.itemPaths).toEqual({});
+    expect(counts.paths).toEqual(["hero 18 pos 1: 0 wins with purchases; no key item passes"]);
+    expect(skillRequests(snap, 181, now)).not.toContainEqual({ heroId: 18, position: 1 });
+  });
+
+  it("saves the late paths from the guide wins' purchases", async () => {
+    const snap = snapshot();
+    const item = (key: string, cost: number): ItemInfo => ({ key, name: key, cost, img: "", components: [] });
+    // 50 Phase, 151 Armlet, 137 Radiance, 116 BKB, 200 to 202 three more big items for a usable slice.
+    snap.items = {
+      50: item("phase_boots", 1500),
+      151: item("armlet", 2500),
+      137: item("radiance", 4700),
+      116: item("black_king_bar", 4050),
+      200: item("assault", 5125),
+      201: item("heart", 5000),
+      202: item("satanic", 5050),
+    };
+    snap.itemTimings = {
+      18: {
+        1: {
+          4: {
+            games: 500,
+            items: [
+              [151, 12, 14],
+              [137, 16, 18],
+              [116, 22, 25],
+              [200, 26, 30],
+              [201, 30, 34],
+              [202, 33, 37],
+            ],
+          },
+        },
+      },
+    };
+    const m = (minute: number) => minute * 60;
+    // Matches 1 to 12: Radiance late (Armlet at 17, Radiance at 28). 13 to 22: Radiance at 16. 23: a loss,
+    // 24: no purchases, 25: another position. Only the 22 wins with purchases at pos 1 count.
+    const match = (id: number) => {
+      const purchases: [number, number][] =
+        id <= 12
+          ? [[151, 17], [137, 28]]
+          : [[137, 16], [116, 25]];
+      const stats = { itemPurchases: purchases.map(([itemId, minute]) => ({ itemId, time: m(minute) })) };
+      if (id === 24) return svenGame({ durationSeconds: m(40) }, { isVictory: true });
+      if (id === 25) return svenGame({ durationSeconds: m(40) }, { isVictory: true, stats, position: "POSITION_3" });
+      return svenGame({ durationSeconds: m(40) }, { isVictory: id !== 23, stats });
+    };
+    const counts = await fetchSkillBuilds(snap, stratz([], match), now);
+    const paths = snap.skillBuilds?.[18]?.[1]?.itemPaths;
+    expect(paths?.[137]).toEqual({
+      late: 18,
+      running: 22,
+      onTime: 10,
+      path: { games: 12, steps: [[151, 17, 12], [137, 28, 12]], keyLater: 12 },
+    });
+    expect(counts.paths[0]).toContain("hero 18 pos 1: 22 wins with purchases; 137 late 18: 22 running, 10 on time, 12 late, path 2 steps");
+    expect(pathsCoverage(snap)).toEqual({ slices: 1, withPath: 1 });
   });
 
   it("stops before a batch that would pass the query budget", async () => {
@@ -262,6 +387,8 @@ describe("refresh", () => {
       due: 1,
       queries: 1,
       matchQueries: 0,
+      largestMatchAnswer: 0,
+      paths: [],
     });
   });
 
