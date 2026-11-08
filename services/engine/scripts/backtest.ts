@@ -15,13 +15,11 @@
  * had. `--snapshot` is then ignored. Both modes also print how well the engine's view of each full
  * draft predicts the winner.
  */
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { addResults, backtest, engineSuggester, metaSuggester, popularSuggester, toMarkdown, type BacktestResult } from "../src/backtest/backtest";
 import { addDraftScores, draftScoreLine, emptyDraftScore, scoreDrafts } from "../src/backtest/draft-score";
-import { copyDays, dailySource, groupByCopy } from "../src/backtest/live";
+import { copyDays, dailySource, scoreByCopy } from "../src/backtest/live";
 import { monthPath, type EvalMatch } from "../src/data/eval-matches";
 import { countPickPhases } from "../src/data/pick-phase";
 import { loadEvalGames, loadHeroData } from "../src/data/eval-store";
@@ -53,30 +51,26 @@ async function live(sources: string[], limit: number) {
   let games = (await Promise.all([...new Set(sources)].map(loadEvalGames))).flat();
   games = games.sort((a, b) => a.startTime - b.startTime).slice(-limit);
   if (games.length === 0) throw new Error(`No games to score from ${sources.join(", ")}`);
-  // Each copy is downloaded once to a temporary folder and read back when its games are scored,
-  // so only one day's hero data is in memory at a time.
-  const dir = mkdtempSync(join(tmpdir(), "hero-data-"));
-  process.on("exit", () => rmSync(dir, { recursive: true, force: true }));
-  const copies: { copy: { day: string; file: string }; builtAt: number }[] = [];
-  for (const day of copyDays(games)) {
-    const snapshot = await loadHeroData(dailySource(day));
-    if (!snapshot) continue;
-    const file = join(dir, `${day}.json`);
-    writeFileSync(file, JSON.stringify(snapshot));
-    copies.push({ copy: { day, file }, builtAt: Date.parse(snapshot.generatedAt) / 1000 });
-  }
   let results: BacktestResult[] | null = null;
   let drafts = emptyDraftScore();
   let scored = 0;
   const used: string[] = [];
-  for (const group of groupByCopy(games, copies)) {
-    const engine = new Engine(JSON.parse(readFileSync(group.copy.file, "utf8")) as Snapshot);
-    const next = scoreAll(engine, group.games);
-    results = results ? results.map((r, i) => addResults(r, next[i]!)) : next;
-    drafts = addDraftScores(drafts, scoreDrafts(engine, group.games));
-    scored += group.games.length;
-    used.push(`${group.copy.day} (${group.games.length})`);
-  }
+  await scoreByCopy(
+    games,
+    copyDays(games),
+    async (day) => {
+      const snapshot = await loadHeroData(dailySource(day));
+      return snapshot ? { copy: { day, snapshot }, builtAt: Date.parse(snapshot.generatedAt) / 1000 } : null;
+    },
+    ({ day, snapshot }, group) => {
+      const engine = new Engine(snapshot);
+      const next = scoreAll(engine, group);
+      results = results ? results.map((r, i) => addResults(r, next[i]!)) : next;
+      drafts = addDraftScores(drafts, scoreDrafts(engine, group));
+      scored += group.length;
+      used.push(`${day} (${group.length})`);
+    },
+  );
   if (!results) throw new Error("No daily hero data was built before these games");
   return [
     toMarkdown(results, scored),

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addDraftScores, draftScoreLine, emptyDraftScore, scoreDrafts } from "../src/backtest/draft-score";
-import { copyDays, dailySource, groupByCopy } from "../src/backtest/live";
+import { copyDays, dailySource, scoreByCopy } from "../src/backtest/live";
 import type { EvalMatch } from "../src/data/eval-matches";
 import { Engine } from "../src/engine/score";
 import type { Position } from "../src/engine/types";
@@ -28,18 +28,41 @@ describe("live backtest copies", () => {
     expect(copyDays([])).toEqual([]);
   });
 
-  it("scores each game with the newest copy built before it started", () => {
-    const copies = [
-      { copy: "nov-2", builtAt: at("2026-11-02T21:00:00Z") },
-      { copy: "nov-1", builtAt: at("2026-11-01T21:00:00Z") },
-    ];
+  it("scores each game with the newest copy built before it started", async () => {
+    const built = { "nov-1": at("2026-11-01T21:00:00Z"), "nov-2": at("2026-11-02T21:00:00Z"), "nov-3": at("2026-11-03T21:00:00Z") };
     const early = game(1, "2026-11-01T10:00:00Z", [], [], true); // Before every copy: left out.
     const morning = game(2, "2026-11-02T08:00:00Z", [], [], true); // The day's copy isn't built yet.
     const night = game(3, "2026-11-02T22:00:00Z", [], [], true);
-    expect(groupByCopy([early, morning, night], copies)).toEqual([
-      { copy: "nov-1", games: [morning] },
-      { copy: "nov-2", games: [night] },
+    const exact = game(4, "2026-11-03T21:00:00Z", [], [], true); // Same second as nov-3: that copy wasn't before it.
+    const late = game(5, "2026-11-05T12:00:00Z", [], [], true);
+    const loaded: string[] = [];
+    const scored: [string, number[]][] = [];
+    await scoreByCopy(
+      [late, night, early, exact, morning],
+      ["nov-1", "missing", "nov-2", "nov-3"],
+      async (day) => {
+        loaded.push(day);
+        return day in built ? { copy: day, builtAt: built[day as keyof typeof built] } : null;
+      },
+      (copy, games) => scored.push([copy, games.map((g) => g.id)]),
+    );
+    expect(loaded).toEqual(["nov-1", "missing", "nov-2", "nov-3"]);
+    expect(scored).toEqual([
+      ["nov-1", [2]],
+      ["nov-2", [3, 4]],
+      ["nov-3", [5]],
     ]);
+  });
+
+  it("skips a copy built before the one it follows", async () => {
+    const scored: [string, number[]][] = [];
+    await scoreByCopy(
+      [game(1, "2026-11-02T22:00:00Z", [], [], true)],
+      ["a", "b"],
+      async (day) => ({ copy: day, builtAt: day === "a" ? at("2026-11-02T21:00:00Z") : at("2026-11-02T20:00:00Z") }),
+      (copy, games) => scored.push([copy, games.map((g) => g.id)]),
+    );
+    expect(scored).toEqual([["a", [1]]]);
   });
 });
 

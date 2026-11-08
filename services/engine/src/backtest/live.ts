@@ -28,17 +28,34 @@ export function copyDays(games: EvalMatch[]): string[] {
 }
 
 /**
- * Each game with the copy to score it with: the newest one built before the game started.
- * `builtAt` is each copy's build time in Unix seconds, in any order. Games older than every copy
- * are left out. Returns one group per copy that scores at least one game, oldest copy first.
+ * Scores each game with the newest copy built before it started, loading the copies of `days`
+ * (oldest first) one at a time and holding at most two, so a month of 5 MB copies never sits in
+ * memory or on disk. `load` returns a copy with its build time in Unix seconds, or null when that
+ * day has none. Games older than every copy are left out. A copy built no later than the one
+ * before it (a late rebuild of an older day) is skipped, since daily copies are built in order.
  */
-export function groupByCopy<T>(games: EvalMatch[], copies: { copy: T; builtAt: number }[]): { copy: T; games: EvalMatch[] }[] {
-  const sorted = [...copies].sort((a, b) => a.builtAt - b.builtAt);
-  const groups = sorted.map((c) => ({ copy: c.copy, games: [] as EvalMatch[] }));
-  for (const game of games) {
-    let at = -1;
-    for (let i = 0; i < sorted.length && sorted[i]!.builtAt < game.startTime; i++) at = i;
-    if (at >= 0) groups[at]!.games.push(game);
+export async function scoreByCopy<T>(
+  games: EvalMatch[],
+  days: string[],
+  load: (day: string) => Promise<{ copy: T; builtAt: number } | null>,
+  score: (copy: T, games: EvalMatch[]) => void,
+): Promise<void> {
+  const sorted = [...games].sort((a, b) => a.startTime - b.startTime);
+  let current: { copy: T; builtAt: number } | null = null;
+  let next = 0;
+  // The games up to `until` belong to the current copy: none newer was built before they started.
+  const flush = (until: number) => {
+    const group: EvalMatch[] = [];
+    for (; next < sorted.length && sorted[next]!.startTime <= until; next++) {
+      if (current && current.builtAt < sorted[next]!.startTime) group.push(sorted[next]!);
+    }
+    if (current && group.length) score(current.copy, group);
+  };
+  for (const day of days) {
+    const copy = await load(day);
+    if (!copy || (current && copy.builtAt <= current.builtAt)) continue;
+    flush(copy.builtAt);
+    current = copy;
   }
-  return groups.filter((g) => g.games.length > 0);
+  flush(Infinity);
 }
