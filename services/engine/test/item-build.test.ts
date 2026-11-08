@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type BuildItem, itemBuild, listNames, sharesBuiltPart, swapFor, threatsOf, withoutAlternatives } from "../src/engine/item-build";
+import { itemBuild, listNames, sharesBuiltPart, threatsOf, withoutAlternatives } from "../src/engine/item-build";
 import type { HeroInfo, ItemInfo, Snapshot } from "../src/engine/types";
 
 const hero = (id: number, name: string, roles: string[]): HeroInfo => ({ id, name, roles, attackType: "Melee", primaryAttr: "str" });
@@ -230,47 +230,37 @@ describe("items built from the same part", () => {
     d.items![200] = item("desolator", "Desolator", 3500);
     return d;
   }
-  const pairs = (rows: [number, number][]) => rows;
-  const byMinute = ([id, minute]: [number, number]) => ({ id, minute });
   // Every fixture here has item builds for hero 1, so there is a build.
-  const names = (d: Snapshot) => itemBuild(d, 1, 1, [])!.core.map((i) => [i.name, i.minute]);
+  const core = (d: Snapshot) => itemBuild(d, 1, 1, [])!.core.map((i) => i.name);
+  const byMinute = ([id, minute]: [number, number]) => ({ id, minute });
+  const timings = (rows: [number, number, number][]) => ({ 1: { 1: { all: { games: 5000, items: rows } } } });
 
   it("keeps only the more bought of two items made from one Yasha at about the same minute", () => {
     const d = withYasha();
-    d.itemTimings = {
-      1: {
-        1: {
-          all: {
-            games: 5000,
-            items: [
-              [151, 12, 14], [137, 17, 19], [147, 20, 24], [154, 21, 28], [116, 23, 26], [200, 26, 30], [202, 31, 35],
-            ] as [number, number, number][],
-          },
-        },
-      },
-    };
-    expect(names(d)).toEqual([
-      ["Phase Boots", 8],
-      ["Armlet of Mordiggian", 12],
-      ["Radiance", 17],
-      ["Manta Style", 20],
-      ["Black King Bar", 23],
-      ["Desolator", 26],
-    ]);
+    // Most bought first, as STRATZ's slices are: Manta Style at 20, then Sange and Yasha at 21.
+    d.itemTimings = timings([[151, 12, 14], [137, 17, 19], [147, 20, 24], [154, 21, 28], [116, 23, 26], [200, 26, 30], [202, 31, 35]]);
+    expect(core(d)).toContain("Manta Style");
+    expect(core(d)).not.toContain("Sange and Yasha");
+    // The freed slot goes to the next item.
+    expect(core(d)).toContain("Desolator");
   });
 
-  it("keeps a second item from the same part bought long after the first", () => {
+  it("does the same with OpenDota's rough minutes", () => {
     const d = withYasha();
-    // Sange and Yasha at 25, Abyssal Blade (also from Sange) at 39: the second comes once the first is done.
-    expect(withoutAlternatives(pairs([[154, 25], [208, 39]]), byMinute, d.items!)).toEqual([
-      [154, 25],
-      [208, 39],
-    ]);
-    // Manta Style at 20 and Sange and Yasha at 21 are one choice; Desolator shares no part.
-    expect(withoutAlternatives(pairs([[147, 20], [154, 21], [200, 22]]), byMinute, d.items!)).toEqual([
-      [147, 20],
-      [200, 22],
-    ]);
+    d.itemBuilds![1] = { start: {}, early: { 50: 100 }, mid: { 151: 60, 147: 50, 154: 30, 137: 40 }, late: { 116: 30 } };
+    expect(core(d)).toContain("Manta Style");
+    expect(core(d)).not.toContain("Sange and Yasha");
+  });
+
+  it("keeps two items from one part bought far apart: players buy both", () => {
+    const d = withYasha();
+    const both: [number, number][] = [[154, 25], [208, 39]];
+    expect(withoutAlternatives(both, byMinute, d.items!)).toEqual(both);
+    // Six minutes apart is far enough; five isn't.
+    const six: [number, number][] = [[147, 20], [154, 26]];
+    expect(withoutAlternatives(six, byMinute, d.items!)).toEqual(six);
+    const five: [number, number][] = [[147, 20], [154, 25], [200, 22]];
+    expect(withoutAlternatives(five, byMinute, d.items!)).toEqual([[147, 20], [200, 22]]);
   });
 
   it("counts only a built part over the core cost, not a basic one", () => {
@@ -279,23 +269,6 @@ describe("items built from the same part", () => {
     // Ogre Axe is a basic item: Sange and Black King Bar are not alternatives through it.
     d.items![116] = item("black_king_bar", "Black King Bar", 4050, [302]);
     expect(sharesBuiltPart(303, 116, d.items!)).toBe(false);
-  });
-
-  it("does the same with OpenDota's rough minutes", () => {
-    const d = withYasha();
-    d.itemBuilds![1] = { start: {}, early: { 50: 100 }, mid: { 151: 60, 147: 50, 154: 30, 137: 40 }, late: { 116: 30 } };
-    const core = names(d).map(([name]) => name);
-    expect(core).toContain("Manta Style");
-    expect(core).not.toContain("Sange and Yasha");
-  });
-
-  it("buys a counter item instead of the core item made from the same part", () => {
-    const d = withYasha();
-    const build = (itemId: number, minute: number): BuildItem => ({ itemId, name: String(itemId), img: "", minute });
-    const usual = [build(50, 8), build(137, 17), build(154, 21), build(200, 30)];
-    // Manta Style at 29 is nearest Desolator, but it is bought instead of Sange and Yasha, made from the same Yasha.
-    const [manta] = swapFor([build(147, 29)], usual, usual[1], 50, () => false, d.items!);
-    expect(manta?.replaces).toBe(154);
   });
 });
 

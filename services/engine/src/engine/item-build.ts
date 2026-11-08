@@ -128,7 +128,9 @@ export const ALTERNATIVE_WINDOW = 6;
 
 /**
  * Whether two items are built from the same big part that is itself built (Yasha in Manta Style and Sange and
- * Yasha): buying one uses up that part, so a player buys the other only with a second one.
+ * Yasha): buying one uses up that part, so a player buys the other only with a second one. The part must cost
+ * CORE_MIN_COST or more, like the items a build lists: Yasha, Sange, Kaya, Soul Booster count, while
+ * Perseverance (1400), shared by Battle Fury, Linken's Sphere and Mage Slayer that players do buy together, doesn't.
  */
 export function sharesBuiltPart(a: number, b: number, items: Record<string, ItemInfo>): boolean {
   const parts = new Set(items[String(a)]?.components ?? []);
@@ -141,7 +143,9 @@ export function sharesBuiltPart(a: number, b: number, items: Record<string, Item
 /**
  * Keeps the first of items that are alternatives to each other: built from the same part (sharesBuiltPart) and
  * bought at about the same minute. Players buy one or the other there, so the build lists the more bought one.
- * Sange and Yasha at 25 and Abyssal Blade at 39 both stay: the second comes once the first is done.
+ * The minutes are what tell the two cases apart: Sange and Yasha at 25 and Abyssal Blade at 39 each need their
+ * own Sange, but come far apart, so players buy both. OpenDota's rough minutes are phase averages, so two items
+ * bought mostly in the same phase always count as about the same minute.
  */
 export function withoutAlternatives<T>(
   mostBoughtFirst: T[],
@@ -390,30 +394,27 @@ export function itemBuild(
     lane: lane.map((i) => ({ ...i, phase: "lane" as const })),
     core: core.map(withCounter),
     ...(stratzOr ? { bootsOr: { ...toItem(String(stratzOr[0]), stratzOr[1]), phase: "lane" as const } } : {}),
-    situational: swapFor(situational, core, firstBig, bootsId, (i) => items[i.itemId]?.key === "blink", items).map(({ added: _, ...i }) => ({ ...i, phase: laterPhase(i), draft: true as const })),
+    situational: swapFor(situational, core, firstBig, bootsId, (i) => items[i.itemId]?.key === "blink").map(({ added: _, ...i }) => ({ ...i, phase: laterPhase(i), draft: true as const })),
   };
 }
 
 /**
- * Each counter item is bought instead of a usual core item: one built from the same part when there is one,
- * else the one nearest its minute that answers nothing, and each usual item at most once. Never the boots, the first big item or a Blink Dagger,
+ * Each counter item is bought instead of a usual core item: the one nearest its minute that answers
+ * nothing, and each usual item at most once. Never the boots, the first big item or a Blink Dagger,
  * which starts an initiator's fights. An item few players of the hero buy is added, not swapped in: its
  * minute is a guess, so it must not push out an item players really buy.
  */
-export function swapFor<T extends BuildItem & { added?: true }>(
+function swapFor<T extends BuildItem & { added?: true }>(
   situational: T[],
   core: BuildItem[],
   firstBig: BuildItem | undefined,
   bootsId: number | undefined,
   isBlink: (i: BuildItem) => boolean,
-  items: Record<string, ItemInfo>,
 ): T[] {
   const free = core.filter((c) => c !== firstBig && c.itemId !== bootsId && !c.reason && !isBlink(c));
   return situational.map((s) => {
     if (s.added) return s;
-    // An item built from the same part as a core item is bought instead of that one (Manta Style for Sange and Yasha).
-    const alternative = free.find((c) => sharesBuiltPart(c.itemId, s.itemId, items));
-    const nearest = alternative ?? [...free].sort((a, b) => Math.abs(a.minute - s.minute) - Math.abs(b.minute - s.minute))[0];
+    const nearest = [...free].sort((a, b) => Math.abs(a.minute - s.minute) - Math.abs(b.minute - s.minute))[0];
     if (!nearest) return s;
     free.splice(free.indexOf(nearest), 1);
     return { ...s, replaces: nearest.itemId };
