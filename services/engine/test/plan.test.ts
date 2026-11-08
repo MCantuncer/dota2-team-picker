@@ -31,8 +31,8 @@ describe("planTeam", () => {
     const top = plan({ favorites: [2, 3], top: [3] }, [5]);
     expect(top.slots[1]!.name).toBe("Mid Three");
     expect(top.score - fav.score).toBeCloseTo(2.5);
-    expect(top.slots[1]!.reasons).toContain("One of the player's Top 3");
-    // A hero outside the pool gets nothing, and a Top 3 hero still loses to a clear counter edge.
+    expect(top.slots[1]!.reasons).toContain("One of the player's Top 5");
+    // A hero outside the pool gets nothing, and a Top 5 hero still loses to a clear counter edge.
     expect(plan({ top: [2] })).toEqual(plan({}));
     expect(plan({ favorites: [2, 3], top: [2] }, [5]).slots[1]!.name).toBe("Mid Three");
   });

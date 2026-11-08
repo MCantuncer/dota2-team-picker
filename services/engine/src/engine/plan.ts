@@ -21,7 +21,7 @@ export interface PlanSlot {
   playerId?: string;
   /** The player's favorite heroes for this position. Planned first. */
   favorites?: number[];
-  /** The player's Top 3 for this position. Only heroes also in `favorites` count. */
+  /** The player's Top 5 for this position. Only heroes also in `favorites` count. */
   top?: number[];
   /** The player's own record per hero id, from their Steam match history. */
   personal?: Record<number, GamesWins>;
@@ -317,7 +317,7 @@ function rate(
   if (inPool) reasons.push({ text: "From the player's hero pool", value: WEIGHTS.inPool });
   if (inPool && slot.top?.includes(hero.id)) {
     comfort += WEIGHTS.top;
-    reasons.push({ text: "One of the player's Top 3", value: WEIGHTS.top });
+    reasons.push({ text: "One of the player's Top 5", value: WEIGHTS.top });
   }
   const mine = slot.personal?.[hero.id];
   if (mine && mine.games > 0) {
