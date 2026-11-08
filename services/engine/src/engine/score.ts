@@ -97,6 +97,21 @@ const SUPPORT_LANE_SHARE = 0.5;
 /** Your lane partner's position, for each position. */
 const LANE_PARTNER: Record<Position, Position | undefined> = { 1: 5, 2: undefined, 3: 4, 4: 3, 5: 1 };
 
+/** A matchup or pairing smaller than this, in points, is never named on a card. */
+const MATCHUP_NAME_MIN = 0.5;
+/**
+ * A matchup or pairing is named on a card ("Beats Tinker", "Works with Lich") only when it is above
+ * this many standard errors: 1.645 is the one-sided 95% line, so a named one is real, not noise.
+ * Smaller ones still count in the score, shrunk toward 0 by their few games.
+ */
+export const MATCHUP_NAME_Z = 1.645;
+
+/** 1 for a matchup worth naming as won, -1 as lost, 0 when it is within noise or too small. */
+export function clearMatchup({ edge, error }: { edge: number; error: number }): -1 | 0 | 1 {
+  if (Math.abs(edge) < Math.max(MATCHUP_NAME_MIN, MATCHUP_NAME_Z * error)) return 0;
+  return edge > 0 ? 1 : -1;
+}
+
 /** Heroes played in a position less often than this are not suggested for it. */
 const MIN_POSITION_FIT = 0.15;
 /** A position counts toward flexibility when the hero plays it at least this often. */
@@ -304,19 +319,23 @@ export class Engine {
   /**
    * Counter points against each enemy; likely lane opponents (from `laneChances`) count extra.
    * A hard counter on the enemy team costs at least its listed gap, so the match data and the
-   * hand-checked list are never added up twice.
+   * hand-checked list are never added up twice. `error` is the edge's standard error, weighted
+   * the same way; 0 for a listed hard counter, which is checked rather than measured.
    */
   counterEdges(
     id: number,
     enemies: number[],
     laneChance: number[],
     bracket?: RankBracket,
-  ): { enemy: number; edge: number; lane: boolean }[] {
+  ): { enemy: number; edge: number; error: number; lane: boolean }[] {
     const hard = this.hardCounters.get(id) ?? [];
     return enemies.map((enemy, i) => {
-      const edge = this.matchupEdge(id, enemy, bracket) * (1 + WEIGHTS.laneOpponent * laneChance[i]!);
+      const weight = 1 + WEIGHTS.laneOpponent * laneChance[i]!;
+      const edge = this.matchupEdge(id, enemy, bracket) * weight;
       const gap = hard.find((hc) => hc.counter === enemy)?.gap;
-      return { enemy, edge: gap === undefined ? edge : Math.min(edge, -gap), lane: laneChance[i]! > 0.5 };
+      const lane = laneChance[i]! > 0.5;
+      if (gap !== undefined && -gap < edge) return { enemy, edge: -gap, error: 0, lane };
+      return { enemy, edge, error: this.matchupError(id, enemy) * weight, lane };
     });
   }
 
@@ -361,19 +380,21 @@ export class Engine {
       const counter = edges.reduce((s, x) => s + x.edge, 0);
       const named = (xs: typeof edges) =>
         namedPoints(xs.map((x) => ({ name: this.hero(x.enemy).name, value: x.edge, note: this.matchupNote(hero.id, x.enemy, x.lane) })));
-      const good = edges.filter((x) => x.edge >= 0.5);
-      const bad = edges.filter((x) => x.edge <= -0.5);
+      const good = edges.filter((x) => clearMatchup(x) > 0);
+      const bad = edges.filter((x) => clearMatchup(x) < 0);
       if (good.length) reasons.push({ text: `Beats ${named(good)}`, value: counter, kind: "draft" });
       if (bad.length) warnings.push({ text: `Loses to ${named(bad)}`, value: -Math.min(...bad.map((x) => x.edge)), matchup: true });
 
       // Synergy with the allies already picked; the lane partner counts extra.
       const synergies = input.allies.map(({ heroId: a, position }) => {
         const isPartner = partner !== undefined && position === partner;
-        const edge = this.synergyEdge(hero.id, a, input.rankBracket) * (isPartner ? 1 + WEIGHTS.lanePartner : 1);
-        return { name: this.hero(a).name, value: edge, note: isPartner ? "your lane partner" : undefined };
+        const weight = isPartner ? 1 + WEIGHTS.lanePartner : 1;
+        const edge = this.synergyEdge(hero.id, a, input.rankBracket) * weight;
+        const error = this.synergyError(hero.id, a) * weight;
+        return { name: this.hero(a).name, value: edge, error, note: isPartner ? "your lane partner" : undefined };
       });
       const synergy = synergies.reduce((s, x) => s + x.value, 0);
-      const friends = synergies.filter((x) => x.value >= 0.5);
+      const friends = synergies.filter((x) => clearMatchup({ edge: x.value, error: x.error }) > 0);
       if (friends.length) reasons.push({ text: `Works with ${namedPoints(friends)}`, value: synergy, kind: "draft" });
 
       // Meta: the hero's win rate at the user's rank, and where that puts it for the position.
