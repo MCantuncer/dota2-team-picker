@@ -123,19 +123,57 @@ export function isCoreItem(item: ItemInfo | undefined): boolean {
   return BOOTS.has(item.key) || item.key === "aghanims_shard" || item.cost >= CORE_MIN_COST;
 }
 
+/** Two items built from the same part and bought within this many minutes of each other are one choice. */
+export const ALTERNATIVE_WINDOW = 6;
+
+/**
+ * Whether two items are built from the same big part that is itself built (Yasha in Manta Style and Sange and
+ * Yasha): buying one uses up that part, so a player buys the other only with a second one.
+ */
+export function sharesBuiltPart(a: number, b: number, items: Record<string, ItemInfo>): boolean {
+  const parts = new Set(items[String(a)]?.components ?? []);
+  return (items[String(b)]?.components ?? []).some((id) => {
+    const part = items[String(id)];
+    return parts.has(id) && !!part && part.components.length > 0 && part.cost >= CORE_MIN_COST;
+  });
+}
+
+/**
+ * Keeps the first of items that are alternatives to each other: built from the same part (sharesBuiltPart) and
+ * bought at about the same minute. Players buy one or the other there, so the build lists the more bought one.
+ * Sange and Yasha at 25 and Abyssal Blade at 39 both stay: the second comes once the first is done.
+ */
+export function withoutAlternatives<T>(
+  mostBoughtFirst: T[],
+  of: (t: T) => { id: number; minute: number },
+  items: Record<string, ItemInfo>,
+): T[] {
+  const kept: T[] = [];
+  for (const t of mostBoughtFirst) {
+    const { id, minute } = of(t);
+    const taken = kept.some((k) => {
+      const other = of(k);
+      return Math.abs(other.minute - minute) < ALTERNATIVE_WINDOW && sharesBuiltPart(other.id, id, items);
+    });
+    if (!taken) kept.push(t);
+  }
+  return kept;
+}
+
 /**
  * The slice's core items past boots, most bought first, as the build takes them: finished items (no parts of
- * another item in the slice), big, not boots, at most `slots`. Shared with item-paths.ts so its key items are
- * the ones game-plan.ts keyItem can pick.
+ * another item in the slice), big, not boots, no alternative to a more bought one (withoutAlternatives), at most
+ * `slots`. Shared with item-paths.ts so its key items are the ones game-plan.ts keyItem can pick.
  */
 export function coreTimingItems(
   slice: ItemTimingSlice,
   items: Record<string, ItemInfo>,
   slots: number,
 ): ItemTimingSlice["items"] {
-  return finishedItems(slice, items)
-    .filter(([id]) => isCoreItem(items[String(id)]) && !BOOTS.has(items[String(id)]?.key ?? ""))
-    .slice(0, slots);
+  const big = finishedItems(slice, items).filter(
+    ([id]) => isCoreItem(items[String(id)]) && !BOOTS.has(items[String(id)]?.key ?? ""),
+  );
+  return withoutAlternatives(big, ([id, minute]) => ({ id, minute }), items).slice(0, slots);
 }
 
 /** Enemy heroes named in one reason, those with the most matching threats first. */
@@ -271,8 +309,11 @@ export function itemBuild(
       ].sort((a, b) => a.minute - b.minute)
     : [
         ...(boots ? [toItem(boots, bootsMinute)] : []),
-        ...candidates
-          .filter(([id]) => isBig(id) && !isBoots(id))
+        ...withoutAlternatives(
+          candidates.filter(([id]) => isBig(id) && !isBoots(id)),
+          ([id, b]) => ({ id: Number(id), minute: b.minute }),
+          items,
+        )
           .slice(0, CORE_ITEMS - (boots ? 1 : 0))
           .map(([id, b]) => toItem(id, b.minute)),
       ].sort((a, b) => a.minute - b.minute);
@@ -349,27 +390,30 @@ export function itemBuild(
     lane: lane.map((i) => ({ ...i, phase: "lane" as const })),
     core: core.map(withCounter),
     ...(stratzOr ? { bootsOr: { ...toItem(String(stratzOr[0]), stratzOr[1]), phase: "lane" as const } } : {}),
-    situational: swapFor(situational, core, firstBig, bootsId, (i) => items[i.itemId]?.key === "blink").map(({ added: _, ...i }) => ({ ...i, phase: laterPhase(i), draft: true as const })),
+    situational: swapFor(situational, core, firstBig, bootsId, (i) => items[i.itemId]?.key === "blink", items).map(({ added: _, ...i }) => ({ ...i, phase: laterPhase(i), draft: true as const })),
   };
 }
 
 /**
- * Each counter item is bought instead of a usual core item: the one nearest its minute that answers
- * nothing, and each usual item at most once. Never the boots, the first big item or a Blink Dagger,
+ * Each counter item is bought instead of a usual core item: one built from the same part when there is one,
+ * else the one nearest its minute that answers nothing, and each usual item at most once. Never the boots, the first big item or a Blink Dagger,
  * which starts an initiator's fights. An item few players of the hero buy is added, not swapped in: its
  * minute is a guess, so it must not push out an item players really buy.
  */
-function swapFor<T extends BuildItem & { added?: true }>(
+export function swapFor<T extends BuildItem & { added?: true }>(
   situational: T[],
   core: BuildItem[],
   firstBig: BuildItem | undefined,
   bootsId: number | undefined,
   isBlink: (i: BuildItem) => boolean,
+  items: Record<string, ItemInfo>,
 ): T[] {
   const free = core.filter((c) => c !== firstBig && c.itemId !== bootsId && !c.reason && !isBlink(c));
   return situational.map((s) => {
     if (s.added) return s;
-    const nearest = [...free].sort((a, b) => Math.abs(a.minute - s.minute) - Math.abs(b.minute - s.minute))[0];
+    // An item built from the same part as a core item is bought instead of that one (Manta Style for Sange and Yasha).
+    const alternative = free.find((c) => sharesBuiltPart(c.itemId, s.itemId, items));
+    const nearest = alternative ?? [...free].sort((a, b) => Math.abs(a.minute - s.minute) - Math.abs(b.minute - s.minute))[0];
     if (!nearest) return s;
     free.splice(free.indexOf(nearest), 1);
     return { ...s, replaces: nearest.itemId };
