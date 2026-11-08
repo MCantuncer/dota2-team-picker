@@ -6,7 +6,7 @@
  * - Magic burst in the lane (two burst heroes, or one in a hard lane): Infused Raindrops.
  * Every changed item is marked `draft` with the enemy heroes it answers.
  */
-import { listNames, type BuildItem, type ItemBuild } from "./item-build";
+import { listNames, STARTING_GOLD, type BuildItem, type ItemBuild } from "./item-build";
 import type { HeroInfo, ItemInfo } from "./types";
 
 /** Heroes whose lane is a stream of cheap spells, so a Magic Wand fills fast. */
@@ -63,8 +63,10 @@ export function laneAdjusted(build: ItemBuild, lane: LaneFacts, items: Record<st
     const salve = make("flask", 0);
     const tango = start.find((i) => keyOf(i) === "tango");
     const added = salve && !start.some((i) => keyOf(i) === "flask") ? salve : null;
-    let cost = (added ? items[added.itemId]!.cost : 0) + (items[idOf("tango") ?? ""]?.cost ?? 0);
-    // Pay for it with optional stat items, one copy at a time, until it is paid.
+    // Gold the usual start leaves unspent pays first (the start is cut to fit, see affordableStart).
+    const spare = STARTING_GOLD - start.reduce((gold, s) => gold + (items[s.itemId]?.cost ?? 0) * (s.count ?? 1), 0);
+    let cost = (added ? items[added.itemId]!.cost : 0) + (items[idOf("tango") ?? ""]?.cost ?? 0) - Math.max(0, spare);
+    // Pay the rest with optional stat items, one copy at a time, until it is paid.
     for (const key of GIVE_UP_FIRST) {
       while (cost > 0) {
         const i = start.findIndex((s) => keyOf(s) === key);

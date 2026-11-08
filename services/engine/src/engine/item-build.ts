@@ -180,6 +180,25 @@ export function coreTimingItems(
   return withoutAlternatives(big, ([id, minute]) => ({ id, minute }), items).slice(0, slots);
 }
 
+/**
+ * The start items one player can really buy: the most held first, each copy kept while the total stays
+ * within STARTING_GOLD. STRATZ counts each item on its own, so the popular items together can cost
+ * more than a player has (Necrophos mid: Tango, 2 Iron Branches, Circlet, Mantle, Magic Stick and
+ * Faerie Fire is 760 gold).
+ */
+export function affordableStart(mostHeldFirst: [id: number, count: number][], items: Record<string, ItemInfo>): [number, number][] {
+  let gold = STARTING_GOLD;
+  const kept: [number, number][] = [];
+  for (const [id, count] of mostHeldFirst) {
+    const cost = items[id]?.cost ?? 0;
+    const copies = cost > 0 ? Math.min(count, Math.floor(gold / cost)) : count;
+    if (copies === 0) continue;
+    gold -= copies * cost;
+    kept.push([id, copies]);
+  }
+  return kept;
+}
+
 /** Enemy heroes named in one reason, those with the most matching threats first. */
 const REASON_NAMES = 3;
 
@@ -187,6 +206,8 @@ const REASON_NAMES = 3;
 const MIN_POPULARITY = 0.1;
 export const CORE_ITEMS = 6;
 const START_ITEMS = 5;
+/** Gold every player has at the start of the game. */
+export const STARTING_GOLD = 600;
 const LANE_ITEMS = 2;
 const SITUATIONAL_ITEMS = 3;
 /** A hero is a right-click hero when more than this share of its core item buys add to attacks. */
@@ -278,15 +299,16 @@ export function itemBuild(
   };
 
   const starts = data.itemStarts?.[heroId]?.[position];
-  // STRATZ's start for this position when there is one, else OpenDota's for the hero.
-  const start = starts?.start.length
-    ? starts.start.filter(([id]) => items[id]).map(([id, count]) => ({ ...toItem(String(id), 0), ...(count > 1 ? { count } : {}) }))
-    : Object.entries(phases.start)
+  // STRATZ's start for this position when there is one, else OpenDota's for the hero, cut to what 600 gold buys.
+  const openDotaStart = Object.entries(phases.start)
     // A support's start list holds both the ward pack and single wards; keep the pack.
     .filter(([id]) => items[id]?.key !== "ward_sentry" || !phases.start[idOf("ward_dispenser") ?? ""])
     .sort((a, b) => b[1] - a[1])
-    .slice(0, START_ITEMS)
-    .map(([id]) => toItem(id, 0));
+    .slice(0, START_ITEMS);
+  const start = (starts?.start.length
+    ? affordableStart(starts.start.filter(([id]) => items[id]), items)
+    : affordableStart(openDotaStart.map(([id]): [number, number] => [Number(id), 1]), items)
+  ).map(([id, count]) => ({ ...toItem(String(id), 0), ...(count > 1 ? { count } : {}) }));
 
   const bought = boughtAfterHorn(phases);
   const top = Math.max(0, ...[...bought.values()].map((b) => b.count));

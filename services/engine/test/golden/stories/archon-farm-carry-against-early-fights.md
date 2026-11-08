@@ -20,7 +20,7 @@ Lane Off lane: Centaur Warrunner + Mirana vs Troll Warlord + Jakiro, hard
 
 ### Pos 1 Anti-Mage
 Timings: rank
-Start: Quelling Blade, Tango, 2 Iron Branch, Magic Stick, Faerie Fire, Circlet
+Start: Quelling Blade, Tango, 2 Iron Branch, Magic Stick, Faerie Fire
 Lane: Magic Wand 2, Wraith Band 2, Perseverance 11
 Boots: Power Treads 8 {Attack speed and a stat to switch.}
 First: Battle Fury 15/17 {Cleave for fast farm.}
@@ -59,7 +59,7 @@ If it goes wrong: No Maelstrom by 18 min? Stop rotating and farm mid and the nea
 
 ### Pos 3 Centaur Warrunner
 Timings: rank
-Start: 2 Tango [Hard lane against Troll Warlord and Jakiro: more sustain], Iron Branch, Ring of Protection, Quelling Blade, Healing Salve [Hard lane against Troll Warlord and Jakiro: more sustain]
+Start: 2 Tango [Hard lane against Troll Warlord and Jakiro: more sustain], Iron Branch, Ring of Protection, Healing Salve [Hard lane against Troll Warlord and Jakiro: more sustain]
 Lane: Bracer 2, Magic Wand 3
 Boots: Phase Boots 12 {Armor and a burst of speed.}
 First: Vanguard 9/11

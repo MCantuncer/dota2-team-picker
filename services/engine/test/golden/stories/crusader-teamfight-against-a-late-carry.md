@@ -20,7 +20,7 @@ Lane Off lane: Magnus + Earthshaker vs Spectre + Disruptor, hard
 
 ### Pos 1 Faceless Void
 Timings: rank
-Start: Quelling Blade, Tango, 2 Iron Branch, Magic Stick, Circlet, Slippers of Agility
+Start: Quelling Blade, Tango, 2 Iron Branch, Magic Stick
 Lane: Wraith Band 2, Magic Wand 3
 Boots: Power Treads 8 {Attack speed and a stat to switch.}
 First: Mask of Madness 14/15
@@ -63,7 +63,7 @@ If it goes wrong: No Meteor Hammer by 14 min? Stop rotating and farm mid and the
 
 ### Pos 3 Magnus
 Timings: all
-Start: 2 Tango [Hard lane against Spectre and Disruptor: more sustain], 2 Iron Branch, Quelling Blade, Magic Stick, Healing Salve [Hard lane against Spectre and Disruptor: more sustain]
+Start: 2 Tango [Hard lane against Spectre and Disruptor: more sustain], 2 Iron Branch, Quelling Blade, Healing Salve [Hard lane against Spectre and Disruptor: more sustain]
 Lane: Bracer 2, Magic Wand 4
 Boots: Power Treads 9 {Attack speed and a stat to switch.}
 First: Blink Dagger 13/16 {Start fights from 1,200 range.}
@@ -85,7 +85,7 @@ If it goes wrong: No Blink Dagger by 16 min? Don't start fights without it. Stay
 
 ### Pos 4 Earthshaker
 Timings: all
-Start: 2 Tango [Hard lane against Spectre and Disruptor: more sustain], Blood Grenade, Boots of Speed, Sentry Ward, Iron Branch, Magic Stick, Healing Salve [Hard lane against Spectre and Disruptor: more sustain]
+Start: 2 Tango [Hard lane against Spectre and Disruptor: more sustain], Blood Grenade, Sentry Ward, Iron Branch, Magic Stick, Healing Salve [Hard lane against Spectre and Disruptor: more sustain]
 Lane: Magic Wand 6, Ring of Basilius 7
 Boots: Arcane Boots 11
 First: Blink Dagger 17/19 {Start fights from 1,200 range.}

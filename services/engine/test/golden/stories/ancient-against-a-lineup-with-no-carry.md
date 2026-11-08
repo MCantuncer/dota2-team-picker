@@ -50,7 +50,7 @@ If it goes wrong: No Spirit Vessel by 15 min? Stop rotating and farm mid and the
 
 ### Pos 3 Mars
 Timings: all
-Start: Gauntlets of Strength, 2 Iron Branch, 2 Tango [Hard lane against Vengeful Spirit and Witch Doctor: more sustain], Quelling Blade, Healing Salve [Hard lane against Vengeful Spirit and Witch Doctor: more sustain]
+Start: 2 Iron Branch, 2 Tango [Hard lane against Vengeful Spirit and Witch Doctor: more sustain], Quelling Blade, Healing Salve [Hard lane against Vengeful Spirit and Witch Doctor: more sustain]
 Lane: Bracer 2, Magic Wand 3 [Against Witch Doctor's spells: get it early], Soul Ring 5
 Boots: Phase Boots 10 {Armor and a burst of speed.}
 First: Blink Dagger 15/17 {Start fights from 1,200 range.}

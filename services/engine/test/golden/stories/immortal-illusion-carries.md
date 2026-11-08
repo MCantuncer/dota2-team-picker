@@ -20,7 +20,7 @@ Lane Off lane: Mars + Tusk vs Naga Siren + Treant Protector, win
 
 ### Pos 1 Terrorblade
 Timings: all
-Start: 2 Iron Branch, Tango, Quelling Blade, Magic Stick, Faerie Fire, Circlet
+Start: 2 Iron Branch, Tango, Quelling Blade, Magic Stick, Faerie Fire
 Lane: Magic Wand 3, Falcon Blade 7
 Boots: Power Treads 7 {Attack speed and a stat to switch.}
 First: Manta Style 19/20
@@ -57,7 +57,7 @@ If it goes wrong: No Desolator by 22 min? Stop rotating and farm mid and the nea
 
 ### Pos 3 Mars
 Timings: all
-Start: 2 Gauntlets of Strength, 2 Iron Branch, Tango, Quelling Blade, Circlet
+Start: 2 Gauntlets of Strength, 2 Iron Branch, Tango, Quelling Blade
 Lane: Bracer 2, Magic Wand 4, Soul Ring 5
 Boots: Phase Boots 10 {Armor and a burst of speed.}
 First: Blink Dagger 15/17 {Start fights from 1,200 range.}
