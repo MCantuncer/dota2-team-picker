@@ -81,9 +81,8 @@ export interface TeamPlan {
 
 const WEIGHTS = {
   /**
-   * Bonus for a hero in the player's pool. A player is usually several
-   * percent better on heroes they know, and the plan should be built around
-   * them, so a hero from outside the pool only makes it when clearly better.
+   * Comfort for a hero in the player's pool, as the plan's reasons show it. A player with a pool is
+   * planned from it alone (see FALLBACK_COST), so this no longer decides between pool and others.
    */
   inPool: 8,
   /** Extra for one of the player's Top 3, on top of `inPool`: the same 1 to 3 ratio as the draft score's 0.5 to 1.5. */
@@ -121,6 +120,17 @@ const MISSING_LABELS: Record<Need, string> = {
 /** Candidates kept per open slot before trying combinations. 10^5 combinations at most. */
 const CANDIDATES = 10;
 /**
+ * Heroes from outside a player's pool kept for their slot, used only when the pool can't fill it:
+ * every pool hero is taken, banned or planned for another player. Enough for a conflict between all
+ * five players.
+ */
+const FALLBACKS = 3;
+/**
+ * Team score lost per slot filled from outside its player's pool. Larger than any team score, so the
+ * plan uses the pool wherever it can and a fallback only when no pool hero is left for that slot.
+ */
+const FALLBACK_COST = 1000;
+/**
  * Heroes played in a position less often than this are not planned for it, unless in the pool.
  * Stricter than for single picks, so the plan sticks to heroes clearly at home in each role.
  */
@@ -129,6 +139,8 @@ const MIN_POSITION_FIT = 0.3;
 interface Candidate {
   hero: HeroInfo;
   inPool: boolean;
+  /** From outside the player's pool, kept only in case the pool can't fill the slot. */
+  fallback: boolean;
   /** Score of the hero on its own, before synergy and team needs. */
   solo: number;
   reasons: { text: string; value: number }[];
@@ -157,12 +169,20 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
     if (given.heroId !== undefined) {
       return { ...given, locked: rate(engine, engine.hero(given.heroId), ctx, enemies), candidates: [], rest: [] };
     }
+    // A player with a pool is planned from it alone (Can, 2026-11-08); a slot without one from every
+    // hero at home in the position.
     const pool = new Set(given.favorites ?? []);
-    const rated = engine.heroes
-      .filter((h) => !taken.has(h.id) && (pool.has(h.id) || engine.fit(h.id)[position] >= MIN_POSITION_FIT))
-      .map((h) => rate(engine, h, ctx, enemies))
-      .sort((a, b) => b.solo - a.solo);
-    return { ...given, locked: undefined, candidates: rated.slice(0, CANDIDATES), rest: rated.slice(CANDIDATES) };
+    const byScore = (heroes: HeroInfo[], fallback = false) =>
+      heroes.map((h) => ({ ...rate(engine, h, ctx, enemies), fallback })).sort((a, b) => b.solo - a.solo);
+    const open = engine.heroes.filter((h) => !taken.has(h.id));
+    const fits = open.filter((h) => engine.fit(h.id)[position] >= MIN_POSITION_FIT);
+    if (!pool.size) {
+      const rated = byScore(fits);
+      return { ...given, locked: undefined, candidates: rated.slice(0, CANDIDATES), rest: rated.slice(CANDIDATES) };
+    }
+    const rated = byScore(open.filter((h) => pool.has(h.id)));
+    const fallbacks = byScore(fits.filter((h) => !pool.has(h.id)), true).slice(0, FALLBACKS);
+    return { ...given, locked: undefined, candidates: [...rated.slice(0, CANDIDATES), ...fallbacks], rest: rated.slice(CANDIDATES) };
   });
 
   const combos = comboMap(engine.heroes);
@@ -170,7 +190,7 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
   const pairKey = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`);
 
   // A combo partner may fall just outside a slot's shortlist, so give it a chance.
-  const anchors = slots.flatMap((s) => (s.locked ? [s.locked] : s.candidates)).map((c) => c.hero.id);
+  const anchors = slots.flatMap((s) => (s.locked ? [s.locked] : s.candidates.filter((c) => !c.fallback))).map((c) => c.hero.id);
   for (const s of slots) {
     const partners = s.rest.filter((c) => anchors.some((a) => combos.has(pairKey(a, c.hero.id))));
     s.candidates.push(...partners.slice(0, COMBO_CANDIDATES));
@@ -217,7 +237,8 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
     const style = mainStyle(team);
     if (style) score += (style.heroes - 2) * WEIGHTS.style;
     const missing = (Object.keys(WANTED) as Need[]).filter((n) => (covered.get(n) ?? 0) < WANTED[n]).length;
-    return score - missing * WEIGHTS.missingNeed;
+    const fallbacks = team.filter((c) => c.fallback).length;
+    return score - missing * WEIGHTS.missingNeed - fallbacks * FALLBACK_COST;
   };
 
   // Try every combination of candidates for the open slots, one hero per slot.
@@ -261,7 +282,8 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
       const alternatives = s.locked
         ? []
         : s.candidates
-            .filter((c) => !teamIds.has(c.hero.id))
+            // Backups come from the pool too; a fallback is only ever the planned hero itself.
+            .filter((c) => !teamIds.has(c.hero.id) && !c.fallback)
             .map((c) => ({ c, delta: teamScore([...others, c]) - bestScore }))
             .sort((a, b) => b.delta - a.delta)
             .slice(0, input.alternatives ?? 2)
@@ -277,7 +299,8 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
         alternatives,
       };
     }),
-    score: round(bestScore),
+    // The team's own score, without the cost that kept fallbacks out of it.
+    score: round(bestScore + team.filter((c) => c.fallback).length * FALLBACK_COST),
     missing: unmetNeeds(team.map((c) => c.hero)).map((n) => MISSING_LABELS[n]),
     style: style && { ...style, label: STYLES[style.key].label },
     combos: teamCombos,
@@ -326,7 +349,7 @@ function rate(
     if (personal >= 0.5) reasons.push({ text: `Player has won ${mine.wins} of ${mine.games} games on it`, value: personal });
   }
 
-  return { hero, inPool, solo: counter + meta + fit + comfort, reasons };
+  return { hero, inPool, fallback: false, solo: counter + meta + fit + comfort, reasons };
 }
 
 /** The top reasons a hero is in the plan, including what it adds to the rest of the team. */

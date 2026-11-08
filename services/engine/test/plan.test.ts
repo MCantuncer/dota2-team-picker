@@ -20,8 +20,36 @@ describe("planTeam", () => {
     const mid = plan.slots[1]!;
     expect(mid).toMatchObject({ name: "Mid Two", playerId: "can", inPool: true, locked: false });
     expect(mid.reasons).toContain("From the player's hero pool");
-    expect(mid.alternatives[0]).toMatchObject({ name: "Mid Three", inPool: false });
-    expect(mid.alternatives[0]!.scoreDelta).toBeLessThan(0);
+    // Backups come from the pool too: a one-hero pool has none.
+    expect(mid.alternatives).toEqual([]);
+    const two = planTeam(new Engine(fixture()), { slots: [{ position: 2, playerId: "can", favorites: [2, 3] }] }).slots[1]!;
+    expect(two.alternatives.map((a) => [a.name, a.inPool])).toEqual([["Mid Three", true]]);
+  });
+
+  it("plans a player from their pool even when a hero outside it scores much higher", () => {
+    // Mid Three beats Offlane Five clearly, but only Mid Two is in the pool.
+    const plan = planTeam(new Engine(fixture()), { slots: [{ position: 2, playerId: "can", favorites: [2] }], enemies: [5] });
+    expect(plan.slots[1]).toMatchObject({ name: "Mid Two", inPool: true });
+    expect(plan.slots.some((s) => s.name === "Mid Three")).toBe(false);
+  });
+
+  it("falls back to a hero outside the pool only when the pool is used up, and marks it", () => {
+    // Both players have only Mid Two: one gets it, the other the best hero left for the slot.
+    const plan = planTeam(new Engine(fixture()), {
+      slots: [
+        { position: 2, playerId: "can", favorites: [2] },
+        { position: 3, playerId: "ali", favorites: [2] },
+      ],
+    });
+    const [mid, off] = [plan.slots[1]!, plan.slots[2]!];
+    expect([mid.name, mid.inPool]).toEqual(["Mid Two", true]);
+    expect(off.inPool).toBe(false);
+    expect(off.name).not.toBe("Mid Two");
+    // The cost that keeps fallbacks out never shows in the team score.
+    expect(Math.abs(plan.score)).toBeLessThan(100);
+    // A banned pool hero leaves the slot to a marked fallback, not an error.
+    const banned = planTeam(new Engine(fixture()), { slots: [{ position: 2, playerId: "can", favorites: [2] }], bans: [2] });
+    expect(banned.slots[1]!.inPool).toBe(false);
   });
 
   it("gives the player's Top 3 a small push inside the pool", () => {
