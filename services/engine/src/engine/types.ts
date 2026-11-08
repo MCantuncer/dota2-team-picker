@@ -314,6 +314,12 @@ export interface Suggestion {
   heroId: number;
   name: string;
   score: number;
+  /**
+   * The standard error of the score, in points: how far its data parts (counters, synergy, win
+   * rate) could be off from the games behind them. Two heroes whose scores differ by less than
+   * about twice this are too close to call.
+   */
+  error: number;
   breakdown: ScoreBreakdown;
   /** Up to 4 lines on why the hero fits this draft, each with its points, then at most one warning. */
   reasons: string[];
