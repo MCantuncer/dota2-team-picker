@@ -87,6 +87,28 @@ export function backtest(name: string, suggest: Suggester, matches: EvalMatch[])
   };
 }
 
+/**
+ * Two results for the same suggester on different games, as one: the rates weighted by picks.
+ * The live backtest scores each day's games with that day's hero data and adds them up.
+ */
+export function addResults(a: BacktestResult, b: BacktestResult): BacktestResult {
+  const picks = a.picks + b.picks;
+  const mix = (x: number, y: number) => (picks ? (x * a.picks + y * b.picks) / picks : 0);
+  const group = (x: BacktestResult["top3"], y: BacktestResult["top3"]) => {
+    const n = x.picks + y.picks;
+    const wins = (x.winRate ?? 0) * x.picks + (y.winRate ?? 0) * y.picks;
+    return { picks: n, winRate: n ? wins / n : null };
+  };
+  return {
+    name: a.name,
+    picks,
+    hitTop1: mix(a.hitTop1, b.hitTop1),
+    hitTop8: mix(a.hitTop8, b.hitTop8),
+    top3: group(a.top3, b.top3),
+    other: group(a.other, b.other),
+  };
+}
+
 /** Heroes the player could still take in this draft. */
 function open(engine: Engine, input: DraftInput) {
   const taken = new Set([...input.allies.map((a) => a.heroId), ...input.enemies, ...(input.bans ?? [])]);
@@ -122,8 +144,13 @@ export const metaSuggester =
 /** A Markdown table of results, for the console and the CI job summary. */
 export function toMarkdown(results: BacktestResult[], games: number): string {
   const pct = (x: number | null) => (x === null ? "n/a" : `${(x * 100).toFixed(1)}%`);
-  const lift = (r: BacktestResult) =>
-    r.top3.winRate === null || r.other.winRate === null ? "n/a" : `${((r.top3.winRate - r.other.winRate) * 100).toFixed(1)} pts`;
+  // With its 95% margin: a lift smaller than the margin could be chance.
+  const lift = (r: BacktestResult) => {
+    const { top3, other } = r;
+    if (top3.winRate === null || other.winRate === null) return "n/a";
+    const se = Math.sqrt((top3.winRate * (1 - top3.winRate)) / top3.picks + (other.winRate * (1 - other.winRate)) / other.picks);
+    return `${((top3.winRate - other.winRate) * 100).toFixed(1)} ± ${(1.96 * se * 100).toFixed(1)} pts`;
+  };
   const rows = results.map(
     (r) =>
       `| ${r.name} | ${pct(r.hitTop1)} | ${pct(r.hitTop8)} | ${pct(r.top3.winRate)} (${r.top3.picks}) | ${pct(r.other.winRate)} (${r.other.picks}) | ${lift(r)} |`,

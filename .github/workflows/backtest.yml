@@ -1,7 +1,8 @@
 name: Engine backtest
 
-# Scores this PR's engine and main's on the same saved games and writes both to the job summary and the
-# job log, so the win lift can be read from the log too. It reports numbers only; a lower score does not
+# Scores this PR's engine and main's on the same saved games, once with each side's data/snapshot.json and
+# once with the daily hero data the website had when each game was played, and writes the tables to the job
+# summary and the job log, so the win lift can be read from the log too. It reports numbers only; a lower score does not
 # fail the PR.
 #
 # It only runs when a change can move the numbers: the engine (its code, scripts and snapshot), the
@@ -64,6 +65,13 @@ jobs:
             else
               echo "main has no backtest yet." > "$out/main.md"
             fi
+            # The same games, each scored with the daily hero data the website had when it was played.
+            (cd services/engine && "$tsx" scripts/backtest.ts --live --matches "$games" --limit "$LIMIT" > "$out/pr-live.md" 2>&1) &
+            if grep -q -- "--live" base/services/engine/scripts/backtest.ts 2>/dev/null; then
+              (cd base/services/engine && "$tsx" scripts/backtest.ts --live --matches "$games" --limit "$LIMIT" > "$out/main-live.md" 2>&1) &
+            else
+              echo "main has no live backtest yet." > "$out/main-live.md"
+            fi
             wait
           fi
           {
@@ -83,6 +91,12 @@ jobs:
             cat "$out/main.md"
             echo
             echo "Each side uses its own data/snapshot.json and only games played after it was built."
+            echo
+            echo "### This PR on live hero data"
+            cat "$out/pr-live.md"
+            echo
+            echo "### main on live hero data"
+            cat "$out/main-live.md"
           } | tee -a "$GITHUB_STEP_SUMMARY"
       # The same fixed drafts on the live hero data, main's suggestions beside this PR's, so a
       # change shows which heroes and reasons it moves.
