@@ -9,10 +9,10 @@ import { skillPlan, type SkillPlan } from "./skill-plan";
 import { gameStory, ourWindow, type Story, type Timing } from "./story";
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
 import { isUpgradedBoots, itemBuild, KEY_ITEM_MIN_COST, listNames, type BuildItem, type ItemBuild } from "./item-build";
-import { guessEnemyPositions, type PositionFit } from "./positions";
+import { guessEnemyPositions, knownPositions, type PositionFit } from "./positions";
 import type { Engine } from "./score";
 import { traitsOf } from "./traits";
-import { POSITIONS, type AllyPick, type PathStep, type Position, type RankBracket } from "./types";
+import { POSITIONS, type AllyPick, type EnemyPositions, type PathStep, type Position, type RankBracket } from "./types";
 import { draftEdge } from "./win-chance";
 
 /**
@@ -126,6 +126,8 @@ export interface GamePlanInput {
   ours: (AllyPick & { position: Position })[];
   /** All five enemy heroes. */
   theirs: number[];
+  /** Enemy positions a player set by hand; the rest are guessed. */
+  theirPositions?: EnemyPositions;
   rankBracket?: RankBracket;
   /**
    * The live matchup lookup's games for each of our heroes against these enemies, by hero id. Leave
@@ -270,7 +272,10 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   const ourCombos = pairCombos(ourIds);
   const theirCombos = pairCombos(input.theirs);
 
-  const theirOdds = guessEnemyPositions(input.theirs.map((id) => engine.fit(id)));
+  const theirOdds = guessEnemyPositions(
+    input.theirs.map((id) => engine.fit(id)),
+    knownPositions(input.theirs, input.theirPositions),
+  );
   const theirByPos = enemyPositions(input.theirs, theirOdds);
   const lanes = LANES.map((lane): LanePlan => {
     const ours = input.ours.filter((p) => lane.ours.includes(p.position)).map((p) => p.heroId);

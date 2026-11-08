@@ -1,6 +1,6 @@
 begin;
 \ir _helpers.psql
-select plan(17);
+select plan(18);
 
 select tests.create_user('lead@example.com') as lead \gset
 select tests.create_user('pal@example.com') as pal \gset
@@ -28,14 +28,16 @@ select lives_ok(format('select public.add_draft_action(%L, %L, 2::smallint)', :'
 select lives_ok(format('select public.add_draft_action(%L, %L, 3::smallint)', :'draft', 'ban'), 'a member adds a ban');
 select throws_ok(format('select public.add_draft_action(%L, %L, 2::smallint)', :'draft', 'ally'), '23505', null,
   'a hero is in the draft once');
-select throws_ok(format('select public.add_draft_action(%L, %L, 4::smallint, 2::smallint)', :'draft', 'enemy'), '22023', null,
-  'enemy picks have no position');
+select throws_ok(format('select public.add_draft_action(%L, %L, 4::smallint, 2::smallint)', :'draft', 'ban'), '22023', null,
+  'bans have no position');
+select lives_ok(format('select public.add_draft_action(%L, %L, 2::smallint, 2::smallint)', :'draft', 'enemy'),
+  'entering an enemy again sets its position');
 select lives_ok(format('select public.add_draft_action(%L, %L, 1::smallint, 3::smallint)', :'draft', 'ally'),
   'entering an ally again changes its position');
 select tests.sign_out();
 select tests.sign_in_as('pal@example.com');
 select results_eq(format('select hero_id::int, kind, position::int from public.draft_state(%L) order by hero_id', :'draft'),
-  $$values (1, 'ally', 3), (2, 'enemy', null::int), (3, 'ban', null::int)$$, 'the other member sees the same draft');
+  $$values (1, 'ally', 3), (2, 'enemy', 2), (3, 'ban', null::int)$$, 'the other member sees the same draft');
 
 -- Taking a hero back out.
 select lives_ok(format('select public.add_draft_action(%L, %L, 2::smallint)', :'draft', 'remove'), 'a member takes a hero back out');

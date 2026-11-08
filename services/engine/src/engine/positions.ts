@@ -1,4 +1,4 @@
-import { POSITIONS, type HeroInfo, type Position, type Snapshot } from "./types";
+import { POSITIONS, type EnemyPositions, type HeroInfo, type Position, type Snapshot } from "./types";
 
 export type PositionFit = Record<Position, number>;
 
@@ -59,8 +59,13 @@ function normalize(fit: PositionFit): PositionFit {
  * Guess where each enemy is playing. Every enemy takes a different position,
  * so we weigh every possible assignment by how natural it is for each hero
  * and return, per enemy, the probability of each position.
+ *
+ * `known` holds the positions a player set by hand: those enemies play only
+ * there, and the others share the positions left. Two enemies set to the same
+ * position leave no assignment, so every hero falls back to its own fit, with
+ * the known ones still sure of theirs.
  */
-export function guessEnemyPositions(enemyFits: PositionFit[]): PositionFit[] {
+export function guessEnemyPositions(enemyFits: PositionFit[], known: (Position | undefined)[] = []): PositionFit[] {
   const n = enemyFits.length;
   const marginals = enemyFits.map(() => ({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }) as PositionFit);
   let total = 0;
@@ -75,7 +80,7 @@ export function guessEnemyPositions(enemyFits: PositionFit[]): PositionFit[] {
       return;
     }
     for (const pos of POSITIONS) {
-      if (used.has(pos)) continue;
+      if (used.has(pos) || (known[i] !== undefined && known[i] !== pos)) continue;
       used.add(pos);
       assigned.push(pos);
       walk(i + 1, weight * Math.max(enemyFits[i]![pos], 1e-4));
@@ -85,7 +90,21 @@ export function guessEnemyPositions(enemyFits: PositionFit[]): PositionFit[] {
   };
   walk(0, 1);
 
-  return total > 0 ? marginals.map((m) => normalize(m)) : enemyFits;
+  if (total > 0) return marginals.map((m) => normalize(m));
+  return enemyFits.map((fit, i) => {
+    const pos = known[i];
+    return pos === undefined ? fit : sure(pos);
+  });
+}
+
+/** The known position of each enemy, in the order of `enemies`. */
+export const knownPositions = (enemies: number[], positions: EnemyPositions | undefined): (Position | undefined)[] =>
+  enemies.map((id) => positions?.[id]);
+
+function sure(pos: Position): PositionFit {
+  const fit: PositionFit = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  fit[pos] = 1;
+  return fit;
 }
 
 /** Enemy positions you mostly face in lane when playing each position. */

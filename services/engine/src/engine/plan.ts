@@ -1,7 +1,7 @@
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
 import { personalScore, type Engine } from "./score";
 import { NEED_LABELS, traitsOf, unmetNeeds, WANTED, type Need } from "./traits";
-import { POSITIONS, type GamesWins, type HeroInfo, type Position, type RankBracket } from "./types";
+import { POSITIONS, type EnemyPositions, type GamesWins, type HeroInfo, type Position, type RankBracket } from "./types";
 
 /**
  * WCST (Wombo-Combo Super Team): plan all five heroes of the captain's team at
@@ -36,6 +36,8 @@ export interface PlanInput {
   slots: PlanSlot[];
   /** Enemy picks entered so far. Empty before the draft. */
   enemies?: number[];
+  /** Enemy positions a player set by hand; the rest are guessed. */
+  enemyPositions?: EnemyPositions;
   bans?: number[];
   /** Used for slots without their own rank. Omit to use all ranks. */
   rankBracket?: RankBracket;
@@ -167,13 +169,13 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
     const given = input.slots.find((s) => s.position === position) ?? { position };
     const ctx = { ...given, rankBracket: given.rankBracket ?? input.rankBracket };
     if (given.heroId !== undefined) {
-      return { ...given, locked: rate(engine, engine.hero(given.heroId), ctx, enemies), candidates: [], rest: [] };
+      return { ...given, locked: rate(engine, engine.hero(given.heroId), ctx, enemies, input.enemyPositions), candidates: [], rest: [] };
     }
     // A player with a pool is planned from it alone (Can, 2026-11-08); a slot without one from every
     // hero at home in the position.
     const pool = new Set(given.favorites ?? []);
     const byScore = (heroes: HeroInfo[], fallback = false) =>
-      heroes.map((h) => ({ ...rate(engine, h, ctx, enemies), fallback })).sort((a, b) => b.solo - a.solo);
+      heroes.map((h) => ({ ...rate(engine, h, ctx, enemies, input.enemyPositions), fallback })).sort((a, b) => b.solo - a.solo);
     const open = engine.heroes.filter((h) => !taken.has(h.id));
     const fits = open.filter((h) => engine.fit(h.id)[position] >= MIN_POSITION_FIT);
     if (!pool.size) {
@@ -322,11 +324,12 @@ function rate(
   hero: HeroInfo,
   slot: Pick<PlanSlot, "position" | "favorites" | "top" | "personal" | "rankBracket">,
   enemies: number[],
+  enemyPositions: EnemyPositions | undefined,
 ): Candidate {
   const reasons: Candidate["reasons"] = [];
   const inPool = slot.favorites?.includes(hero.id) ?? false;
 
-  const edges = engine.counterEdges(hero.id, enemies, engine.laneChances(enemies, slot.position), slot.rankBracket);
+  const edges = engine.counterEdges(hero.id, enemies, engine.laneChances(enemies, slot.position, enemyPositions), slot.rankBracket);
   const counter = edges.reduce((s, x) => s + x.edge, 0);
   const good = edges.filter((x) => x.edge >= 0.5).sort((a, b) => b.edge - a.edge);
   if (good.length) reasons.push({ text: `Strong against ${engine.names(good.map((x) => x.enemy))}`, value: counter });
