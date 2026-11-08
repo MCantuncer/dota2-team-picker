@@ -77,14 +77,14 @@ isOneToOne: false
                   ]
                 },"draft_suggestions": {
                   Row: {
-                    "draft_id": string,"first_shown_at": string,"heroes": (number)[],"position": number,"scores": (number)[],"updated_at": string,"user_id": string,"win_chance": number | null
+                    "draft_id": string,"first_shown_at": string,"heroes": (number)[],"list_rule": string | null,"outside": (number)[] | null,"position": number,"scores": (number)[],"updated_at": string,"user_id": string,"win_chance": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "draft_id": string,"first_shown_at"?: string,"heroes": (number)[],"position": number,"scores": (number)[],"updated_at"?: string,"user_id": string,"win_chance"?: number | null
+                    "draft_id": string,"first_shown_at"?: string,"heroes": (number)[],"list_rule"?: string | null,"outside"?: (number)[] | null,"position": number,"scores": (number)[],"updated_at"?: string,"user_id": string,"win_chance"?: number | null
                   }
                   Update: {
-                    "draft_id"?: string,"first_shown_at"?: string,"heroes"?: (number)[],"position"?: number,"scores"?: (number)[],"updated_at"?: string,"user_id"?: string,"win_chance"?: number | null
+                    "draft_id"?: string,"first_shown_at"?: string,"heroes"?: (number)[],"list_rule"?: string | null,"outside"?: (number)[] | null,"position"?: number,"scores"?: (number)[],"updated_at"?: string,"user_id"?: string,"win_chance"?: number | null
                   }
                   Relationships: [
                     {
@@ -865,6 +865,16 @@ isOneToOne: false
               "avatar_url": string,"display_name": string,"hero_count": number,"joined_at": string,"rank_tier": number,"steam_id": string,"user_id": string
             }[]
                            },
+"admin_pool_check":
+{ Args: { "days"?: number }; Returns: {
+              "any_lists": number,"lists": number,"players": number,"pool_lists": number,"slips": number,"unknown_lists": number
+            }[]
+                           },
+"admin_pool_slips":
+{ Args: { "max_rows"?: number }; Returns: {
+              "display_name": string,"draft_id": string,"heroes": (number)[],"outside": (number)[],"position": number,"updated_at": string,"user_id": string
+            }[]
+                           },
 "admin_signup_stats":
 { Args: Record<PropertyKey, never>; Returns: {
               "first_day": string,"last_7_days": number,"per_day": (number)[],"today": number,"total": number
@@ -1180,7 +1190,7 @@ isOneToOne: false
 { Args: { "team": string }; Returns: boolean
                            },
 "save_draft_suggestions":
-{ Args: { "chance"?: number,"draft": string,"pos": number,"shown": (number)[],"shown_scores": (number)[] }; Returns: undefined
+{ Args: { "chance"?: number,"draft": string,"pos": number,"rule"?: string,"shown": (number)[],"shown_scores": (number)[] }; Returns: undefined
                            },
 "save_game_check_in":
 { Args: { "allies": (number)[],"ally_positions": (number)[],"bans": (number)[],"enemies": (number)[],"key": string,"my_hero": number,"my_position": number,"party_draft": string,"shown": (number)[],"story_shown": boolean }; Returns: string
