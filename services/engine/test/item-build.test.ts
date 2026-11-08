@@ -269,6 +269,12 @@ describe("items built from the same part", () => {
     // Ogre Axe is a basic item: Sange and Black King Bar are not alternatives through it.
     d.items![116] = item("black_king_bar", "Black King Bar", 4050, [302]);
     expect(sharesBuiltPart(303, 116, d.items!)).toBe(false);
+    // Perseverance is built but costs 1400: Battle Fury and Linken's Sphere are not alternatives through it.
+    d.items![310] = item("ring_of_health", "Ring of Health", 700);
+    d.items![311] = item("pers", "Perseverance", 1400, [310]);
+    d.items![312] = item("bfury", "Battle Fury", 4100, [311]);
+    d.items![313] = item("sphere", "Linken's Sphere", 4800, [311]);
+    expect(sharesBuiltPart(312, 313, d.items!)).toBe(false);
   });
 });
 
