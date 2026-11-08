@@ -1,5 +1,6 @@
 /** Reads the saved ranked games back from local files or the public hero-data bucket. */
 import { existsSync, readFileSync } from "node:fs";
+import type { Snapshot } from "../engine/types";
 import { isEvalMatch, monthPath, type EvalMatch } from "./eval-matches";
 import { HERO_DATA_URL } from "./pull";
 
@@ -25,6 +26,20 @@ export async function loadEvalGames(source: string): Promise<EvalMatch[]> {
   const games = list.filter(isEvalMatch);
   if (games.length < list.length) console.warn(`${source}: skipped ${list.length - games.length} games with a bad shape`);
   return games;
+}
+
+/**
+ * The hero data in a local file or bucket path (such as `daily/2026-11-07.json`), or null when the
+ * bucket has no such file.
+ */
+export async function loadHeroData(source: string): Promise<Snapshot | null> {
+  if (existsSync(source)) return JSON.parse(readFileSync(source, "utf8")) as Snapshot;
+  const res = await fetch(BUCKET_URL + source, { cache: "no-store" });
+  if (res.status === 404 || res.status === 400) return null;
+  if (!res.ok) throw new Error(`GET ${source} failed: HTTP ${res.status}`);
+  const snapshot = (await res.json()) as Snapshot;
+  if (!snapshot.generatedAt || !snapshot.heroes) throw new Error(`${source} is not hero data`);
+  return snapshot;
 }
 
 /** The month files from the month of `from` to the month of `to` (Unix seconds), oldest first. */

@@ -9,13 +9,22 @@
  *
  * `--pick-phase` counts pick phases from the older half of the games, scores the newer half, and
  * adds an "Engine with pick phase" row next to the engine without them.
+ *
+ * `--live` scores each game with the bucket's daily copy of the hero data built before it (see
+ * src/backtest/live.ts) instead of one snapshot, so it measures the engine on the data the website
+ * had. `--snapshot` is then ignored. Both modes also print how well the engine's view of each full
+ * draft predicts the winner.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { backtest, engineSuggester, metaSuggester, popularSuggester, toMarkdown } from "../src/backtest/backtest";
-import { monthPath } from "../src/data/eval-matches";
+import { addResults, backtest, engineSuggester, metaSuggester, popularSuggester, toMarkdown, type BacktestResult } from "../src/backtest/backtest";
+import { addDraftScores, draftScoreLine, emptyDraftScore, scoreDrafts } from "../src/backtest/draft-score";
+import { copyDays, dailySource, groupByCopy } from "../src/backtest/live";
+import { monthPath, type EvalMatch } from "../src/data/eval-matches";
 import { countPickPhases } from "../src/data/pick-phase";
-import { loadEvalGames } from "../src/data/eval-store";
+import { loadEvalGames, loadHeroData } from "../src/data/eval-store";
 import { Engine } from "../src/engine/score";
 import type { Snapshot } from "../src/engine/types";
 
@@ -27,18 +36,73 @@ const { values } = parseArgs({
     out: { type: "string" },
     "include-seen": { type: "boolean", default: false },
     "pick-phase": { type: "boolean", default: false },
+    live: { type: "boolean", default: false },
   },
 });
 
+/** The engine and the two rivals on some games with one copy of the hero data. */
+function scoreAll(engine: Engine, games: EvalMatch[]): BacktestResult[] {
+  return [
+    backtest("Engine", engineSuggester(engine), games),
+    backtest("Most played", popularSuggester(engine), games),
+    backtest("Highest win rate", metaSuggester(engine), games),
+  ];
+}
+
+async function live(sources: string[], limit: number) {
+  let games = (await Promise.all([...new Set(sources)].map(loadEvalGames))).flat();
+  games = games.sort((a, b) => a.startTime - b.startTime).slice(-limit);
+  if (games.length === 0) throw new Error(`No games to score from ${sources.join(", ")}`);
+  // Each copy is downloaded once to a temporary folder and read back when its games are scored,
+  // so only one day's hero data is in memory at a time.
+  const dir = mkdtempSync(join(tmpdir(), "hero-data-"));
+  process.on("exit", () => rmSync(dir, { recursive: true, force: true }));
+  const copies: { copy: { day: string; file: string }; builtAt: number }[] = [];
+  for (const day of copyDays(games)) {
+    const snapshot = await loadHeroData(dailySource(day));
+    if (!snapshot) continue;
+    const file = join(dir, `${day}.json`);
+    writeFileSync(file, JSON.stringify(snapshot));
+    copies.push({ copy: { day, file }, builtAt: Date.parse(snapshot.generatedAt) / 1000 });
+  }
+  let results: BacktestResult[] | null = null;
+  let drafts = emptyDraftScore();
+  let scored = 0;
+  const used: string[] = [];
+  for (const group of groupByCopy(games, copies)) {
+    const engine = new Engine(JSON.parse(readFileSync(group.copy.file, "utf8")) as Snapshot);
+    const next = scoreAll(engine, group.games);
+    results = results ? results.map((r, i) => addResults(r, next[i]!)) : next;
+    drafts = addDraftScores(drafts, scoreDrafts(engine, group.games));
+    scored += group.games.length;
+    used.push(`${group.copy.day} (${group.games.length})`);
+  }
+  if (!results) throw new Error("No daily hero data was built before these games");
+  return [
+    toMarkdown(results, scored),
+    "",
+    draftScoreLine(drafts),
+    "",
+    `Hero data: the daily copy built before each game, ${used.join(", ")}.`,
+  ].join("\n");
+}
+
 async function main() {
-  const snapshot = JSON.parse(readFileSync(values.snapshot!, "utf8")) as Snapshot;
   const now = Math.floor(Date.now() / 1000);
   const sources = values.matches?.split(",") ?? [monthPath(now - 31 * 24 * 60 * 60), monthPath(now)];
+  const limit = values.limit ? Number(values.limit) : Infinity;
+  if (!(limit > 0)) throw new Error("--limit must be a positive number");
+  if (values.live) {
+    if (values["pick-phase"] || values["include-seen"]) throw new Error("--live takes neither --pick-phase nor --include-seen");
+    const text = await live(sources, limit);
+    console.log(text);
+    if (values.out) writeFileSync(values.out, `${text}\n`);
+    return;
+  }
+  const snapshot = JSON.parse(readFileSync(values.snapshot!, "utf8")) as Snapshot;
   const builtAt = Date.parse(snapshot.generatedAt) / 1000;
   let games = (await Promise.all([...new Set(sources)].map(loadEvalGames))).flat();
   if (!values["include-seen"]) games = games.filter((g) => g.startTime > builtAt);
-  const limit = values.limit ? Number(values.limit) : Infinity;
-  if (!(limit > 0)) throw new Error("--limit must be a positive number");
   let counted: typeof games = [];
   if (values["pick-phase"]) {
     const half = Math.floor(games.length / 2);
@@ -62,7 +126,7 @@ async function main() {
     backtest("Most played", popularSuggester(engine), games),
     backtest("Highest win rate", metaSuggester(engine), games),
   );
-  const table = toMarkdown(results, games.length);
+  const table = [toMarkdown(results, games.length), "", draftScoreLine(scoreDrafts(engine, games))].join("\n");
   console.log(table);
   if (values.out) writeFileSync(values.out, `${table}\n`);
 }

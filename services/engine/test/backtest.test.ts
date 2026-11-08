@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  addResults,
   backtest,
   bracketOf,
   draftAt,
@@ -73,6 +74,18 @@ describe("backtest", () => {
     expect(r.other.picks).toBe(14);
   });
 
+  it("adds up results on different games as if scored together", () => {
+    const games = [game(1, true), game(2, false), game(3, false)];
+    const whole = backtest("fan", radiantFan, games);
+    const parts = addResults(backtest("fan", radiantFan, games.slice(0, 1)), backtest("fan", radiantFan, games.slice(1)));
+    expect(parts.picks).toBe(whole.picks);
+    expect(parts.hitTop8).toBeCloseTo(whole.hitTop8);
+    expect(parts.hitTop1).toBeCloseTo(whole.hitTop1);
+    expect(parts.top3.picks).toBe(whole.top3.picks);
+    expect(parts.top3.winRate).toBeCloseTo(whole.top3.winRate!);
+    expect(parts.other.winRate).toBeCloseTo(whole.other.winRate!);
+  });
+
   it("scores nothing when no position is known", () => {
     const r = backtest("fan", radiantFan, [game(1, true, false)]);
     expect(r).toMatchObject({ picks: 0, hitTop8: 0, top3: { picks: 0, winRate: null } });
@@ -82,7 +95,7 @@ describe("backtest", () => {
     const r = backtest("fan", radiantFan, [game(1, true), game(2, true), game(3, false)]);
     const md = toMarkdown([r], 3);
     expect(md).toContain("Backtest on 3 games, 30 picks with a known position.");
-    expect(md).toMatch(/\| fan \| 10\.0% \| 50\.0% \| 66\.7% \(9\) \| 42\.9% \(21\) \| 23\.8 pts \|/);
+    expect(md).toMatch(/\| fan \| 10\.0% \| 50\.0% \| 66\.7% \(9\) \| 42\.9% \(21\) \| 23\.8 ± 37\.4 pts \|/);
     expect(toMarkdown([{ ...r, top3: { picks: 0, winRate: null } }], 3)).toContain("| n/a |");
   });
 });
