@@ -168,3 +168,31 @@ describe("Engine.matchupEdge on real data", () => {
     expect(sd).toBeLessThan(0.2);
 });
 });
+
+describe("score error margins", () => {
+  const engine = new Engine(fixture());
+
+  it("shrinks the error as the games behind a number grow", () => {
+    // 1000 games plus 250 prior games: 50 / sqrt(1250).
+    expect(engine.matchupError(3, 5)).toBeCloseTo(50 / Math.sqrt(1250), 6);
+    // No games at all: only the prior's 250.
+    expect(engine.matchupError(3, 4)).toBeCloseTo(50 / Math.sqrt(250), 6);
+    expect(engine.matchupError(3, 5)).toBeLessThan(engine.matchupError(3, 4));
+    expect(engine.synergyError(3, 4)).toBe(engine.synergyError(4, 3));
+    // One bracket has 1000 games; all eight together have 8000.
+    expect(engine.winRateError(3, 2)).toBeCloseTo(50 / Math.sqrt(1300), 6);
+    expect(engine.winRateError(3)).toBeCloseTo(50 / Math.sqrt(8300), 6);
+  });
+
+  it("gives each suggestion an error that grows with the heroes it is scored against", () => {
+    const card = (enemies: number[], allies: number[] = []) =>
+      engine
+        .suggest({ myPosition: 2, allies: allies.map((heroId) => ({ heroId })), enemies, count: 20 })
+        .find((s) => s.heroId === 3)!;
+    const alone = card([]);
+    expect(alone.error).toBeGreaterThan(0);
+    expect(card([5]).error).toBeGreaterThan(alone.error);
+    expect(card([5, 7]).error).toBeGreaterThan(card([5]).error);
+    expect(card([], [4]).error).toBeGreaterThan(alone.error);
+  });
+});

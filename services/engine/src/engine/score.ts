@@ -105,6 +105,13 @@ const FLEX_FIT = 0.2;
 const shrink = (gw: GamesWins | undefined, prior: number, priorGames: number) =>
   gw ? (gw.wins + prior * priorGames) / (gw.games + priorGames) : prior;
 
+/**
+ * The standard error, in win-rate points, of a rate shrunk with `priorGames` from `games` games:
+ * a 50% rate's binomial error with the prior counted as games. A matchup from 400 games is about
+ * ±2 points either way, so two heroes whose scores differ by less than that are a coin flip.
+ */
+const errorPoints = (games: number, priorGames: number) => 50 / Math.sqrt(games + priorGames);
+
 /** Precomputed lookups over a snapshot, built once and reused for every draft. */
 export class Engine {
   readonly heroes: HeroInfo[];
@@ -184,6 +191,24 @@ export class Engine {
     const group = bracket ? rankGroup(bracket) : undefined;
     const inGroup = group ? this.data.rankMatchups?.[group]?.[a]?.[b] : undefined;
     return this.edge(a, b, -1, this.data.matchups[a]?.[b], inGroup, group);
+  }
+
+  /** The standard error of matchupEdge(a, b), in points, from the all-ranks games behind it. */
+  matchupError(a: number, b: number): number {
+    return errorPoints(this.data.matchups[a]?.[b]?.games ?? 0, PRIOR_GAMES.matchup);
+  }
+
+  /** The standard error of synergyEdge(a, b), in points, from the all-ranks games behind it. */
+  synergyError(a: number, b: number): number {
+    const key = a < b ? `${a}-${b}` : `${b}-${a}`;
+    return errorPoints(this.data.synergy[key]?.games ?? 0, PRIOR_GAMES.matchup);
+  }
+
+  /** The standard error of winRate(id, bracket), in points. */
+  winRateError(id: number, bracket?: number): number {
+    const s = this.data.bracketStats[id];
+    const games = s ? (bracket ? (s.picks[bracket - 1] ?? 0) : s.picks.reduce((n, x) => n + x, 0)) : 0;
+    return errorPoints(games, PRIOR_GAMES.heroWinRate);
   }
 
   /** How much better a and b do together than their overall win rates predict. */
@@ -445,10 +470,21 @@ export class Engine {
         pickSafety: round(pickSafety * w.pickSafety),
       };
       const score = round(Object.values(breakdown).reduce((s, x) => s + x, 0));
+      // How far the data parts (counters, synergy, win rate) could be off: each part's error
+      // weighted as it is in the score, added up as variances since they come from separate games.
+      let variance = (this.winRateError(hero.id, input.rankBracket) * w.meta) ** 2;
+      edges.forEach((x, i) => {
+        variance += (this.matchupError(hero.id, x.enemy) * (1 + WEIGHTS.laneOpponent * laneChance[i]!) * w.counter) ** 2;
+      });
+      for (const { heroId: a, position } of input.allies) {
+        const isPartner = partner !== undefined && position === partner;
+        variance += (this.synergyError(hero.id, a) * (isPartner ? 1 + WEIGHTS.lanePartner : 1) * w.synergy) ** 2;
+      }
       results.push({
         heroId: hero.id,
         name: hero.name,
         score,
+        error: round(Math.sqrt(variance)),
         breakdown,
         reasons: pickLines(reasons, warnings),
         summary: summaryOf(breakdown),
