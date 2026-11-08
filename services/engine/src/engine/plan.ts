@@ -1,5 +1,5 @@
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
-import { personalScore, type Engine } from "./score";
+import { clearMatchup, personalScore, type Engine } from "./score";
 import { NEED_LABELS, traitsOf, unmetNeeds, WANTED, type Need } from "./traits";
 import { POSITIONS, type GamesWins, type HeroInfo, type Position, type RankBracket } from "./types";
 
@@ -328,7 +328,7 @@ function rate(
 
   const edges = engine.counterEdges(hero.id, enemies, engine.laneChances(enemies, slot.position), slot.rankBracket);
   const counter = edges.reduce((s, x) => s + x.edge, 0);
-  const good = edges.filter((x) => x.edge >= 0.5).sort((a, b) => b.edge - a.edge);
+  const good = edges.filter((x) => clearMatchup(x) > 0).sort((a, b) => b.edge - a.edge);
   if (good.length) reasons.push({ text: `Strong against ${engine.names(good.map((x) => x.enemy))}`, value: counter });
 
   const meta = (engine.winRate(hero.id, slot.rankBracket) - 0.5) * 100;

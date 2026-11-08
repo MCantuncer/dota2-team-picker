@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { pickLines, summaryOf } from "../src/engine/reasons";
-import { Engine } from "../src/engine/score";
+import { clearMatchup, Engine, MATCHUP_NAME_Z } from "../src/engine/score";
 import type { ScoreBreakdown } from "../src/engine/types";
 import { fixture } from "./fixture";
 
@@ -48,8 +48,9 @@ describe("place among the heroes for the position", () => {
 describe("thin matchups", () => {
   it("says how few games a named matchup has", () => {
     const data = fixture();
-    data.matchups[3]![5] = { games: 60, wins: 40 };
-    data.matchups[5]![3] = { games: 60, wins: 20 };
+    // Lopsided enough to clear its own error: few games make the error big.
+    data.matchups[3]![5] = { games: 60, wins: 58 };
+    data.matchups[5]![3] = { games: 60, wins: 2 };
     const engine = new Engine(data, { hardCounters: [] });
     const card = engine.suggest({ myPosition: 2, allies: [], enemies: [5], count: 100 }).find((s) => s.heroId === 3)!;
     expect(card.reasons[0]).toMatch(/^Beats Offlane Five \(\+\d+\.\d, (likely your lane, )?only 60 games\)/);
@@ -59,5 +60,28 @@ describe("thin matchups", () => {
     const engine = new Engine(fixture(), { hardCounters: [] });
     const card = engine.suggest({ myPosition: 2, allies: [], enemies: [5], count: 100 }).find((s) => s.heroId === 3)!;
     expect(card.reasons[0]).not.toMatch(/games\)/);
+  });
+});
+
+describe("matchups within noise", () => {
+  it("names a matchup only when it is bigger than its error", () => {
+    expect(clearMatchup({ edge: -0.7, error: 0.53 })).toBe(0);
+    expect(clearMatchup({ edge: -0.9, error: 0.53 })).toBe(-1);
+    expect(clearMatchup({ edge: 2.7, error: 0.4 })).toBe(1);
+    expect(clearMatchup({ edge: 0.4, error: 0 })).toBe(0);
+    expect(clearMatchup({ edge: -8, error: 0 })).toBe(-1);
+  });
+
+  it("leaves a small lost matchup off the card but keeps it in the score", () => {
+    const data = fixture();
+    // 2,000 games, slightly below what the win rates predict: real data, but within noise.
+    data.matchups[3]![5] = { games: 2000, wins: 980 };
+    data.matchups[5]![3] = { games: 2000, wins: 1020 };
+    const engine = new Engine(data, { hardCounters: [] });
+    const [edge] = engine.counterEdges(3, [5], [0]);
+    expect(Math.abs(edge!.edge)).toBeLessThan(MATCHUP_NAME_Z * edge!.error);
+    const card = engine.suggest({ myPosition: 2, allies: [], enemies: [5], count: 100 }).find((s) => s.heroId === 3)!;
+    expect(card.reasons.join(" ")).not.toMatch(/Offlane Five/);
+    expect(card.breakdown.counter).not.toBe(0);
   });
 });
