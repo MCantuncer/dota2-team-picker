@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { itemBuild, listNames, threatsOf } from "../src/engine/item-build";
+import { itemBuild, listNames, sharesBuiltPart, threatsOf, withoutAlternatives } from "../src/engine/item-build";
 import type { HeroInfo, ItemInfo, Snapshot } from "../src/engine/types";
 
 const hero = (id: number, name: string, roles: string[]): HeroInfo => ({ id, name, roles, attackType: "Melee", primaryAttr: "str" });
@@ -212,6 +212,69 @@ describe("itemBuild with STRATZ item timings", () => {
     const build = itemBuild(timed(), 1, 3, [4])!;
     expect(build.timings).toBe("around");
     expect(build.core.every((i) => i.lateMinute === undefined)).toBe(true);
+  });
+});
+
+describe("items built from the same part", () => {
+  /** Yasha (built) in Manta Style and Sange and Yasha; Sange (built) in Sange and Yasha and Abyssal Blade. */
+  function withYasha(): Snapshot {
+    const d = data();
+    d.items![300] = item("blade_of_alacrity", "Blade of Alacrity", 1000);
+    d.items![301] = item("yasha", "Yasha", 2100, [300]);
+    d.items![302] = item("ogre_axe", "Ogre Axe", 1000);
+    d.items![303] = item("sange", "Sange", 2100, [302]);
+    d.items![147] = item("manta", "Manta Style", 4650, [301]);
+    d.items![154] = item("sange_and_yasha", "Sange and Yasha", 4200, [301, 303]);
+    d.items![208] = item("abyssal_blade", "Abyssal Blade", 6250, [303]);
+    d.items![202] = item("assault", "Assault Cuirass", 5125);
+    d.items![200] = item("desolator", "Desolator", 3500);
+    return d;
+  }
+  // Every fixture here has item builds for hero 1, so there is a build.
+  const core = (d: Snapshot) => itemBuild(d, 1, 1, [])!.core.map((i) => i.name);
+  const byMinute = ([id, minute]: [number, number]) => ({ id, minute });
+  const timings = (rows: [number, number, number][]) => ({ 1: { 1: { all: { games: 5000, items: rows } } } });
+
+  it("keeps only the more bought of two items made from one Yasha at about the same minute", () => {
+    const d = withYasha();
+    // Most bought first, as STRATZ's slices are: Manta Style at 20, then Sange and Yasha at 21.
+    d.itemTimings = timings([[151, 12, 14], [137, 17, 19], [147, 20, 24], [154, 21, 28], [116, 23, 26], [200, 26, 30], [202, 31, 35]]);
+    expect(core(d)).toContain("Manta Style");
+    expect(core(d)).not.toContain("Sange and Yasha");
+    // The freed slot goes to the next item.
+    expect(core(d)).toContain("Desolator");
+  });
+
+  it("does the same with OpenDota's rough minutes", () => {
+    const d = withYasha();
+    d.itemBuilds![1] = { start: {}, early: { 50: 100 }, mid: { 151: 60, 147: 50, 154: 30, 137: 40 }, late: { 116: 30 } };
+    expect(core(d)).toContain("Manta Style");
+    expect(core(d)).not.toContain("Sange and Yasha");
+  });
+
+  it("keeps two items from one part bought far apart: players buy both", () => {
+    const d = withYasha();
+    const both: [number, number][] = [[154, 25], [208, 39]];
+    expect(withoutAlternatives(both, byMinute, d.items!)).toEqual(both);
+    // Six minutes apart is far enough; five isn't.
+    const six: [number, number][] = [[147, 20], [154, 26]];
+    expect(withoutAlternatives(six, byMinute, d.items!)).toEqual(six);
+    const five: [number, number][] = [[147, 20], [154, 25], [200, 22]];
+    expect(withoutAlternatives(five, byMinute, d.items!)).toEqual([[147, 20], [200, 22]]);
+  });
+
+  it("counts only a built part over the core cost, not a basic one", () => {
+    const d = withYasha();
+    expect(sharesBuiltPart(147, 154, d.items!)).toBe(true);
+    // Ogre Axe is a basic item: Sange and Black King Bar are not alternatives through it.
+    d.items![116] = item("black_king_bar", "Black King Bar", 4050, [302]);
+    expect(sharesBuiltPart(303, 116, d.items!)).toBe(false);
+    // Perseverance is built but costs 1400: Battle Fury and Linken's Sphere are not alternatives through it.
+    d.items![310] = item("ring_of_health", "Ring of Health", 700);
+    d.items![311] = item("pers", "Perseverance", 1400, [310]);
+    d.items![312] = item("bfury", "Battle Fury", 4100, [311]);
+    d.items![313] = item("sphere", "Linken's Sphere", 4800, [311]);
+    expect(sharesBuiltPart(312, 313, d.items!)).toBe(false);
   });
 });
 

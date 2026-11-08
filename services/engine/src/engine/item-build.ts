@@ -123,19 +123,61 @@ export function isCoreItem(item: ItemInfo | undefined): boolean {
   return BOOTS.has(item.key) || item.key === "aghanims_shard" || item.cost >= CORE_MIN_COST;
 }
 
+/** Two items built from the same part and bought within this many minutes of each other are one choice. */
+export const ALTERNATIVE_WINDOW = 6;
+
+/**
+ * Whether two items are built from the same big part that is itself built (Yasha in Manta Style and Sange and
+ * Yasha): buying one uses up that part, so a player buys the other only with a second one. The part must cost
+ * CORE_MIN_COST or more, like the items a build lists: Yasha, Sange, Kaya, Soul Booster count, while
+ * Perseverance (1400), shared by Battle Fury, Linken's Sphere and Mage Slayer that players do buy together, doesn't.
+ */
+export function sharesBuiltPart(a: number, b: number, items: Record<string, ItemInfo>): boolean {
+  const parts = new Set(items[String(a)]?.components ?? []);
+  return (items[String(b)]?.components ?? []).some((id) => {
+    const part = items[String(id)];
+    return parts.has(id) && !!part && part.components.length > 0 && part.cost >= CORE_MIN_COST;
+  });
+}
+
+/**
+ * Keeps the first of items that are alternatives to each other: built from the same part (sharesBuiltPart) and
+ * bought at about the same minute. Players buy one or the other there, so the build lists the more bought one.
+ * The minutes are what tell the two cases apart: Sange and Yasha at 25 and Abyssal Blade at 39 each need their
+ * own Sange, but come far apart, so players buy both. OpenDota's rough minutes are phase averages, so two items
+ * bought mostly in the same phase always count as about the same minute.
+ */
+export function withoutAlternatives<T>(
+  mostBoughtFirst: T[],
+  of: (t: T) => { id: number; minute: number },
+  items: Record<string, ItemInfo>,
+): T[] {
+  const kept: T[] = [];
+  for (const t of mostBoughtFirst) {
+    const { id, minute } = of(t);
+    const taken = kept.some((k) => {
+      const other = of(k);
+      return Math.abs(other.minute - minute) < ALTERNATIVE_WINDOW && sharesBuiltPart(other.id, id, items);
+    });
+    if (!taken) kept.push(t);
+  }
+  return kept;
+}
+
 /**
  * The slice's core items past boots, most bought first, as the build takes them: finished items (no parts of
- * another item in the slice), big, not boots, at most `slots`. Shared with item-paths.ts so its key items are
- * the ones game-plan.ts keyItem can pick.
+ * another item in the slice), big, not boots, no alternative to a more bought one (withoutAlternatives), at most
+ * `slots`. Shared with item-paths.ts so its key items are the ones game-plan.ts keyItem can pick.
  */
 export function coreTimingItems(
   slice: ItemTimingSlice,
   items: Record<string, ItemInfo>,
   slots: number,
 ): ItemTimingSlice["items"] {
-  return finishedItems(slice, items)
-    .filter(([id]) => isCoreItem(items[String(id)]) && !BOOTS.has(items[String(id)]?.key ?? ""))
-    .slice(0, slots);
+  const big = finishedItems(slice, items).filter(
+    ([id]) => isCoreItem(items[String(id)]) && !BOOTS.has(items[String(id)]?.key ?? ""),
+  );
+  return withoutAlternatives(big, ([id, minute]) => ({ id, minute }), items).slice(0, slots);
 }
 
 /** Enemy heroes named in one reason, those with the most matching threats first. */
@@ -271,8 +313,11 @@ export function itemBuild(
       ].sort((a, b) => a.minute - b.minute)
     : [
         ...(boots ? [toItem(boots, bootsMinute)] : []),
-        ...candidates
-          .filter(([id]) => isBig(id) && !isBoots(id))
+        ...withoutAlternatives(
+          candidates.filter(([id]) => isBig(id) && !isBoots(id)),
+          ([id, b]) => ({ id: Number(id), minute: b.minute }),
+          items,
+        )
           .slice(0, CORE_ITEMS - (boots ? 1 : 0))
           .map(([id, b]) => toItem(id, b.minute)),
       ].sort((a, b) => a.minute - b.minute);
