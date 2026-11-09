@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MIN_SLICE_GAMES, MIN_SLICE_ITEMS, chooseTimingSlice, finishedItems } from "../src/engine/item-timing-slice";
+import { MIN_SLICE_GAMES, THIN_SLICE_MIN_ITEMS, chooseTimingSlice, finishedItems } from "../src/engine/item-timing-slice";
 import type { ItemInfo, ItemTimingSlice, Snapshot } from "../src/engine/types";
 
 const item = (key: string, components: number[] = []): ItemInfo => ({ key, name: key, cost: 3000, img: "", components });
@@ -61,14 +61,20 @@ describe("chooseTimingSlice", () => {
     expect(chooseTimingSlice(snapshot({ 3: own, all }), 1, 1, 5)?.source).toBe("all");
   });
 
-  it("uses a thin slice when no slice is full, the player's rank group first", () => {
-    // Battle Fury, Manta Style and Butterfly: three finished items, like carry Vengeful Spirit's short list.
-    const thin = { games: 12486, items: FULL.filter(([id]) => [145, 147, 170, 139].includes(id)) };
-    expect(finishedItems(thin, ITEMS)).toHaveLength(MIN_SLICE_ITEMS);
+  it("uses a thin slice when no slice is full, and the rank group only with as many items", () => {
+    // Battle Fury, Manta Style (Yasha is its part), Butterfly and Black King Bar: four finished items,
+    // like carry Vengeful Spirit's short list.
+    const thin = { games: 12486, items: FULL.filter(([id]) => [145, 170, 147, 139, 116].includes(id)) };
+    expect(finishedItems(thin, ITEMS)).toHaveLength(THIN_SLICE_MIN_ITEMS);
     expect(chooseTimingSlice(snapshot({ all: thin }), 1, 1, 5)).toEqual({ source: "all", slice: thin });
     expect(chooseTimingSlice(snapshot({ 3: thin, all: thin }), 1, 1, 5)?.source).toBe("rank");
-    const thinner = { games: 12486, items: FULL.filter(([id]) => [147, 170, 139].includes(id)) };
-    expect(chooseTimingSlice(snapshot({ all: thinner }), 1, 1)).toBeNull();
+    // Five finished items for every rank beat the rank group's four.
+    const fuller = { games: 90000, items: FULL.filter(([id]) => id !== 208) };
+    expect(chooseTimingSlice(snapshot({ 3: thin, all: fuller }), 1, 1, 5)).toEqual({ source: "all", slice: fuller });
+    // A full slice for every rank beats a thin rank group.
+    expect(chooseTimingSlice(snapshot({ 3: thin, all }), 1, 1, 5)).toEqual({ source: "all", slice: all });
+    const tooThin = { games: 12486, items: FULL.filter(([id]) => [145, 170, 147, 139].includes(id)) };
+    expect(chooseTimingSlice(snapshot({ all: tooThin }), 1, 1)).toBeNull();
   });
 
   it("uses every rank when the player's rank is unknown or its slice is missing", () => {
