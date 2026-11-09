@@ -18,6 +18,26 @@ describe("toItems", () => {
     expect(items[116]).toEqual({ key: "black_king_bar", name: "Black King Bar", cost: 4050, img: "/items/black_king_bar.png", components: [21] });
     expect(items[2]!.components).toEqual([]);
   });
+
+  it("builds each Dagon level from the one below, which OpenDota does not list", () => {
+    const items = toItems({
+      ...constants,
+      dagon: { id: 104, dname: "Dagon", cost: 3050, img: "", components: ["ogre_axe"] },
+      dagon_2: { id: 201, dname: "Dagon", cost: 4200, img: "", components: null },
+      dagon_3: { id: 202, dname: "Dagon", cost: 5350, img: "", components: null },
+      // A level whose lower level is missing keeps no parts, and listed parts are kept as they are.
+      travel_boots_2: { id: 220, dname: "Boots of Travel 2", cost: 4500, img: "", components: ["blades_of_attack"] },
+      diffusal_blade_2: { id: 196, dname: "Diffusal Blade", cost: 3850, img: "", components: null },
+      // Not an upgrade: the "level below" costs more.
+      ogre_axe_2: { id: 900, dname: "Axe", cost: 500, img: "", components: null },
+    });
+    expect(items[104]!.components).toEqual([21]);
+    expect(items[201]!.components).toEqual([104]);
+    expect(items[202]!.components).toEqual([201]);
+    expect(items[220]!.components).toEqual([2]);
+    expect(items[196]!.components).toEqual([]);
+    expect(items[900]!.components).toEqual([]);
+  });
 });
 
 describe("toItemPhases", () => {

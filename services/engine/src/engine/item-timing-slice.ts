@@ -12,12 +12,13 @@ export const MIN_SLICE_GAMES = 200;
 /** ...and this many items that are not parts of another item in it, to fill a core build... */
 export const FULL_SLICE_ITEMS = 6;
 /**
- * ...or at least this many, when no slice is full. STRATZ keeps few items for some heroes (carry
- * Vengeful Spirit: 12,486 games, five finished items), and real items with real minutes beat
- * OpenDota's rough list, which mixes every position (it lost carry Venge's Aghanim's Scepter).
- * The build then has fewer core items, all of them this position's own.
+ * ...or at least this many, when no slice is full. STRATZ keeps few items for some heroes and positions
+ * (carry Vengeful Spirit: 12,486 games, five finished items; support Abaddon: three), and real items with
+ * real minutes beat OpenDota's rough list, which mixes every position: it lost carry Venge's Aghanim's
+ * Scepter and gave support Abaddon Radiance and Bloodthorn. The build then has fewer core items, all of
+ * them this position's own; an empty slot says less than an item the position does not buy.
  */
-export const THIN_SLICE_MIN_ITEMS = 4;
+export const THIN_SLICE_MIN_ITEMS = 1;
 
 export interface ChosenSlice {
   /** "rank" when it is the player's own rank group, "all" for every rank. */
@@ -25,9 +26,20 @@ export interface ChosenSlice {
   slice: ItemTimingSlice;
 }
 
-/** The slice's items without the ones another of its items is built from (Yasha in Manta Style). */
+/**
+ * The slice's items without the ones another of its items is built from (Yasha in Manta Style), all the
+ * way down: Dagon is part of Dagon 3 through Dagon 2 even when the slice has no Dagon 2.
+ */
 export function finishedItems(slice: ItemTimingSlice, items: Record<string, ItemInfo>): ItemTimingSlice["items"] {
-  const parts = new Set(slice.items.flatMap(([id]) => items[id]?.components ?? []));
+  const parts = new Set<number>();
+  const addParts = (id: number) => {
+    for (const part of items[id]?.components ?? []) {
+      if (parts.has(part)) continue;
+      parts.add(part);
+      addParts(part);
+    }
+  };
+  for (const [id] of slice.items) addParts(id);
   return slice.items.filter(([id]) => !parts.has(id));
 }
 

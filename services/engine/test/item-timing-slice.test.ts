@@ -39,6 +39,11 @@ describe("finishedItems", () => {
   it("drops items that another item in the slice is built from", () => {
     expect(finishedItems({ games: 500, items: FULL }, ITEMS).map(([id]) => id)).toEqual([145, 147, 139, 160, 116, 208]);
   });
+
+  it("drops parts of parts, like Dagon under Dagon 3 when Dagon 2 is not in the slice", () => {
+    const dagons: Record<string, ItemInfo> = { 104: item("dagon"), 201: item("dagon_2", [104]), 202: item("dagon_3", [201]) };
+    expect(finishedItems({ games: 500, items: [[104, 17, 20], [202, 25, 28]] }, dagons).map(([id]) => id)).toEqual([202]);
+  });
 });
 
 describe("chooseTimingSlice", () => {
@@ -65,7 +70,7 @@ describe("chooseTimingSlice", () => {
     // Battle Fury, Manta Style (Yasha is its part), Butterfly and Black King Bar: four finished items,
     // like carry Vengeful Spirit's short list.
     const thin = { games: 12486, items: FULL.filter(([id]) => [145, 170, 147, 139, 116].includes(id)) };
-    expect(finishedItems(thin, ITEMS)).toHaveLength(THIN_SLICE_MIN_ITEMS);
+    expect(finishedItems(thin, ITEMS)).toHaveLength(4);
     expect(chooseTimingSlice(snapshot({ all: thin }), 1, 1, 5)).toEqual({ source: "all", slice: thin });
     expect(chooseTimingSlice(snapshot({ 3: thin, all: thin }), 1, 1, 5)?.source).toBe("rank");
     // Five finished items for every rank beat the rank group's four.
@@ -73,8 +78,14 @@ describe("chooseTimingSlice", () => {
     expect(chooseTimingSlice(snapshot({ 3: thin, all: fuller }), 1, 1, 5)).toEqual({ source: "all", slice: fuller });
     // A full slice for every rank beats a thin rank group.
     expect(chooseTimingSlice(snapshot({ 3: thin, all }), 1, 1, 5)).toEqual({ source: "all", slice: all });
-    const tooThin = { games: 12486, items: FULL.filter(([id]) => [145, 170, 147, 139].includes(id)) };
-    expect(chooseTimingSlice(snapshot({ all: tooThin }), 1, 1)).toBeNull();
+  });
+
+  it("uses a slice with a single finished item rather than the rough list, and none with no items", () => {
+    // Yasha is part of Manta Style: one finished item, like a position few players play the hero in.
+    const one = { games: 900, items: FULL.filter(([id]) => [170, 147].includes(id)) };
+    expect(finishedItems(one, ITEMS)).toHaveLength(THIN_SLICE_MIN_ITEMS);
+    expect(chooseTimingSlice(snapshot({ all: one }), 1, 1)).toEqual({ source: "all", slice: one });
+    expect(chooseTimingSlice(snapshot({ all: { games: 900, items: [] } }), 1, 1)).toBeNull();
   });
 
   it("uses every rank when the player's rank is unknown or its slice is missing", () => {
