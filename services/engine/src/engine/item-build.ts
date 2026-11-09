@@ -181,22 +181,30 @@ export function coreTimingItems(
 }
 
 /**
- * The start items one player can really buy: the most held first, each copy kept while the total stays
- * within STARTING_GOLD. STRATZ counts each item on its own, so the popular items together can cost
- * more than a player has (Necrophos mid: Tango, 2 Iron Branches, Circlet, Mantle, Magic Stick and
- * Faerie Fire is 760 gold).
+ * The start one player can really buy: items are kept in `priority` order (the most held first, unless
+ * the lane asks for something), each copy while the total stays within STARTING_GOLD, and are then
+ * told in their start order. STRATZ counts each start item on its own, so the popular items together
+ * can cost more than a player has (Necrophos mid: Tango, 2 Iron Branches, Circlet, Mantle, Magic Stick
+ * and Faerie Fire is 760 gold). An item missing from `items` has no known price and is left out.
  */
-export function affordableStart(mostHeldFirst: [id: number, count: number][], items: Record<string, ItemInfo>): [number, number][] {
+export function affordableStart(start: BuildItem[], items: Record<string, ItemInfo>, priority: BuildItem[] = start): BuildItem[] {
   let gold = STARTING_GOLD;
-  const kept: [number, number][] = [];
-  for (const [id, count] of mostHeldFirst) {
-    const cost = items[id]?.cost ?? 0;
-    const copies = cost > 0 ? Math.min(count, Math.floor(gold / cost)) : count;
+  const kept = new Map<BuildItem, number>();
+  for (const item of priority) {
+    const info = items[item.itemId];
+    if (!info) continue;
+    const count = item.count ?? 1;
+    const copies = info.cost > 0 ? Math.min(count, Math.floor(gold / info.cost)) : count;
     if (copies === 0) continue;
-    gold -= copies * cost;
-    kept.push([id, copies]);
+    gold -= copies * info.cost;
+    kept.set(item, copies);
   }
-  return kept;
+  return start.flatMap((item) => {
+    const copies = kept.get(item);
+    if (!copies) return [];
+    const { count: _, ...rest } = item;
+    return [copies > 1 ? { ...rest, count: copies } : rest];
+  });
 }
 
 /** Enemy heroes named in one reason, those with the most matching threats first. */
@@ -299,16 +307,16 @@ export function itemBuild(
   };
 
   const starts = data.itemStarts?.[heroId]?.[position];
-  // STRATZ's start for this position when there is one, else OpenDota's for the hero, cut to what 600 gold buys.
-  const openDotaStart = Object.entries(phases.start)
+  // STRATZ's start for this position when there is one, else OpenDota's for the hero, most held first.
+  // Together they can cost more than a player has: the lane rules cut them to 600 gold (laneAdjusted).
+  const start = starts?.start.length
+    ? starts.start.filter(([id]) => items[id]).map(([id, count]) => ({ ...toItem(String(id), 0), ...(count > 1 ? { count } : {}) }))
+    : Object.entries(phases.start)
     // A support's start list holds both the ward pack and single wards; keep the pack.
     .filter(([id]) => items[id]?.key !== "ward_sentry" || !phases.start[idOf("ward_dispenser") ?? ""])
     .sort((a, b) => b[1] - a[1])
-    .slice(0, START_ITEMS);
-  const start = (starts?.start.length
-    ? affordableStart(starts.start.filter(([id]) => items[id]), items)
-    : affordableStart(openDotaStart.map(([id]): [number, number] => [Number(id), 1]), items)
-  ).map(([id, count]) => ({ ...toItem(String(id), 0), ...(count > 1 ? { count } : {}) }));
+    .slice(0, START_ITEMS)
+    .map(([id]) => toItem(id, 0));
 
   const bought = boughtAfterHorn(phases);
   const top = Math.max(0, ...[...bought.values()].map((b) => b.count));

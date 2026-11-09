@@ -79,7 +79,7 @@ If it goes wrong: No Blink Dagger by 22 min? Don't start fights without it. Stay
 
 ### Pos 4 Mirana
 Timings: all
-Start: 2 Tango [Hard lane against Troll Warlord and Jakiro: more sustain], Blood Grenade, Iron Branch, Magic Stick, Sentry Ward, Healing Salve [Hard lane against Troll Warlord and Jakiro: more sustain]
+Start: 2 Tango [Hard lane against Troll Warlord and Jakiro: more sustain], Blood Grenade, Iron Branch, Magic Stick, Healing Salve [Hard lane against Troll Warlord and Jakiro: more sustain]
 Lane: Magic Wand 3 [Against Jakiro's spells: get it early], Urn of Shadows 7, Ring of Basilius 8
 Boots: Arcane Boots 12
 First: Essence Distiller 14/17

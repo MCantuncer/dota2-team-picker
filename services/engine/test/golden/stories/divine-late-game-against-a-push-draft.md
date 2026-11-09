@@ -83,7 +83,7 @@ If it goes wrong: No Blink Dagger by 25 min? Don't start fights without it. Stay
 
 ### Pos 4 Rubick
 Timings: rank
-Start: 2 Tango [Hard lane against Lycan and Shadow Shaman: more sustain], Blood Grenade, 2 Iron Branch, Magic Stick, Sentry Ward, Healing Salve [Hard lane against Lycan and Shadow Shaman: more sustain]
+Start: 2 Tango [Hard lane against Lycan and Shadow Shaman: more sustain], Blood Grenade, 2 Iron Branch, Sentry Ward, Faerie Fire, Healing Salve [Hard lane against Lycan and Shadow Shaman: more sustain]
 Lane: Magic Wand 5, Ring of Basilius 7, Urn of Shadows 8
 Boots: Arcane Boots 11
 First: Essence Distiller 14/15

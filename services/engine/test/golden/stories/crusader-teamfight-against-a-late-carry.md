@@ -41,7 +41,7 @@ If it goes wrong: No Battle Fury by 18 min? Don't show on the map without it. Fa
 
 ### Pos 2 Invoker
 Timings: rank
-Start: 2 Iron Branch, Mantle of Intelligence, 2 Tango [Hard lane against Ember Spirit: more sustain], Healing Salve [Hard lane against Ember Spirit: more sustain]
+Start: 2 Iron Branch, Mantle of Intelligence, Faerie Fire, 2 Tango [Hard lane against Ember Spirit: more sustain], Healing Salve [Hard lane against Ember Spirit: more sustain]
 Lane: Null Talisman 2, Magic Wand 3
 Boots: Boots of Travel 19
 First: Meteor Hammer 12/14
@@ -85,7 +85,7 @@ If it goes wrong: No Blink Dagger by 16 min? Don't start fights without it. Stay
 
 ### Pos 4 Earthshaker
 Timings: all
-Start: 2 Tango [Hard lane against Spectre and Disruptor: more sustain], Blood Grenade, Sentry Ward, Iron Branch, Magic Stick, Healing Salve [Hard lane against Spectre and Disruptor: more sustain]
+Start: 2 Tango [Hard lane against Spectre and Disruptor: more sustain], Blood Grenade, Sentry Ward, Iron Branch, Healing Salve [Hard lane against Spectre and Disruptor: more sustain]
 Lane: Magic Wand 6, Ring of Basilius 7
 Boots: Arcane Boots 11
 First: Blink Dagger 17/19 {Start fights from 1,200 range.}

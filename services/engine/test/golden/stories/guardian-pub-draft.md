@@ -20,7 +20,7 @@ Lane Off lane: Axe + Ogre Magi vs Drow Ranger + Crystal Maiden, hard
 
 ### Pos 1 Wraith King
 Timings: all
-Start: Quelling Blade, 2 Tango [Hard lane against Legion Commander and Shadow Shaman: more sustain], 2 Iron Branch, Magic Stick, Healing Salve [Hard lane against Legion Commander and Shadow Shaman: more sustain]
+Start: Quelling Blade, 2 Tango [Hard lane against Legion Commander and Shadow Shaman: more sustain], 2 Iron Branch, Faerie Fire, Healing Salve [Hard lane against Legion Commander and Shadow Shaman: more sustain]
 Lane: Bracer 2, Magic Wand 3
 Boots: Phase Boots 8 {Armor and a burst of speed.}
 First: Radiance 17/18 {Burns everything near you, and 25% evasion.}
@@ -41,7 +41,7 @@ If it goes wrong: No Radiance by 18 min? Don't show on the map without it. Farm 
 
 ### Pos 2 Sniper
 Timings: all
-Start: 2 Tango [Hard lane against Pudge: more sustain], Slippers of Agility, Iron Branch, Healing Salve [Hard lane against Pudge: more sustain]
+Start: 2 Tango [Hard lane against Pudge: more sustain], Slippers of Agility, Iron Branch, Faerie Fire, Healing Salve [Hard lane against Pudge: more sustain]
 Lane: Wraith Band 2, Magic Wand 4
 Boots: Power Treads 8 {Attack speed and a stat to switch.}
 First: Hurricane Pike 26/31
@@ -85,7 +85,7 @@ If it goes wrong: No Blink Dagger by 21 min? Don't start fights without it. Stay
 
 ### Pos 4 Ogre Magi
 Timings: all
-Start: 2 Tango [Hard lane against Drow Ranger and Crystal Maiden: more sustain], Blood Grenade, Magic Stick, Iron Branch, Sentry Ward, Healing Salve [Hard lane against Drow Ranger and Crystal Maiden: more sustain]
+Start: 2 Tango [Hard lane against Drow Ranger and Crystal Maiden: more sustain], Blood Grenade, Magic Stick, Iron Branch, Healing Salve [Hard lane against Drow Ranger and Crystal Maiden: more sustain]
 Lane: Magic Wand 5, Ring of Basilius 7
 Boots: Arcane Boots 12
 First: Hand of Midas 18/21
@@ -107,7 +107,7 @@ If it goes wrong: Drow Ranger is farming free? Pressure that lane before 10 min.
 
 ### Pos 5 Lion
 Timings: all
-Start: 2 Tango [Hard lane against Legion Commander and Shadow Shaman: more sustain], Blood Grenade, 2 Iron Branch, Magic Stick, Observer and Sentry Wards, Healing Salve [Hard lane against Legion Commander and Shadow Shaman: more sustain]
+Start: 2 Tango [Hard lane against Legion Commander and Shadow Shaman: more sustain], Blood Grenade, 2 Iron Branch, Observer and Sentry Wards, Healing Salve [Hard lane against Legion Commander and Shadow Shaman: more sustain]
 Lane: Magic Wand 5
 Boots: Tranquil Boots 7
 First: Blink Dagger 18/20 {Start fights from 1,200 range.}
