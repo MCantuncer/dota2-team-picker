@@ -1,0 +1,59 @@
+name: PR body clean
+
+# Removes tool attribution from pull request descriptions: "Generated with/by Claude Code"
+# footers, claude.ai/code session or project thread links, the attribution marker and
+# Co-Authored-By: Claude lines. Some tools add these after the PR is opened, so this runs
+# on every open and edit. Links to claude.ai/artifact mockups are kept.
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: write
+
+concurrency:
+  group: pr-body-clean-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  clean:
+    name: Remove attribution from PR body
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Strip attribution lines
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr view "$PR" --json body --jq '.body' > body.md
+          python3 - <<'PY'
+          import re
+
+          src = open("body.md", encoding="utf-8").read()
+          drop = [
+              re.compile(r"generated (with|by) \[?claude code", re.I),
+              re.compile(r"claude\.ai/code/(session|project)", re.I),
+              re.compile(r"claude\.com/claude-code", re.I),
+              re.compile(r"<!--\s*claude-projects-attribution", re.I),
+              re.compile(r"^\s*co-authored-by:\s*claude", re.I),
+              re.compile(r"^\s*claude-session:", re.I),
+          ]
+          lines = [l for l in src.splitlines() if not any(p.search(l) for p in drop)]
+          # Drop separators and blank lines left behind at either end.
+          while lines and lines[-1].strip() in ("", "---"):
+              lines.pop()
+          while lines and lines[0].strip() in ("", "---"):
+              lines.pop(0)
+          out = re.sub(r"\n{3,}", "\n\n", "\n".join(lines))
+          if out != src.strip():
+              open("clean.md", "w", encoding="utf-8").write(out + "\n")
+              print("Attribution found, cleaning the PR body.")
+          else:
+              print("PR body is clean.")
+          PY
+          if [ -f clean.md ]; then
+            gh pr edit "$PR" --body-file clean.md
+          fi
