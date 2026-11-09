@@ -6,8 +6,8 @@
  * its losing matchups against them, weighted by those chances, with lane opponents counting extra.
  * Bans and picked heroes leave the pool, so banning a hero's counters lowers its risk.
  */
-import { guessEnemyPositions, LANE_OPPONENTS, type PositionFit } from "./positions";
-import { POSITIONS, type Position, type RankBracket } from "./types";
+import { guessEnemyPositions, knownPositions, LANE_OPPONENTS, type PositionFit } from "./positions";
+import { POSITIONS, type EnemyPositions, type Position, type RankBracket } from "./types";
 
 /** Extra weight on an enemy position you face in lane. */
 const LANE_WEIGHT = 1.5;
@@ -25,6 +25,8 @@ export interface RiskInput {
   /** Heroes the enemy can still pick. */
   pool: number[];
   enemies: number[];
+  /** Enemy positions the player set by hand; the rest are guessed. */
+  enemyPositions?: EnemyPositions;
   myPosition: Position;
   rankBracket?: RankBracket;
   /** Pairs left out of the risk because another term already counts them, as `candidate-enemy`. */
@@ -40,9 +42,12 @@ export interface OpenSlot {
   chances: Map<number, number>;
 }
 
-export function openSlots(engine: RiskEngine, pool: number[], enemies: number[]): OpenSlot[] {
+export function openSlots(engine: RiskEngine, pool: number[], enemies: number[], known?: EnemyPositions): OpenSlot[] {
   if (enemies.length >= 5) return [];
-  const guessed = guessEnemyPositions(enemies.map((e) => engine.fit(e)));
+  const guessed = guessEnemyPositions(
+    enemies.map((e) => engine.fit(e)),
+    knownPositions(enemies, known),
+  );
   return POSITIONS.flatMap((position) => {
     const open = Math.max(0, 1 - guessed.reduce((s, fit) => s + fit[position], 0));
     const weights = pool.map((id) => [id, engine.pickRate(id) * engine.fit(id)[position]] as const);
@@ -60,7 +65,7 @@ export const pickChance = (slots: OpenSlot[], id: number) =>
  * Risk of each candidate, in win-rate points (0 or less), and how much each enemy hero adds to it.
  */
 export function blindPickRisk(engine: RiskEngine, input: RiskInput): Map<number, { risk: number; by: Map<number, number> }> {
-  const slots = openSlots(engine, input.pool, input.enemies);
+  const slots = openSlots(engine, input.pool, input.enemies, input.enemyPositions);
   const lane = new Set(LANE_OPPONENTS[input.myPosition]);
   const out = new Map<number, { risk: number; by: Map<number, number> }>();
   for (const c of input.candidates) {

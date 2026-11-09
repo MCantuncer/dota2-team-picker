@@ -67,6 +67,13 @@ describe("gamePlan", () => {
     expect(plan.roadmap[0]!.text).toContain("Press your edge in the safe lane");
   });
 
+  it("puts enemies in the positions a player set instead of the guess", () => {
+    // Anti-Mage and Terrorblade swapped: Anti-Mage now meets Medusa's lane from the offlane.
+    const plan = gamePlan(new Engine(data()), { ours, theirs, theirPositions: { 1: 3, 109: 1 } });
+    expect(plan.lanes.find((l) => l.name === "Safe lane")!.theirs).toEqual([1, 30]);
+    expect(plan.lanes.find((l) => l.name === "Off lane")!.theirs).toEqual([109, 31]);
+  });
+
   it("calls the lane from real lane results when the snapshot has them, naming the pair", () => {
     const d = data();
     // Medusa wins the game against Terrorblade but loses the lane to him, the worst of the four pairs.

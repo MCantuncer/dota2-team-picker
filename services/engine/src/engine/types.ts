@@ -269,11 +269,16 @@ export interface AllyPick {
   position?: Position;
 }
 
+/** Enemy positions a player set by hand, by hero id. The engine guesses the rest. */
+export type EnemyPositions = Partial<Record<number, Position>>;
+
 export interface DraftInput {
   myPosition: Position;
   allies: AllyPick[];
   /** Enemy picks. Their positions are not visible in game, so the engine guesses them. */
   enemies: number[];
+  /** Enemy positions the player set by hand, which override the guess for those heroes. */
+  enemyPositions?: EnemyPositions;
   bans?: number[];
   /** Only known for Steam users; omit to use all ranks. */
   rankBracket?: RankBracket;

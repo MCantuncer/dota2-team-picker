@@ -2,13 +2,14 @@ import { mergeHardCounters } from "./data-hard-counters";
 import { HARD_COUNTERS, hardCountersOf, type HardCounter } from "./hard-counters";
 import { list, namedPoints, ordinal, pickLines, points, RANK_NAMES, ROLE_NAMES, summaryOf, type Line, type Warning } from "./reasons";
 import { blindPickRisk, openSlots, pickChance } from "./risk";
-import { guessEnemyPositions, LANE_OPPONENTS, positionFit, type PositionFit } from "./positions";
+import { guessEnemyPositions, knownPositions, LANE_OPPONENTS, positionFit, type PositionFit } from "./positions";
 import { NEED_SHORT, traitsOf, unmetNeeds } from "./traits";
 import {
   phaseOf,
   POSITIONS,
   rankGroup,
   type DraftInput,
+  type EnemyPositions,
   type HardCounterNote,
   type Position,
   type GamesWins,
@@ -297,10 +298,11 @@ export class Engine {
    * Chance (0-1) that each enemy is one you face in lane when playing `pos`. Which enemy support
    * is the 4 and which the 5 is often guessed wrong, and supports rotate, so in a lane with an
    * enemy support every likely support counts at least SUPPORT_LANE_SHARE of its support chance.
+   * Enemies whose position the player set (`known`) are sure of it; a support still gets the floor, since it rotates.
    */
-  laneChances(enemies: number[], pos: Position): number[] {
+  laneChances(enemies: number[], pos: Position, known?: EnemyPositions): number[] {
     const facesSupport = LANE_OPPONENTS[pos].some((p) => p >= 4);
-    return guessEnemyPositions(enemies.map((e) => this.fit(e))).map((fit) => {
+    return guessEnemyPositions(enemies.map((e) => this.fit(e)), knownPositions(enemies, known)).map((fit) => {
       const chance = LANE_OPPONENTS[pos].reduce((s, p) => s + fit[p], 0);
       return facesSupport ? Math.max(chance, SUPPORT_LANE_SHARE * (fit[4] + fit[5])) : chance;
     });
@@ -350,7 +352,7 @@ export class Engine {
     // Top 5 only counts for heroes in the pool, so it can never lift a hero from outside it.
     const top = new Set((input.top ?? []).filter((id) => favorites.has(id)));
 
-    const laneChance = this.laneChances(input.enemies, pos);
+    const laneChance = this.laneChances(input.enemies, pos, input.enemyPositions);
 
     const allies = allyIds.map((id) => this.hero(id));
     const needs = unmetNeeds(allies);
@@ -362,7 +364,7 @@ export class Engine {
     const candidates = pool.filter((h) => this.fit(h.id)[pos] >= MIN_POSITION_FIT || favorites.has(h.id));
     const risk = this.risks(candidates.map((h) => h.id), input);
     const avgRisk = mean([...risk.values()].map((r) => r.risk));
-    const slots = openSlots(this, pool.map((h) => h.id), input.enemies);
+    const slots = openSlots(this, pool.map((h) => h.id), input.enemies, input.enemyPositions);
     const partner = LANE_PARTNER[pos];
     const metaRank = this.metaRanks(pos, input.rankBracket);
     const where = input.rankBracket ? ` at ${RANK_NAMES[input.rankBracket - 1]}` : "";
@@ -580,7 +582,14 @@ export class Engine {
     const bans = new Set((input.bans ?? []).filter((id) => !picked.has(id)));
     const unpicked = this.heroes.map((h) => h.id).filter((id) => !picked.has(id));
     const skip = new Set(candidates.flatMap((c) => (this.hardCounters.get(c) ?? []).map((hc) => `${c}-${hc.counter}`)));
-    const base = { candidates, enemies: input.enemies, myPosition: input.myPosition, rankBracket: input.rankBracket, skip };
+    const base = {
+      candidates,
+      enemies: input.enemies,
+      enemyPositions: input.enemyPositions,
+      myPosition: input.myPosition,
+      rankBracket: input.rankBracket,
+      skip,
+    };
     const now = blindPickRisk(this, { ...base, pool: unpicked.filter((id) => !bans.has(id)) });
     const unbanned = bans.size ? blindPickRisk(this, { ...base, pool: unpicked }) : now;
     const top = (by: Map<number, number>, n: number, keep: (id: number) => boolean) =>
