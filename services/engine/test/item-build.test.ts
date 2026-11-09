@@ -218,7 +218,7 @@ describe("itemBuild with STRATZ item timings", () => {
 describe("start items within the starting gold", () => {
   const items: Record<string, ItemInfo> = {
     44: item("tango", "Tango", 90),
-    16: item("branches", "Iron Branch", 50),
+    16: item("branches", "Iron Branch", 55),
     20: item("circlet", "Circlet", 155),
     237: item("faerie_fire", "Faerie Fire", 65),
     15: item("mantle", "Mantle of Intelligence", 140),
@@ -226,21 +226,34 @@ describe("start items within the starting gold", () => {
     29: item("boots", "Boots of Speed", 500),
     42: item("ward_observer", "Observer Ward", 0),
   };
+  const own = (id: number, count = 1) => ({ itemId: id, name: items[id]?.name ?? "Unknown", img: "", minute: 0, ...(count > 1 ? { count } : {}) });
+  const told = (start: { itemId: number; count?: number }[]) => start.map((i) => [i.itemId, i.count ?? 1]);
+  const gold = (start: { itemId: number; count?: number }[]) => start.reduce((n, i) => n + (items[i.itemId]?.cost ?? 0) * (i.count ?? 1), 0);
 
   it("keeps the most held items while they fit in 600 gold", () => {
-    // Necrophos mid's popular start costs 750 here; Magic Stick, the least held, no longer fits.
-    const start = affordableStart([[44, 1], [16, 2], [20, 1], [237, 1], [15, 1], [34, 1]], items);
-    expect(start).toEqual([[44, 1], [16, 2], [20, 1], [237, 1], [15, 1]]);
-    expect(start.reduce((gold, [id, count]) => gold + items[id]!.cost * count, 0)).toBeLessThanOrEqual(STARTING_GOLD); // ids come from `items` above.
+    // Necrophos mid's popular start costs 760; Magic Stick, the least held, no longer fits.
+    const start = affordableStart([own(44), own(16, 2), own(20), own(237), own(15), own(34)], items);
+    expect(told(start)).toEqual([[44, 1], [16, 2], [20, 1], [237, 1], [15, 1]]);
+    expect(gold(start)).toBeLessThanOrEqual(STARTING_GOLD);
   });
 
   it("skips an item that does not fit but keeps a cheaper one after it", () => {
-    expect(affordableStart([[44, 1], [34, 1], [29, 1], [16, 1]], items)).toEqual([[44, 1], [34, 1], [16, 1]]);
+    expect(told(affordableStart([own(44), own(34), own(29), own(16)], items))).toEqual([[44, 1], [34, 1], [16, 1]]);
   });
 
-  it("keeps only the copies that fit, and free items always", () => {
-    expect(affordableStart([[34, 2], [16, 3], [42, 2]], items)).toEqual([[34, 2], [16, 3], [42, 2]]);
-    expect(affordableStart([[29, 1], [16, 3]], items)).toEqual([[29, 1], [16, 2]]);
+  it("keeps only the copies that fit, free items always, and no item without a price", () => {
+    expect(told(affordableStart([own(34, 2), own(16, 3), own(42, 2)], items))).toEqual([[34, 2], [16, 3], [42, 2]]);
+    expect(told(affordableStart([own(29), own(16, 3)], items))).toEqual([[29, 1], [16, 1]]);
+    expect(told(affordableStart([own(999), own(44)], items))).toEqual([[44, 1]]);
+  });
+
+  it("keeps items in priority order but tells them in start order", () => {
+    const [circlet, stick, boots] = [own(20), own(34), own(29)];
+    // Boots first leave 100 gold, so Circlet and Magic Stick go.
+    expect(told(affordableStart([circlet, stick, boots], items, [boots, circlet, stick]))).toEqual([[29, 1]]);
+    // Everything fits: told as the start has it, not in priority order.
+    const tango = own(44);
+    expect(told(affordableStart([circlet, stick, tango], items, [tango, stick, circlet]))).toEqual([[20, 1], [34, 1], [44, 1]]);
   });
 });
 

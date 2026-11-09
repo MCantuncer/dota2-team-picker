@@ -79,7 +79,7 @@ If it goes wrong: No Blink Dagger by 22 min? Don't start fights without it. Stay
 
 ### Pos 4 Mirana
 Timings: all
-Start: 2 Tango [Hard lane against Troll Warlord and Jakiro: more sustain], Blood Grenade, Iron Branch, Magic Stick, Sentry Ward, Healing Salve [Hard lane against Troll Warlord and Jakiro: more sustain]
+Start: 2 Tango [Hard lane against Troll Warlord and Jakiro: more sustain], Blood Grenade, Iron Branch, Circlet, Sentry Ward, Healing Salve [Hard lane against Troll Warlord and Jakiro: more sustain]
 Lane: Magic Wand 3 [Against Jakiro's spells: get it early], Urn of Shadows 7, Ring of Basilius 8
 Boots: Arcane Boots 12
 First: Essence Distiller 14/17
@@ -101,7 +101,7 @@ If it goes wrong: Troll Warlord is farming free? Pressure that lane before 10 mi
 
 ### Pos 5 Warlock
 Timings: all
-Start: Tango, Magic Stick, Blood Grenade, Iron Branch, Sentry Ward, Observer and Sentry Wards
+Start: Tango, Magic Stick, Blood Grenade, Iron Branch, Observer and Sentry Wards
 Lane: Ring of Basilius 5, Magic Wand 5
 Boots: Arcane Boots 11
 First: Glimmer Cape 21/23 [Against Snapfire and Jakiro] {Invisibility and a magic damage barrier.}

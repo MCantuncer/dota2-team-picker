@@ -6,6 +6,8 @@ import type { HeroInfo, ItemInfo } from "../src/engine/types";
 const item = (key: string, name: string, cost: number): ItemInfo => ({ key, name, cost, img: "", components: [] });
 const ITEMS: Record<string, ItemInfo> = {
   11: item("quelling_blade", "Quelling Blade", 100),
+  42: item("ward_observer", "Observer Ward", 0),
+  43: item("ward_sentry", "Sentry Ward", 50),
   13: item("gauntlets", "Gauntlets of Strength", 140),
   16: item("branches", "Iron Branch", 55),
   20: item("circlet", "Circlet", 155),
@@ -46,15 +48,15 @@ describe("laneAdjusted", () => {
     expect(build).toEqual(juggernaut());
   });
 
-  it("buys sustain for a hard lane, paid for by Faerie Fire and Circlet", () => {
+  it("buys sustain for a hard lane, paid for by the Circlet and the 80 gold left", () => {
     const build = laneAdjusted(juggernaut(), { verdict: "hard", enemies: [AXE, SNIPER] }, ITEMS);
-    expect(names(build.start)).toEqual(["Quelling Blade", "2 Tango", "2 Iron Branch", "Healing Salve"]);
+    expect(names(build.start)).toEqual(["Quelling Blade", "2 Tango", "2 Iron Branch", "Faerie Fire", "Healing Salve"]);
     const salve = build.start.at(-1)!;
     expect(salve).toMatchObject({ draft: true, phase: "start", reason: "Hard lane against Axe and Sniper: more sustain", against: [2, 35] });
   });
 
   it("gives up one copy at a time", () => {
-    // 590 gold: 10 left, so two Gauntlets pay for the Salve and Tango (190 gold) only together.
+    // 590 gold: two Gauntlets pay for the Salve and Tango (190 gold) only together.
     const usual = { ...juggernaut(), start: [own(13, 0, 2), own(44, 0), own(16, 0, 4)] };
     const build = laneAdjusted(usual, { verdict: "hard", enemies: [AXE] }, ITEMS);
     expect(names(build.start)).toEqual(["2 Tango", "4 Iron Branch", "Healing Salve"]);
@@ -67,6 +69,32 @@ describe("laneAdjusted", () => {
     const usual = { ...juggernaut(), start: [own(13, 0, 2), own(44, 0)] };
     const build = laneAdjusted(usual, { verdict: "hard", enemies: [AXE] }, ITEMS);
     expect(names(build.start)).toEqual(["2 Gauntlets of Strength", "2 Tango", "Healing Salve"]);
+  });
+
+  it("never starts with more than 600 gold, even with nothing optional to give up", () => {
+    // 650 gold with the Salve and Tango, none of it on the give-up list: the Wand no longer fits.
+    const support = { ...juggernaut(), start: [own(44, 0), own(36, 0), own(11, 0)] };
+    const build = laneAdjusted(support, { verdict: "hard", enemies: [AXE] }, ITEMS);
+    expect(names(build.start)).toEqual(["2 Tango", "Quelling Blade", "Healing Salve"]);
+    expect(build.start.reduce((gold, i) => gold + ITEMS[i.itemId]!.cost * (i.count ?? 1), 0)).toBeLessThanOrEqual(600); // Every start id is in ITEMS.
+  });
+
+  it("keeps a support's wards in a hard lane, before a Magic Wand", () => {
+    const support = { ...juggernaut(), start: [own(44, 0), own(36, 0), own(16, 0, 2), own(43, 0), own(42, 0)] };
+    const build = laneAdjusted(support, { verdict: "hard", enemies: [AXE] }, ITEMS);
+    expect(names(build.start)).toEqual(["2 Tango", "2 Iron Branch", "Sentry Ward", "Observer Ward", "Healing Salve"]);
+  });
+
+  it("keeps the wards first in an even lane too", () => {
+    const support = { ...juggernaut(), start: [own(36, 0), own(44, 0), own(43, 0)] };
+    expect(names(laneAdjusted(support, { verdict: "even", enemies: [SNIPER] }, ITEMS).start)).toEqual(["Magic Wand", "Tango", "Sentry Ward"]);
+    const dear = { ...support, start: [own(36, 0), own(11, 0), own(43, 0)] };
+    expect(names(laneAdjusted(dear, { verdict: "even", enemies: [SNIPER] }, ITEMS).start)).toEqual(["Magic Wand", "Sentry Ward"]);
+  });
+
+  it("cuts the usual start to 600 gold in any lane, the least held first", () => {
+    const usual = { ...juggernaut(), start: [own(11, 0), own(44, 0), own(16, 0, 2), own(36, 0)] };
+    expect(names(laneAdjusted(usual, { verdict: "even", enemies: [SNIPER] }, ITEMS).start)).toEqual(["Quelling Blade", "Tango", "2 Iron Branch"]);
   });
 
   it("moves the Magic Wand early against spell spammers, and only when it changes", () => {

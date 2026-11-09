@@ -1,12 +1,13 @@
 /**
  * Start and lane items changed for the lane this draft gives a player. STRATZ has no purchases by
  * lane opponent, so these are hand rules (checked by a strong player, see the PR):
- * - A hard lane starts with a Healing Salve and one more Tango, paid for by optional stat items.
+ * - A hard lane starts with a Healing Salve and one more Tango, paid for by optional stat items first.
+ * - Every start is then cut to what 600 starting gold buys (affordableStart), wards always kept.
  * - Spell spammers in the lane: Magic Wand early, since every spell they cast charges it.
  * - Magic burst in the lane (two burst heroes, or one in a hard lane): Infused Raindrops.
  * Every changed item is marked `draft` with the enemy heroes it answers.
  */
-import { listNames, STARTING_GOLD, type BuildItem, type ItemBuild } from "./item-build";
+import { affordableStart, listNames, type BuildItem, type ItemBuild } from "./item-build";
 import type { HeroInfo, ItemInfo } from "./types";
 
 /** Heroes whose lane is a stream of cheap spells, so a Magic Wand fills fast. */
@@ -22,7 +23,7 @@ export const MAGIC_BURST = new Set([
   "Shadow Fiend", "Leshrac", "Earthshaker",
 ]);
 
-/** Optional start items given up first to pay for sustain in a hard lane, in that order. */
+/** Optional start items given up first to pay for sustain in a hard lane, in that order (see affordableStart). */
 const GIVE_UP_FIRST = ["faerie_fire", "circlet", "slippers", "mantle", "gauntlets", "enchanted_mango"];
 /** Minute an early Magic Wand or Infused Raindrops is bought by in a lane that calls for it. */
 const EARLY_MINUTE = { magic_wand: 3, infused_raindrop: 4 } as const;
@@ -63,19 +64,6 @@ export function laneAdjusted(build: ItemBuild, lane: LaneFacts, items: Record<st
     const salve = make("flask", 0);
     const tango = start.find((i) => keyOf(i) === "tango");
     const added = salve && !start.some((i) => keyOf(i) === "flask") ? salve : null;
-    // Gold the usual start leaves unspent pays first (the start is cut to fit, see affordableStart).
-    const spare = STARTING_GOLD - start.reduce((gold, s) => gold + (items[s.itemId]?.cost ?? 0) * (s.count ?? 1), 0);
-    let cost = (added ? items[added.itemId]!.cost : 0) + (items[idOf("tango") ?? ""]?.cost ?? 0) - Math.max(0, spare);
-    // Pay the rest with optional stat items, one copy at a time, until it is paid.
-    for (const key of GIVE_UP_FIRST) {
-      while (cost > 0) {
-        const i = start.findIndex((s) => keyOf(s) === key);
-        if (i < 0) break;
-        const s = start[i]!; // i is a valid index.
-        cost -= items[s.itemId]!.cost;
-        start = (s.count ?? 1) > 1 ? start.map((x, j) => (j === i ? withCount(x, (s.count ?? 1) - 1) : x)) : start.filter((_, j) => j !== i);
-      }
-    }
     start = start.map((s) => (s === tango ? mark(withCount(s, (s.count ?? 1) + 1), reason, lane.enemies) : s));
     if (!tango) {
       const t = make("tango", 0);
@@ -103,5 +91,16 @@ export function laneAdjusted(build: ItemBuild, lane: LaneFacts, items: Record<st
   }
 
   laneItems.sort((a, b) => a.minute - b.minute);
-  return { ...build, start, lane: laneItems };
+  // Cut to what 600 gold buys, once, after the lane's changes. What this lane asks for and a support's
+  // wards are kept first, then the usual items most held first. In a hard lane the optional stat items
+  // go first (Faerie Fire first). Cutting is greedy: a cheap item can stay after a dearer one is cut.
+  const hard = lane.verdict === "hard" && lane.enemies.length > 0;
+  const optional = (i: BuildItem) => (hard ? GIVE_UP_FIRST.indexOf(keyOf(i) ?? "") : -1);
+  const first = (i: BuildItem) => i.draft || (keyOf(i) ?? "").startsWith("ward_");
+  const priority = [
+    ...start.filter(first),
+    ...start.filter((i) => !first(i) && optional(i) < 0),
+    ...start.filter((i) => !first(i) && optional(i) >= 0).sort((a, b) => optional(b) - optional(a)),
+  ];
+  return { ...build, start: affordableStart(start, items, priority), lane: laneItems };
 }

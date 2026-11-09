@@ -92,7 +92,7 @@ Watch Hoodwink: Stay spread so one combo can't catch two.
 
 ### Pos 5 Disruptor
 Timings: all
-Start: Tango, Blood Grenade, Magic Stick, Iron Branch, Sentry Ward, Observer and Sentry Wards
+Start: Tango, Blood Grenade, Magic Stick, Iron Branch, Observer and Sentry Wards
 Lane: Magic Wand 5, Ring of Basilius 6
 Boots: Arcane Boots 11
 First: Glimmer Cape 24/30 [Against Pangolier and Hoodwink] {Invisibility and a magic damage barrier.}

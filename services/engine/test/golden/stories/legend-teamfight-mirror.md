@@ -83,7 +83,7 @@ If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay
 
 ### Pos 4 Lion
 Timings: rank
-Start: 2 Tango [Hard lane against Phantom Assassin and Lich: more sustain], Blood Grenade, 2 Iron Branch, Magic Stick, Sentry Ward, Healing Salve [Hard lane against Phantom Assassin and Lich: more sustain]
+Start: 2 Tango [Hard lane against Phantom Assassin and Lich: more sustain], Blood Grenade, 2 Iron Branch, Sentry Ward, Healing Salve [Hard lane against Phantom Assassin and Lich: more sustain]
 Lane: Magic Wand 4, Infused Raindrops 4 [Against Lich's magic burst]
 Boots: Tranquil Boots 7
 First: Blink Dagger 17/20 {Start fights from 1,200 range.}
