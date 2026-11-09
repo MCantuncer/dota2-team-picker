@@ -54,12 +54,19 @@ describe("laneAdjusted", () => {
   });
 
   it("gives up one copy at a time", () => {
+    // 590 gold: 10 left, so two Gauntlets pay for the Salve and Tango (190 gold) only together.
+    const usual = { ...juggernaut(), start: [own(13, 0, 2), own(44, 0), own(16, 0, 4)] };
+    const build = laneAdjusted(usual, { verdict: "hard", enemies: [AXE] }, ITEMS);
+    expect(names(build.start)).toEqual(["2 Tango", "4 Iron Branch", "Healing Salve"]);
+    // 535 gold: the 65 left and one Gauntlets pay for it.
+    const cheaper = laneAdjusted({ ...usual, start: [own(13, 0, 2), own(44, 0), own(16, 0, 3)] }, { verdict: "hard", enemies: [AXE] }, ITEMS);
+    expect(names(cheaper.start)).toEqual(["Gauntlets of Strength", "2 Tango", "3 Iron Branch", "Healing Salve"]);
+  });
+
+  it("pays from gold the usual start leaves unspent before giving anything up", () => {
     const usual = { ...juggernaut(), start: [own(13, 0, 2), own(44, 0)] };
     const build = laneAdjusted(usual, { verdict: "hard", enemies: [AXE] }, ITEMS);
-    // Two Gauntlets pay for the Salve and Tango (190 gold) only together.
-    expect(names(build.start)).toEqual(["2 Tango", "Healing Salve"]);
-    const cheaper = laneAdjusted({ ...usual, start: [own(13, 0, 2), own(20, 0), own(44, 0)] }, { verdict: "hard", enemies: [AXE] }, ITEMS);
-    expect(names(cheaper.start)).toEqual(["Gauntlets of Strength", "2 Tango", "Healing Salve"]);
+    expect(names(build.start)).toEqual(["2 Gauntlets of Strength", "2 Tango", "Healing Salve"]);
   });
 
   it("moves the Magic Wand early against spell spammers, and only when it changes", () => {

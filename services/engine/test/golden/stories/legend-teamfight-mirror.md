@@ -20,7 +20,7 @@ Lane Off lane: Mars + Lion vs Phantom Assassin + Lich, hard
 
 ### Pos 1 Juggernaut
 Timings: rank
-Start: Quelling Blade, Tango, 2 Iron Branch, Magic Stick, Faerie Fire, Circlet
+Start: Quelling Blade, Tango, 2 Iron Branch, Magic Stick, Faerie Fire
 Lane: Wraith Band 2, Magic Wand 3, Perseverance 10
 Boots: Power Treads 7 {Attack speed and a stat to switch.}, or Phase Boots 8
 First: Battle Fury 14/16 {Cleave for fast farm.}
@@ -40,7 +40,7 @@ If it goes wrong: No Battle Fury by 16 min? Don't show on the map without it. Fa
 
 ### Pos 2 Puck
 Timings: all
-Start: 2 Tango [Hard lane against Shadow Fiend: more sustain], 3 Iron Branch, Healing Salve [Hard lane against Shadow Fiend: more sustain]
+Start: 2 Tango [Hard lane against Shadow Fiend: more sustain], 3 Iron Branch, Faerie Fire, Healing Salve [Hard lane against Shadow Fiend: more sustain]
 Lane: Null Talisman 4, Magic Wand 4, Infused Raindrops 4 [Against Shadow Fiend's magic burst]
 Boots: Power Treads 10 {Attack speed and a stat to switch.}
 First: Blink Dagger 19/20 {Start fights from 1,200 range.}
@@ -62,7 +62,7 @@ If it goes wrong: No Blink Dagger by 20 min? Stop rotating and farm mid and the 
 
 ### Pos 3 Mars
 Timings: all
-Start: Gauntlets of Strength, 2 Iron Branch, 2 Tango [Hard lane against Phantom Assassin and Lich: more sustain], Quelling Blade, Healing Salve [Hard lane against Phantom Assassin and Lich: more sustain]
+Start: 2 Iron Branch, 2 Tango [Hard lane against Phantom Assassin and Lich: more sustain], Quelling Blade, Healing Salve [Hard lane against Phantom Assassin and Lich: more sustain]
 Lane: Bracer 2, Magic Wand 4, Infused Raindrops 4 [Against Lich's magic burst], Soul Ring 5
 Boots: Phase Boots 10 {Armor and a burst of speed.}
 First: Blink Dagger 15/17 {Start fights from 1,200 range.}
@@ -83,7 +83,7 @@ If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay
 
 ### Pos 4 Lion
 Timings: rank
-Start: 2 Tango [Hard lane against Phantom Assassin and Lich: more sustain], Blood Grenade, 2 Iron Branch, Magic Stick, Wind Lace, Sentry Ward, Healing Salve [Hard lane against Phantom Assassin and Lich: more sustain]
+Start: 2 Tango [Hard lane against Phantom Assassin and Lich: more sustain], Blood Grenade, 2 Iron Branch, Magic Stick, Sentry Ward, Healing Salve [Hard lane against Phantom Assassin and Lich: more sustain]
 Lane: Magic Wand 4, Infused Raindrops 4 [Against Lich's magic burst]
 Boots: Tranquil Boots 7
 First: Blink Dagger 17/20 {Start fights from 1,200 range.}

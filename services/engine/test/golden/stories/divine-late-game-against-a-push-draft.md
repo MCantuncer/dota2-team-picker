@@ -19,7 +19,7 @@ Lane Off lane: Tidehunter + Rubick vs Lycan + Shadow Shaman, hard
 
 ### Pos 1 Medusa
 Timings: all
-Start: 2 Iron Branch, Magic Wand, Enchanted Mango, Magic Stick, Circlet
+Start: 2 Iron Branch, Magic Wand
 Lane: Null Talisman 2
 Boots: Power Treads 8 {Attack speed and a stat to switch.}
 First: Manta Style 18/19
@@ -40,7 +40,7 @@ If it goes wrong: No Manta Style by 19 min? Don't show on the map without it. Fa
 
 ### Pos 2 Storm Spirit
 Timings: all
-Start: 2 Tango [Hard lane against Leshrac: more sustain], 3 Iron Branch, Healing Salve [Hard lane against Leshrac: more sustain]
+Start: 2 Tango [Hard lane against Leshrac: more sustain], 3 Iron Branch, Faerie Fire, Healing Salve [Hard lane against Leshrac: more sustain]
 Lane: Magic Wand 3 [Against Leshrac's spells: get it early], Infused Raindrops 4 [Against Leshrac's magic burst], Soul Ring 7
 Boots: Power Treads 9 {Attack speed and a stat to switch.}
 First: Orchid Malevolence 20/24
@@ -61,7 +61,7 @@ If it goes wrong: No Orchid Malevolence by 24 min? Stop rotating and farm mid an
 
 ### Pos 3 Tidehunter
 Timings: rank
-Start: 2 Tango [Hard lane against Lycan and Shadow Shaman: more sustain], 2 Iron Branch, Quelling Blade, Magic Stick, Healing Salve [Hard lane against Lycan and Shadow Shaman: more sustain]
+Start: 2 Tango [Hard lane against Lycan and Shadow Shaman: more sustain], 2 Iron Branch, Quelling Blade, Healing Salve [Hard lane against Lycan and Shadow Shaman: more sustain]
 Lane: Bracer 2, Magic Wand 4, Soul Ring 6, Ring of Basilius 11
 Boots: Phase Boots 9 {Armor and a burst of speed.}
 First: Vladmir's Offering 13/15

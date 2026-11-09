@@ -107,7 +107,7 @@ If it goes wrong: Drow Ranger is farming free? Pressure that lane before 10 min.
 
 ### Pos 5 Lion
 Timings: all
-Start: 2 Tango [Hard lane against Legion Commander and Shadow Shaman: more sustain], Blood Grenade, 2 Iron Branch, Magic Stick, Observer and Sentry Wards, Wind Lace, Healing Salve [Hard lane against Legion Commander and Shadow Shaman: more sustain]
+Start: 2 Tango [Hard lane against Legion Commander and Shadow Shaman: more sustain], Blood Grenade, 2 Iron Branch, Magic Stick, Observer and Sentry Wards, Healing Salve [Hard lane against Legion Commander and Shadow Shaman: more sustain]
 Lane: Magic Wand 5
 Boots: Tranquil Boots 7
 First: Blink Dagger 18/20 {Start fights from 1,200 range.}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { itemBuild, listNames, sharesBuiltPart, threatsOf, withoutAlternatives } from "../src/engine/item-build";
+import { STARTING_GOLD, affordableStart, itemBuild, listNames, sharesBuiltPart, threatsOf, withoutAlternatives } from "../src/engine/item-build";
 import type { HeroInfo, ItemInfo, Snapshot } from "../src/engine/types";
 
 const hero = (id: number, name: string, roles: string[]): HeroInfo => ({ id, name, roles, attackType: "Melee", primaryAttr: "str" });
@@ -167,8 +167,8 @@ describe("itemBuild with STRATZ item timings", () => {
     expect(build.core[0]).toMatchObject({ name: "Power Treads", minute: 7 });
     expect(build.core.filter((i) => i.name === "Phase Boots")).toEqual([]);
     expect(build.bootsOr).toMatchObject({ name: "Phase Boots", minute: 8 });
-    // A lane item already in the start is not bought twice.
-    d.itemStarts[1]![1]!.start.push([36, 1]);
+    // A lane item already in the start (a Magic Wand with a Tango, within 600 gold) is not bought twice.
+    d.itemStarts[1]![1]!.start = [[36, 1], [44, 1]];
     expect(itemBuild(d, 1, 1, [4])!.lane.map((i) => i.name)).toEqual([]);
     // Another position has no STRATZ start: OpenDota's is kept.
     expect(itemBuild(d, 1, 2, [4])!.bootsOr).toBeUndefined();
@@ -212,6 +212,35 @@ describe("itemBuild with STRATZ item timings", () => {
     const build = itemBuild(timed(), 1, 3, [4])!;
     expect(build.timings).toBe("around");
     expect(build.core.every((i) => i.lateMinute === undefined)).toBe(true);
+  });
+});
+
+describe("start items within the starting gold", () => {
+  const items: Record<string, ItemInfo> = {
+    44: item("tango", "Tango", 90),
+    16: item("branches", "Iron Branch", 50),
+    20: item("circlet", "Circlet", 155),
+    237: item("faerie_fire", "Faerie Fire", 65),
+    15: item("mantle", "Mantle of Intelligence", 140),
+    34: item("magic_stick", "Magic Stick", 200),
+    29: item("boots", "Boots of Speed", 500),
+    42: item("ward_observer", "Observer Ward", 0),
+  };
+
+  it("keeps the most held items while they fit in 600 gold", () => {
+    // Necrophos mid's popular start costs 750 here; Magic Stick, the least held, no longer fits.
+    const start = affordableStart([[44, 1], [16, 2], [20, 1], [237, 1], [15, 1], [34, 1]], items);
+    expect(start).toEqual([[44, 1], [16, 2], [20, 1], [237, 1], [15, 1]]);
+    expect(start.reduce((gold, [id, count]) => gold + items[id]!.cost * count, 0)).toBeLessThanOrEqual(STARTING_GOLD); // ids come from `items` above.
+  });
+
+  it("skips an item that does not fit but keeps a cheaper one after it", () => {
+    expect(affordableStart([[44, 1], [34, 1], [29, 1], [16, 1]], items)).toEqual([[44, 1], [34, 1], [16, 1]]);
+  });
+
+  it("keeps only the copies that fit, and free items always", () => {
+    expect(affordableStart([[34, 2], [16, 3], [42, 2]], items)).toEqual([[34, 2], [16, 3], [42, 2]]);
+    expect(affordableStart([[29, 1], [16, 3]], items)).toEqual([[29, 1], [16, 2]]);
   });
 });
 
