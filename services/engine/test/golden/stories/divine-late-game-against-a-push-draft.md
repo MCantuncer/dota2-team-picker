@@ -104,7 +104,7 @@ If it goes wrong: Lycan is farming free? Pressure that lane before 10 min. After
 
 ### Pos 5 Dazzle
 Timings: all
-Start: Tango, Blood Grenade, 2 Iron Branch, Magic Stick, Sentry Ward, Observer and Sentry Wards
+Start: Tango, Blood Grenade, 2 Iron Branch, Magic Stick, Observer and Sentry Wards
 Lane: Magic Wand 5, Ring of Basilius 7
 Boots: Arcane Boots 12
 First: Holy Locket 20/22

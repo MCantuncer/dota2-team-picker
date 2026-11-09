@@ -70,7 +70,7 @@ If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay
 
 ### Pos 4 Shadow Shaman
 Timings: all
-Start: 2 Tango [Hard lane against Vengeful Spirit and Witch Doctor: more sustain], Blood Grenade, Iron Branch, Sentry Ward, Observer and Sentry Wards, Healing Salve [Hard lane against Vengeful Spirit and Witch Doctor: more sustain]
+Start: 2 Tango [Hard lane against Vengeful Spirit and Witch Doctor: more sustain], Blood Grenade, Magic Stick, Observer and Sentry Wards, Healing Salve [Hard lane against Vengeful Spirit and Witch Doctor: more sustain]
 Lane: Magic Wand 3 [Against Witch Doctor's spells: get it early], Ring of Basilius 6
 Boots: Arcane Boots 11
 First: Blink Dagger 20/22 {Start fights from 1,200 range.}

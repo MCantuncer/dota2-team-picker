@@ -313,7 +313,11 @@ export function itemBuild(
   // STRATZ's start for this position when there is one, else OpenDota's for the hero, most held first.
   // Together they can cost more than a player has: the lane rules cut them to 600 gold (laneAdjusted).
   const start = starts?.start.length
-    ? starts.start.filter(([id]) => items[id]).map(([id, count]) => ({ ...toItem(String(id), 0), ...(count > 1 ? { count } : {}) }))
+    ? starts.start
+        .filter(([id]) => items[id])
+        // A support who holds the ward pack does not also hold single Sentry Wards.
+        .filter(([id]) => items[id]?.key !== "ward_sentry" || !starts.start.some(([other]) => items[other]?.key === "ward_dispenser"))
+        .map(([id, count]) => ({ ...toItem(String(id), 0), ...(count > 1 ? { count } : {}) }))
     : Object.entries(phases.start)
     // A support's start list holds both the ward pack and single wards; keep the pack.
     .filter(([id]) => items[id]?.key !== "ward_sentry" || !phases.start[idOf("ward_dispenser") ?? ""])

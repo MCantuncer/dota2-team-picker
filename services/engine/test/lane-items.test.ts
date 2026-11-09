@@ -85,6 +85,13 @@ describe("laneAdjusted", () => {
     expect(names(build.start)).toEqual(["2 Tango", "2 Iron Branch", "Sentry Ward", "Observer Ward", "Healing Salve"]);
   });
 
+  it("keeps the wards first in an even lane too", () => {
+    const support = { ...juggernaut(), start: [own(36, 0), own(44, 0), own(43, 0)] };
+    expect(names(laneAdjusted(support, { verdict: "even", enemies: [SNIPER] }, ITEMS).start)).toEqual(["Magic Wand", "Tango", "Sentry Ward"]);
+    const dear = { ...support, start: [own(36, 0), own(11, 0), own(43, 0)] };
+    expect(names(laneAdjusted(dear, { verdict: "even", enemies: [SNIPER] }, ITEMS).start)).toEqual(["Magic Wand", "Sentry Ward"]);
+  });
+
   it("cuts the usual start to 600 gold in any lane, the least held first", () => {
     const usual = { ...juggernaut(), start: [own(11, 0), own(44, 0), own(16, 0, 2), own(36, 0)] };
     expect(names(laneAdjusted(usual, { verdict: "even", enemies: [SNIPER] }, ITEMS).start)).toEqual(["Quelling Blade", "Tango", "2 Iron Branch"]);

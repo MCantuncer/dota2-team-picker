@@ -101,7 +101,7 @@ If it goes wrong: Troll Warlord is farming free? Pressure that lane before 10 mi
 
 ### Pos 5 Warlock
 Timings: all
-Start: Tango, Magic Stick, Blood Grenade, Iron Branch, Sentry Ward, Observer and Sentry Wards
+Start: Tango, Magic Stick, Blood Grenade, Iron Branch, Observer and Sentry Wards
 Lane: Ring of Basilius 5, Magic Wand 5
 Boots: Arcane Boots 11
 First: Glimmer Cape 21/23 [Against Snapfire and Jakiro] {Invisibility and a magic damage barrier.}
