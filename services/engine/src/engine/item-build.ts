@@ -186,6 +186,9 @@ export function coreTimingItems(
  * told in their start order. STRATZ counts each start item on its own, so the popular items together
  * can cost more than a player has (Necrophos mid: Tango, 2 Iron Branches, Circlet, Mantle, Magic Stick
  * and Faerie Fire is 760 gold). An item missing from `items` has no known price and is left out.
+ * `priority` must hold the same objects as `start`; any other item is left out.
+ * TODO: STRATZ counts given copies (a support's spare Tango) with bought ones (data/item-starts.ts),
+ * so they are charged here as if bought. Keeping the given count apart needs a data change.
  */
 export function affordableStart(start: BuildItem[], items: Record<string, ItemInfo>, priority: BuildItem[] = start): BuildItem[] {
   let gold = STARTING_GOLD;

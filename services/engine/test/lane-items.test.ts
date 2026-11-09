@@ -6,6 +6,8 @@ import type { HeroInfo, ItemInfo } from "../src/engine/types";
 const item = (key: string, name: string, cost: number): ItemInfo => ({ key, name, cost, img: "", components: [] });
 const ITEMS: Record<string, ItemInfo> = {
   11: item("quelling_blade", "Quelling Blade", 100),
+  42: item("ward_observer", "Observer Ward", 0),
+  43: item("ward_sentry", "Sentry Ward", 50),
   13: item("gauntlets", "Gauntlets of Strength", 140),
   16: item("branches", "Iron Branch", 55),
   20: item("circlet", "Circlet", 155),
@@ -75,6 +77,12 @@ describe("laneAdjusted", () => {
     const build = laneAdjusted(support, { verdict: "hard", enemies: [AXE] }, ITEMS);
     expect(names(build.start)).toEqual(["2 Tango", "Quelling Blade", "Healing Salve"]);
     expect(build.start.reduce((gold, i) => gold + ITEMS[i.itemId]!.cost * (i.count ?? 1), 0)).toBeLessThanOrEqual(600); // Every start id is in ITEMS.
+  });
+
+  it("keeps a support's wards in a hard lane, before a Magic Wand", () => {
+    const support = { ...juggernaut(), start: [own(44, 0), own(36, 0), own(16, 0, 2), own(43, 0), own(42, 0)] };
+    const build = laneAdjusted(support, { verdict: "hard", enemies: [AXE] }, ITEMS);
+    expect(names(build.start)).toEqual(["2 Tango", "2 Iron Branch", "Sentry Ward", "Observer Ward", "Healing Salve"]);
   });
 
   it("cuts the usual start to 600 gold in any lane, the least held first", () => {

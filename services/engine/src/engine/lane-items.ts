@@ -1,8 +1,8 @@
 /**
  * Start and lane items changed for the lane this draft gives a player. STRATZ has no purchases by
  * lane opponent, so these are hand rules (checked by a strong player, see the PR):
- * - A hard lane starts with a Healing Salve and one more Tango, paid for by optional stat items.
- * Every start is then cut to what 600 starting gold buys (affordableStart).
+ * - A hard lane starts with a Healing Salve and one more Tango, paid for by optional stat items first.
+ * - Every start is then cut to what 600 starting gold buys (affordableStart), wards always kept.
  * - Spell spammers in the lane: Magic Wand early, since every spell they cast charges it.
  * - Magic burst in the lane (two burst heroes, or one in a hard lane): Infused Raindrops.
  * Every changed item is marked `draft` with the enemy heroes it answers.
@@ -91,13 +91,16 @@ export function laneAdjusted(build: ItemBuild, lane: LaneFacts, items: Record<st
   }
 
   laneItems.sort((a, b) => a.minute - b.minute);
-  // Cut to what 600 gold buys, once, after the lane's changes. What this lane asks for is kept first,
-  // then the usual items most held first, and the optional stat items last (Faerie Fire first to go).
-  const optional = (i: BuildItem) => GIVE_UP_FIRST.indexOf(keyOf(i) ?? "");
+  // Cut to what 600 gold buys, once, after the lane's changes. What this lane asks for and a support's
+  // wards are kept first, then the usual items most held first. In a hard lane the optional stat items
+  // go first (Faerie Fire first). Cutting is greedy: a cheap item can stay after a dearer one is cut.
+  const hard = lane.verdict === "hard" && lane.enemies.length > 0;
+  const optional = (i: BuildItem) => (hard ? GIVE_UP_FIRST.indexOf(keyOf(i) ?? "") : -1);
+  const first = (i: BuildItem) => i.draft || (keyOf(i) ?? "").startsWith("ward_");
   const priority = [
-    ...start.filter((i) => i.draft),
-    ...start.filter((i) => !i.draft && optional(i) < 0),
-    ...start.filter((i) => !i.draft && optional(i) >= 0).sort((a, b) => optional(b) - optional(a)),
+    ...start.filter(first),
+    ...start.filter((i) => !first(i) && optional(i) < 0),
+    ...start.filter((i) => !first(i) && optional(i) >= 0).sort((a, b) => optional(b) - optional(a)),
   ];
-  return { ...build, start: affordableStart(start, items, lane.verdict === "hard" ? priority : start), lane: laneItems };
+  return { ...build, start: affordableStart(start, items, priority), lane: laneItems };
 }

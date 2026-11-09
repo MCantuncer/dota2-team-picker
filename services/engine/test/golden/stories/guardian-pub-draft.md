@@ -85,7 +85,7 @@ If it goes wrong: No Blink Dagger by 21 min? Don't start fights without it. Stay
 
 ### Pos 4 Ogre Magi
 Timings: all
-Start: 2 Tango [Hard lane against Drow Ranger and Crystal Maiden: more sustain], Blood Grenade, Magic Stick, Iron Branch, Healing Salve [Hard lane against Drow Ranger and Crystal Maiden: more sustain]
+Start: 2 Tango [Hard lane against Drow Ranger and Crystal Maiden: more sustain], Blood Grenade, Magic Stick, Sentry Ward, Healing Salve [Hard lane against Drow Ranger and Crystal Maiden: more sustain]
 Lane: Magic Wand 5, Ring of Basilius 7
 Boots: Arcane Boots 12
 First: Hand of Midas 18/21
