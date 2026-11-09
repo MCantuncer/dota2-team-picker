@@ -912,7 +912,7 @@ isOneToOne: false
                            },
 "browse_stacks":
 { Args: { "page"?: number,"search"?: string }; Returns: {
-              "games": number,"id": string,"members": number,"name": string,"owner_name": string
+              "average_rank": number,"games": number,"id": string,"members": number,"name": string,"owner_avatar_url": string,"owner_name": string
             }[]
                            },
 "can_invite":
@@ -1029,7 +1029,7 @@ isOneToOne: false
                            },
 "hot_stacks":
 { Args: Record<PropertyKey, never>; Returns: {
-              "games": number,"id": string,"members": number,"name": string,"owner_name": string
+              "average_rank": number,"games": number,"id": string,"members": number,"name": string,"owner_avatar_url": string,"owner_name": string
             }[]
                            },
 "in_draft_party":
@@ -1161,6 +1161,9 @@ isOneToOne: false
 "played_draft":
 { Args: { "draft": string }; Returns: boolean
                            },
+"positions_played":
+{ Args: { "player": string }; Returns: Json
+                           },
 "profile_by_friend_code":
 { Args: { "code": string }; Returns: {
               "avatar_url": string,"display_name": string,"id": string
@@ -1240,6 +1243,9 @@ isOneToOne: false
 "snooze_check_in":
 { Args: { "check_in": string }; Returns: undefined
                            },
+"stack_average_rank":
+{ Args: { "team": string }; Returns: number
+                           },
 "stack_games":
 { Args: { "teams": (string)[] }; Returns: {
               "games": number,"team_id": string
@@ -1257,7 +1263,7 @@ isOneToOne: false
                            },
 "stack_player_stats":
 { Args: { "team": string }; Returns: {
-              "display_name": string,"favorites": Json,"hero_stats": Json,"positions": (number)[],"rank_tier": number,"top": Json,"user_id": string
+              "display_name": string,"favorites": Json,"hero_stats": Json,"played": Json,"positions": (number)[],"rank_tier": number,"top": Json,"user_id": string
             }[]
                            },
 "stale_match_files":
