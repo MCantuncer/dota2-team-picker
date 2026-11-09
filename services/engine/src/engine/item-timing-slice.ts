@@ -38,7 +38,7 @@ function usableItems(slice: ItemTimingSlice | undefined, items: Record<string, I
 
 /**
  * The item timings for `heroId` at `position`: the player's rank group first, then every rank.
- * A slice with FULL_SLICE_ITEMS wins over a thinner one. Null when neither has enough data, when
+ * A slice with FULL_SLICE_ITEMS wins over a thinner one; else the fuller one with THIN_SLICE_MIN_ITEMS. Null when neither has enough data, when
  * there is no timing data, or the hero is off its main positions.
  */
 export function chooseTimingSlice(
@@ -57,7 +57,7 @@ export function chooseTimingSlice(
   if (own && ownItems >= FULL_SLICE_ITEMS) return { source: "rank", slice: own };
   if (all && allItems >= FULL_SLICE_ITEMS) return { source: "all", slice: all };
   // Neither is full: a rank group is thin because it has fewer games, not because players buy less,
-  // so it only wins with at least as many items as every rank.
+  // so it only wins with at least as many items as every rank (ties go to the rank group).
   if (own && ownItems >= THIN_SLICE_MIN_ITEMS && ownItems >= allItems) return { source: "rank", slice: own };
   if (all && allItems >= THIN_SLICE_MIN_ITEMS) return { source: "all", slice: all };
   return null;
