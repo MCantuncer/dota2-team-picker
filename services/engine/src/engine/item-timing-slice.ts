@@ -38,8 +38,8 @@ function usableItems(slice: ItemTimingSlice | undefined, items: Record<string, I
 
 /**
  * The item timings for `heroId` at `position`: the player's rank group first, then every rank.
- * A slice with FULL_SLICE_ITEMS wins over a thinner one; else the fuller one with THIN_SLICE_MIN_ITEMS. Null when neither has enough data, when
- * there is no timing data, or the hero is off its main positions.
+ * A slice with FULL_SLICE_ITEMS wins over a thinner one; else the fuller one with THIN_SLICE_MIN_ITEMS.
+ * Null when neither has enough data, when there is no timing data, or the hero is off its main positions.
  */
 export function chooseTimingSlice(
   data: Snapshot,
