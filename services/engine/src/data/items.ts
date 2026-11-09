@@ -33,7 +33,7 @@ export function itemsDue(snapshot: Snapshot, now: Date): boolean {
  * OpenDota lists no parts for Dagon's levels, so without this each level looked like its own finished item and
  * a build showed Dagon four times (Keeper of the Light mid: Dagon at 13, 16, 19 and 20).
  */
-function lowerLevel(key: string, rows: Record<string, ItemConstantRow>): string | undefined {
+function lowerLevel(key: string, cost: number, rows: Record<string, ItemConstantRow>): string | undefined {
   const match = /^(.+)_(\d+)$/.exec(key);
   if (!match) return undefined;
   const [, base, level] = match;
@@ -41,7 +41,7 @@ function lowerLevel(key: string, rows: Record<string, ItemConstantRow>): string 
   const lower = Number(level) === 2 ? base : `${base}_${Number(level) - 1}`;
   const below = rows[lower]?.cost;
   // A real upgrade costs more than the level below it.
-  return typeof below === "number" && typeof rows[key]?.cost === "number" && below < rows[key].cost ? lower : undefined;
+  return typeof below === "number" && below < cost ? lower : undefined;
 }
 
 /** Turns OpenDota's item constants into items by id, dropping recipes and free items. */
@@ -53,7 +53,7 @@ export function toItems(rows: Record<string, ItemConstantRow>): Record<string, I
     if (key.startsWith("recipe_") || typeof row.id !== "number" || typeof row.dname !== "string") continue;
     if (typeof row.cost !== "number" || row.cost <= 0) continue;
     const listed = Array.isArray(row.components) ? row.components : [];
-    const lower = lowerLevel(key, rows);
+    const lower = lowerLevel(key, row.cost, rows);
     const components = listed.length || lower === undefined ? listed : [lower];
     items[row.id] = {
       key,

@@ -68,7 +68,7 @@ describe("chooseTimingSlice", () => {
 
   it("uses a thin slice when no slice is full, and the rank group only with as many items", () => {
     // Battle Fury, Manta Style (Yasha is its part), Butterfly and Black King Bar: four finished items,
-    // like carry Vengeful Spirit's short list.
+    // a short list like carry Vengeful Spirit's five.
     const thin = { games: 12486, items: FULL.filter(([id]) => [145, 170, 147, 139, 116].includes(id)) };
     expect(finishedItems(thin, ITEMS)).toHaveLength(4);
     expect(chooseTimingSlice(snapshot({ all: thin }), 1, 1, 5)).toEqual({ source: "all", slice: thin });
