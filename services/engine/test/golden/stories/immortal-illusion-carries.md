@@ -3,11 +3,11 @@
 Headline: Your safe lane to press: Disruptor wins 62% and loses 15% of 308 lanes against Primal Beast.
 
 - 0 to 10 min: Terrorblade and Disruptor win the safe lane against Primal Beast and Hoodwink: take their tower. Disruptor wins 62% and loses 15% of 308 lanes against Primal Beast.
-- 10 to 20 min: Mars's Blink Dagger at 15 and Templar Assassin's Desolator at 17: ready to fight at 17. Their Naga Siren has Manta Style around 18.
+- 10 to 20 min: Mars's Blink Dagger at 15 and Templar Assassin's Desolator at 17: ready to fight at 17. Their Naga Siren has Manta Style at 17.
 - 20 to 30 min: Their Pangolier has Blink Dagger at 20. Roshan from 20 min, once three key items are in.
 
 Danger heroes:
-- Naga Siren: Manta Style around 18 min. Take fights and towers before then.
+- Naga Siren: Manta Style at 17 min. Take fights and towers before then.
 - Primal Beast: Blink Dagger at 15 min. From then, spread out and watch the fog.
 
 If the game goes wrong:
@@ -74,11 +74,14 @@ Watch Primal Beast: Don't focus them: kill their damage dealers first.
 If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay behind your cores and soak damage.
 
 ### Pos 4 Tusk
-Timings: around
+Timings: all
 Start: Tango, Blood Grenade, Iron Branch, Magic Stick, Sentry Ward
+Lane: Magic Wand 4
 Boots: Tranquil Boots 8, or Arcane Boots 12
-First: Blink Dagger 19 {Start fights from 1,200 range.}
-Late: Eul's Scepter of Divinity 31, Black King Bar 32 {Stops disables from Pangolier, Hoodwink and Treant Protector. Pulverize still goes through it.}, Force Staff 33 [Against Naga Siren and Pangolier: don't skip it] {Pushes you out of trouble.}, Aghanim's Scepter 34
+First: Blink Dagger 19/21 {Start fights from 1,200 range.}
+Next: Eul's Scepter of Divinity 28/30
+Late: Aghanim's Scepter 33/36
+If needed: Force Staff 32 [Against Naga Siren and Pangolier] instead of Aghanim's Scepter
 Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Blink Dagger around minute 19.
 Vs Naga Siren (lane): Illusions split your damage. buy Force Staff.
 Vs Treant Protector (lane): Goes invisible. Ask your support for Dust and Sentries before fights.

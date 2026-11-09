@@ -1,14 +1,14 @@
 ## Crusader teamfight against a late carry
 
-Headline: Fight from 13 min, before Spectre has Radiance around 18.
+Headline: Fight from 13 min, before Spectre has Radiance at 19.
 
 - 0 to 10 min: Invoker farms safely in the mid against Ember Spirit: skip trades. Invoker wins 29% and loses 43% of 2,093 lanes against Ember Spirit.
-- 10 to 20 min: Invoker's Meteor Hammer at 12 and Magnus's Blink Dagger at 13: ready to fight at 13. Their Spectre has Radiance around 18. Open fights with Chronosphere into Sun Strike and Chaos Meteor.
+- 10 to 20 min: Invoker's Meteor Hammer at 12 and Magnus's Blink Dagger at 13: ready to fight at 13. Their Spectre has Radiance at 19. Open fights with Chronosphere into Sun Strike and Chaos Meteor.
 - 20 to 30 min: Roshan from 20 min, once three key items are in.
 
 Danger heroes:
 - Bristleback: Consecrated Wraps at 16 min. Don't focus them: kill their damage dealers first.
-- Spectre: Radiance around 18 min. Take fights and towers before then.
+- Spectre: Radiance at 19 min. Take fights and towers before then.
 
 If the game goes wrong:
 - Behind at 20? Defend towers together and only fight with your key spells ready.

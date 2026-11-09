@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MIN_SLICE_GAMES, chooseTimingSlice, finishedItems } from "../src/engine/item-timing-slice";
+import { MIN_SLICE_GAMES, MIN_SLICE_ITEMS, chooseTimingSlice, finishedItems } from "../src/engine/item-timing-slice";
 import type { ItemInfo, ItemTimingSlice, Snapshot } from "../src/engine/types";
 
 const item = (key: string, components: number[] = []): ItemInfo => ({ key, name: key, cost: 3000, img: "", components });
@@ -59,6 +59,16 @@ describe("chooseTimingSlice", () => {
     // Seven items, but Yasha is part of Manta Style and Butterfly is gone: five finished items.
     const own = { games: 5000, items: FULL.filter(([id]) => id !== 139) };
     expect(chooseTimingSlice(snapshot({ 3: own, all }), 1, 1, 5)?.source).toBe("all");
+  });
+
+  it("uses a thin slice when no slice is full, the player's rank group first", () => {
+    // Battle Fury, Manta Style and Butterfly: three finished items, like carry Vengeful Spirit's short list.
+    const thin = { games: 12486, items: FULL.filter(([id]) => [145, 147, 170, 139].includes(id)) };
+    expect(finishedItems(thin, ITEMS)).toHaveLength(MIN_SLICE_ITEMS);
+    expect(chooseTimingSlice(snapshot({ all: thin }), 1, 1, 5)).toEqual({ source: "all", slice: thin });
+    expect(chooseTimingSlice(snapshot({ 3: thin, all: thin }), 1, 1, 5)?.source).toBe("rank");
+    const thinner = { games: 12486, items: FULL.filter(([id]) => [147, 170, 139].includes(id)) };
+    expect(chooseTimingSlice(snapshot({ all: thinner }), 1, 1)).toBeNull();
   });
 
   it("uses every rank when the player's rank is unknown or its slice is missing", () => {
