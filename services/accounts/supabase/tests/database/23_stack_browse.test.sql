@@ -1,13 +1,18 @@
 begin;
 \ir _helpers.psql
-select plan(14);
+select plan(17);
 
 select tests.create_user('a@example.com') as a \gset
 select tests.create_user('b@example.com') as b \gset
 select tests.create_user('c@example.com') as c \gset
 select tests.create_user('d@example.com') as d \gset
 select tests.create_user('out@example.com') as out \gset
-update public.profiles set display_name = 'Ana' where id = :'a';
+update public.profiles set display_name = 'Ana', avatar_url = 'https://avatars.steamstatic.com/ana_full.jpg' where id = :'a';
+-- Night Owls ranks: Legend 4 (54), Ancient 2 (62), no rank: steps 23 and 26 average to 24.5, rounded to 25 (Ancient 1, 61).
+update public.profiles set rank_tier = 54 where id = :'a';
+update public.profiles set rank_tier = 62 where id = :'b';
+-- Duo 100%: only d has a rank, Immortal.
+update public.profiles set rank_tier = 80 where id = :'d';
 
 -- Three Stacks: Night Owls (open, 3 players), Duo 100% (open, 2 players), Secret (closed).
 insert into public.teams (owner_id, name, open_to_requests) values (:'a', 'Night Owls', true) returning id as owls \gset
@@ -47,6 +52,11 @@ select results_eq('select name from public.browse_stacks()', array['Night Owls',
 select results_eq('select games from public.browse_stacks()', array[2, 1], 'games together count matched, spaced games');
 select results_eq('select members from public.browse_stacks()', array[3, 2], 'member counts include the owner');
 select is((select owner_name from public.browse_stacks() where name = 'Night Owls'), 'Ana', 'browse shows the owner name');
+select is((select owner_avatar_url from public.browse_stacks() where name = 'Night Owls'),
+  'https://avatars.steamstatic.com/ana_full.jpg', 'browse shows the owner avatar');
+select results_eq('select average_rank from public.browse_stacks()', array[61, 80]::smallint[],
+  'the average rank skips players without one; Immortal stays Immortal');
+select results_eq('select average_rank from public.hot_stacks()', array[61, 80]::smallint[], 'hot stacks has it too');
 select results_eq($$select name from public.browse_stacks('100%')$$, array['Duo 100%'], 'search matches % literally');
 select is_empty($$select 1 from public.browse_stacks('_ight')$$, 'search matches _ literally');
 select is_empty('select 1 from public.browse_stacks(null, 1)', 'the second page is empty');

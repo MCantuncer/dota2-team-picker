@@ -1,6 +1,6 @@
 begin;
 \ir _helpers.psql
-select plan(14);
+select plan(16);
 
 select tests.create_user('own@example.com') as own \gset
 select tests.create_user('mgr@example.com') as mgr \gset
@@ -13,6 +13,11 @@ insert into public.favorite_positions (user_id, position) values (:'pal', 3), (:
 insert into public.favorite_heroes (user_id, position, hero_id, created_at) values
   (:'pal', 1, 8, now() - interval '2 days'), (:'pal', 1, 1, now() - interval '1 day'), (:'pal', 3, 2, now()),
   (:'own', 2, 11, now());
+-- pal's last 20 games: 15 at Pos 2, 3 at Pos 4, 2 with no known position; 5 older Pos 1 games fall outside.
+insert into public.player_game_facts (user_id, match_id, hero_id, position, is_win, started_at, duration_s)
+select :'pal', n, 1, case when n <= 15 then 2 when n <= 18 then 4 when n <= 20 then null else 1 end, true,
+  now() - n * interval '1 hour', 2400
+from generate_series(1, 25) n;
 
 insert into public.teams (owner_id, name, open_to_requests) values (:'own', 'Night Owls', true) returning id as team \gset
 insert into public.team_members (team_id, user_id, role, joined_at) values
@@ -35,6 +40,10 @@ select is((select positions from public.stack_player_stats(:'team') where user_i
 select is((select hero_stats -> '8' ->> 'games' from public.stack_player_stats(:'team') where user_id = :'pal'), '10',
   'match stats come along');
 select is((select rank_tier from public.stack_player_stats(:'team') where user_id = :'pal'), 54::smallint, 'rank comes along');
+select is((select played from public.stack_player_stats(:'team') where user_id = :'pal'), '{"2": 15, "4": 3}'::jsonb,
+  'played counts positions over the last 20 games only, without unknown ones');
+select is((select played from public.stack_player_stats(:'team') where user_id = :'mgr'), '{}'::jsonb,
+  'a player with no games has nothing played');
 select is_empty(format('select 1 from public.stack_player_stats(%L) where user_id in (%L, %L, %L)', :'team', :'ask', :'inv', :'out'),
   'join requests and invites, pending or declined, are not members');
 select is_empty(format('select 1 from public.stack_player_stats(%L)', gen_random_uuid()), 'an unknown Stack gives nothing');
