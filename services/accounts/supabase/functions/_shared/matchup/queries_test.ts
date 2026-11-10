@@ -27,10 +27,13 @@ Deno.test("refuses bad slices and too many of them", () => {
 });
 
 Deno.test("reads match ids from a guide list, once each", () => {
-  assertEquals(guideMatchIds([{ guides: [{ matchId: 5 }, { matchId: 5 }, { matchId: "x" }, null] }, { guides: [{ matchId: 7 }] }]), [
-    5,
-    7,
-  ]);
+  assertEquals(
+    guideMatchIds([{ guides: [{ matchId: 5 }, { matchId: 5 }, { matchId: "x" }, null] }, { guides: [{ matchId: 7 }] }]),
+    [
+      5,
+      7,
+    ],
+  );
   assertEquals(guideMatchIds(null), []);
   assertEquals(guideMatchIds([{ guides: "no" }, null]), []);
   // A single list object is not what STRATZ sends.
