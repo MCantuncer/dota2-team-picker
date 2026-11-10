@@ -36,22 +36,22 @@ describe("pick verdicts", () => {
     expect(verdicts([leader, other], name, 2)[1]).toEqual({
       heroId: 2,
       kind: "behind",
-      text: "3.5 points behind Invoker: Invoker does 3.0 points better against Axe.",
+      text: "3.5 points behind Invoker: 3.0 worse against Axe.",
       note: null,
     });
     const ally = hero(3, "Lina", {}, { synergyBy: [{ heroId: 11, points: 0 }] });
     const friend = hero(1, "Invoker", { synergy: 1.4 }, { synergyBy: [{ heroId: 11, points: 1.4 }] });
-    expect(verdicts([friend, ally], name, 2)[1]!.text).toBe("1.4 points behind Invoker: Invoker works 1.4 points better with Lion.");
+    expect(verdicts([friend, ally], name, 2)[1]!.text).toBe("1.4 points behind Invoker: 1.4 worse with Lion.");
   });
 
   it("words every score part", () => {
     const lines = (part: keyof ScoreBreakdown) => verdicts([hero(1, "Invoker", { [part]: 2 }), hero(2, "Puck", {})], name, 2)[1]!.text;
-    expect(lines("meta")).toBe("2.0 points behind Invoker: Invoker wins more at your rank (+2.0).");
-    expect(lines("positionFit")).toBe("2.0 points behind Invoker: Invoker is played as mid more often (+2.0).");
-    expect(lines("teamNeeds")).toBe("2.0 points behind Invoker: Invoker adds more of what your team lacks (+2.0).");
-    expect(lines("pickSafety")).toBe("2.0 points behind Invoker: Invoker is safer to pick now (+2.0).");
-    expect(lines("flex")).toBe("2.0 points behind Invoker: Invoker can go more positions, hiding your plan (+2.0).");
-    expect(lines("comfort")).toBe("2.0 points behind Invoker: your record and stars favor Invoker (+2.0).");
+    expect(lines("meta")).toBe("2.0 points behind Invoker: lower win rate (-2.0).");
+    expect(lines("positionFit")).toBe("2.0 points behind Invoker: played as mid less often (-2.0).");
+    expect(lines("teamNeeds")).toBe("2.0 points behind Invoker: adds less of what your team lacks (-2.0).");
+    expect(lines("pickSafety")).toBe("2.0 points behind Invoker: easier to punish now (-2.0).");
+    expect(lines("flex")).toBe("2.0 points behind Invoker: fits fewer positions, so it shows your plan (-2.0).");
+    expect(lines("comfort")).toBe("2.0 points behind Invoker: your record and stars favor Invoker (-2.0).");
   });
 
   it("says the player wins more on a hero only when the plain win rate agrees", () => {
@@ -59,25 +59,27 @@ describe("pick verdicts", () => {
     const puck = hero(2, "Puck", { meta: 2, comfort: 3.5 }, { record: record(38, 24) });
     expect(verdicts([invoker, puck], name, 2)[1]).toMatchObject({
       note: "You win more on Puck (63% of 38 games) than on Invoker (49% of 83). A good pick too.",
-      text: "1.1 points behind Invoker: Invoker wins more at your rank (+4.0).",
+      text: "1.1 points behind Invoker: lower win rate (-4.0).",
     });
     // 9-1 shrinks below 140-60, but 90% reads higher than 70%: no note that contradicts the numbers.
     const lucky = hero(3, "Sniper", { meta: 6 }, { record: record(10, 9) });
     const steady = hero(4, "Pudge", { meta: 2 }, { record: record(200, 140) });
     expect(steady.record!.points - lucky.record!.points).toBeGreaterThan(1);
-    expect(verdicts([lucky, steady], name, 2)[1]).toMatchObject({ text: "4.0 points behind Sniper: Sniper wins more at your rank (+4.0).", note: null });
+    expect(verdicts([lucky, steady], name, 2)[1]).toMatchObject({ text: "4.0 points behind Sniper: lower win rate (-4.0).", note: null });
   });
 
   it("names the leader's missing record, and a teammate's list in their name", () => {
+    const team = verdicts([hero(1, "Invoker", { comfort: 3 }), hero(2, "Puck", {})], name, 2, "Ali")[1]!.text;
+    expect(team).toBe("3.0 points behind Invoker: Ali's record and stars favor Invoker (-3.0).");
     const leader = hero(1, "Invoker", { meta: 8 });
     const puck = hero(2, "Puck", { comfort: 3.5 }, { record: record(38, 24) });
     expect(verdicts([leader, puck], name, 2)[1]).toMatchObject({
       note: "You have won 63% of 38 games on Puck and have no games on Invoker.",
-      text: "4.5 points behind Invoker: Invoker wins more at your rank (+8.0).",
+      text: "4.5 points behind Invoker: lower win rate (-8.0).",
     });
     expect(verdicts([leader, puck], name, 2, "Ali")[1]).toMatchObject({
       note: "Ali has won 63% of 38 games on Puck and has no games on Invoker.",
-      text: "4.5 points behind Invoker: Invoker wins more at this rank (+8.0).",
+      text: "4.5 points behind Invoker: lower win rate (-8.0).",
     });
   });
 

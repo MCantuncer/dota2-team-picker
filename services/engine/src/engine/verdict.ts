@@ -44,33 +44,36 @@ function biggestLead(leader: HeroPoints[], other: HeroPoints[]): HeroPoints | nu
 /** Whose list it is: undefined for the reader's own ("you"), or a teammate's name on a Per Player column. */
 type Owner = string | undefined;
 
-/** Why `s` is behind `leader`: the score part where the leader gains most, with the difference. */
+/**
+ * Why `s` is behind `leader`, from `s`'s side and short enough for a closed row: the score part where the leader
+ * gains most, with the difference ("3.2 worse against Timbersaw").
+ */
 function whyBehind(leader: Listed, s: Listed, name: (id: number) => string, pos: Position, owner: Owner): string {
   const parts = Object.keys(leader.breakdown) as (keyof ScoreBreakdown)[];
   const part = parts.reduce((a, b) => (leader.breakdown[b] - s.breakdown[b] > leader.breakdown[a] - s.breakdown[a] ? b : a));
   const lead = leader.breakdown[part] - s.breakdown[part];
-  const who = leader.name;
+  const less = points(-lead);
   switch (part) {
     case "counter": {
       const enemy = biggestLead(leader.counterBy, s.counterBy);
-      return enemy ? `${who} does ${one(enemy.points)} points better against ${name(enemy.heroId)}` : `${who} does better against the enemy picks (${points(lead)})`;
+      return enemy ? `${one(enemy.points)} worse against ${name(enemy.heroId)}` : `worse against the enemy picks (${less})`;
     }
     case "synergy": {
       const ally = biggestLead(leader.synergyBy, s.synergyBy);
-      return ally ? `${who} works ${one(ally.points)} points better with ${name(ally.heroId)}` : `${who} works better with ${owner ? "the" : "your"} picks (${points(lead)})`;
+      return ally ? `${one(ally.points)} worse with ${name(ally.heroId)}` : `works less with ${owner ? "the" : "your"} picks (${less})`;
     }
     case "meta":
-      return `${who} wins more at ${owner ? "this" : "your"} rank (${points(lead)})`;
+      return `lower win rate (${less})`;
     case "positionFit":
-      return `${who} is played as ${ROLE_NAMES[pos]} more often (${points(lead)})`;
+      return `played as ${ROLE_NAMES[pos]} less often (${less})`;
     case "teamNeeds":
-      return `${who} adds more of what ${owner ? "the" : "your"} team lacks (${points(lead)})`;
+      return `adds less of what ${owner ? "the" : "your"} team lacks (${less})`;
     case "pickSafety":
-      return `${who} is safer to pick now (${points(lead)})`;
+      return `easier to punish now (${less})`;
     case "flex":
-      return `${who} can go more positions, hiding ${owner ? "the" : "your"} plan (${points(lead)})`;
+      return `fits fewer positions, so it shows ${owner ? "the" : "your"} plan (${less})`;
     case "comfort":
-      return `${owner ? `${owner}'s` : "your"} record and stars favor ${who} (${points(lead)})`;
+      return `${owner ? `${owner}'s` : "your"} record and stars favor ${leader.name} (${less})`;
   }
 }
 
