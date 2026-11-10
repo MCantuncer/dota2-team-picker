@@ -1,10 +1,10 @@
 ## Divine late game against a push draft
 
-Headline: Leshrac has Blink Dagger at 14: hold fights until 19 min.
+Headline: Leshrac has Blink Dagger at 14: hold fights until 18 min.
 
 - 0 to 10 min: Medusa and Dazzle win the safe lane against Underlord and Chen: take their tower. Storm Spirit farms safely in the mid against Leshrac: skip trades. Dazzle wins 48% and loses 26% of 1,543 lanes against Underlord. Storm Spirit wins 26% and loses 43% of 736 lanes against Leshrac.
-- 10 to 20 min: Medusa's Manta Style at 18 and Tidehunter's Blink Dagger at 19: ready to fight at 19. Their Leshrac has Blink Dagger at 14.
-- 20 to 30 min: Storm Spirit's Orchid Malevolence at 20. Their Underlord has Aghanim's Scepter at 23. Roshan from 20 min, once three key items are in.
+- 10 to 20 min: Medusa's Manta Style at 18 and Storm Spirit's Witch Blade at 18: ready to fight at 18. Their Leshrac has Blink Dagger at 14.
+- 20 to 30 min: Roshan from 20 min, once three key items are in.
 
 Danger heroes:
 - Leshrac: Blink Dagger at 14 min. Lock them down first in every fight.
@@ -43,10 +43,10 @@ Timings: all
 Start: 2 Tango [Hard lane against Leshrac: more sustain], 3 Iron Branch, Faerie Fire, Healing Salve [Hard lane against Leshrac: more sustain]
 Lane: Magic Wand 3 [Against Leshrac's spells: get it early], Infused Raindrops 4 [Against Leshrac's magic burst], Soul Ring 7
 Boots: Power Treads 9 {Attack speed and a stat to switch.}
-First: Orchid Malevolence 20/24
+First: Witch Blade 18/22
 Next: Kaya and Sange 26/28, Black King Bar 29/32 [Against Leshrac, Underlord and Shadow Shaman: don't skip it] {Spell immunity for the big fights.}
 Late: Parasma 35/39, Aghanim's Scepter 40/45
-Job: Win your lane, then use runes to help the side lanes. Your timing is Orchid Malevolence around minute 20.
+Job: Win your lane, then use runes to help the side lanes. Your timing is Witch Blade around minute 18.
 Vs Leshrac (lane): Magic burst. buy Magic Wand, Infused Raindrops, Black King Bar.
 Vs Lycan: Right-click carry who grows late. Fight before their big item, not after.
 Vs Underlord: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
@@ -57,7 +57,7 @@ Watch Lycan: Fight before their big item, not after.
 Watch Underlord: Don't focus them: kill their damage dealers first.
 Watch Chen: Kill them first or fight short and decisive.
 If it goes wrong: Lane lost? Stop contesting runes. Push the wave, farm the near jungle, and wait for your pos 4 to rotate.
-If it goes wrong: No Orchid Malevolence by 24 min? Stop rotating and farm mid and the near camps until it is done.
+If it goes wrong: No Witch Blade by 22 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Tidehunter
 Timings: rank

@@ -27,20 +27,36 @@ export interface ChosenSlice {
 }
 
 /**
- * The slice's items without the ones another of its items is built from (Yasha in Manta Style), all the
- * way down: Dagon is part of Dagon 3 through Dagon 2 even when the slice has no Dagon 2.
+ * A part bought this many minutes or more before the item built from it is played with on its own, so it
+ * stays an item of the build. Slark buys Diffusal Blade at 14 and Disperser at 38: hiding the part dropped
+ * his most bought item, and Disperser was too late to make the build. In the live slices (2026-11-11) real
+ * steps come sooner: Yasha 4 minutes before Manta Style, Maelstrom 6 before Mjollnir, Dragon Lance 7 before
+ * Hurricane Pike (medians); held parts come far earlier: Diffusal Blade 20, Blink Dagger 14 before Swift Blink.
+ */
+export const PART_HELD_MINUTES = 8;
+
+/**
+ * The slice's items without the ones another of its items is built from soon after (Yasha in Manta Style),
+ * all the way down: Dagon is part of Dagon 3 through Dagon 2 even when the slice has no Dagon 2. A part
+ * bought PART_HELD_MINUTES or more before the item built from it stays.
  */
 export function finishedItems(slice: ItemTimingSlice, items: Record<string, ItemInfo>): ItemTimingSlice["items"] {
-  const parts = new Set<number>();
-  const addParts = (id: number) => {
-    for (const part of items[id]?.components ?? []) {
-      if (parts.has(part)) continue;
-      parts.add(part);
-      addParts(part);
-    }
-  };
-  for (const [id] of slice.items) addParts(id);
-  return slice.items.filter(([id]) => !parts.has(id));
+  const minute = new Map(slice.items.map(([id, m]) => [id, m]));
+  const steps = new Set<number>();
+  for (const [id, built] of slice.items) {
+    const seen = new Set<number>();
+    const addParts = (of: number) => {
+      for (const part of items[of]?.components ?? []) {
+        if (seen.has(part)) continue;
+        seen.add(part);
+        const at = minute.get(part);
+        if (at !== undefined && built - at < PART_HELD_MINUTES) steps.add(part);
+        addParts(part);
+      }
+    };
+    addParts(id);
+  }
+  return slice.items.filter(([id]) => !steps.has(id));
 }
 
 /** Finished items in the slice, or 0 when it has too few games to trust. */

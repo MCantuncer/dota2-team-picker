@@ -40,9 +40,15 @@ describe("finishedItems", () => {
     expect(finishedItems({ games: 500, items: FULL }, ITEMS).map(([id]) => id)).toEqual([145, 147, 139, 160, 116, 208]);
   });
 
+  it("keeps a part bought long before the item built from it (Slark's Diffusal Blade at 14, Disperser at 38)", () => {
+    const slark: Record<string, ItemInfo> = { 174: item("diffusal_blade"), 1097: item("disperser", [174]), 108: item("ultimate_scepter") };
+    const slice: ItemTimingSlice = { games: 500, items: [[174, 14, 15], [108, 25, 26], [1097, 38, 47]] };
+    expect(finishedItems(slice, slark).map(([id]) => id)).toEqual([174, 108, 1097]);
+  });
+
   it("drops parts of parts, like Dagon under Dagon 3 when Dagon 2 is not in the slice", () => {
     const dagons: Record<string, ItemInfo> = { 104: item("dagon"), 201: item("dagon_2", [104]), 202: item("dagon_3", [201]) };
-    expect(finishedItems({ games: 500, items: [[104, 17, 20], [202, 25, 28]] }, dagons).map(([id]) => id)).toEqual([202]);
+    expect(finishedItems({ games: 500, items: [[104, 22, 24], [202, 25, 28]] }, dagons).map(([id]) => id)).toEqual([202]);
   });
 });
 

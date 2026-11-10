@@ -24,8 +24,9 @@ Start: Quelling Blade, Tango, 2 Iron Branch, Magic Stick, Faerie Fire
 Lane: Wraith Band 2, Magic Wand 3, Perseverance 10
 Boots: Power Treads 7 {Attack speed and a stat to switch.}, or Phase Boots 8
 First: Battle Fury 14/16 {Cleave for fast farm.}
-Next: Manta Style 23/24, Butterfly 29/30
-Late: Monkey King Bar 33/37 [Against Phantom Assassin: don't skip it] {Most of your hits go through evasion.}, Swift Blink 40/43
+Next: Manta Style 23/24, Blink Dagger 27/33 {Start fights from 1,200 range.}, Butterfly 29/30
+Late: Aghanim's Scepter 33/36
+If needed: Monkey King Bar 33/37 [Against Phantom Assassin] instead of Aghanim's Scepter
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Battle Fury around minute 14.
 Vs Axe (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Witch Doctor (lane, guessed): Heals their team through fights. Kill them first or fight short and decisive.
@@ -39,13 +40,13 @@ Watch Shadow Fiend, Lich: Stay spread so one combo can't catch two.
 If it goes wrong: No Battle Fury by 16 min? Don't show on the map without it. Farm the side Axe is not on.
 
 ### Pos 2 Puck
-Timings: all
+Timings: rank
 Start: 2 Tango [Hard lane against Shadow Fiend: more sustain], 3 Iron Branch, Faerie Fire, Healing Salve [Hard lane against Shadow Fiend: more sustain]
 Lane: Null Talisman 4, Magic Wand 4, Infused Raindrops 4 [Against Shadow Fiend's magic burst]
 Boots: Power Treads 10 {Attack speed and a stat to switch.}
-First: Blink Dagger 19/20 {Start fights from 1,200 range.}
-Next: Eul's Scepter of Divinity 26/28, Parasma 29/32
-Late: Aghanim's Scepter 34/36, Octarine Core 35
+First: Witch Blade 14/16
+Next: Blink Dagger 19/20 {Start fights from 1,200 range.}, Eul's Scepter of Divinity 25/27, Parasma 29/33
+Late: Aghanim's Scepter 34/36
 Job: Win your lane, then use runes to help the side lanes. Your timing is Blink Dagger around minute 19.
 Vs Shadow Fiend (lane): Magic burst. buy Infused Raindrops.
 Vs Phantom Assassin: Evasion: right clicks miss. Fight them with spells, not right clicks.

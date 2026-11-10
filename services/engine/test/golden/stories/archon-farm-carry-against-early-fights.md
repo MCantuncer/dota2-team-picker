@@ -3,7 +3,7 @@
 Headline: Hard off lane: Centaur Warrunner wins 30% and loses 44% of 964 lanes against Jakiro.
 
 - 0 to 10 min: Anti-Mage and Warlock win the safe lane against Dark Seer and Snapfire: take their tower. Survive the off lane against Troll Warlord and Jakiro: just get levels. Warlock wins 51% and loses 24% of 416 lanes against Dark Seer. Centaur Warrunner wins 30% and loses 44% of 964 lanes against Jakiro.
-- 10 to 20 min: Anti-Mage's Battle Fury at 15 and Lina's Maelstrom at 16: ready to fight at 16. Their Troll Warlord has Battle Fury at 15.
+- 10 to 20 min: Lina's Kaya at 14 and Anti-Mage's Battle Fury at 15: ready to fight at 15. Their Troll Warlord has Battle Fury at 15.
 - 20 to 30 min: Their Dark Seer has Blink Dagger at 21. Roshan from 20 min, once three key items are in.
 
 Danger heroes:
@@ -43,10 +43,10 @@ Timings: rank
 Start: Tango, 3 Iron Branch, Faerie Fire
 Lane: Null Talisman 3, Magic Wand 3 [Against Huskar's spells: get it early]
 Boots: Boots of Travel 15
-First: Maelstrom 16/18
+First: Kaya 14/17
 Next: Yasha and Kaya 24/31, Aghanim's Scepter 25, Shadow Blade 26/29
 Late: Black King Bar 32/36 [Against Dark Seer, Snapfire and Jakiro: don't skip it] {Spell immunity for the big fights. Troll Warlord's bash and Life Break still go through it.}
-Job: Win your lane, then use runes to help the side lanes. Your timing is Maelstrom around minute 16.
+Job: Win your lane, then use runes to help the side lanes. Your timing is Kaya around minute 14.
 Vs Huskar (lane): Heals their team through fights. buy Magic Wand.
 Vs Troll Warlord: Evasion: right clicks miss. Fight them with spells, not right clicks.
 Vs Dark Seer: Locks you down. buy Black King Bar.
@@ -55,7 +55,7 @@ Vs Jakiro: Magic burst. buy Black King Bar.
 Watch Huskar: buy Magic Wand.
 Watch Troll Warlord: Fight them with spells, not right clicks.
 Watch Dark Seer, Snapfire, Jakiro: buy Black King Bar.
-If it goes wrong: No Maelstrom by 18 min? Stop rotating and farm mid and the near camps until it is done.
+If it goes wrong: No Kaya by 17 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Centaur Warrunner
 Timings: rank
