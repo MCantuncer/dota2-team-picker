@@ -45,7 +45,7 @@ Lane: Magic Wand 3 [Against Leshrac's spells: get it early], Infused Raindrops 4
 Boots: Power Treads 9 {Attack speed and a stat to switch.}
 First: Witch Blade 18/22
 Next: Kaya and Sange 26/28, Black King Bar 29/32 [Against Leshrac, Underlord and Shadow Shaman: don't skip it] {Spell immunity for the big fights.}
-Late: Linken's Sphere 32/36, Aghanim's Scepter 40/45
+Late: Parasma 35/39, Aghanim's Scepter 40/45
 Job: Win your lane, then use runes to help the side lanes. Your timing is Witch Blade around minute 18.
 Vs Leshrac (lane): Magic burst. buy Magic Wand, Infused Raindrops, Black King Bar.
 Vs Lycan: Right-click carry who grows late. Fight before their big item, not after.
