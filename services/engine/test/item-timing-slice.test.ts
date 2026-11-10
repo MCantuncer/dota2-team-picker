@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MIN_SLICE_GAMES, THIN_SLICE_MIN_ITEMS, chooseTimingSlice, finishedItems } from "../src/engine/item-timing-slice";
+import { MIN_SLICE_GAMES, PART_HELD_MINUTES, THIN_SLICE_MIN_ITEMS, chooseTimingSlice, finishedItems } from "../src/engine/item-timing-slice";
 import type { ItemInfo, ItemTimingSlice, Snapshot } from "../src/engine/types";
 
 const item = (key: string, components: number[] = []): ItemInfo => ({ key, name: key, cost: 3000, img: "", components });
@@ -40,15 +40,20 @@ describe("finishedItems", () => {
     expect(finishedItems({ games: 500, items: FULL }, ITEMS).map(([id]) => id)).toEqual([145, 147, 139, 160, 116, 208]);
   });
 
-  it("keeps a part bought long before the item built from it (Slark's Diffusal Blade at 14, Disperser at 38)", () => {
+  it("keeps the more bought of a part held long before the item built from it (Slark's Diffusal Blade, Disperser)", () => {
     const slark: Record<string, ItemInfo> = { 174: item("diffusal_blade"), 1097: item("disperser", [174]), 108: item("ultimate_scepter") };
-    const slice: ItemTimingSlice = { games: 500, items: [[174, 14, 15], [108, 25, 26], [1097, 38, 47]] };
-    expect(finishedItems(slice, slark).map(([id]) => id)).toEqual([174, 108, 1097]);
+    const ids = (items: ItemTimingSlice["items"]) => finishedItems({ games: 500, items }, slark).map(([id]) => id);
+    expect(ids([[174, 14, 15], [108, 25, 26], [1097, 38, 47]])).toEqual([174, 108]);
+    // Exactly PART_HELD_MINUTES apart counts as held; one minute less is a step into Disperser.
+    expect(ids([[174, 14, 15], [1097, 14 + PART_HELD_MINUTES, 30]])).toEqual([174]);
+    expect(ids([[174, 14, 15], [1097, 13 + PART_HELD_MINUTES, 30]])).toEqual([1097]);
+    // Held but less bought than what it builds into: the built item takes the place.
+    expect(ids([[1097, 38, 47], [174, 14, 15]])).toEqual([1097]);
   });
 
   it("drops parts of parts, like Dagon under Dagon 3 when Dagon 2 is not in the slice", () => {
     const dagons: Record<string, ItemInfo> = { 104: item("dagon"), 201: item("dagon_2", [104]), 202: item("dagon_3", [201]) };
-    expect(finishedItems({ games: 500, items: [[104, 22, 24], [202, 25, 28]] }, dagons).map(([id]) => id)).toEqual([202]);
+    expect(finishedItems({ games: 500, items: [[104, 17, 20], [202, 25, 28]] }, dagons).map(([id]) => id)).toEqual([202]);
   });
 });
 

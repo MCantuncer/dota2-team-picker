@@ -24,9 +24,7 @@ Start: 2 Iron Branch, Tango, Quelling Blade, Magic Stick, Faerie Fire
 Lane: Magic Wand 3, Falcon Blade 7
 Boots: Power Treads 7 {Attack speed and a stat to switch.}
 First: Manta Style 19/20
-Next: Dragon Lance 22/24
-Late: Eye of Skadi 30/31 {Cuts the healing from Treant Protector; your hits slow.}, Hurricane Pike 32/41, Butterfly 33/41
-If needed: Black King Bar 35/39 [Against Pangolier, Hoodwink and Treant Protector] instead of Butterfly
+Late: Eye of Skadi 30/31 {Cuts the healing from Treant Protector; your hits slow.}, Hurricane Pike 32/41, Butterfly 33/41, Black King Bar 35/39 [Against Pangolier, Hoodwink and Treant Protector: don't skip it] {Spell immunity for the big fights. Pulverize still goes through it.}
 Job: Farm and carry the late game; join fights once your items are in. Your timing is Manta Style around minute 19.
 Vs Primal Beast (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Hoodwink (lane): Magic burst. buy Black King Bar.
