@@ -12,6 +12,7 @@
     "mark-refresh": "tsx src/data/mark-refresh.ts",
     "item-odds-sim": "tsx scripts/item-odds-sim.ts",
     "item-odds-report": "tsx scripts/item-odds-report.ts",
+    "item-problem-report": "tsx scripts/item-problem-report.ts",
     "lead-report": "tsx scripts/lead-report.ts",
     "spell-facts": "tsx scripts/spell-facts.ts",
     "item-facts": "tsx scripts/item-facts.ts",
