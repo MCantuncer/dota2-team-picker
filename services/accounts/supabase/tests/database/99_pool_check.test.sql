@@ -40,7 +40,7 @@ select results_eq(format('select list_rule, outside::int[] from public.draft_sug
   $$values (null::text, '{1,2}'::int[])$$, 'with no rule, and the outside heroes worked out anyway');
 select tests.sign_in_as('pal@example.com');
 select throws_ok(format($$select public.save_draft_suggestions(%L, 5::smallint, '{1}', '{1}', null, 'outside')$$, :'draft'),
-  '23514', null, 'the rule is pool or any');
+  '23514', null, 'the rule is pool, played or any');
 
 -- lead saves a pool list with an outsider, then an any list replaces it: one slip from pal only.
 select tests.sign_out();

@@ -867,7 +867,7 @@ isOneToOne: false
                            },
 "admin_pool_check":
 { Args: { "days"?: number }; Returns: {
-              "any_lists": number,"lists": number,"players": number,"pool_lists": number,"slips": number,"unknown_lists": number
+              "any_lists": number,"lists": number,"played_lists": number,"players": number,"pool_lists": number,"slips": number,"unknown_lists": number
             }[]
                            },
 "admin_pool_slips":
