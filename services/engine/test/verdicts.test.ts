@@ -33,7 +33,12 @@ describe("pick verdicts", () => {
   it("says why every other hero is behind, with the difference between the two", () => {
     const leader = hero(1, "Invoker", { counter: 3 }, { counterBy: [{ heroId: 10, points: 2.5 }, { heroId: 11, points: 0.5 }] });
     const other = hero(2, "Puck", { counter: -0.5 }, { counterBy: [{ heroId: 10, points: -0.5 }, { heroId: 11, points: 0 }] });
-    expect(verdicts([leader, other], name, 2)[1]).toEqual({ heroId: 2, kind: "behind", text: "3.5 points behind Invoker: Invoker does 3.0 points better against Axe." });
+    expect(verdicts([leader, other], name, 2)[1]).toEqual({
+      heroId: 2,
+      kind: "behind",
+      text: "3.5 points behind Invoker: Invoker does 3.0 points better against Axe.",
+      note: null,
+    });
     const ally = hero(3, "Lina", {}, { synergyBy: [{ heroId: 11, points: 0 }] });
     const friend = hero(1, "Invoker", { synergy: 1.4 }, { synergyBy: [{ heroId: 11, points: 1.4 }] });
     expect(verdicts([friend, ally], name, 2)[1]!.text).toBe("1.4 points behind Invoker: Invoker works 1.4 points better with Lion.");
@@ -52,32 +57,35 @@ describe("pick verdicts", () => {
   it("says the player wins more on a hero only when the plain win rate agrees", () => {
     const invoker = hero(1, "Invoker", { meta: 6, comfort: 0.6 }, { record: record(83, 41) });
     const puck = hero(2, "Puck", { meta: 2, comfort: 3.5 }, { record: record(38, 24) });
-    expect(verdicts([invoker, puck], name, 2)[1]!.text).toBe(
-      "You win more on Puck (63% of 38 games) than on Invoker (49% of 83). 1.1 points behind Invoker: Invoker wins more at your rank (+4.0). A good pick too.",
-    );
+    expect(verdicts([invoker, puck], name, 2)[1]).toMatchObject({
+      note: "You win more on Puck (63% of 38 games) than on Invoker (49% of 83). A good pick too.",
+      text: "1.1 points behind Invoker: Invoker wins more at your rank (+4.0).",
+    });
     // 9-1 shrinks below 140-60, but 90% reads higher than 70%: no note that contradicts the numbers.
     const lucky = hero(3, "Sniper", { meta: 6 }, { record: record(10, 9) });
     const steady = hero(4, "Pudge", { meta: 2 }, { record: record(200, 140) });
     expect(steady.record!.points - lucky.record!.points).toBeGreaterThan(1);
-    expect(verdicts([lucky, steady], name, 2)[1]!.text).toBe("4.0 points behind Sniper: Sniper wins more at your rank (+4.0).");
+    expect(verdicts([lucky, steady], name, 2)[1]).toMatchObject({ text: "4.0 points behind Sniper: Sniper wins more at your rank (+4.0).", note: null });
   });
 
   it("names the leader's missing record, and a teammate's list in their name", () => {
     const leader = hero(1, "Invoker", { meta: 8 });
     const puck = hero(2, "Puck", { comfort: 3.5 }, { record: record(38, 24) });
-    expect(verdicts([leader, puck], name, 2)[1]!.text).toBe(
-      "You have won 63% of 38 games on Puck and have no games on Invoker. 4.5 points behind Invoker: Invoker wins more at your rank (+8.0).",
-    );
-    expect(verdicts([leader, puck], name, 2, "Ali")[1]!.text).toBe(
-      "Ali has won 63% of 38 games on Puck and has no games on Invoker. 4.5 points behind Invoker: Invoker wins more at this rank (+8.0).",
-    );
+    expect(verdicts([leader, puck], name, 2)[1]).toMatchObject({
+      note: "You have won 63% of 38 games on Puck and have no games on Invoker.",
+      text: "4.5 points behind Invoker: Invoker wins more at your rank (+8.0).",
+    });
+    expect(verdicts([leader, puck], name, 2, "Ali")[1]).toMatchObject({
+      note: "Ali has won 63% of 38 games on Puck and has no games on Invoker.",
+      text: "4.5 points behind Invoker: Invoker wins more at this rank (+8.0).",
+    });
   });
 
   it("reads tied scores as level, and a list of one as the only hero", () => {
     const [first, second] = verdicts([hero(1, "Invoker", { meta: 2 }), hero(2, "Puck", { flex: 2 })], name, 2);
     expect(first!.text).toBe("Level with Puck, the next best.");
     expect(second!.text).toBe("Level with Invoker.");
-    expect(verdicts([hero(1, "Invoker", {})], name, 2)).toEqual([{ heroId: 1, kind: "only", text: "The only hero on this list for this draft." }]);
+    expect(verdicts([hero(1, "Invoker", {})], name, 2)).toEqual([{ heroId: 1, kind: "only", text: "The only hero on this list for this draft.", note: null }]);
     expect(verdicts([], name, 2)).toEqual([]);
   });
 });
