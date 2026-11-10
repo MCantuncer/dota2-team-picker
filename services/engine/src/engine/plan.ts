@@ -87,8 +87,12 @@ const WEIGHTS = {
    * planned from it alone (see FALLBACK_COST), so this no longer decides between pool and others.
    */
   inPool: 8,
-  /** Extra for one of the player's Top 3, on top of `inPool`: the same 1 to 3 ratio as the draft score's 0.5 to 1.5. */
-  top: 2.5,
+  /**
+   * Extra for one of the player's Top 5, on top of `inPool`. `inPool` is the same for every pool hero, so this
+   * is the whole gap between a starred hero and the rest of the pool: the same +0.5 the draft score gives, a
+   * nudge for the player's best heroes, never a reason to plan only them.
+   */
+  top: 0.5,
   /**
    * Share of each pair's synergy that counts. A team has 10 pairs and their
    * edges overlap, so adding them all in full overstates synergy and lets

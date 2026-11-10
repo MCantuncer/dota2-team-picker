@@ -52,14 +52,15 @@ describe("planTeam", () => {
     expect(banned.slots[1]!.inPool).toBe(false);
   });
 
-  it("gives the player's Top 3 a small push inside the pool", () => {
+  it("gives the player's Top 5 the same small push inside the pool as the draft score", () => {
     const plan = (slot: { favorites?: number[]; top?: number[] }, enemies: number[] = []) =>
       planTeam(new Engine(fixture()), { slots: [{ position: 2, playerId: "can", ...slot }], enemies });
     const fav = plan({ favorites: [2, 3] }, [5]);
     const top = plan({ favorites: [2, 3], top: [3] }, [5]);
     expect(top.slots[1]!.name).toBe("Mid Three");
-    expect(top.score - fav.score).toBeCloseTo(2.5);
-    expect(top.slots[1]!.reasons).toContain("One of the player's Top 5");
+    expect(top.score - fav.score).toBeCloseTo(0.5);
+    // Too small to make the three reasons shown next to a counter edge.
+    expect(top.slots[1]!.reasons).not.toContain("One of the player's Top 5");
     // A hero outside the pool gets nothing, and a Top 5 hero still loses to a clear counter edge.
     expect(plan({ top: [2] })).toEqual(plan({}));
     expect(plan({ favorites: [2, 3], top: [2] }, [5]).slots[1]!.name).toBe("Mid Three");
