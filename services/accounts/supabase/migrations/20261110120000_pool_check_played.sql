@@ -48,11 +48,14 @@ begin
       select 1 from public.favorite_heroes f
       where f.user_id = me and f.position in (pos, 0) and f.hero_id = s.hero
     )
-    -- A played hero needs a whole number of games; anything else in the JSON counts as not played.
+    -- A played hero needs a number of games; anything else in the JSON, or no rule, counts as not played.
+    -- CASE, so the cast only runs on a number and a missing rule or hero reads as false, never null.
     and not (
-      rule = 'played'
-      and jsonb_typeof(played -> s.hero::text -> 'games') = 'number'
-      and (played -> s.hero::text ->> 'games')::numeric >= 10
+      case
+        when rule = 'played' and jsonb_typeof(played -> s.hero::text -> 'games') = 'number'
+          then (played -> s.hero::text ->> 'games')::numeric >= 10
+        else false
+      end
     )
     order by s.n
   );

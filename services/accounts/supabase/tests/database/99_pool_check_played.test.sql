@@ -8,7 +8,7 @@ select tests.create_user('pal@example.com') as pal \gset
 
 insert into public.friendships (requester_id, addressee_id, status) values (:'lead', :'pal', 'accepted');
 -- pal's own Pos 5 hero is 5. pal played hero 30 twelve times, hero 31 nine times and hero 32 has a broken count.
-insert into public.favorite_heroes (user_id, position, hero_id) values (:'pal', 5, 5);
+insert into public.favorite_heroes (user_id, position, hero_id) values (:'pal', 5, 5), (:'lead', 2, 40);
 update public.profiles set hero_stats = '{"30": {"games": 12, "wins": 7}, "31": {"games": 9, "wins": 6}, "32": {"games": "many"}}'
 where id = :'pal';
 
