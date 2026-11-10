@@ -315,17 +315,29 @@ export interface HardCounterNote {
   text: string;
 }
 
+/** Score points one hero in the draft accounts for. */
+export interface HeroPoints {
+  heroId: number;
+  points: number;
+}
+
 export interface Suggestion {
   heroId: number;
   name: string;
   score: number;
   /**
    * The standard error of the score, in points: how far its data parts (counters, synergy, win
-   * rate) could be off from the games behind them. Two heroes whose scores differ by less than
-   * about twice this are too close to call.
+   * rate and the player's own record) could be off from the games behind them. Two heroes whose
+   * scores differ by less than about twice this are too close to call.
    */
   error: number;
   breakdown: ScoreBreakdown;
+  /** The counter part per enemy picked, in score points (they add up to `breakdown.counter`). */
+  counterBy: HeroPoints[];
+  /** The synergy part per ally picked, in score points (they add up to `breakdown.synergy`). */
+  synergyBy: HeroPoints[];
+  /** The player's own record on the hero and the comfort points it gives, with their error; null without games. */
+  record: (GamesWins & { points: number; error: number }) | null;
   /** Up to 4 lines on why the hero fits this draft, each with its points, then at most one warning. */
   reasons: string[];
   /** Where the score comes from (this draft, or meta, role and comfort) and the hero's place. */

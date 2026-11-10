@@ -433,8 +433,9 @@ export class Engine {
         tags.push(`Top 5 (${points(WEIGHTS.top)})`);
       }
       const mine = input.personal?.[hero.id];
+      let personal = 0;
       if (mine && mine.games > 0) {
-        const personal = personalScore(mine);
+        personal = personalScore(mine);
         comfort += personal;
         tags.push(`Your record ${mine.wins}-${mine.games - mine.wins} (${points(personal)})`);
       }
@@ -503,12 +504,18 @@ export class Engine {
         const isPartner = partner !== undefined && position === partner;
         variance += (this.synergyError(hero.id, a) * (isPartner ? 1 + WEIGHTS.lanePartner : 1) * w.synergy) ** 2;
       }
+      // The player's own record is a sample too: a hero they won 19 of 29 games on could be a 55% hero for them.
+      const recordError = mine && mine.games > 0 ? personalError(mine) * w.comfort : 0;
+      variance += recordError ** 2;
       results.push({
         heroId: hero.id,
         name: hero.name,
         score,
         error: round(Math.sqrt(variance)),
         breakdown,
+        counterBy: edges.map((x) => ({ heroId: x.enemy, points: round(x.edge * w.counter) })),
+        synergyBy: input.allies.map((a, i) => ({ heroId: a.heroId, points: round(synergies[i]!.value * w.synergy) })),
+        record: mine && mine.games > 0 ? { points: round(personal * w.comfort), error: round(recordError), games: mine.games, wins: mine.wins } : null,
         reasons: pickLines(reasons, warnings),
         summary: summaryOf(breakdown),
         place: { rank: 0, of: 0 },
@@ -611,6 +618,15 @@ export class Engine {
 
 /** Points for the user's own record on a hero, after shrinking small samples. */
 export const personalScore = (mine: GamesWins) => (shrink(mine, 0.5, PRIOR_GAMES.personal) - 0.5) * 100 * WEIGHTS.personal;
+
+/**
+ * How far `personalScore` could be off, in the same points: the binomial error of the record around its shrunk
+ * rate, shrunk the same way. A 10-0 record still has an error, since its shrunk rate is not 100%.
+ */
+export function personalError(mine: GamesWins): number {
+  const p = shrink(mine, 0.5, PRIOR_GAMES.personal);
+  return (Math.sqrt(mine.games * p * (1 - p)) / (mine.games + PRIOR_GAMES.personal)) * 100 * WEIGHTS.personal;
+}
 
 /** Games and wins summed over a matchup row. */
 function totalOf(row: Record<string, GamesWins> | undefined): GamesWins {
