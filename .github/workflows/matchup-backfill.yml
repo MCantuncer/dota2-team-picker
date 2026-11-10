@@ -13,6 +13,9 @@ on:
       heroes_per_position:
         description: "Most played heroes of each position to fill"
         default: "10"
+      first:
+        description: "hero:position pairs to fill first, comma separated"
+        default: "93:1"
 
 permissions:
   contents: read
@@ -42,4 +45,7 @@ jobs:
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           STRATZ_TOKEN: ${{ secrets.STRATZ_TOKEN }}
           HEROES_PER_POSITION: ${{ inputs.heroes_per_position || '10' }}
+          # Slark carry first: Can's Mage Slayer question (2026-11-11). Filled rows are skipped, so it costs
+          # nothing once done.
+          FIRST: ${{ inputs.first || '93:1' }}
         run: npx deno run --node-modules-dir=none --no-lock --allow-net --allow-env supabase/functions/_shared/matchup/backfill.ts

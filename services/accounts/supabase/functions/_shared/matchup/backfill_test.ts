@@ -24,6 +24,13 @@ Deno.test("plans the most played heroes, positions taking turns, against every o
     "1@1:7",
   ]);
   assertEquals(backfillPlan(SNAPSHOT, 1).map((s) => s.hero), [2, 2, 3, 3]);
+  // A hero asked for first comes first and only once; an unknown hero is skipped.
+  assertEquals(backfillPlan(SNAPSHOT, 1, [{ hero: 3, position: 2 }, { hero: 99, position: 1 }]).map((s) => s.hero), [
+    3,
+    3,
+    2,
+    2,
+  ]);
 });
 
 Deno.test("sends the newest skill build version, as the site does", () => {

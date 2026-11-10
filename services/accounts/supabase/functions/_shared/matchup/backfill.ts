@@ -43,10 +43,14 @@ export interface BackfillLookup {
 }
 
 /**
- * The lookups to make, in order: the most played hero of each position first (positions taking turns),
- * each against every other hero, five at a time.
+ * The lookups to make, in order: `first` (a question waiting on one hero, like Slark's Mage Slayer), then
+ * the most played hero of each position (positions taking turns), each against every other hero, five at a time.
  */
-export function backfillPlan(snapshot: BackfillSnapshot, perPosition = HEROES_PER_POSITION): BackfillLookup[] {
+export function backfillPlan(
+  snapshot: BackfillSnapshot,
+  perPosition = HEROES_PER_POSITION,
+  first: { hero: number; position: number }[] = [],
+): BackfillLookup[] {
   const heroes = Object.keys(snapshot.heroes).map(Number).filter((id) => Number.isSafeInteger(id) && id > 0);
   const games = (hero: number, position: number) => snapshot.itemTimings?.[hero]?.[position]?.all?.games ?? 0;
   const byPosition = [1, 2, 3, 4, 5].map((position) =>
@@ -55,11 +59,13 @@ export function backfillPlan(snapshot: BackfillSnapshot, perPosition = HEROES_PE
       .slice(0, perPosition)
       .map((hero) => ({ hero, position }))
   );
-  const order: { hero: number; position: number }[] = [];
+  const order = first.filter((f) => heroes.includes(f.hero) && f.position >= 1 && f.position <= 5);
+  const listed = (o: { hero: number; position: number }) =>
+    order.some((f) => f.hero === o.hero && f.position === o.position);
   for (let i = 0; i < perPosition; i++) {
     for (const list of byPosition) {
       const next = list[i];
-      if (next) order.push(next);
+      if (next && !listed(next)) order.push(next);
     }
   }
   return order.flatMap(({ hero, position }) => {
@@ -131,7 +137,14 @@ async function main() {
   if (!version) throw new Error("The snapshot has no game version");
   const perPosition = Number(Deno.env.get("HEROES_PER_POSITION") ?? HEROES_PER_POSITION);
   if (!Number.isSafeInteger(perPosition) || perPosition < 1) throw new Error("HEROES_PER_POSITION must be 1 or more");
-  const plan = backfillPlan(snapshot, perPosition);
+  // FIRST is "hero:position" pairs, comma separated, like "93:1".
+  const first = (Deno.env.get("FIRST") ?? "").split(",").filter(Boolean).map((pair) => {
+    const [hero, position] = pair.split(":").map(Number);
+    if (!Number.isSafeInteger(hero) || !Number.isSafeInteger(position)) throw new Error(`Bad FIRST entry ${pair}`);
+    // Both checked as integers just above.
+    return { hero: hero as number, position: position as number };
+  });
+  const plan = backfillPlan(snapshot, perPosition, first);
 
   const toJson = (slices: Slice[]) => slices.map((s) => ({ hero: s.hero, position: s.position, enemy: s.enemy }));
   const deps: LookupDeps = {
