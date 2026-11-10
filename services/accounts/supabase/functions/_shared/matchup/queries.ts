@@ -85,11 +85,17 @@ export function guideListQuery(slices: Slice[]): string {
   return `{\n  heroStats {\n${lines.join("\n")}\n  }\n}`;
 }
 
-/** The match ids of one guide list answer, unknown shapes dropped. */
+/**
+ * The match ids of one guide list answer, unknown shapes dropped. STRATZ answers a list of lists:
+ * `[{ guides: [{ matchId }] }]` (checked against a real answer, 2026-11-10).
+ */
 export function guideMatchIds(answer: unknown): number[] {
+  if (!Array.isArray(answer)) return [];
   // Checked field by field below.
-  const guides = (answer as { guides?: unknown } | null)?.guides;
-  if (!Array.isArray(guides)) return [];
+  const guides = answer.flatMap((list) => {
+    const g = (list as { guides?: unknown } | null)?.guides;
+    return Array.isArray(g) ? g : [];
+  });
   return [...new Set(guides.map((g) => g?.matchId).filter(isId))];
 }
 

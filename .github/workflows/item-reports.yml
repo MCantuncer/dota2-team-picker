@@ -1,9 +1,11 @@
 name: Item reports
 
 # Runs the offline item reports against the matchup cache on demand, so they
-# don't need a local copy of the secret key. Each reads the cache and the
-# published data only: no STRATZ calls, nothing uploaded. Results are in the
-# job log and summary.
+# don't need a local copy of the secret key. The reports read the cache and the
+# published data only: no STRATZ calls, nothing uploaded. matchup-probe asks
+# STRATZ a few lookup queries and prints counts only (run it outside the
+# refresh runs at 02, 06, 10 and 14:17 UTC). Results are in the job log and
+# summary.
 on:
   workflow_dispatch:
     inputs:
@@ -13,6 +15,7 @@ on:
         options:
           - item-problem-report
           - item-odds-report
+          - matchup-probe
         default: item-problem-report
 
 permissions:
@@ -37,11 +40,13 @@ jobs:
       - name: Run the report
         working-directory: services/engine
         shell: bash
-        # Only this step gets the key: install scripts and the download don't need it.
+        # Only this step gets the keys: install scripts and the download don't need them.
+        # Each run gets only the key it uses.
         env:
           REPORT: ${{ inputs.report }}
           SUPABASE_URL: https://odigcdwsvajkbvcxeskj.supabase.co
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          SUPABASE_SECRET_KEY: ${{ inputs.report != 'matchup-probe' && secrets.SUPABASE_SECRET_KEY || '' }}
+          STRATZ_TOKEN: ${{ inputs.report == 'matchup-probe' && secrets.STRATZ_TOKEN || '' }}
         run: |
           npm run "$REPORT" | tee "$RUNNER_TEMP/report.txt"
           { echo '```'; cat "$RUNNER_TEMP/report.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
