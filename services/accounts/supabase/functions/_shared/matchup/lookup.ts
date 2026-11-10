@@ -134,7 +134,9 @@ async function inPool<T>(tasks: (() => Promise<T>)[], limit: number): Promise<(T
  */
 async function fetchSlices(deps: LookupDeps, claimed: Slice[], version: number, deadline: number) {
   const left = () => deadline - deps.now();
-  const lists = await deps.post<Record<string, unknown>>(guideListQuery(claimed), left());
+  // The lists sit under heroStats, as asked in guideListQuery.
+  const data = await deps.post<{ heroStats?: Record<string, unknown> | null }>(guideListQuery(claimed), left());
+  const lists = data.heroStats ?? {};
   const ids = claimed.map((_, i) => ({
     wins: guideMatchIds(lists[`w${i}`]),
     losses: guideMatchIds(lists[`l${i}`]),

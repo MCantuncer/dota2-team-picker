@@ -22,11 +22,14 @@ const game = (match: number, won: boolean): MatchupGame => ({
 /** A STRATZ stand-in: Sven (18) at pos 1 against Lion (26) and Crystal Maiden (5). */
 function stratzAnswer(query: string): Record<string, unknown> {
   if (query.includes("heroStats")) {
+    // The shape STRATZ answers (2026-11-10): lists of lists under heroStats.
     return {
-      w0: { guides: [{ matchId: 1 }] },
-      l0: { guides: [{ matchId: 2 }] },
-      w1: { guides: [{ matchId: 3 }] },
-      l1: { guides: [] },
+      heroStats: {
+        w0: [{ guides: [{ matchId: 1 }] }],
+        l0: [{ guides: [{ matchId: 2 }] }],
+        w1: [{ guides: [{ matchId: 3 }] }],
+        l1: [{ guides: [] }],
+      },
     };
   }
   const out: Record<string, unknown> = {};
