@@ -97,8 +97,8 @@ const LEVEL = 0.05;
 
 /**
  * A verdict per hero in `list` (best first, as shown). The first is the best pick, "clear" only when it beats
- * every other listed hero by more than their combined error. Every other hero says how far behind it is and
- * why; when the player wins more on it, its note says so, adding "A good pick too" when the gap is within the error.
+ * every other listed hero by more than their combined error. Every other hero says how far behind the first it is
+ * and why (the list names the first, so the line doesn't); when the player wins more on it, its note says so, adding "A good pick too" when the gap is within the error.
  */
 export function verdicts(list: Listed[], name: (id: number) => string, pos: Position, owner?: string): Verdict[] {
   const [leader, ...rest] = list;
@@ -123,7 +123,7 @@ export function verdicts(list: Listed[], name: (id: number) => string, pos: Posi
       const behind = leader.score - s.score;
       const record = recordNote(leader, s, owner);
       const goodToo = record && behind <= marginOf(leader, s) && s.score > 0 ? " A good pick too." : "";
-      const text = behind < LEVEL ? `Level with ${leader.name}.` : `${one(behind)} points behind ${leader.name}: ${whyBehind(leader, s, name, pos, owner)}.`;
+      const text = behind < LEVEL ? `Level with ${leader.name}.` : `${one(behind)} points behind: ${whyBehind(leader, s, name, pos, owner)}.`;
       return { heroId: s.heroId, kind: "behind", text, note: record && `${record}${goodToo}` };
     }),
   ];
