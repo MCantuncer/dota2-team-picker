@@ -166,6 +166,12 @@ async function main() {
     `cache rows: ${all.length}, ${latest.length} for version ${version}, ${latest.filter((r) => Array.isArray(r.games) && r.games.length).length} with games; ` +
       `${latestGames.length} games, ${latestGames.filter(hasItems).length} with items, duration and lead`,
   );
+  const shapes = new Map<string, number>();
+  for (const r of latest) {
+    const shape = Array.isArray(r.games) ? `array of ${Math.min(r.games.length, 3)}${r.games.length >= 3 ? "+" : ""}` : typeof r.games;
+    shapes.set(shape, (shapes.get(shape) ?? 0) + 1);
+  }
+  console.log(`row game lists: ${[...shapes].map(([k, n]) => `${k}: ${n}`).join(", ")}`);
   const byGroup = new Map<string, EnemyGames[]>();
   for (const r of all) {
     if (r.game_version !== version || r.position < 1 || r.position > 5) continue;
