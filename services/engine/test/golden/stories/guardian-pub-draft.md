@@ -45,9 +45,9 @@ Start: 2 Tango [Hard lane against Pudge: more sustain], Slippers of Agility, Iro
 Lane: Wraith Band 2, Magic Wand 4
 Boots: Power Treads 8 {Attack speed and a stat to switch.}
 First: Maelstrom 16/18
-Next: Hurricane Pike 26/31, Specialist's Array 27/32, Shadow Blade 28/33
-Late: Daedalus 36/41
-If needed: Black King Bar 32 [Against Drow Ranger, Shadow Shaman and Crystal Maiden] instead of Shadow Blade
+Next: Hurricane Pike 26/31, Mjollnir 28/33 {Attack speed and chain lightning.}, Shadow Blade 29/33
+Late: Crystalys 31/36
+If needed: Black King Bar 32 [Against Drow Ranger, Shadow Shaman and Crystal Maiden] instead of Crystalys
 Job: Win your lane, then use runes to help the side lanes. Your timing is Maelstrom around minute 16.
 Vs Pudge (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Drow Ranger: Locks you down. Keep distance until their disable is used.
