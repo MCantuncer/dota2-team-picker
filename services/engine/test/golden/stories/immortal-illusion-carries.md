@@ -42,7 +42,7 @@ Start: Tango, 2 Iron Branch, Faerie Fire
 Lane: Magic Wand 3
 Boots: Power Treads 8 {Attack speed and a stat to switch.}
 First: Desolator 17/22 {-6 armor on your target.}
-Next: Blink Dagger 18/21 {Start fights from 1,200 range.}, Hurricane Pike 29/32
+Next: Dragon Lance 18/24, Blink Dagger 19/21 {Start fights from 1,200 range.}
 Late: Black King Bar 31/36 [Against Pangolier, Hoodwink and Treant Protector: don't skip it] {Spell immunity for the big fights. Pulverize still goes through it.}, Daedalus 32/34
 Job: Win your lane, then use runes to help the side lanes. Your timing is Desolator around minute 17.
 Vs Pangolier (lane): Magic burst. buy Black King Bar.

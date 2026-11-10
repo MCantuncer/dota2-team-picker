@@ -11,6 +11,8 @@ import { rankGroup, type Position, type RankBracket, type Snapshot } from "../sr
  * and position in the golden snapshot (real data, scripts/golden-fixture.ts) at every rank group:
  * - Necrophos mid started with 760 gold of items: a start fits in the starting gold.
  * - Carry Vengeful Spirit lost Aghanim's Scepter: the items a position buys most are in its build.
+ * - Slark lost Diffusal Blade (his most bought item, minute 14) because Disperser, bought at 38, is built
+ *   from it, and neither was shown: the most bought item, or an item built from it, is shown.
  * Razor's case (Sange and Yasha at 17, Mjollnir at 18) needs how much gold players have by each minute,
  * which the snapshot does not hold yet; its rule comes with that data (item engine plan, step 3).
  */
@@ -20,6 +22,10 @@ const engine = new Engine(snapshot);
 // The golden fixture always holds the item list.
 const items = snapshot.items!;
 const cost = (id: number) => items[id]?.cost ?? 0;
+
+/** Whether `item` is built from `part`, all the way down (Dagon 3 from Dagon through Dagon 2). */
+const builtFrom = (item: number, part: number): boolean =>
+  (items[item]?.components ?? []).some((c) => c === part || builtFrom(c, part));
 
 /** Two real enemy lineups from the golden drafts; a hero in the first plays against the second. */
 const ENEMY_LINEUPS = [
@@ -73,6 +79,25 @@ describe("coach rules", () => {
         shown.includes(id) || shown.some((other) => items[other]?.components.includes(id) || sharesBuiltPart(other, id, items));
       const missing = usual.map((slice) => coreTimingItems(slice, items, 3).filter(([id]) => !isShown(id)).map(([id]) => items[id]?.name));
       expect(missing.some((m) => m.length === 0), `${label}: ${missing.flat().join(", ")} missing from ${build.core.map((i) => i.name).join(", ")}`).toBe(true);
+    }
+  });
+
+  it("show the item a position buys most, or an item built from it (Slark's Diffusal Blade)", () => {
+    for (const { label, heroId, position, rankBracket, build } of cases) {
+      const slices = snapshot.itemTimings?.[heroId]?.[position];
+      const usual = [slices?.[`${rankGroup(rankBracket)}`], slices?.all].flatMap((s) => (s && s.games >= MIN_SLICE_GAMES ? [s] : []));
+      if (!build || !usual.length) continue;
+      const shown = [...build.core, ...(build.bootsOr ? [build.bootsOr] : [])];
+      // In the rank group or in every rank, like the rule above.
+      const missing = usual.flatMap((slice) => {
+        const top = slice.items[0];
+        if (!top) return [];
+        const [id] = top;
+        // The item, an item built from it (Dagon 1 into Dagon 3), or a choice built from the same part.
+        const ok = shown.some((o) => o.itemId === id || builtFrom(o.itemId, id) || sharesBuiltPart(o.itemId, id, items));
+        return ok ? [] : [items[id]?.name];
+      });
+      expect(missing.length < usual.length, `${label}: ${missing.join(", ")} missing from ${build.core.map((i) => i.name).join(", ")}`).toBe(true);
     }
   });
 });

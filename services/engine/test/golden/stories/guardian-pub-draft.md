@@ -1,10 +1,10 @@
 ## Guardian pub draft
 
-Headline: Fight from 17 min, before Drow Ranger has Manta Style at 24.
+Headline: Fight from 16 min, before Drow Ranger has Manta Style at 24.
 
 - 0 to 10 min: Wraith King farms safely in the safe lane against Legion Commander and Shadow Shaman: skip trades. Lion wins 30% and loses 46% of 2,306 lanes against Legion Commander.
-- 10 to 20 min: Axe's Blink Dagger at 16 and Wraith King's Radiance at 17: ready to fight at 17. Their Legion Commander has Blink Dagger at 15.
-- 20 to 30 min: Sniper's Hurricane Pike at 26. Their Drow Ranger has Manta Style at 24. Roshan from 26 min, once three key items are in.
+- 10 to 20 min: Sniper's Maelstrom at 16 and Axe's Blink Dagger at 16: ready to fight at 16. Their Legion Commander has Blink Dagger at 15.
+- 20 to 30 min: Their Drow Ranger has Manta Style at 24. Roshan from 20 min, once three key items are in.
 
 Danger heroes:
 - Drow Ranger: Manta Style at 24 min. Take fights and towers before then.
@@ -44,11 +44,11 @@ Timings: all
 Start: 2 Tango [Hard lane against Pudge: more sustain], Slippers of Agility, Iron Branch, Faerie Fire, Healing Salve [Hard lane against Pudge: more sustain]
 Lane: Wraith Band 2, Magic Wand 4
 Boots: Power Treads 8 {Attack speed and a stat to switch.}
-First: Hurricane Pike 26/31
-Next: Specialist's Array 27/32, Mjollnir 28/33 {Attack speed and chain lightning.}, Shadow Blade 29/33
+First: Maelstrom 16/18
+Next: Hurricane Pike 26/31, Specialist's Array 27/32, Shadow Blade 28/33
 Late: Daedalus 36/41
 If needed: Black King Bar 32 [Against Drow Ranger, Shadow Shaman and Crystal Maiden] instead of Shadow Blade
-Job: Win your lane, then use runes to help the side lanes. Your timing is Hurricane Pike around minute 26.
+Job: Win your lane, then use runes to help the side lanes. Your timing is Maelstrom around minute 16.
 Vs Pudge (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Drow Ranger: Locks you down. Keep distance until their disable is used.
 Vs Legion Commander: Magic burst. Stay spread so one combo can't catch two.
@@ -59,7 +59,7 @@ Watch Drow Ranger: Keep distance until their disable is used.
 Watch Legion Commander: Stay spread so one combo can't catch two.
 Watch Shadow Shaman, Crystal Maiden: buy Black King Bar.
 If it goes wrong: Lane lost? Stop contesting runes. Push the wave, farm the near jungle, and wait for your pos 4 to rotate.
-If it goes wrong: No Hurricane Pike by 31 min? Stop rotating and farm mid and the near camps until it is done.
+If it goes wrong: No Maelstrom by 18 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Axe
 Timings: rank

@@ -27,20 +27,49 @@ export interface ChosenSlice {
 }
 
 /**
- * The slice's items without the ones another of its items is built from (Yasha in Manta Style), all the
- * way down: Dagon is part of Dagon 3 through Dagon 2 even when the slice has no Dagon 2.
+ * A part bought this many minutes or more before the item built from it is played with on its own. Slark
+ * buys Diffusal Blade at 14 and Disperser at 38: hiding the part dropped his most bought item, and Disperser
+ * was too late to make the build. In the live slices (2026-11-10), pairs that are usually steps (Yasha into
+ * Manta Style, Maelstrom into Mjollnir, Dragon Lance into Hurricane Pike, Kaya into Kaya and Sange) are 12
+ * minutes or more apart in about 10% of slices or fewer; held parts sit further apart (Diffusal Blade 20 minutes before
+ * Disperser, Witch Blade 17 before Parasma, Blink Dagger 14 before Swift Blink).
+ */
+export const PART_HELD_MINUTES = 12;
+
+/**
+ * The slice's items with each part and the item built from it taking one place, all the way down (Dagon is
+ * part of Dagon 3 through Dagon 2 even when the slice has no Dagon 2):
+ * - bought soon before it (Yasha before Manta Style), the part is only a step and the built item stays;
+ * - held PART_HELD_MINUTES or more before every item built from it, the more bought of the two stays
+ *   (Slark's Diffusal Blade over Disperser).
+ * Two items for one place would push out other items (Black King Bar) from a build of a few slots.
  */
 export function finishedItems(slice: ItemTimingSlice, items: Record<string, ItemInfo>): ItemTimingSlice["items"] {
-  const parts = new Set<number>();
-  const addParts = (id: number) => {
-    for (const part of items[id]?.components ?? []) {
-      if (parts.has(part)) continue;
-      parts.add(part);
-      addParts(part);
-    }
-  };
-  for (const [id] of slice.items) addParts(id);
-  return slice.items.filter(([id]) => !parts.has(id));
+  // The slice lists items most bought first.
+  const order = new Map(slice.items.map(([id, minute], i) => [id, { minute, rank: i }]));
+  /** Every part of an item in the slice with the item built from it. */
+  const pairs: { part: number; built: number }[] = [];
+  for (const [built] of slice.items) {
+    const seen = new Set<number>();
+    const addParts = (of: number) => {
+      for (const part of items[of]?.components ?? []) {
+        if (seen.has(part)) continue;
+        seen.add(part);
+        if (order.has(part)) pairs.push({ part, built });
+        addParts(part);
+      }
+    };
+    addParts(built);
+  }
+  // Pairs hold only items of the slice, so the fallback never applies.
+  const at = (id: number) => order.get(id) ?? { minute: 0, rank: 0 };
+  const held = (p: { part: number; built: number }) => at(p.built).minute - at(p.part).minute >= PART_HELD_MINUTES;
+  const partFirst = (p: { part: number; built: number }) => at(p.part).rank < at(p.built).rank;
+  // A step into any item (Dagon into Dagon 2) gives way even when a later level comes much later, and so does
+  // a held part less bought than what it builds into.
+  const steps = new Set(pairs.filter((p) => !held(p) || !partFirst(p)).map((p) => p.part));
+  const outbought = new Set(pairs.filter((p) => !steps.has(p.part)).map((p) => p.built));
+  return slice.items.filter(([id]) => !steps.has(id) && !outbought.has(id));
 }
 
 /** Finished items in the slice, or 0 when it has too few games to trust. */

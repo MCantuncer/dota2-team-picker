@@ -1,9 +1,9 @@
 ## Ancient against a lineup with no carry
 
-Headline: Fight from 15 min, before Storm Spirit has Orchid Malevolence at 18.
+Headline: Fight from 15 min, before Storm Spirit has Witch Blade at 17.
 
 - 0 to 10 min: Ursa and Silencer win the safe lane against Tidehunter and Pudge: take their tower. Survive the off lane against Vengeful Spirit and Witch Doctor: just get levels. Ursa wins 62% and loses 18% of 4,234 lanes against Tidehunter. Mars wins 21% and loses 55% of 2,522 lanes against Witch Doctor.
-- 10 to 20 min: Ember Spirit's Spirit Vessel at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Their Storm Spirit has Orchid Malevolence at 18.
+- 10 to 20 min: Ember Spirit's Spirit Vessel at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Their Storm Spirit has Witch Blade at 17.
 
 Danger heroes:
 - Vengeful Spirit: Lock them down first in every fight.
