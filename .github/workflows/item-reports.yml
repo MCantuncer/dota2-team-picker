@@ -1,0 +1,47 @@
+name: Item reports
+
+# Runs the offline item reports against the matchup cache on demand, so they
+# don't need a local copy of the secret key. Each reads the cache and the
+# published data only: no STRATZ calls, nothing uploaded. Results are in the
+# job log and summary.
+on:
+  workflow_dispatch:
+    inputs:
+      report:
+        description: "Which report to run"
+        type: choice
+        options:
+          - item-problem-report
+          - item-odds-report
+        default: item-problem-report
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Download the latest data
+        working-directory: services/engine
+        run: npm run pull-data
+      - name: Run the report
+        working-directory: services/engine
+        shell: bash
+        # Only this step gets the key: install scripts and the download don't need it.
+        env:
+          REPORT: ${{ inputs.report }}
+          SUPABASE_URL: https://odigcdwsvajkbvcxeskj.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          npm run "$REPORT" | tee "$RUNNER_TEMP/report.txt"
+          { echo '```'; cat "$RUNNER_TEMP/report.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
