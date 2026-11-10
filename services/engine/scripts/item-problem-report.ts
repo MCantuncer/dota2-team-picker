@@ -158,6 +158,14 @@ async function main() {
 
   const all = await readCache();
   const version = Math.max(0, ...all.map((r) => r.game_version));
+  // Says why a cache gives few cells: empty rows (lookups that found no games) or games cached without items.
+  const latest = all.filter((r) => r.game_version === version);
+  // Written only by save_matchup_guides with games from toMatchupGame.
+  const latestGames = latest.flatMap((r) => (Array.isArray(r.games) ? (r.games as MatchupGame[]) : []));
+  console.log(
+    `cache rows: ${all.length}, ${latest.length} for version ${version}, ${latest.filter((r) => Array.isArray(r.games) && r.games.length).length} with games; ` +
+      `${latestGames.length} games, ${latestGames.filter(hasItems).length} with items, duration and lead`,
+  );
   const byGroup = new Map<string, EnemyGames[]>();
   for (const r of all) {
     if (r.game_version !== version || r.position < 1 || r.position > 5) continue;
