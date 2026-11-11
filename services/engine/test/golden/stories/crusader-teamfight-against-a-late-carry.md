@@ -67,8 +67,8 @@ Start: 2 Tango [Hard lane against Spectre and Disruptor: more sustain], 2 Iron B
 Lane: Bracer 2, Magic Wand 4
 Boots: Power Treads 9 {Attack speed and a stat to switch.}
 First: Blink Dagger 13/16 {Start fights from 1,200 range.}
-Next: Harpoon 25/26, Yasha 26/34, Aghanim's Scepter 29/34
-Late: Black King Bar 31/39 [Against Ember Spirit, Nyx Assassin and Disruptor: don't skip it] {Spell immunity for the big fights.}
+Next: Harpoon 25/26, Aghanim's Scepter 29/34
+Late: Black King Bar 31/39 [Against Ember Spirit, Nyx Assassin and Disruptor: don't skip it] {Spell immunity for the big fights.}, Refresher Orb 43/47
 Job: Make their carry's lane hard, then start the team's fights as Magnus. Your timing is Blink Dagger around minute 13.
 Vs Spectre (lane): Strong passives. Fight them when they are low, not head on.
 Vs Disruptor (lane): Magic burst. buy Black King Bar.

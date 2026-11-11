@@ -166,7 +166,7 @@ export function withoutAlternatives<T>(
 
 /**
  * The slice's core items past boots, most bought first, as the build takes them: finished items (no parts of
- * another item in the slice, unless nothing built from it makes the build), big, not boots, no alternative to a more bought one (withoutAlternatives), at most
+ * another item in the slice), big, not boots, no alternative to a more bought one (withoutAlternatives), at most
  * `slots`. Shared with item-paths.ts so its key items are the ones game-plan.ts keyItem can pick.
  */
 export function coreTimingItems(
@@ -174,37 +174,10 @@ export function coreTimingItems(
   items: Record<string, ItemInfo>,
   slots: number,
 ): ItemTimingSlice["items"] {
-  const isBig = ([id]: ItemTimingSlice["items"][number]) => isCoreItem(items[String(id)]) && !BOOTS.has(items[String(id)]?.key ?? "");
-  const pick = (from: Set<number>) =>
-    withoutAlternatives(slice.items.filter((t) => from.has(t[0]) && isBig(t)), ([id, minute]) => ({ id, minute }), items).slice(0, slots);
-  const finished = new Set(finishedItems(slice, items).map(([id]) => id));
-  // A part left out as a step comes back when nothing built from it makes the build: Windranger buys Maelstrom
-  // most and Mjollnir too rarely to take a slot. Coming back can push out another built item, whose parts then
-  // come back in turn, so this repeats until the build stops changing (a few rounds at most).
-  let taken = pick(finished);
-  for (let round = 0; round < MAX_PART_ROUNDS; round++) {
-    const ids = new Set(taken.map(([id]) => id));
-    const from = new Set([
-      ...finished,
-      ...slice.items.flatMap(([part]) =>
-        finished.has(part) || slice.items.some(([id]) => ids.has(id) && builtFrom(id, part, items)) ? [] : [part]
-      ),
-    ]);
-    const next = pick(from);
-    if (next.map(([id]) => id).join() === taken.map(([id]) => id).join()) break;
-    taken = next;
-  }
-  return taken;
-}
-
-/** Rounds of bringing parts back in coreTimingItems; a build of a few slots settles within them. */
-const MAX_PART_ROUNDS = 4;
-
-/** Whether `item` is built from `part`, all the way down (Dagon 3 from Dagon through Dagon 2). */
-function builtFrom(item: number, part: number, items: Record<string, ItemInfo>, seen = new Set<number>()): boolean {
-  if (seen.has(item)) return false;
-  seen.add(item);
-  return (items[String(item)]?.components ?? []).some((c) => c === part || builtFrom(c, part, items, seen));
+  const big = finishedItems(slice, items).filter(
+    ([id]) => isCoreItem(items[String(id)]) && !BOOTS.has(items[String(id)]?.key ?? ""),
+  );
+  return withoutAlternatives(big, ([id, minute]) => ({ id, minute }), items).slice(0, slots);
 }
 
 /**
