@@ -1,12 +1,14 @@
 /**
  * When players buy their core items, per hero, position and rank group, from STRATZ, for the item
  * minutes in the Game Story. STRATZ counts every purchase by the minute it happened, with wins, so
- * each item gets its average minute and the minute after which buying it is slower than most.
+ * each item gets its average minute and the minute after which buying it is slower than most, and a core's
+ * main item keeps its wins by minute (the pace, for the game plan against dangerous heroes).
  *
  * About 1,500 slices (each hero's main positions, four rank groups and all ranks) fit in about
  * 25 batched queries, so they are refreshed once a day like the item builds.
  */
-import { isConsumable, isCoreItem } from "../engine/item-build";
+import { isConsumable, isCoreItem, isUpgradedBoots, KEY_ITEM_MIN_COST } from "../engine/item-build";
+import { finishedItems } from "../engine/item-timing-slice";
 import { isShareItem, SHARE_MIN } from "../engine/item-trends";
 import type { ItemInfo, ItemTimingSlice, ItemTimingSliceKey, Position, RankGroup, Snapshot } from "../engine/types";
 
@@ -36,6 +38,11 @@ const WIN_DROP = 0.05;
 const MIN_MINUTE_SHARE = 0.01;
 /** Look for the win drop up to this many minutes past the 75th percentile. */
 const LATE_SEARCH_AFTER_P75 = 5;
+
+/** A minute joins an item's pace when it has this share of the item's purchases; rarer minutes are noise. */
+export const PACE_MIN_SHARE = 0.01;
+/** Positions that get a pace: the cores, whose big item sets when they fight. */
+const PACE_POSITIONS: readonly Position[] = [1, 2, 3];
 
 /** STRATZ's names for our rank groups (see RANK_GROUP_BRACKETS). */
 const STRATZ_BRACKETS: Record<RankGroup, string> = {
@@ -170,6 +177,32 @@ export function toTimingSlice(rows: PurchaseRow[], items: Record<string, ItemInf
   return { games, items: top, ...(lane.length ? { lane } : {}), ...(shares.length ? { shares } : {}) };
 }
 
+/**
+ * The slice's pace (ItemTimingSlice.pace): the most bought finished core item from KEY_ITEM_MIN_COST gold that is
+ * not boots, with its games and wins by the minute it was done. Undefined when the slice has no such item.
+ */
+export function itemPace(rows: PurchaseRow[], slice: ItemTimingSlice, items: Record<string, ItemInfo>): ItemTimingSlice["pace"] {
+  const key = finishedItems(slice, items).find(([id]) => {
+    const item = items[id];
+    return item !== undefined && item.cost >= KEY_ITEM_MIN_COST && !isUpgradedBoots(item);
+  });
+  if (!key) return undefined;
+  const byMinute = new Map<number, [number, number]>();
+  for (const r of rows) {
+    if (r.itemId !== key[0] || r.instance !== 0 || r.matchCount <= 0) continue;
+    const m = byMinute.get(r.time) ?? [0, 0];
+    m[0] += r.matchCount;
+    m[1] += r.winCount;
+    byMinute.set(r.time, m);
+  }
+  const games = [...byMinute.values()].reduce((n, [g]) => n + g, 0);
+  const minutes = [...byMinute]
+    .filter(([, [g]]) => g >= games * PACE_MIN_SHARE)
+    .sort(([a], [b]) => a - b)
+    .map(([minute, [g, w]]): [number, number, number] => [minute, g, w]);
+  return minutes.length ? { itemId: key[0], minutes } : undefined;
+}
+
 /** Downloads item timings for every hero's main positions into the snapshot. */
 export async function fetchItemTimings(
   snapshot: Snapshot,
@@ -185,8 +218,11 @@ export async function fetchItemTimings(
     const stats = (await post(itemTimingsQuery(batch))).heroStats;
     if (!stats) throw new Error("STRATZ item timings failed: no heroStats in the answer");
     batch.forEach((r, j) => {
-      const slice = toTimingSlice(validRows(stats[`s${j}`]), items, r.slice === "all");
-      if (slice) ((timings[r.heroId] ??= {})[r.position] ??= {})[r.slice] = slice;
+      const rows = validRows(stats[`s${j}`]);
+      const slice = toTimingSlice(rows, items, r.slice === "all");
+      if (!slice) return;
+      const pace = PACE_POSITIONS.includes(r.position) ? itemPace(rows, slice, items) : undefined;
+      ((timings[r.heroId] ??= {})[r.position] ??= {})[r.slice] = pace ? { ...slice, pace } : slice;
     });
   }
   snapshot.itemTimings = timings;
