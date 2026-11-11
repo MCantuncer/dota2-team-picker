@@ -14,11 +14,12 @@ on:
         type: choice
         options:
           - item-problem-report
+          - item-patterns-report
           - item-odds-report
           - matchup-probe
         default: item-problem-report
       focus:
-        description: "Hero id whose cells item-problem-report prints in full (optional)"
+        description: "Hero id that item-problem-report and item-patterns-report print in full (optional)"
         default: ""
 
 permissions:
