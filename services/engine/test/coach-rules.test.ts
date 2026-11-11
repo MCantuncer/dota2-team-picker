@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { gamePlan } from "../src/engine/game-plan";
 import { STARTING_GOLD, coreTimingItems, sharesBuiltPart } from "../src/engine/item-build";
-import { MIN_SLICE_GAMES } from "../src/engine/item-timing-slice";
+import { MIN_SLICE_GAMES, PART_HELD_MINUTES } from "../src/engine/item-timing-slice";
 import { Engine } from "../src/engine/score";
 import { rankGroup, type Position, type RankBracket, type Snapshot } from "../src/engine/types";
 
@@ -93,11 +93,24 @@ describe("coach rules", () => {
         const top = slice.items[0];
         if (!top) return [];
         const [id] = top;
-        // The item, an item built from it (Dagon 1 into Dagon 3), or a choice built from the same part.
-        const ok = shown.some((o) => o.itemId === id || builtFrom(o.itemId, id) || sharesBuiltPart(o.itemId, id, items));
+        // The item, an item built from it (Dagon 1 into Dagon 3), or a choice built from the same part. A part
+        // bought soon before an item of the slice built from it is a step, and the build follows that item:
+        // Windranger's Maelstrom into Mjollnir, even when Mjollnir is too rarely bought to take a slot.
+        const step = slice.items.some(([other, at]) => builtFrom(other, id) && at - top[1] < PART_HELD_MINUTES);
+        const ok = step || shown.some((o) => o.itemId === id || builtFrom(o.itemId, id) || sharesBuiltPart(o.itemId, id, items));
         return ok ? [] : [items[id]?.name];
       });
       expect(missing.length < usual.length, `${label}: ${missing.join(", ")} missing from ${build.core.map((i) => i.name).join(", ")}`).toBe(true);
+    }
+  });
+
+  it("never show a part next to an item built from it (Diffusal Blade and Disperser take one place)", () => {
+    for (const { label, build } of cases) {
+      const core = build?.core ?? [];
+      for (const a of core) {
+        const into = core.find((b) => b !== a && builtFrom(b.itemId, a.itemId));
+        expect(into, `${label}: ${a.name} next to ${into?.name}`).toBeUndefined();
+      }
     }
   });
 });
