@@ -7,6 +7,7 @@
  * 25 batched queries, so they are refreshed once a day like the item builds.
  */
 import { isConsumable, isCoreItem } from "../engine/item-build";
+import { SHARE_MIN } from "../engine/item-trends";
 import type { ItemInfo, ItemTimingSlice, ItemTimingSliceKey, Position, RankGroup, Snapshot } from "../engine/types";
 
 const ITEM_TIMINGS_MAX_AGE_DAYS = 1;
@@ -29,10 +30,8 @@ const LANE_SHARE = 0.25;
 const LANE_LAST_MINUTE = 12;
 /** Lane items kept per slice. */
 const LANE_ITEMS_PER_SLICE = 4;
-/** Items from this cost are kept in `shares`: lane items like Soul Ring too, not Magic Wand. */
+/** Items from this cost, bought in SHARE_MIN of games, are kept in `shares`: lane items like Soul Ring too, not Magic Wand. */
 export const SHARE_MIN_COST = 500;
-/** ...when bought in at least this share of the slice's games. */
-export const SHARE_MIN = 0.03;
 /** A minute counts as slower than most when its win rate is this far under the item's own. */
 const WIN_DROP = 0.05;
 /** Ignore minutes with less than this share of the item's purchases: too few games to trust. */

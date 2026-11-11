@@ -3,30 +3,36 @@ import { itemTrends, type Timings } from "../src/engine/item-trends";
 
 const SOUL_RING = 178;
 const DIFFUSAL = 174;
-/** Slark pos 1 at one day: all-ranks games and purchase counts. */
-const day = (games: number, shares: [number, number][]): Timings => ({ 93: { 1: { all: { games, items: [], shares } } } });
+/** Slark pos 1 in one copy: that STRATZ week's games and purchase counts. */
+const week = (games: number, shares: [number, number][]): Timings => ({ 93: { 1: { all: { games, items: [], shares } } } });
 
 describe("itemTrends", () => {
-  it("finds an item bought more often in the newer games", () => {
-    // Older window: 10,000 games, 3,000 Soul Rings (30%). Newer: 10,000 games, 4,500 (45%).
-    const trends = itemTrends(
-      day(100000, [[SOUL_RING, 30000], [DIFFUSAL, 80000]]),
-      day(110000, [[SOUL_RING, 33000], [DIFFUSAL, 88000]]),
-      day(120000, [[SOUL_RING, 37500], [DIFFUSAL, 96000]]),
+  it("finds an item bought more often this week, and not one that held steady", () => {
+    const { trends, compared, checks } = itemTrends(
+      week(100000, [[SOUL_RING, 30000], [DIFFUSAL, 80000]]),
+      week(60000, [[SOUL_RING, 27000], [DIFFUSAL, 48000]]),
     );
+    expect(compared).toBe(1);
+    expect(checks).toBe(2);
     expect(trends).toHaveLength(1);
-    expect(trends[0]).toMatchObject({ hero: 93, position: 1, item: SOUL_RING, older: { bought: 3000, games: 10000 }, newer: { bought: 4500, games: 10000 } });
+    expect(trends[0]).toMatchObject({ hero: 93, position: 1, item: SOUL_RING, older: { bought: 30000, games: 100000 }, newer: { bought: 27000, games: 60000 } });
   });
 
-  it("skips a hero whose counts dropped (a new patch) or whose windows are small", () => {
-    const reset = itemTrends(day(100000, [[SOUL_RING, 30000]]), day(110000, [[SOUL_RING, 33000]]), day(5000, [[SOUL_RING, 2500]]));
-    expect(reset).toEqual([]);
-    const small = itemTrends(day(100000, [[SOUL_RING, 30000]]), day(100500, [[SOUL_RING, 30100]]), day(101000, [[SOUL_RING, 30400]]));
-    expect(small).toEqual([]);
+  it("finds a new item, counting it at the most it could have been before", () => {
+    const { trends } = itemTrends(week(100000, []), week(100000, [[SOUL_RING, 10000]]));
+    expect(trends[0]).toMatchObject({ item: SOUL_RING, older: { bought: 3000, games: 100000, atMost: true } });
   });
 
-  it("leaves out an item missing from an older copy", () => {
-    const trends = itemTrends(day(100000, []), day(110000, [[SOUL_RING, 3000]]), day(120000, [[SOUL_RING, 7500]]));
+  it("doesn't flag an item that only crossed into the stored list", () => {
+    // 3.5% now: maybe 2.9% before, so no change can be claimed.
+    const { trends } = itemTrends(week(100000, []), week(100000, [[SOUL_RING, 3500]]));
     expect(trends).toEqual([]);
+  });
+
+  it("counts heroes it couldn't compare", () => {
+    const result = itemTrends(week(500, [[SOUL_RING, 300]]), week(100000, [[SOUL_RING, 30000]]));
+    expect(result).toMatchObject({ compared: 0, tooFew: 1, trends: [] });
+    const missing = itemTrends({}, week(100000, [[SOUL_RING, 30000]]));
+    expect(missing.noCounts).toBe(1);
   });
 });

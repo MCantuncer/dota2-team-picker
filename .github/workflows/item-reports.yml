@@ -22,6 +22,9 @@ on:
       focus:
         description: "Hero id whose cells item-problem-report prints in full (optional)"
         default: ""
+      days:
+        description: "Days between the copies item-trends-report compares (7 or more)"
+        default: "7"
 
 permissions:
   contents: read
@@ -50,6 +53,7 @@ jobs:
         env:
           REPORT: ${{ inputs.report }}
           FOCUS: ${{ inputs.focus }}
+          DAYS: ${{ inputs.days }}
           SUPABASE_URL: https://odigcdwsvajkbvcxeskj.supabase.co
           SUPABASE_SECRET_KEY: ${{ inputs.report != 'matchup-probe' && inputs.report != 'item-trends-report' && secrets.SUPABASE_SECRET_KEY || '' }}
           STRATZ_TOKEN: ${{ inputs.report == 'matchup-probe' && secrets.STRATZ_TOKEN || '' }}
