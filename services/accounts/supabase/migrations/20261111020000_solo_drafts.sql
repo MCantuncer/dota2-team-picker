@@ -141,7 +141,7 @@ $$;
 -- team has 5 picks, a draft has at most 24 bans, and `remove` needs the hero to be in. Entering a pick again only
 -- changes its position. An entry that changes nothing is skipped without an error: Watch Dota can send the same
 -- read twice before the page shows the first.
-create function public.add_solo_draft_action(draft uuid, action text, hero smallint, pos smallint, device text)
+create function public.add_solo_draft_action(draft uuid, action text, hero smallint, device text, pos smallint default null)
 returns void
 language plpgsql
 security definer

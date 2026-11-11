@@ -921,7 +921,7 @@ isOneToOne: false
 { Args: { "action": string,"draft": string,"hero": number,"pos"?: number }; Returns: undefined
                            },
 "add_solo_draft_action":
-{ Args: { "action": string,"device": string,"draft": string,"hero": number,"pos": number }; Returns: undefined
+{ Args: { "action": string,"device": string,"draft": string,"hero": number,"pos"?: number }; Returns: undefined
                            },
 "admin_newest_players":
 { Args: { "before_at"?: string,"before_id"?: string,"max_rows"?: number }; Returns: {

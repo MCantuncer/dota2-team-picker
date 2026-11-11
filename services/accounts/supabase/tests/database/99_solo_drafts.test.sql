@@ -10,33 +10,33 @@ select public.start_solo_draft() as draft \gset
 select is(public.start_solo_draft(), :'draft'::uuid, 'a second tab gets the same open draft');
 
 -- Entries.
-select lives_ok(format($$select public.add_solo_draft_action(%L, 'ally', 74::smallint, 2::smallint, 'pc')$$, :'draft'),
+select lives_ok(format($$select public.add_solo_draft_action(%L, 'ally', 74::smallint, 'pc', 2::smallint)$$, :'draft'),
   'an ally with a position is added');
-select public.add_solo_draft_action(:'draft', 'enemy', 11::smallint, null, 'pc');
-select public.add_solo_draft_action(:'draft', 'ban', 1::smallint, null, 'phone');
+select public.add_solo_draft_action(:'draft', 'enemy', 11::smallint, 'pc', null);
+select public.add_solo_draft_action(:'draft', 'ban', 1::smallint, 'phone', null);
 select results_eq(format('select hero_id::int, kind, position::int from public.solo_draft_state(%L) order by hero_id', :'draft'),
   $$values (1, 'ban'::text, null::int), (11, 'enemy', null), (74, 'ally', 2)$$, 'the board replays the entries');
 
 -- Watch Dota sending the same read twice, and a remove of a hero that is not in, change nothing.
-select public.add_solo_draft_action(:'draft', 'enemy', 11::smallint, null, 'pc');
-select public.add_solo_draft_action(:'draft', 'remove', 99::smallint, null, 'pc');
+select public.add_solo_draft_action(:'draft', 'enemy', 11::smallint, 'pc', null);
+select public.add_solo_draft_action(:'draft', 'remove', 99::smallint, 'pc', null);
 select is((select count(*)::int from public.solo_draft_actions where draft_id = :'draft'), 3, 'repeats are skipped');
 
-select throws_ok(format($$select public.add_solo_draft_action(%L, 'ally', 11::smallint, null, 'pc')$$, :'draft'),
+select throws_ok(format($$select public.add_solo_draft_action(%L, 'ally', 11::smallint, 'pc', null)$$, :'draft'),
   '23505', 'That hero is already in the draft', 'a hero is in the draft once');
-select throws_ok(format($$select public.add_solo_draft_action(%L, 'ban', 5::smallint, 3::smallint, 'pc')$$, :'draft'),
+select throws_ok(format($$select public.add_solo_draft_action(%L, 'ban', 5::smallint, 'pc', 3::smallint)$$, :'draft'),
   '22023', 'Only picks have a position', 'bans have no position');
-select throws_ok(format($$select public.add_solo_draft_action(%L, 'ally', 5::smallint, 6::smallint, 'pc')$$, :'draft'),
+select throws_ok(format($$select public.add_solo_draft_action(%L, 'ally', 5::smallint, 'pc', 6::smallint)$$, :'draft'),
   '22023', 'Unknown hero or position', 'a position is 1 to 5');
-select throws_ok(format($$select public.add_solo_draft_action(%L, 'ally', 5::smallint, null, '')$$, :'draft'),
+select throws_ok(format($$select public.add_solo_draft_action(%L, 'ally', 5::smallint, '', null)$$, :'draft'),
   '22023', 'Missing device', 'every entry names its device');
-select public.add_solo_draft_action(:'draft', 'ally', h::smallint, null, 'pc') from generate_series(20, 23) h;
-select throws_ok(format($$select public.add_solo_draft_action(%L, 'ally', 30::smallint, null, 'pc')$$, :'draft'),
+select public.add_solo_draft_action(:'draft', 'ally', h::smallint, 'pc', null) from generate_series(20, 23) h;
+select throws_ok(format($$select public.add_solo_draft_action(%L, 'ally', 30::smallint, 'pc', null)$$, :'draft'),
   '54000', 'That team already has 5 picks', 'a team has 5 picks');
 
 -- Entering a pick again moves it; removing takes it out.
-select public.add_solo_draft_action(:'draft', 'ally', 74::smallint, 3::smallint, 'phone');
-select public.add_solo_draft_action(:'draft', 'remove', 1::smallint, null, 'phone');
+select public.add_solo_draft_action(:'draft', 'ally', 74::smallint, 'phone', 3::smallint);
+select public.add_solo_draft_action(:'draft', 'remove', 1::smallint, 'phone', null);
 select results_eq(format('select hero_id::int, position::int from public.solo_draft_state(%L) where hero_id in (1, 74)', :'draft'),
   $$values (74, 3)$$, 'a pick moves and a ban comes out');
 
@@ -64,7 +64,7 @@ select is((select count(*)::int from public.solo_drafts), 0, 'other players do n
 select is((select count(*)::int from public.solo_draft_actions), 0, 'or its entries');
 select is((select count(*)::int from public.solo_draft_state(:'draft')), 0, 'or its board');
 select is((select count(*)::int from public.solo_draft_status(:'draft')), 0, 'or its status');
-select throws_ok(format($$select public.add_solo_draft_action(%L, 'ban', 2::smallint, null, 'x')$$, :'draft'),
+select throws_ok(format($$select public.add_solo_draft_action(%L, 'ban', 2::smallint, 'x', null)$$, :'draft'),
   'P0002', 'This draft has ended', 'and cannot add to it');
 select throws_ok(format($$select public.solo_draft_beat(%L, true)$$, :'draft'),
   'P0002', 'This draft has ended', 'or beat for it');
@@ -74,7 +74,7 @@ select tests.sign_out();
 select tests.sign_in_as('solo@example.com');
 select public.new_solo_draft() as fresh \gset
 select isnt(:'fresh'::uuid, :'draft'::uuid, 'Start Over makes a new draft');
-select throws_ok(format($$select public.add_solo_draft_action(%L, 'ban', 2::smallint, null, 'pc')$$, :'draft'),
+select throws_ok(format($$select public.add_solo_draft_action(%L, 'ban', 2::smallint, 'pc', null)$$, :'draft'),
   'P0002', 'This draft has ended', 'the old draft takes no more entries');
 
 -- A draft untouched for 2 hours is not handed out again.
