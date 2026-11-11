@@ -16,7 +16,6 @@
  * Reads the cache only; makes no STRATZ calls.
  */
 import { readFileSync } from "node:fs";
-import { createClient } from "@supabase/supabase-js";
 import { threatsOf, type Threat } from "../src/engine/item-build";
 import { bigItemCheck, hasItems, type ItemGame, seeded } from "../src/engine/item-odds";
 import {
@@ -36,8 +35,8 @@ import {
 } from "../src/engine/item-problems";
 import type { MatchupGame } from "../src/engine/matchup-talents";
 import type { Snapshot } from "../src/engine/types";
+import { readCache } from "./matchup-cache";
 
-const PAGE = 1000;
 /** An item is a candidate when the hero buys it in at least this share of its cached games. */
 const CANDIDATE_SHARE = 0.1;
 const PLACEBO_RUNS = 100;
@@ -46,39 +45,6 @@ const SHOW_CELLS = 40;
 const PROBLEMS: Threat[] = [
   "disable", "magicBurst", "heal", "evasion", "illusions", "invisible", "passives", "physicalCarry", "unattackable",
 ];
-
-function env(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`${name} is not set`);
-  return value;
-}
-
-interface Row {
-  hero_id: number;
-  position: number;
-  enemy_id: number;
-  game_version: number;
-  games: unknown;
-}
-
-async function readCache(): Promise<Row[]> {
-  const supabase = createClient(env("SUPABASE_URL"), env("SUPABASE_SECRET_KEY"), { auth: { persistSession: false } });
-  const rows: Row[] = [];
-  for (let from = 0; ; from += PAGE) {
-    const { data, error } = await supabase
-      .from("matchup_guides")
-      .select("hero_id, position, enemy_id, game_version, games")
-      .order("hero_id")
-      .order("position")
-      .order("enemy_id")
-      .order("game_version")
-      .range(from, from + PAGE - 1);
-    if (error) throw new Error(`Reading the cache failed: ${error.message}`);
-    // The select above names exactly Row's columns.
-    rows.push(...((data ?? []) as Row[]));
-    if (!data || data.length < PAGE) return rows;
-  }
-}
 
 interface Group {
   hero: number;
@@ -157,7 +123,8 @@ async function main() {
   };
 
   const all = await readCache();
-  const version = Math.max(0, ...all.map((r) => r.game_version));
+  // A reduce, not Math.max(...all): spreading a cache of 100k+ rows overflows the call stack.
+  const version = all.reduce((m, r) => Math.max(m, r.game_version), 0);
   // Says why a cache gives few cells: empty rows (lookups that found no games) or games cached without items.
   const latest = all.filter((r) => r.game_version === version);
   // Written only by save_matchup_guides with games from toMatchupGame.
