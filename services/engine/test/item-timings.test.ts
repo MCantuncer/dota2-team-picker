@@ -1,8 +1,10 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  PACE_MIN_SHARE,
   SLICES_PER_QUERY,
   fetchItemTimings,
+  itemPace,
   itemTimingsDue,
   itemTimingsQuery,
   lateMinute,
@@ -127,6 +129,45 @@ describe("toTimingSlice", () => {
   });
 });
 
+describe("itemPace", () => {
+  const items: Record<string, ItemInfo> = {
+    ...ITEMS,
+    170: item("yasha", "Yasha", 2050),
+    // Priced over KEY_ITEM_MIN_COST here, so only its being boots keeps it out.
+    63: item("power_treads", "Power Treads", 2400),
+    147: { ...item("manta", "Manta Style", 4650), components: [170] },
+  };
+
+  it("keeps the wins by minute of the most bought big finished item", () => {
+    // Treads is bought most but is boots; Yasha is only a step into Manta Style, 6 minutes later.
+    const rows = [
+      row(8, 5000, 2500, 63),
+      row(12, 3000, 1600, 170),
+      row(14, 1000, 690, 147),
+      row(16, 2000, 1000, 147),
+      row(18, 1000, 430, 147),
+      row(40, 10, 9, 147),
+      { ...row(30, 500, 250, 147), instance: 1 },
+    ];
+    const slice = toTimingSlice(rows, items)!; // Rows are given.
+    // The minute 40 row has under PACE_MIN_SHARE of the 4,010 Manta games; a second Manta is no pace.
+    expect(10 / 4010).toBeLessThan(PACE_MIN_SHARE);
+    expect(itemPace(rows, slice, items)).toEqual({
+      itemId: 147,
+      minutes: [
+        [14, 1000, 690],
+        [16, 2000, 1000],
+        [18, 1000, 430],
+      ],
+    });
+  });
+
+  it("is undefined without a big finished item", () => {
+    const rows = [row(8, 5000, 2500, 63), row(9, 900, 450, 69)];
+    expect(itemPace(rows, toTimingSlice(rows, items)!, items)).toBeUndefined(); // Rows are given.
+  });
+});
+
 describe("fetchItemTimings", () => {
   const snapshot = (): Snapshot => ({
     generatedAt: "",
@@ -155,12 +196,21 @@ describe("fetchItemTimings", () => {
     // Purchase counts on the all-ranks slice only, so the snapshot stays small. Both slices were stored above.
     expect(data.itemTimings![1]![1]!.all!.shares?.length).toBeGreaterThan(0);
     expect(data.itemTimings![1]![1]!["3"]!.shares).toBeUndefined();
+    // A core's slices keep the pace of his big item: Battle Fury for this Anti-Mage.
+    expect(data.itemTimings![1]![1]!["3"]!.pace?.itemId).toBe(145);
     expect(data.itemTimingsAt).toBe("2026-11-02T00:00:00.000Z");
     // Start items come with the timings: without them, the timings are due again.
     expect(itemTimingsDue(data, new Date("2026-11-02T12:00:00Z"))).toBe(true);
     data.itemStarts = {};
     expect(itemTimingsDue(data, new Date("2026-11-02T12:00:00Z"))).toBe(false);
     expect(itemTimingsDue(data, new Date("2026-11-03T00:00:00Z"))).toBe(true);
+  });
+
+  it("leaves the pace out for supports", async () => {
+    const data = { ...snapshot(), positions: { 1: [0, 0, 0, 0, 900] } };
+    await fetchItemTimings(data, async () => ({ heroStats: { s0: ANTI_MAGE } }), new Date());
+    expect(data.itemTimings![1]![5]!.all).toBeDefined();
+    expect(data.itemTimings![1]![5]!.all!.pace).toBeUndefined();
   });
 
   it("fails when STRATZ answers without heroStats", async () => {

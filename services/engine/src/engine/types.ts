@@ -159,6 +159,13 @@ export interface ItemTimingSlice {
    * missing in snapshots from before 2026-11-11.
    */
   shares?: [itemId: number, games: number][];
+  /**
+   * When the most bought finished core item from KEY_ITEM_MIN_COST gold (not boots) was done, and how those games
+   * ended: [minute, games, wins] for each minute with at least PACE_MIN_SHARE of its purchases, earliest first.
+   * Positions 1 to 3 only. It shows when, not why: a fast item often follows a game that was already going well.
+   * Missing in snapshots from before 2026-11-12.
+   */
+  pace?: { itemId: number; minutes: [minute: number, games: number, wins: number][] };
 }
 
 export interface ItemStart {
