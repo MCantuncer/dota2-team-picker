@@ -13,6 +13,7 @@
     "item-odds-sim": "tsx scripts/item-odds-sim.ts",
     "item-odds-report": "tsx scripts/item-odds-report.ts",
     "item-problem-report": "tsx scripts/item-problem-report.ts",
+    "item-patterns-report": "tsx scripts/item-patterns-report.ts",
     "matchup-probe": "tsx scripts/matchup-probe.ts",
     "lead-report": "tsx scripts/lead-report.ts",
     "spell-facts": "tsx scripts/spell-facts.ts",
