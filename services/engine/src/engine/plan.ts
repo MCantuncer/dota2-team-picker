@@ -125,9 +125,14 @@ export interface PickFirst {
   takenChance: number;
   /** Points the plan loses if the hero is taken: the plan with the slot's next best hero. */
   gap: number;
-  /** Points the enemy's likely picks still to come take off the hero (0 or more). */
+  /**
+   * Points showing the hero now can cost (0 or more): the clear counter the enemy can still pick, or the
+   * average over their likely picks when that is more.
+   */
   exposed: number;
   reason: PlanReason;
+  /** That clear counter, when there is one. */
+  counter: { heroId: number; edge: number } | null;
 }
 
 export interface TeamPlan {
@@ -476,13 +481,19 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
       const gap = swaps.length ? Math.max(0, draftPoints(team) - Math.max(...swaps)) : NO_SWAP_GAP;
       const takenChance = pickChance(enemySlots, id);
       const risk = blindPickRisk(engine, { candidates: [id], pool, enemies, enemyPositions: input.enemyPositions, myPosition: s.position, rankBracket: input.rankBracket });
-      const exposed = Math.max(0, -(risk.get(id)?.risk ?? 0));
-      return { position: s.position, heroId: id, pickRate: engine.pickRate(id), takenChance, gap, exposed, priority: takenChance * gap - exposed };
+      // The enemy picks after seeing it, so a clear counter they can still play costs its whole edge, not the
+      // small share its pick rate gives it in the average.
+      const counter = hardestCounter(id, pool, enemySlots);
+      const exposed = Math.max(0, -(risk.get(id)?.risk ?? 0), counter ? -counter.edge : 0);
+      return { position: s.position, heroId: id, pickRate: engine.pickRate(id), takenChance, gap, exposed, counter, priority: takenChance * gap - exposed };
     });
     // Ties (no enemy picks left) go to the hero picked in the most games.
     ranked.sort((a, b) => b.priority - a.priority || b.pickRate - a.pickRate);
     const top = ranked[0]!;
     const pct = Math.round(top.takenChance * 100);
+    const shown = top.counter
+      ? `showing it now lets ${engine.hero(top.counter.enemy).name} answer it for ${(-top.counter.edge).toFixed(1)}`
+      : `showing it now costs ${top.exposed.toFixed(1)}`;
     return {
       position: top.position,
       heroId: top.heroId,
@@ -493,9 +504,25 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
       reason: {
         kind: "meta",
         lead: `${pct}%`,
-        text: `chance the enemy takes it; losing it costs the plan ${top.gap.toFixed(1)}, showing it now costs ${top.exposed.toFixed(1)}`,
+        text: `chance the enemy takes it; losing it costs the plan ${top.gap.toFixed(1)}, ${shown}`,
       },
+      counter: top.counter ? { heroId: top.counter.enemy, edge: round(top.counter.edge) } : null,
     };
+  }
+
+  /**
+   * The enemy's best answer to a hero shown now: the clear counter (past noise, see clearMatchup) with the
+   * biggest edge among the heroes they can still pick in a position they still need.
+   */
+  function hardestCounter(id: number, pool: number[], enemySlots: ReturnType<typeof openSlots>): { enemy: number; edge: number } | null {
+    let best: { enemy: number; edge: number } | null = null;
+    for (const enemy of pool) {
+      if (enemy === id || !enemySlots.some((slot) => engine.fit(enemy)[slot.position] >= COUNTER_FIT)) continue;
+      const edge = engine.matchupEdge(id, enemy, input.rankBracket);
+      if (clearMatchup({ edge, error: engine.matchupError(id, enemy) }) >= 0) continue;
+      if (!best || edge < best.edge) best = { enemy, edge };
+    }
+    return best;
   }
 
   /**
@@ -754,3 +781,5 @@ function needsOf(team: Candidate[]): TeamNeed[] {
 const round = (x: number) => Math.round(x * 100) / 100;
 /** The gap when a slot has no other hero to fall back on: losing the hero costs the slot outright. */
 const NO_SWAP_GAP = 10;
+/** A hero counts as an enemy's possible answer in a position it plays at least this often. */
+const COUNTER_FIT = 0.15;
