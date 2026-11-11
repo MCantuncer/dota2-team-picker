@@ -7,7 +7,7 @@
  * 25 batched queries, so they are refreshed once a day like the item builds.
  */
 import { isConsumable, isCoreItem } from "../engine/item-build";
-import { SHARE_MIN } from "../engine/item-trends";
+import { isShareItem, SHARE_MIN } from "../engine/item-trends";
 import type { ItemInfo, ItemTimingSlice, ItemTimingSliceKey, Position, RankGroup, Snapshot } from "../engine/types";
 
 const ITEM_TIMINGS_MAX_AGE_DAYS = 1;
@@ -30,8 +30,6 @@ const LANE_SHARE = 0.25;
 const LANE_LAST_MINUTE = 12;
 /** Lane items kept per slice. */
 const LANE_ITEMS_PER_SLICE = 4;
-/** Items from this cost, bought in SHARE_MIN of games, are kept in `shares`: lane items like Soul Ring too, not Magic Wand. */
-export const SHARE_MIN_COST = 500;
 /** A minute counts as slower than most when its win rate is this far under the item's own. */
 const WIN_DROP = 0.05;
 /** Ignore minutes with less than this share of the item's purchases: too few games to trust. */
@@ -165,10 +163,7 @@ export function toTimingSlice(rows: PurchaseRow[], items: Record<string, ItemInf
     .map((c): [number, number] => [c.id, Math.round(c.minute)]);
   const shares = withShares
     ? counted
-        .filter((c) => {
-          const item = items[c.id];
-          return item !== undefined && !isConsumable(item) && item.key !== "boots" && item.cost >= SHARE_MIN_COST && c.games >= games * SHARE_MIN;
-        })
+        .filter((c) => isShareItem(items[c.id]) && c.games >= games * SHARE_MIN)
         .sort((a, b) => b.games - a.games || a.id - b.id)
         .map((c): [number, number] => [c.id, c.games])
     : [];

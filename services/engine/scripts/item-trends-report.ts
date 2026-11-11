@@ -1,19 +1,23 @@
 /**
  * Items players buy more or less often lately, for every hero and position (item-trends.ts). Compares the
- * daily snapshot copy of today with the copy DAYS days before (7 or more, so the two STRATZ weeks differ):
+ * daily snapshot copy of today with the copy DAYS days before (MIN_GAP_DAYS or more, so the STRATZ weeks differ):
  *
- *   DAYS=7 npm run item-trends-report
+ *   DAYS=10 npm run item-trends-report
  *
  * Or run the "Item reports" workflow with item-trends-report. Reads the public daily copies only. Purchase
- * counts are in the snapshot from 2026-11-11, so the first comparison is possible about a week later.
+ * counts are in the snapshot from 2026-11-11, so the first comparison is possible about 10 days later.
  */
 import { itemTrends, MIN_CHANGE, type Timings, TREND_CHANCE, TREND_Z } from "../src/engine/item-trends";
 import type { Snapshot } from "../src/engine/types";
 
 const BASE = "https://odigcdwsvajkbvcxeskj.supabase.co/storage/v1/object/public/hero-data";
 const DAY_MS = 24 * 60 * 60 * 1000;
-/** STRATZ's item counts restart weekly; copies closer than this can hold the same week. */
-const WEEK_DAYS = 7;
+/**
+ * STRATZ's item counts restart weekly, but each week is answered for up to about 8 days and the switch moves
+ * by a day (daily copies, Nov 2026: the week from Oct 29 was still answered on Nov 6, the next first seen on
+ * Nov 8). Copies whose item data is at least this many days apart can't hold the same week.
+ */
+const MIN_GAP_DAYS = 9;
 /** A missing day (no refresh ran) falls back to an earlier day, this many times. */
 const DAYS_BACK = 3;
 
@@ -32,8 +36,8 @@ async function dailyCopy(date: Date): Promise<Snapshot | undefined> {
 }
 
 async function main() {
-  const days = Number(process.env.DAYS || WEEK_DAYS);
-  if (!Number.isSafeInteger(days) || days < WEEK_DAYS) throw new Error(`DAYS must be ${WEEK_DAYS} or more`);
+  const days = Number(process.env.DAYS || MIN_GAP_DAYS + 1);
+  if (!Number.isSafeInteger(days) || days < MIN_GAP_DAYS) throw new Error(`DAYS must be ${MIN_GAP_DAYS} or more`);
   const newer = await dailyCopy(new Date());
   const newerAt = newer?.itemTimingsAt;
   if (!newer || !newerAt) {
@@ -47,13 +51,13 @@ async function main() {
     console.log(`No daily copy with item timings from about ${days} days before ${newerAt}.`);
     return;
   }
-  if (Date.parse(newerAt) - Date.parse(olderAt) < (WEEK_DAYS - 1) * DAY_MS) {
+  if (Date.parse(newerAt) - Date.parse(olderAt) < MIN_GAP_DAYS * DAY_MS) {
     console.log(`The copies' item data (${olderAt}, ${newerAt}) may be the same STRATZ week; not comparing.`);
     return;
   }
   // itemTimings is keyed by hero id, then position, then slice key; Timings reads it with string keys.
   const timings = (s: Snapshot) => (s.itemTimings ?? {}) as unknown as Timings;
-  const result = itemTrends(timings(older), timings(newer));
+  const result = itemTrends(timings(older), timings(newer), older.items ?? {}, newer.items ?? {});
   const items = newer.items ?? {};
   const name = (id: number) => items[String(id)]?.name ?? `item ${id}`;
   const heroName = (id: number) => newer.heroes[id]?.name ?? `hero ${id}`;

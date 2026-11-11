@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { itemTrends, type Timings } from "../src/engine/item-trends";
+import { itemTrends as trendsOf, type Timings } from "../src/engine/item-trends";
+import type { ItemInfo } from "../src/engine/types";
 
 const SOUL_RING = 178;
 const DIFFUSAL = 174;
+const item = (key: string, cost: number): ItemInfo => ({ key, name: key, cost, img: "", components: [] });
+const ITEMS: Record<string, ItemInfo> = { [SOUL_RING]: item("soul_ring", 680), [DIFFUSAL]: item("diffusal_blade", 2500) };
+const itemTrends = (older: Timings, newer: Timings, olderItems = ITEMS) => trendsOf(older, newer, olderItems, ITEMS);
 /** Slark pos 1 in one copy: that STRATZ week's games and purchase counts. */
 const week = (games: number, shares: [number, number][]): Timings => ({ 93: { 1: { all: { games, items: [], shares } } } });
 
@@ -27,6 +31,13 @@ describe("itemTrends", () => {
     // 3.5% now: maybe 2.9% before, so no change can be claimed.
     const { trends } = itemTrends(week(100000, []), week(100000, [[SOUL_RING, 3500]]));
     expect(trends).toEqual([]);
+  });
+
+  it("skips an item the older copy couldn't count, like one that cost under 500 then", () => {
+    const cheap = { ...ITEMS, [SOUL_RING]: item("soul_ring", 450) };
+    const { trends, checks } = itemTrends(week(100000, []), week(100000, [[SOUL_RING, 40000]]), cheap);
+    expect(trends).toEqual([]);
+    expect(checks).toBe(0);
   });
 
   it("counts heroes it couldn't compare", () => {

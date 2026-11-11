@@ -6,10 +6,18 @@
  * ItemTimingSlice.games is the slice's most bought item (Town Portal Scroll or boots, about every game), a
  * stand-in for its games used the same way in both copies.
  */
-import type { ItemTimingSlice } from "./types";
+import { isConsumable } from "./item-build";
+import type { ItemInfo, ItemTimingSlice } from "./types";
 
+/** Items from this cost are counted: lane items like Soul Ring too, not Magic Wand. */
+export const SHARE_MIN_COST = 500;
 /** The daily fetch keeps items bought in at least this share of the slice's games (ItemTimingSlice.shares). */
 export const SHARE_MIN = 0.03;
+/** Whether the daily fetch counts an item in ItemTimingSlice.shares (when bought in SHARE_MIN of games). */
+export function isShareItem(item: ItemInfo | undefined): boolean {
+  return item !== undefined && !isConsumable(item) && item.key !== "boots" && item.cost >= SHARE_MIN_COST;
+}
+
 /** Each copy needs this many games for a hero and position. */
 export const MIN_GAMES = 1000;
 /**
@@ -63,9 +71,15 @@ function zScore(a: Count, b: Count): number {
 /**
  * Items whose share moved past TREND_Z and MIN_CHANGE between the two copies, biggest change first. An item
  * missing from one copy was bought in under SHARE_MIN of its games there: it is counted at that bound, the
- * case least likely to show a change, so a new item (Soul Ring from 1% to 10%) is still found.
+ * case least likely to show a change, so a new item (Soul Ring from 1% to 10%) is still found. An item that
+ * copy couldn't have counted at all (its cost or type then, from that copy's item list) is skipped.
  */
-export function itemTrends(older: Timings, newer: Timings): TrendResult {
+export function itemTrends(
+  older: Timings,
+  newer: Timings,
+  olderItems: Record<string, ItemInfo>,
+  newerItems: Record<string, ItemInfo>,
+): TrendResult {
   const result: TrendResult = { trends: [], compared: 0, tooFew: 0, noCounts: 0, checks: 0 };
   for (const [hero, positions] of Object.entries(newer)) {
     for (const position of Object.keys(positions ?? {})) {
@@ -86,6 +100,7 @@ export function itemTrends(older: Timings, newer: Timings): TrendResult {
       for (const item of new Set([...then.keys(), ...now.keys()])) {
         const t = then.get(item);
         const n = now.get(item);
+        if ((t === undefined && !isShareItem(olderItems[item])) || (n === undefined && !isShareItem(newerItems[item]))) continue;
         const olderCount: Count = t === undefined ? bound(a.games) : { bought: t, games: a.games };
         const newerCount: Count = n === undefined ? bound(b.games) : { bought: n, games: b.games };
         result.checks++;

@@ -23,8 +23,8 @@ on:
         description: "Hero id whose cells item-problem-report prints in full (optional)"
         default: ""
       days:
-        description: "Days between the copies item-trends-report compares (7 or more)"
-        default: "7"
+        description: "Days between the copies item-trends-report compares (9 or more)"
+        default: "10"
 
 permissions:
   contents: read
