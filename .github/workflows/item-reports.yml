@@ -4,7 +4,8 @@ name: Item reports
 # don't need a local copy of the secret key. The reports read the cache and the
 # published data only: no STRATZ calls, nothing uploaded. matchup-probe asks
 # STRATZ a few lookup queries and prints counts only (run it outside the
-# refresh runs at 02, 06, 10 and 14:17 UTC). Results are in the job log and
+# refresh runs at 02, 06, 10 and 14:17 UTC). item-trends-report reads the
+# public daily snapshot copies. Results are in the job log and
 # summary.
 on:
   workflow_dispatch:
@@ -17,10 +18,14 @@ on:
           - item-patterns-report
           - item-odds-report
           - matchup-probe
+          - item-trends-report
         default: item-problem-report
       focus:
         description: "Hero id that item-problem-report and item-patterns-report print in full (optional)"
         default: ""
+      days:
+        description: "Days between the copies item-trends-report compares (9 or more)"
+        default: "10"
 
 permissions:
   contents: read
@@ -49,8 +54,9 @@ jobs:
         env:
           REPORT: ${{ inputs.report }}
           FOCUS: ${{ inputs.focus }}
+          DAYS: ${{ inputs.days }}
           SUPABASE_URL: https://odigcdwsvajkbvcxeskj.supabase.co
-          SUPABASE_SECRET_KEY: ${{ inputs.report != 'matchup-probe' && secrets.SUPABASE_SECRET_KEY || '' }}
+          SUPABASE_SECRET_KEY: ${{ inputs.report != 'matchup-probe' && inputs.report != 'item-trends-report' && secrets.SUPABASE_SECRET_KEY || '' }}
           STRATZ_TOKEN: ${{ inputs.report == 'matchup-probe' && secrets.STRATZ_TOKEN || '' }}
         run: |
           npm run "$REPORT" | tee "$RUNNER_TEMP/report.txt"

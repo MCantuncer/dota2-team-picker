@@ -7,6 +7,7 @@
  * 25 batched queries, so they are refreshed once a day like the item builds.
  */
 import { isConsumable, isCoreItem } from "../engine/item-build";
+import { isShareItem, SHARE_MIN } from "../engine/item-trends";
 import type { ItemInfo, ItemTimingSlice, ItemTimingSliceKey, Position, RankGroup, Snapshot } from "../engine/types";
 
 const ITEM_TIMINGS_MAX_AGE_DAYS = 1;
@@ -128,8 +129,11 @@ export function lateMinute(rows: PurchaseRow[], minute: number): number {
   return Math.max(drop?.time ?? p75, minute + 1);
 }
 
-/** Turns one slice's purchase rows into its most bought core and lane items with their minutes, or null when empty. */
-export function toTimingSlice(rows: PurchaseRow[], items: Record<string, ItemInfo>): ItemTimingSlice | null {
+/**
+ * Turns one slice's purchase rows into its most bought core and lane items with their minutes, or null when
+ * empty. `withShares` adds every lasting item's purchase count (ItemTimingSlice.shares).
+ */
+export function toTimingSlice(rows: PurchaseRow[], items: Record<string, ItemInfo>, withShares = false): ItemTimingSlice | null {
   const byItem = new Map<number, PurchaseRow[]>();
   for (const r of rows) {
     // A second copy (instance 1) is a different purchase, like a second Wraith Band.
@@ -157,7 +161,13 @@ export function toTimingSlice(rows: PurchaseRow[], items: Record<string, ItemInf
     .slice(0, LANE_ITEMS_PER_SLICE)
     .sort((a, b) => a.minute - b.minute)
     .map((c): [number, number] => [c.id, Math.round(c.minute)]);
-  return { games, items: top, ...(lane.length ? { lane } : {}) };
+  const shares = withShares
+    ? counted
+        .filter((c) => isShareItem(items[c.id]) && c.games >= games * SHARE_MIN)
+        .sort((a, b) => b.games - a.games || a.id - b.id)
+        .map((c): [number, number] => [c.id, c.games])
+    : [];
+  return { games, items: top, ...(lane.length ? { lane } : {}), ...(shares.length ? { shares } : {}) };
 }
 
 /** Downloads item timings for every hero's main positions into the snapshot. */
@@ -175,7 +185,7 @@ export async function fetchItemTimings(
     const stats = (await post(itemTimingsQuery(batch))).heroStats;
     if (!stats) throw new Error("STRATZ item timings failed: no heroStats in the answer");
     batch.forEach((r, j) => {
-      const slice = toTimingSlice(validRows(stats[`s${j}`]), items);
+      const slice = toTimingSlice(validRows(stats[`s${j}`]), items, r.slice === "all");
       if (slice) ((timings[r.heroId] ??= {})[r.position] ??= {})[r.slice] = slice;
     });
   }
