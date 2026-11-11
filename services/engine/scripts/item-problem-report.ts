@@ -241,6 +241,25 @@ async function main() {
       `${held.held > p95(shuffledHeld) ? "passes" : "fails"}`,
   );
 
+  // FOCUS=93 prints every judged cell of one hero, passing or not, to answer "does X change against Y?".
+  const focus = Number(process.env.FOCUS ?? 0);
+  for (const group of groups.filter((g) => g.hero === focus)) {
+    console.log(`\n${heroName(group.hero)} pos ${group.position}: ${group.games.length} games after pooling`);
+    for (const problem of PROBLEMS) {
+      const isCase = group.games.map((g) => g.enemies.some((e) => has(e, problem)));
+      for (const { item, minute } of group.candidates) {
+        const cell = problemCell(group.games, isCase, item, minute, { wins: 1, losses: 1 });
+        if (!cell) continue;
+        const { caseWins: w, caseLosses: l, controlWins: c, controlLosses: cl } = cell;
+        console.log(
+          `  against ${problem}: ${name(item)} by ${Math.round(minute) + HORIZON} min in ${w.bought} of ${w.games} wins, ` +
+            `${l.bought} of ${l.games} losses; otherwise ${c.bought} of ${c.games} wins, ${cl.bought} of ${cl.games} losses` +
+            (cell.passes ? " (passes)" : ""),
+        );
+      }
+    }
+  }
+
   console.log(`\nstrongest passing cells (of ${found.length}):`);
   const lift = (f: Found) => f.cell.shrunk - share(f.cell.controlWins);
   for (const f of [...found].sort((a, b) => lift(b) - lift(a)).slice(0, SHOW_CELLS)) {
