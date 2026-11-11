@@ -152,6 +152,13 @@ export interface ItemTimingSlice {
    * [item id, average minute bought]. Missing in snapshots from before Nov 2026.
    */
   lane?: [itemId: number, minute: number][];
+  /**
+   * Every lasting item from SHARE_MIN_COST gold bought in at least SHARE_MIN of the games, most bought first:
+   * [item id, games that bought it]. STRATZ counts from the patch start, so two daily copies of the snapshot
+   * give the share among the games in between (scripts/item-trends-report.ts). On the "all" slice only;
+   * missing in snapshots from before 2026-11-11.
+   */
+  shares?: [itemId: number, games: number][];
 }
 
 export interface ItemStart {

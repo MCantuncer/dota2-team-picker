@@ -11,6 +11,7 @@
     "collect-matches": "tsx src/data/collect.ts",
     "mark-refresh": "tsx src/data/mark-refresh.ts",
     "item-odds-sim": "tsx scripts/item-odds-sim.ts",
+    "item-trends-report": "tsx scripts/item-trends-report.ts",
     "item-odds-report": "tsx scripts/item-odds-report.ts",
     "item-problem-report": "tsx scripts/item-problem-report.ts",
     "matchup-probe": "tsx scripts/matchup-probe.ts",

@@ -29,6 +29,10 @@ const LANE_SHARE = 0.25;
 const LANE_LAST_MINUTE = 12;
 /** Lane items kept per slice. */
 const LANE_ITEMS_PER_SLICE = 4;
+/** Items from this cost are kept in `shares`: lane items like Soul Ring too, not Magic Wand. */
+export const SHARE_MIN_COST = 500;
+/** ...when bought in at least this share of the slice's games. */
+export const SHARE_MIN = 0.03;
 /** A minute counts as slower than most when its win rate is this far under the item's own. */
 const WIN_DROP = 0.05;
 /** Ignore minutes with less than this share of the item's purchases: too few games to trust. */
@@ -128,8 +132,11 @@ export function lateMinute(rows: PurchaseRow[], minute: number): number {
   return Math.max(drop?.time ?? p75, minute + 1);
 }
 
-/** Turns one slice's purchase rows into its most bought core and lane items with their minutes, or null when empty. */
-export function toTimingSlice(rows: PurchaseRow[], items: Record<string, ItemInfo>): ItemTimingSlice | null {
+/**
+ * Turns one slice's purchase rows into its most bought core and lane items with their minutes, or null when
+ * empty. `withShares` adds every lasting item's purchase count (ItemTimingSlice.shares).
+ */
+export function toTimingSlice(rows: PurchaseRow[], items: Record<string, ItemInfo>, withShares = false): ItemTimingSlice | null {
   const byItem = new Map<number, PurchaseRow[]>();
   for (const r of rows) {
     // A second copy (instance 1) is a different purchase, like a second Wraith Band.
@@ -157,7 +164,16 @@ export function toTimingSlice(rows: PurchaseRow[], items: Record<string, ItemInf
     .slice(0, LANE_ITEMS_PER_SLICE)
     .sort((a, b) => a.minute - b.minute)
     .map((c): [number, number] => [c.id, Math.round(c.minute)]);
-  return { games, items: top, ...(lane.length ? { lane } : {}) };
+  const shares = withShares
+    ? counted
+        .filter((c) => {
+          const item = items[c.id];
+          return item !== undefined && !isConsumable(item) && item.key !== "boots" && item.cost >= SHARE_MIN_COST && c.games >= games * SHARE_MIN;
+        })
+        .sort((a, b) => b.games - a.games || a.id - b.id)
+        .map((c): [number, number] => [c.id, c.games])
+    : [];
+  return { games, items: top, ...(lane.length ? { lane } : {}), ...(shares.length ? { shares } : {}) };
 }
 
 /** Downloads item timings for every hero's main positions into the snapshot. */
@@ -175,7 +191,7 @@ export async function fetchItemTimings(
     const stats = (await post(itemTimingsQuery(batch))).heroStats;
     if (!stats) throw new Error("STRATZ item timings failed: no heroStats in the answer");
     batch.forEach((r, j) => {
-      const slice = toTimingSlice(validRows(stats[`s${j}`]), items);
+      const slice = toTimingSlice(validRows(stats[`s${j}`]), items, r.slice === "all");
       if (slice) ((timings[r.heroId] ??= {})[r.position] ??= {})[r.slice] = slice;
     });
   }

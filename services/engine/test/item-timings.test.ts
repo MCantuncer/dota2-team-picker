@@ -114,6 +114,14 @@ describe("toTimingSlice", () => {
     expect(toTimingSlice(rows, cheapPers)!.lane).toBeUndefined();
   });
 
+  it("keeps every lasting item's purchase count from 500 gold when asked", () => {
+    const rows = [row(14, 1000, 500, 145), row(20, 400, 220, 147), row(3, 900, 450, 36), row(9, 20, 10, 69)];
+    // Wand costs under 500; Perseverance is in 2% of games, under SHARE_MIN.
+    // Both calls have rows, so neither slice is null.
+    expect(toTimingSlice(rows, ITEMS, true)!.shares).toEqual([[145, 1000], [147, 400]]);
+    expect(toTimingSlice(rows, ITEMS)!.shares).toBeUndefined();
+  });
+
   it("is null for a slice STRATZ has no data for", () => {
     expect(toTimingSlice([], ITEMS)).toBeNull();
   });
@@ -144,6 +152,9 @@ describe("fetchItemTimings", () => {
     );
     expect(queries).toHaveLength(1);
     expect(Object.keys(data.itemTimings![1]![1]!).sort()).toEqual(["3", "all"]);
+    // Purchase counts on the all-ranks slice only, so the snapshot stays small. Both slices were stored above.
+    expect(data.itemTimings![1]![1]!.all!.shares?.length).toBeGreaterThan(0);
+    expect(data.itemTimings![1]![1]!["3"]!.shares).toBeUndefined();
     expect(data.itemTimingsAt).toBe("2026-11-02T00:00:00.000Z");
     // Start items come with the timings: without them, the timings are due again.
     expect(itemTimingsDue(data, new Date("2026-11-02T12:00:00Z"))).toBe(true);
