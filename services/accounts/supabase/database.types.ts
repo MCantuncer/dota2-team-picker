@@ -541,6 +541,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"phone_sign_ins": {
+                  Row: {
+                    "code_hash": string,"expires_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "code_hash": string,"expires_at": string,"user_id": string
+                  }
+                  Update: {
+                    "code_hash"?: string,"expires_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "phone_sign_ins_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"player_feedback": {
                   Row: {
                     "findings": NonNullable<Json>,"first_game_at": string | null,"games": number,"improved": NonNullable<Json>,"last_game_at": string | null,"parsed_games": number,"updated_at": string,"user_id": string,"version": number
@@ -660,6 +680,46 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"solo_draft_actions": {
+                  Row: {
+                    "created_at": string,"device": string,"draft_id": string,"hero_id": number,"id": number,"kind": string,"position": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"device": string,"draft_id": string,"hero_id": number,"id"?: never,"kind": string,"position"?: number | null
+                  }
+                  Update: {
+                    "created_at"?: string,"device"?: string,"draft_id"?: string,"hero_id"?: number,"id"?: never,"kind"?: string,"position"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "solo_draft_actions_draft_id_fkey"
+      columns: ["draft_id"]
+isOneToOne: false
+      referencedRelation: "solo_drafts"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"solo_drafts": {
+                  Row: {
+                    "created_at": string,"ended_at": string | null,"id": string,"phone_seen_at": string | null,"side": string | null,"user_id": string,"watching_at": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"phone_seen_at"?: string | null,"side"?: string | null,"user_id": string,"watching_at"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"ended_at"?: string | null,"id"?: string,"phone_seen_at"?: string | null,"side"?: string | null,"user_id"?: string,"watching_at"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "solo_drafts_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"stratz_calls": {
                   Row: {
@@ -860,6 +920,9 @@ isOneToOne: false
 "add_draft_action":
 { Args: { "action": string,"draft": string,"hero": number,"pos"?: number }; Returns: undefined
                            },
+"add_solo_draft_action":
+{ Args: { "action": string,"device": string,"draft": string,"hero": number,"pos"?: number }; Returns: undefined
+                           },
 "admin_newest_players":
 { Args: { "before_at"?: string,"before_id"?: string,"max_rows"?: number }; Returns: {
               "avatar_url": string,"display_name": string,"hero_count": number,"joined_at": string,"rank_tier": number,"steam_id": string,"user_id": string
@@ -966,6 +1029,9 @@ isOneToOne: false
 { Args: { "max_rows"?: number }; Returns: {
               "account_ids": (number)[],"allies": (number)[],"created_at": string,"draft_id": string
             }[]
+                           },
+"create_phone_sign_in":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "delete_my_account":
 { Args: Record<PropertyKey, never>; Returns: undefined
@@ -1096,6 +1162,9 @@ isOneToOne: false
               "avatar_url": string,"display_name": string,"incoming": boolean,"since": string,"status": string,"steam_linked": boolean,"user_id": string
             }[]
                            },
+"my_open_solo_draft":
+{ Args: { "draft": string }; Returns: undefined
+                           },
 "my_pair_records":
 { Args: Record<PropertyKey, never>; Returns: {
               "games": number,"my_position": number,"teammate_id": string,"teammate_name": string,"their_position": number,"wins": number
@@ -1123,6 +1192,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: {
               "invite_id": string,"inviter_avatar_url": string,"inviter_name": string,"members": number,"sent_at": string,"team_id": string,"team_name": string
             }[]
+                           },
+"new_solo_draft":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "note_check_in_no_games":
 { Args: { "check_in": string }; Returns: undefined
@@ -1174,6 +1246,9 @@ isOneToOne: false
                            },
 "record_draft_players":
 { Args: { "draft": string,"joined_by"?: string }; Returns: undefined
+                           },
+"redeem_phone_sign_in":
+{ Args: { "code": string }; Returns: string
                            },
 "remove_from_party":
 { Args: { "target": string }; Returns: undefined
@@ -1234,6 +1309,9 @@ isOneToOne: false
 "set_share_heroes_with_friends":
 { Args: { "is_on": boolean }; Returns: undefined
                            },
+"set_solo_draft_side":
+{ Args: { "draft": string,"side": string }; Returns: undefined
+                           },
 "set_top_hero":
 { Args: { "hero": number,"hero_position": number,"is_top": boolean,"replace_hero"?: number }; Returns: Json
                            },
@@ -1242,6 +1320,22 @@ isOneToOne: false
                            },
 "snooze_check_in":
 { Args: { "check_in": string }; Returns: undefined
+                           },
+"solo_draft_beat":
+{ Args: { "draft": string,"watching": boolean }; Returns: undefined
+                           },
+"solo_draft_seen":
+{ Args: { "draft": string }; Returns: undefined
+                           },
+"solo_draft_state":
+{ Args: { "draft": string }; Returns: {
+              "hero_id": number,"kind": string,"position": number
+            }[]
+                           },
+"solo_draft_status":
+{ Args: { "draft": string }; Returns: {
+              "phone_age": number,"phone_seen_at": string,"side": string,"watch_age": number,"watching_at": string
+            }[]
                            },
 "stack_average_rank":
 { Args: { "team": string }; Returns: number
@@ -1275,6 +1369,9 @@ isOneToOne: false
 { Args: { "team"?: string }; Returns: string
                            },
 "start_party_draft":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"start_solo_draft":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "step_down_captain":
