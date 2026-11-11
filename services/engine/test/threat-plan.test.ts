@@ -50,6 +50,17 @@ describe("draftThreats", () => {
     expect(others).toEqual([]);
   });
 
+  it("shows an answer once, at the empty seat he is played at most", () => {
+    const d = data();
+    // Now the engine agrees on Support Four, who plays pos 4 and 5 as often (the first wins the tie).
+    d.matchups[1] = { 4: { games: 1000, wins: 420 }, 5: { games: 1000, wins: 400 }, 7: { games: 1000, wins: 380 } };
+    const { main } = draftThreats(new Engine(d), { allies: [{ heroId: 3, position: 2 }], enemies: [1] });
+    expect(main?.open.map((s) => [s.position, s.heroes.map((a) => a.hero)])).toEqual([
+      [3, [5, 7]],
+      [4, [4]],
+    ]);
+  });
+
   it("counts two or more answers as the last step and leaves out taken heroes", () => {
     const { main } = draftThreats(new Engine(data()), {
       allies: [{ heroId: 3, position: 2 }, { heroId: 5, position: 3 }],
