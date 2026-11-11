@@ -287,6 +287,22 @@ The upload needs the project's secret key in the repo's `SUPABASE_SECRET_KEY` Ac
 `data/snapshot.json` in the repo is not updated anymore. It is the starting point if the bucket
 is empty, and an offline copy for tests. Run `npm run pull-data` to get today's data locally.
 
+### Dangerous heroes
+
+Once a week the refresh reads about a million ranked All Pick games from the last 10 days (never from
+before the patch) from the OpenDota explorer, one query per day, and finds the heroes whose games swing on
+whether the other team answers them ([`src/engine/threat.ts`](src/engine/threat.ts), saved as `threatPlans`).
+The games are split three ways by match id, so nothing is checked on the games it was chosen on:
+
+1. A hero's answers are the enemies he plays 3 or more points below what both heroes' win rates predict.
+2. He gets a plan when, against teams with two or more answers, he plays at least 4 points further below
+   the expected win rate (from all ten heroes) than against teams with none, at the low end of its 95% range.
+3. The site shows his win rate against teams with 0, 1 and 2+ answers from the third split, and his win rate
+   by game length next to the average position 1 hero.
+
+There is no hand list: the settings are fixed in the file, and the heroes change only with the games.
+If the explorer fails or returns fewer than 300,000 games, the last plans stay.
+
 ### Games for the backtest
 
 After the upload, each run also saves about 100 new ranked All Pick games
