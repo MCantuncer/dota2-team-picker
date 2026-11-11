@@ -303,6 +303,13 @@ The games are split three ways by match id, so nothing is checked on the games i
 There is no hand list: the settings are fixed in the file, and the heroes change only with the games.
 If the explorer fails or returns fewer than 300,000 games, the last plans stay.
 
+For one draft, [`src/engine/threat-plan.ts`](src/engine/threat-plan.ts) picks the enemy core (likely position 1
+to 3) with the biggest drop and gathers only measured facts: his answers on your team and which step that is,
+open answers for each empty seat (heroes with at least 20% of their games there, only where the pick engine's
+own matchup says he does worse against them), his whole lane with each of your laners in it next to his usual
+lane (STRATZ), when he finishes his big item with the win rates of early and late games, and the length line.
+Other dangerous enemy cores in the draft get one line each.
+
 ### Games for the backtest
 
 After the upload, each run also saves about 100 new ranked All Pick games
