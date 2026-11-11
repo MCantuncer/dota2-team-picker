@@ -923,6 +923,11 @@ isOneToOne: false
 "add_solo_draft_action":
 { Args: { "action": string,"device": string,"draft": string,"hero": number,"pos"?: number }; Returns: undefined
                            },
+"admin_matchup_fill":
+{ Args: { "version": number }; Returns: {
+              "expiring": number,"fresh": number,"hero_id": number,"last_day": number,"last_fetched": string,"position": number,"slices": number
+            }[]
+                           },
 "admin_newest_players":
 { Args: { "before_at"?: string,"before_id"?: string,"max_rows"?: number }; Returns: {
               "avatar_url": string,"display_name": string,"hero_count": number,"joined_at": string,"rank_tier": number,"steam_id": string,"user_id": string
