@@ -48,7 +48,10 @@ describe("Team Plan pool rule on random drafts", () => {
       for (const s of plan.slots) {
         const pool = slots.find((x) => x.position === s.position)!.favorites ?? [];
         if (s.locked || !pool.length) continue;
-        for (const alt of s.alternatives) expect(pool).toContain(alt.heroId);
+        // Another Super Team keeps a player on their pool too, or on the plan's hero when no other is left.
+        const other = plan.another?.slots.find((a) => a.position === s.position);
+        if (other?.inPool) expect(pool).toContain(other.heroId);
+        if (other?.same) expect(other.heroId).toBe(s.heroId);
         if (s.inPool) {
           expect(pool).toContain(s.heroId);
           continue;

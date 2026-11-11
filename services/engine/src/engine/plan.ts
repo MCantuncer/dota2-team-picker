@@ -1,6 +1,7 @@
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
+import { list, points, RANK_NAMES, ROLE_NAMES } from "./reasons";
 import { clearMatchup, personalScore, type Engine } from "./score";
-import { NEED_LABELS, traitsOf, unmetNeeds, WANTED, type Need } from "./traits";
+import { NEED_SHORT, traitsOf, unmetNeeds, WANTED, type Need } from "./traits";
 import { POSITIONS, type EnemyPositions, type GamesWins, type HeroInfo, type Position, type RankBracket } from "./types";
 
 /**
@@ -12,6 +13,8 @@ import { POSITIONS, type EnemyPositions, type GamesWins, type HeroInfo, type Pos
  * every combination of candidates is tried and the five heroes that work best
  * together win: pairwise synergy, how many team needs the full five cover,
  * known spell combos, and whether the five share one way to win (a style).
+ * A second search finds Another Super Team: the best five with a different
+ * hero in every open slot, for when the party wants another way to play.
  */
 
 /** One position on the captain's team. */
@@ -19,6 +22,10 @@ export interface PlanSlot {
   position: Position;
   /** Who plays this position, passed back untouched so the caller can show it. */
   playerId?: string;
+  /** The player's name, for reasons like "zeri's win rate on it". */
+  playerName?: string;
+  /** The player is the one reading the plan, so reasons say "your". */
+  isMe?: boolean;
   /** The player's favorite heroes for this position. Planned first. */
   favorites?: number[];
   /** The player's Top 5 for this position. Only heroes also in `favorites` count. */
@@ -41,17 +48,33 @@ export interface PlanInput {
   bans?: number[];
   /** Used for slots without their own rank. Omit to use all ranks. */
   rankBracket?: RankBracket;
-  /** Backup heroes per open slot, in case the planned one is banned or taken. Default 2. */
-  alternatives?: number;
 }
 
-export interface PlanAlternative {
-  heroId: number;
-  name: string;
-  /** One of the player's favorites for this position. */
-  inPool: boolean;
-  /** Team score change compared with the plan (0 or less). */
-  scoreDelta: number;
+/**
+ * One line on why a hero or a team is in the plan, always with the number behind it: `lead` is that number or
+ * word ("+3.2", "62%", "Only", "5 of 7") and `text` the rest of the line ("with Puck (2,232 games)").
+ */
+export interface PlanReason {
+  kind: "combo" | "pair" | "counter" | "need" | "record" | "top" | "meta" | "fit" | "pool";
+  lead: string;
+  text: string;
+  /**
+   * The heroes the line is about, for faces: on a hero's card the partner (pair, combo) or the enemy (counter); on
+   * the team's lines a pair's two heroes, or a hero and the enemy it beats most.
+   */
+  heroes?: number[];
+  /** The team need a "need" line is about, for its icon. */
+  need?: Need;
+}
+
+/** One team need and the heroes in a five that cover it, for a row of need chips. */
+export interface TeamNeed {
+  need: Need;
+  /** "Stun", "Frontliner", ... */
+  label: string;
+  /** Heroes in the five that bring it; fewer than `wanted` means the team still lacks it. */
+  heroes: number[];
+  wanted: number;
 }
 
 export interface PlannedSlot {
@@ -62,8 +85,34 @@ export interface PlannedSlot {
   /** Picked already in the draft. */
   locked: boolean;
   inPool: boolean;
-  reasons: string[];
-  alternatives: PlanAlternative[];
+  /** Up to three, the biggest first. */
+  reasons: PlanReason[];
+}
+
+/** One hero of Another Super Team. */
+export interface AnotherSlot {
+  position: Position;
+  playerId?: string;
+  heroId: number;
+  name: string;
+  locked: boolean;
+  inPool: boolean;
+  /** The same hero as the plan in this position: picked already, or the player's only hero left for it. */
+  same: boolean;
+}
+
+export interface AnotherTeam {
+  /** Sorted by position, 1 to 5. */
+  slots: AnotherSlot[];
+  /** Team score, like TeamPlan.score. */
+  score: number;
+  /** Points behind the plan (0 or more). */
+  behind: number;
+  /** How far behind the plan it is and why, e.g. "2.9 points behind: its pairs win less together (-3.1)." */
+  verdict: string;
+  /** Why these five work together too, the biggest first. */
+  why: PlanReason[];
+  needs: TeamNeed[];
 }
 
 export interface TeamPlan {
@@ -79,12 +128,23 @@ export interface TeamPlan {
   combos: { heroes: [string, string]; text: string }[];
   /** One line on how to play the five, e.g. "Teamfight: group up ... Key combo: ...". */
   gamePlan: string;
+  /** Why the five are a super team: their best pairs, the enemy picks, the players' record and the team needs. */
+  why: PlanReason[];
+  /** Every team need, in a fixed order, with the heroes that cover it. */
+  needs: TeamNeed[];
+  /**
+   * The open slot to lock first, while two or more are open: its planned hero is picked in the most games, so it is
+   * the one the enemy is most likely to take or ban before the party gets to it.
+   */
+  pickFirst: { position: Position; heroId: number; pickRate: number } | null;
+  /** The best five with a different hero in every open slot, or null when no open slot has another hero. */
+  another: AnotherTeam | null;
 }
 
 const WEIGHTS = {
   /**
-   * Comfort for a hero in the player's pool, as the plan's reasons show it. A player with a pool is
-   * planned from it alone (see FALLBACK_COST), so this no longer decides between pool and others.
+   * Comfort for a hero in the player's pool. A player with a pool is planned from it alone (see FALLBACK_COST),
+   * so this is the same for every hero the plan can choose and never shows as a reason.
    */
   inPool: 8,
   /**
@@ -123,6 +183,28 @@ const MISSING_LABELS: Record<Need, string> = {
   physicalDamage: "right-click damage",
 };
 
+/** What a hero brings that the rest of the five lack, after "Only" or "2nd": "Only frontliner on the team". */
+const NEED_NOUNS: Record<Need, string> = {
+  disable: "stun on the team",
+  initiation: "initiator on the team",
+  save: "save on the team",
+  durable: "frontliner on the team",
+  push: "wave clear on the team",
+  magicDamage: "magic damage on the team",
+  physicalDamage: "right-click damage on the team",
+};
+
+/** Pair lines a hero's card and the team's lines show at most. */
+const MAX_PAIRS = 2;
+/** Reasons on a hero's card. */
+const MAX_REASONS = 3;
+/** The players' record on the five shows once it covers this many games. */
+const MIN_TEAM_RECORD_GAMES = 10;
+/** A hero played in the position at least this often has a line saying so: it is clearly at home there. */
+const HOME_FIT = 0.5;
+/** Teams this close read as level: below the 0.1 a line shows. */
+const LEVEL = 0.05;
+
 /** Candidates kept per open slot before trying combinations. 10^5 combinations at most. */
 const CANDIDATES = 10;
 /**
@@ -142,6 +224,15 @@ const FALLBACK_COST = 1000;
  */
 const MIN_POSITION_FIT = 0.3;
 
+/** A hero's own score for a slot, split into the parts a team is compared on. */
+interface SoloParts {
+  counter: number;
+  meta: number;
+  fit: number;
+  /** The player's record and Top 5 star; the pool's flat `inPool` is left out, as it never differs. */
+  comfort: number;
+}
+
 interface Candidate {
   hero: HeroInfo;
   inPool: boolean;
@@ -149,7 +240,9 @@ interface Candidate {
   fallback: boolean;
   /** Score of the hero on its own, before synergy and team needs. */
   solo: number;
-  reasons: { text: string; value: number }[];
+  parts: SoloParts;
+  /** Lines about the hero on its own; `value` ranks them, in score points. */
+  reasons: (PlanReason & { value: number })[];
 }
 
 interface Slot extends PlanSlot {
@@ -157,6 +250,20 @@ interface Slot extends PlanSlot {
   candidates: Candidate[];
   /** Rated heroes that missed the shortlist. */
   rest: Candidate[];
+}
+
+/** A team's score split into parts, so two teams can be compared on the part where they differ most. */
+type TeamParts = SoloParts & { pairs: number; needs: number; style: number };
+
+const one = (x: number) => x.toFixed(1);
+const count = (n: number) => n.toLocaleString("en-US");
+const percent = (r: GamesWins) => `${Math.round((r.wins / r.games) * 100)}%`;
+const pairKey = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`);
+
+/** "zeri's", "your" or "the player's". */
+function owner(slot: Pick<PlanSlot, "playerName" | "isMe">): string {
+  if (slot.isMe) return "your";
+  return slot.playerName ? `${slot.playerName}'s` : "the player's";
 }
 
 export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
@@ -193,7 +300,6 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
 
   const combos = comboMap(engine.heroes);
   const styles = styleSets(engine.heroes);
-  const pairKey = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`);
 
   // A combo partner may fall just outside a slot's shortlist, so give it a chance.
   const anchors = slots.flatMap((s) => (s.locked ? [s.locked] : s.candidates.filter((c) => !c.fallback))).map((c) => c.hero.id);
@@ -231,6 +337,25 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
     }
     return best;
   };
+  /** The team score split into its parts; `teamScore` is their sum plus the flat pool comfort, less fallbacks. */
+  const partsOf = (team: Candidate[]): TeamParts => {
+    const ids = team.map((c) => index.get(c)!);
+    const covered = new Map<Need, number>();
+    const parts: TeamParts = { counter: 0, meta: 0, fit: 0, comfort: 0, pairs: 0, needs: 0, style: 0 };
+    ids.forEach((i, n) => {
+      const c = all[i]!;
+      parts.counter += c.parts.counter;
+      parts.meta += c.parts.meta;
+      parts.fit += c.parts.fit;
+      parts.comfort += c.parts.comfort;
+      for (let m = n + 1; m < ids.length; m++) parts.pairs += pairScore[i * all.length + ids[m]!]!;
+      for (const t of traits[i]!) covered.set(t, (covered.get(t) ?? 0) + 1);
+    });
+    const style = mainStyle(team);
+    if (style) parts.style = (style.heroes - 2) * WEIGHTS.style;
+    parts.needs = -(Object.keys(WANTED) as Need[]).filter((n) => (covered.get(n) ?? 0) < WANTED[n]).length * WEIGHTS.missingNeed;
+    return parts;
+  };
   const teamScore = (team: Candidate[]) => {
     const ids = team.map((c) => index.get(c)!);
     const covered = new Map<Need, number>();
@@ -247,32 +372,35 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
     return score - missing * WEIGHTS.missingNeed - fallbacks * FALLBACK_COST;
   };
 
-  // Try every combination of candidates for the open slots, one hero per slot.
-  let best: Candidate[] = [];
-  let bestScore = -Infinity;
-  const chosen: Candidate[] = [];
-  const used = new Set<number>();
-  const walk = (i: number) => {
-    if (i === open.length) {
-      const score = teamScore([...fixed, ...chosen]);
-      if (score > bestScore) [best, bestScore] = [[...chosen], score];
-      return;
-    }
-    for (const c of open[i]!.candidates) {
-      if (used.has(c.hero.id)) continue;
-      used.add(c.hero.id);
-      chosen.push(c);
-      walk(i + 1);
-      chosen.pop();
-      used.delete(c.hero.id);
-    }
+  /** Tries every combination of `choices` for the open slots, one hero per slot, and keeps the best team. */
+  const search = (choices: Candidate[][]) => {
+    let best: Candidate[] = [];
+    let bestScore = -Infinity;
+    const chosen: Candidate[] = [];
+    const used = new Set<number>();
+    const walk = (i: number) => {
+      if (i === open.length) {
+        const score = teamScore([...fixed, ...chosen]);
+        if (score > bestScore) [best, bestScore] = [[...chosen], score];
+        return;
+      }
+      for (const c of choices[i]!) {
+        if (used.has(c.hero.id)) continue;
+        used.add(c.hero.id);
+        chosen.push(c);
+        walk(i + 1);
+        chosen.pop();
+        used.delete(c.hero.id);
+      }
+    };
+    walk(0);
+    return { best, bestScore };
   };
-  walk(0);
+  const { best, bestScore } = search(open.map((s) => s.candidates));
   if (bestScore === -Infinity) throw new Error("Not enough heroes left to fill every position");
 
   const planned = new Map(open.map((s, i) => [s.position, best[i]!]));
   const team = slots.map((s) => s.locked ?? planned.get(s.position)!);
-  const teamIds = new Set(team.map((c) => c.hero.id));
   const teamCombos = team.flatMap((c, i) =>
     team.slice(i + 1).flatMap((d) => {
       const text = combos.get(pairKey(c.hero.id, d.hero.id));
@@ -280,20 +408,14 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
     }),
   );
   const style = mainStyle(team);
+  /** The team's own score, without the cost that kept fallbacks out of it. */
+  const ownScore = (t: Candidate[], score: number) => score + t.filter((c) => c.fallback).length * FALLBACK_COST;
+  const ctx = { engine, enemies, enemyPositions: input.enemyPositions, slots, bracket: input.rankBracket };
 
   return {
     slots: slots.map((s, i) => {
       const pick = team[i]!;
       const others = team.filter((_, j) => j !== i);
-      const alternatives = s.locked
-        ? []
-        : s.candidates
-            // Backups come from the pool too; a fallback is only ever the planned hero itself.
-            .filter((c) => !teamIds.has(c.hero.id) && !c.fallback)
-            .map((c) => ({ c, delta: teamScore([...others, c]) - bestScore }))
-            .sort((a, b) => b.delta - a.delta)
-            .slice(0, input.alternatives ?? 2)
-            .map(({ c, delta }) => ({ heroId: c.hero.id, name: c.hero.name, inPool: c.inPool, scoreDelta: round(delta) }));
       return {
         position: s.position,
         playerId: s.playerId,
@@ -301,17 +423,86 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
         name: pick.hero.name,
         locked: !!s.locked,
         inPool: pick.inPool,
-        reasons: explain(engine, pick, others, unmetNeeds(others.map((c) => c.hero)), combos, input.rankBracket),
-        alternatives,
+        reasons: explain(engine, pick, others, combos, input.rankBracket),
       };
     }),
-    // The team's own score, without the cost that kept fallbacks out of it.
-    score: round(bestScore + team.filter((c) => c.fallback).length * FALLBACK_COST),
+    score: round(ownScore(team, bestScore)),
     missing: unmetNeeds(team.map((c) => c.hero)).map((n) => MISSING_LABELS[n]),
     style: style && { ...style, label: STYLES[style.key].label },
     combos: teamCombos,
     gamePlan: gamePlan(style?.key, teamCombos),
+    why: teamWhy(ctx, team),
+    needs: needsOf(team),
+    pickFirst: pickFirstOf(),
+    another: anotherTeam(),
   };
+
+  function pickFirstOf(): TeamPlan["pickFirst"] {
+    if (open.length < 2) return null;
+    const ranked = open
+      .map((s) => ({ position: s.position, heroId: planned.get(s.position)!.hero.id }))
+      .map((x) => ({ ...x, pickRate: round(engine.pickRate(x.heroId)) }))
+      .sort((a, b) => b.pickRate - a.pickRate);
+    return ranked[0]!;
+  }
+
+  /**
+   * The best five with a different hero in every open slot than the plan. A slot whose player has no other
+   * hero left keeps the plan's hero, so a small pool never pushes a player off their heroes.
+   */
+  function anotherTeam(): AnotherTeam | null {
+    const choices = open.map((s) => {
+      const mine = planned.get(s.position)!;
+      const others = s.candidates.filter((c) => c.hero.id !== mine.hero.id);
+      return others.some((c) => !c.fallback) ? others : s.candidates;
+    });
+    const found = search(choices);
+    if (found.bestScore === -Infinity) return null;
+    const other = new Map(open.map((s, i) => [s.position, found.best[i]!]));
+    const five = slots.map((s) => s.locked ?? other.get(s.position)!);
+    if (five.every((c, i) => c === team[i])) return null;
+    const score = ownScore(five, found.bestScore);
+    const behind = Math.max(0, ownScore(team, bestScore) - score);
+    return {
+      slots: slots.map((s, i) => ({
+        position: s.position,
+        playerId: s.playerId,
+        heroId: five[i]!.hero.id,
+        name: five[i]!.hero.name,
+        locked: !!s.locked,
+        inPool: five[i]!.inPool,
+        same: five[i] === team[i],
+      })),
+      score: round(score),
+      behind: round(behind),
+      verdict: behind < LEVEL ? "Level with the plan." : `${one(behind)} points behind: ${whyBehind(partsOf(team), partsOf(five))}.`,
+      why: teamWhy(ctx, five),
+      needs: needsOf(five),
+    };
+  }
+}
+
+/** The part of the plan's score that leads Another Super Team's most, in words, with the difference. */
+function whyBehind(plan: TeamParts, other: TeamParts): string {
+  const keys = Object.keys(plan) as (keyof TeamParts)[];
+  const part = keys.reduce((a, b) => (plan[b] - other[b] > plan[a] - other[a] ? b : a));
+  const less = `(${points(other[part] - plan[part])})`;
+  switch (part) {
+    case "pairs":
+      return `its pairs win less together ${less}`;
+    case "counter":
+      return `weaker against the enemy picks ${less}`;
+    case "meta":
+      return `its heroes win less in this patch ${less}`;
+    case "fit":
+      return `its heroes play these positions less often ${less}`;
+    case "comfort":
+      return `the players win less on its heroes ${less}`;
+    case "needs":
+      return `it covers fewer team needs ${less}`;
+    case "style":
+      return `its heroes share less of one way to win ${less}`;
+  }
 }
 
 function gamePlan(style: Style | undefined, combos: TeamPlan["combos"]): string {
@@ -326,72 +517,186 @@ function gamePlan(style: Style | undefined, combos: TeamPlan["combos"]): string 
 function rate(
   engine: Engine,
   hero: HeroInfo,
-  slot: Pick<PlanSlot, "position" | "favorites" | "top" | "personal" | "rankBracket">,
+  slot: Pick<PlanSlot, "position" | "favorites" | "top" | "personal" | "rankBracket" | "playerName" | "isMe">,
   enemies: number[],
   enemyPositions: EnemyPositions | undefined,
 ): Candidate {
   const reasons: Candidate["reasons"] = [];
   const inPool = slot.favorites?.includes(hero.id) ?? false;
+  const whose = owner(slot);
 
   const edges = engine.counterEdges(hero.id, enemies, engine.laneChances(enemies, slot.position, enemyPositions), slot.rankBracket);
   const counter = edges.reduce((s, x) => s + x.edge, 0);
-  const good = edges.filter((x) => clearMatchup(x) > 0).sort((a, b) => b.edge - a.edge);
-  if (good.length) reasons.push({ text: `Strong against ${engine.names(good.map((x) => x.enemy))}`, value: counter });
+  for (const x of edges.filter((x) => clearMatchup(x) > 0)) {
+    reasons.push({ kind: "counter", lead: points(x.edge), text: `against ${engine.hero(x.enemy).name}`, heroes: [x.enemy], value: x.edge });
+  }
 
-  const meta = (engine.winRate(hero.id, slot.rankBracket) - 0.5) * 100;
-  if (meta >= 1) reasons.push({ text: "Strong in the current meta", value: meta });
+  const winRate = engine.winRate(hero.id, slot.rankBracket);
+  const meta = (winRate - 0.5) * 100;
+  if (meta >= 1) {
+    const where = slot.rankBracket ? `at ${RANK_NAMES[slot.rankBracket - 1]}` : "in all ranks";
+    reasons.push({ kind: "meta", lead: `${(winRate * 100).toFixed(1)}%`, text: `win rate ${where}`, value: meta });
+  }
 
   const fit = engine.positionScore(hero.id, slot.position);
+  const share = engine.fit(hero.id)[slot.position];
+  if (share >= HOME_FIT) {
+    // True of most planned heroes, so it ranks last and only fills a card with little else to say.
+    reasons.push({ kind: "fit", lead: `${Math.round(share * 100)}%`, text: `of its games as ${ROLE_NAMES[slot.position]}`, value: 0.1 });
+  }
 
-  let comfort = inPool ? WEIGHTS.inPool : 0;
-  if (inPool) reasons.push({ text: "From the player's hero pool", value: WEIGHTS.inPool });
+  let comfort = 0;
+  // The pool's comfort is the same for every hero the plan can choose, so it only fills an empty card.
+  if (inPool) reasons.push({ kind: "pool", lead: "Pool", text: `one of ${whose} heroes here`, value: 0 });
   if (inPool && slot.top?.includes(hero.id)) {
     comfort += WEIGHTS.top;
-    reasons.push({ text: "One of the player's Top 5", value: WEIGHTS.top });
+    reasons.push({ kind: "top", lead: "Top 5", text: `one of ${whose} best heroes here`, value: WEIGHTS.top });
   }
   const mine = slot.personal?.[hero.id];
   if (mine && mine.games > 0) {
     const personal = personalScore(mine);
     comfort += personal;
-    if (personal >= 0.5) reasons.push({ text: `Player has won ${mine.wins} of ${mine.games} games on it`, value: personal });
+    if (personal >= 0.5) {
+      reasons.push({ kind: "record", lead: percent(mine), text: `${whose} win rate on it (${count(mine.games)} games)`, value: personal });
+    }
   }
 
-  return { hero, inPool, fallback: false, solo: counter + meta + fit + comfort, reasons };
+  return {
+    hero,
+    inPool,
+    fallback: false,
+    solo: counter + meta + fit + comfort + (inPool ? WEIGHTS.inPool : 0),
+    parts: { counter, meta, fit, comfort },
+    reasons,
+  };
 }
 
 /** The top reasons a hero is in the plan, including what it adds to the rest of the team. */
-function explain(
-  engine: Engine,
-  pick: Candidate,
-  others: Candidate[],
-  needs: Need[],
-  combos: Map<string, string>,
-  bracket?: RankBracket,
-): string[] {
+function explain(engine: Engine, pick: Candidate, others: Candidate[], combos: Map<string, string>, bracket?: RankBracket): PlanReason[] {
   const reasons = [...pick.reasons];
   for (const c of others) {
-    const a = pick.hero.id;
-    const b = c.hero.id;
-    const text = combos.get(a < b ? `${a}-${b}` : `${b}-${a}`);
+    const text = combos.get(pairKey(pick.hero.id, c.hero.id));
     // Ranked above everything else: a combo is the point of the plan.
-    if (text) reasons.push({ text: `Combo with ${c.hero.name}: ${text}`, value: 100 });
+    if (text) reasons.push({ kind: "combo", lead: "Combo", text: `with ${c.hero.name}: ${text}`, heroes: [c.hero.id], value: 100 });
   }
-  const friends = others
-    .map((c) => ({ id: c.hero.id, edge: engine.synergyEdge(pick.hero.id, c.hero.id, bracket) }))
-    .filter((x) => x.edge >= 0.5)
-    .sort((a, b) => b.edge - a.edge);
-  if (friends.length) {
-    reasons.push({ text: `Works well with ${engine.names(friends.map((x) => x.id))}`, value: friends.reduce((s, x) => s + x.edge, 0) });
+  const pairs = others
+    .map((c) => ({ c, ...pairOf(engine, pick.hero.id, c.hero.id, bracket) }))
+    .filter((x) => x.clear)
+    .sort((a, b) => b.edge - a.edge)
+    .slice(0, MAX_PAIRS);
+  for (const x of pairs) {
+    reasons.push({
+      kind: "pair",
+      lead: points(x.edge),
+      text: `with ${x.c.hero.name} (${count(x.games)} games)`,
+      heroes: [x.c.hero.id],
+      // Ranked by the number the line shows, like a counter line, so a card reads biggest first.
+      value: x.edge,
+    });
   }
-  const covered = needs.filter((n) => traitsOf(pick.hero).has(n));
-  if (covered.length) {
-    const text = covered.map((n) => NEED_LABELS[n]).join(", ");
-    reasons.push({ text: text.charAt(0).toUpperCase() + text.slice(1), value: covered.length * WEIGHTS.missingNeed });
+  const mine = traitsOf(pick.hero);
+  const have = new Map<Need, number>();
+  for (const c of others) for (const t of traitsOf(c.hero)) have.set(t, (have.get(t) ?? 0) + 1);
+  for (const need of Object.keys(WANTED) as Need[]) {
+    const n = have.get(need) ?? 0;
+    if (!mine.has(need) || n >= WANTED[need]) continue;
+    reasons.push({ kind: "need", lead: n === 0 ? "Only" : "2nd", text: NEED_NOUNS[need], need, value: WEIGHTS.missingNeed });
   }
-  return reasons
+  // The pool line only fills a card that has nothing else to say.
+  const real = reasons.filter((r) => r.kind !== "pool");
+  return (real.length ? real : reasons)
     .sort((a, b) => b.value - a.value)
-    .slice(0, 3)
-    .map((r) => r.text);
+    .slice(0, MAX_REASONS)
+    .map(({ kind, lead, text, heroes, need }): PlanReason => ({ kind, lead, text, ...(heroes && { heroes }), ...(need && { need }) }));
+}
+
+/** A pair's synergy, its standard error and games, and whether it is clear of noise and worth naming. */
+function pairOf(engine: Engine, a: number, b: number, bracket?: RankBracket) {
+  const edge = engine.synergyEdge(a, b, bracket);
+  const error = engine.synergyError(a, b);
+  return { edge, games: engine.data.synergy[pairKey(a, b)]?.games ?? 0, clear: clearMatchup({ edge, error }) > 0 };
+}
+
+/**
+ * Why a five works as a team, from data only: its pairs that win more together (clear of noise), how much it
+ * beats the enemy picks by, the players' own record on its heroes and how many team needs it covers.
+ */
+function teamWhy(
+  ctx: { engine: Engine; enemies: number[]; enemyPositions?: EnemyPositions; slots: PlanSlot[]; bracket?: RankBracket },
+  team: Candidate[],
+): PlanReason[] {
+  const { engine, bracket } = ctx;
+  const why: PlanReason[] = [];
+
+  const pairs = team
+    .flatMap((c, i) => team.slice(i + 1).map((d) => ({ a: c.hero, b: d.hero, ...pairOf(engine, c.hero.id, d.hero.id, bracket) })))
+    .filter((x) => x.clear)
+    .sort((x, y) => y.edge - x.edge)
+    .slice(0, MAX_PAIRS);
+  for (const x of pairs) {
+    why.push({
+      kind: "pair",
+      lead: points(x.edge),
+      text: `${x.a.name} and ${x.b.name} win more together (${count(x.games)} games)`,
+      heroes: [x.a.id, x.b.id],
+    });
+  }
+
+  if (ctx.enemies.length) {
+    const total = team.reduce((s, c) => s + c.parts.counter, 0);
+    if (total >= LEVEL) {
+      const best = team
+        .flatMap((c, i) => {
+          const pos = POSITIONS[i]!;
+          const rank = ctx.slots.find((s) => s.position === pos)?.rankBracket ?? bracket;
+          const edges = engine.counterEdges(c.hero.id, ctx.enemies, engine.laneChances(ctx.enemies, pos, ctx.enemyPositions), rank);
+          return edges.filter((x) => clearMatchup(x) > 0).map((x) => ({ id: c.hero.id, hero: c.hero.name, enemyId: x.enemy, enemy: engine.hero(x.enemy).name, edge: x.edge }));
+        })
+        .sort((x, y) => y.edge - x.edge)[0];
+      const most = best ? `, most from ${best.hero} against ${best.enemy} (${points(best.edge)})` : "";
+      why.push({ kind: "counter", lead: points(total), text: `against the enemy picks${most}`, heroes: best ? [best.id, best.enemyId] : undefined });
+    }
+  }
+
+  const record = team.reduce(
+    (r, c, i) => {
+      const mine = ctx.slots.find((s) => s.position === POSITIONS[i])?.personal?.[c.hero.id];
+      return mine ? { games: r.games + mine.games, wins: r.wins + mine.wins } : r;
+    },
+    { games: 0, wins: 0 },
+  );
+  if (record.games >= MIN_TEAM_RECORD_GAMES) {
+    why.push({ kind: "record", lead: percent(record), text: `the players' win rate on these heroes (${count(record.games)} games)` });
+  }
+
+  const needs = Object.keys(WANTED).length;
+  const missing = unmetNeeds(team.map((c) => c.hero));
+  why.push({
+    kind: "need",
+    lead: `${needs - missing.length} of ${needs}`,
+    text: missing.length ? `team needs covered, lacks ${list(missing.map((n) => NEED_SHORT[n]))}` : "team needs covered",
+  });
+  return why;
+}
+
+/** Labels for need chips, in the order they show. */
+const NEED_CHIPS: Record<Need, string> = {
+  disable: "Stun",
+  initiation: "Initiator",
+  save: "Save",
+  durable: "Frontliner",
+  push: "Wave Clear",
+  magicDamage: "Magic Damage",
+  physicalDamage: "Right-Click",
+};
+
+function needsOf(team: Candidate[]): TeamNeed[] {
+  return (Object.keys(NEED_CHIPS) as Need[]).map((need) => ({
+    need,
+    label: NEED_CHIPS[need],
+    heroes: team.filter((c) => traitsOf(c.hero).has(need)).map((c) => c.hero.id),
+    wanted: WANTED[need],
+  }));
 }
 
 const round = (x: number) => Math.round(x * 100) / 100;
