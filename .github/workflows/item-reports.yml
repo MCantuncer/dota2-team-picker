@@ -17,6 +17,9 @@ on:
           - item-odds-report
           - matchup-probe
         default: item-problem-report
+      focus:
+        description: "Hero id whose cells item-problem-report prints in full (optional)"
+        default: ""
 
 permissions:
   contents: read
@@ -44,6 +47,7 @@ jobs:
         # Each run gets only the key it uses.
         env:
           REPORT: ${{ inputs.report }}
+          FOCUS: ${{ inputs.focus }}
           SUPABASE_URL: https://odigcdwsvajkbvcxeskj.supabase.co
           SUPABASE_SECRET_KEY: ${{ inputs.report != 'matchup-probe' && secrets.SUPABASE_SECRET_KEY || '' }}
           STRATZ_TOKEN: ${{ inputs.report == 'matchup-probe' && secrets.STRATZ_TOKEN || '' }}
