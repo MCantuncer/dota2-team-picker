@@ -109,13 +109,29 @@ describe("planTeam", () => {
     for (const n of plan.needs) for (const id of n.heroes) expect(plan.slots.map((s) => s.heroId)).toContain(id);
   });
 
-  it("picks first the open hero picked in the most games, only while two or more are open", () => {
+  it("picks first where waiting costs most against showing the hero, only while two or more are open", () => {
     const engine = new Engine(fixture());
     const plan = planTeam(engine, { slots: [] });
-    const rates = plan.slots.map((s) => engine.pickRate(s.heroId));
-    expect(plan.pickFirst).toMatchObject({ heroId: plan.slots[rates.indexOf(Math.max(...rates))]!.heroId });
+    const first = plan.pickFirst!;
+    expect(plan.slots.find((s) => s.position === first.position)!.heroId).toBe(first.heroId);
+    expect(first.takenChance).toBeGreaterThanOrEqual(0);
+    expect(first.takenChance).toBeLessThanOrEqual(1);
+    expect(first.gap).toBeGreaterThanOrEqual(0);
+    expect(first.exposed).toBeGreaterThanOrEqual(0);
+    expect(first.reason).toMatchObject({ lead: `${Math.round(first.takenChance * 100)}%`, text: expect.stringMatching(/^chance the enemy takes it; losing it costs the plan \d+\.\d, showing it now costs \d+\.\d$/) });
     const one = planTeam(engine, { slots: [1, 2, 3, 4].map((position) => ({ position: position as 1 | 2 | 3 | 4, heroId: position })) });
     expect(one.pickFirst).toBeNull();
+  });
+
+  it("with all five enemies in, nothing is left to lose or fear, so the most picked open hero goes first", () => {
+    const data = JSON.parse(readFileSync("test/fixtures/golden-snapshot.json", "utf8")) as Snapshot;
+    const engine = new Engine(data);
+    const open = planTeam(engine, { slots: [] });
+    const enemies = engine.heroes.map((h) => h.id).filter((id) => !open.slots.some((s) => s.heroId === id)).slice(0, 5);
+    const plan = planTeam(engine, { slots: [], enemies });
+    expect(plan.pickFirst).toMatchObject({ takenChance: 0, exposed: 0 });
+    const rates = plan.slots.map((s) => engine.pickRate(s.heroId));
+    expect(plan.pickFirst!.heroId).toBe(plan.slots[rates.indexOf(Math.max(...rates))]!.heroId);
   });
 
   it("builds Another Super Team with a different hero in every open slot, and says how far behind it is", () => {

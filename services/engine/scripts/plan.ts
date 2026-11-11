@@ -71,6 +71,10 @@ for (const s of plan.slots) {
 }
 console.log("Why it works:");
 for (const r of plan.why) console.log(`     - ${line(r)}`);
+if (plan.pickFirst) {
+  const first = plan.slots.find((s) => s.position === plan.pickFirst!.position)!;
+  console.log(`\n  Pick First: ${first.name} (Pos ${first.position}): ${line(plan.pickFirst.reason)}`);
+}
 if (plan.another) {
   const five = plan.another.slots.map((s) => `${s.name}${s.same ? " (same)" : ""}`).join(", ");
   console.log(`Another Super Team: ${five}`);

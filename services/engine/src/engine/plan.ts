@@ -1,5 +1,6 @@
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
 import { list, points, RANK_NAMES, ROLE_NAMES } from "./reasons";
+import { blindPickRisk, openSlots, pickChance } from "./risk";
 import { clearMatchup, personalScore, type Engine } from "./score";
 import { NEED_SHORT, traitsOf, unmetNeeds, WANTED, type Need } from "./traits";
 import { POSITIONS, type EnemyPositions, type GamesWins, type HeroInfo, type Position, type RankBracket } from "./types";
@@ -115,6 +116,20 @@ export interface AnotherTeam {
   needs: TeamNeed[];
 }
 
+export interface PickFirst {
+  position: Position;
+  heroId: number;
+  /** Share of games at the rank the hero is picked in, 0-1. */
+  pickRate: number;
+  /** Chance (0-1) the enemy picks the hero with their picks still to come. */
+  takenChance: number;
+  /** Points the plan loses if the hero is taken: the plan with the slot's next best hero. */
+  gap: number;
+  /** Points the enemy's likely picks still to come take off the hero (0 or more). */
+  exposed: number;
+  reason: PlanReason;
+}
+
 export interface TeamPlan {
   /** Sorted by position, 1 to 5. */
   slots: PlannedSlot[];
@@ -133,10 +148,12 @@ export interface TeamPlan {
   /** Every team need, in a fixed order, with the heroes that cover it. */
   needs: TeamNeed[];
   /**
-   * The open slot to lock first, while two or more are open: its planned hero is picked in the most games, so it is
-   * the one the enemy is most likely to take or ban before the party gets to it.
+   * The open slot to lock first, while two or more are open. Waiting risks the enemy taking the hero (`takenChance`
+   * times the points the plan loses without it, `gap`); locking it now shows it to the enemy's picks still to come
+   * (`exposed`, the points those likely picks take off it). The slot where waiting costs most against showing it
+   * goes first, so an easy to counter carry waits unless it is likely to be taken. `reason` says why in one line.
    */
-  pickFirst: { position: Position; heroId: number; pickRate: number } | null;
+  pickFirst: PickFirst | null;
   /** The best five with a different hero in every open slot, or null when no open slot has another hero. */
   another: AnotherTeam | null;
 }
@@ -437,13 +454,48 @@ export function planTeam(engine: Engine, input: PlanInput): TeamPlan {
     another: anotherTeam(),
   };
 
-  function pickFirstOf(): TeamPlan["pickFirst"] {
+  /** A five's own score: the team score without the fallback cost. */
+  function draftPoints(five: Candidate[]): number {
+    return ownScore(five, teamScore(five));
+  }
+
+  function pickFirstOf(): PickFirst | null {
     if (open.length < 2) return null;
-    const ranked = open
-      .map((s) => ({ position: s.position, heroId: planned.get(s.position)!.hero.id }))
-      .map((x) => ({ ...x, pickRate: round(engine.pickRate(x.heroId)) }))
-      .sort((a, b) => b.pickRate - a.pickRate);
-    return ranked[0]!;
+    // The heroes the enemy can still pick: all but those picked or banned (our planned heroes are still free).
+    const pool = engine.heroes.map((h) => h.id).filter((id) => !taken.has(id));
+    const enemySlots = openSlots(engine, pool, enemies, input.enemyPositions);
+    const ranked = open.map((s) => {
+      const mine = planned.get(s.position)!;
+      const id = mine.hero.id;
+      const inTeam = new Set(team.map((c) => c.hero.id));
+      // Without the cost that keeps fallbacks out of the search: a player whose pool hero is taken loses the pool
+      // comfort and what the next best hero is worse by in this draft, not the search's penalty.
+      const swaps = s.candidates
+        .filter((c) => !inTeam.has(c.hero.id))
+        .map((c) => draftPoints(team.map((t) => (t === mine ? c : t))));
+      const gap = swaps.length ? Math.max(0, draftPoints(team) - Math.max(...swaps)) : NO_SWAP_GAP;
+      const takenChance = pickChance(enemySlots, id);
+      const risk = blindPickRisk(engine, { candidates: [id], pool, enemies, enemyPositions: input.enemyPositions, myPosition: s.position, rankBracket: input.rankBracket });
+      const exposed = Math.max(0, -(risk.get(id)?.risk ?? 0));
+      return { position: s.position, heroId: id, pickRate: engine.pickRate(id), takenChance, gap, exposed, priority: takenChance * gap - exposed };
+    });
+    // Ties (no enemy picks left) go to the hero picked in the most games.
+    ranked.sort((a, b) => b.priority - a.priority || b.pickRate - a.pickRate);
+    const top = ranked[0]!;
+    const pct = Math.round(top.takenChance * 100);
+    return {
+      position: top.position,
+      heroId: top.heroId,
+      pickRate: round(top.pickRate),
+      takenChance: round(top.takenChance),
+      gap: round(top.gap),
+      exposed: round(top.exposed),
+      reason: {
+        kind: "meta",
+        lead: `${pct}%`,
+        text: `chance the enemy takes it; losing it costs the plan ${top.gap.toFixed(1)}, showing it now costs ${top.exposed.toFixed(1)}`,
+      },
+    };
   }
 
   /**
@@ -700,3 +752,5 @@ function needsOf(team: Candidate[]): TeamNeed[] {
 }
 
 const round = (x: number) => Math.round(x * 100) / 100;
+/** The gap when a slot has no other hero to fall back on: losing the hero costs the slot outright. */
+const NO_SWAP_GAP = 10;
