@@ -1,3 +1,5 @@
+import type { StairStep, ThreatPlan } from "./threat";
+
 /** Dota 2 positions: 1 carry, 2 mid, 3 offlane, 4 soft support, 5 hard support. */
 export type Position = 1 | 2 | 3 | 4 | 5;
 export const POSITIONS: readonly Position[] = [1, 2, 3, 4, 5];
@@ -134,6 +136,11 @@ export interface Snapshot {
   patch?: { name: string; startedAt: string };
   /** Highest public match id already counted, so daily runs only add new matches. */
   lastPublicMatchId?: number;
+  /**
+   * Dangerous heroes and their answers, found weekly in about a million recent ranked games (see
+   * threat.ts), biggest drop first, with the game length line of position 1 heroes pooled.
+   */
+  threatPlans?: { at: string; games: number; plans: ThreatPlan[]; pos1Length: StairStep[] };
 }
 
 /** A rank group ("1" to "4") or "all" ranks. */

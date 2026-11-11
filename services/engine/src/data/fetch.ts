@@ -31,6 +31,7 @@ import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
 import { fetchPositions, postStratz } from "./stratz";
 import { applyStratzCounts, fetchStratzCounts } from "./stratz-matchups";
 import { fetchLaneOutcomes, lanesDue, MIN_LANE_GAMES } from "./stratz-lanes";
+import { fetchThreatPlans, threatPlansDue } from "./threat-plans";
 import { rankGroup, type GamesWins, type HeroInfo, type RankBracket, type Snapshot } from "../engine/types";
 
 const SNAPSHOT_PATH = "data/snapshot.json";
@@ -367,6 +368,20 @@ async function main() {
       // Lane results are an extra; keep the last ones and go on.
       console.warn(`::warning::${(err as Error).message}`);
     }
+  }
+  if (threatPlansDue(snapshot, now)) {
+    console.log("Dangerous heroes from recent ranked games...");
+    try {
+      await fetchThreatPlans(snapshot, get, now, patchStart);
+      const plans = snapshot.threatPlans?.plans ?? [];
+      const names = plans.map((p) => `${snapshot.heroes[p.hero]?.name ?? p.hero} ${p.drop}`).join(", ");
+      console.log(`Threat plans from ${snapshot.threatPlans?.games ?? 0} games: ${names || "none"}.`);
+    } catch (err) {
+      // Threat plans are an extra; keep the last ones and go on.
+      console.warn(`::warning::${(err as Error).message}`);
+    }
+  } else {
+    console.log(`Threat plans are from ${snapshot.threatPlans?.at}, keeping them.`);
   }
   if (snapshot.matchupsFrom?.source === "stratz") {
     const hours = (now.getTime() - Date.parse(snapshot.matchupsFrom.at)) / 3_600_000;
