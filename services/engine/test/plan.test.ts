@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { COMBOS, STYLES } from "../src/engine/gameplan";
 import { planTeam } from "../src/engine/plan";
-import { Engine } from "../src/engine/score";
+import { clearMatchup, Engine } from "../src/engine/score";
 import type { Snapshot } from "../src/engine/types";
 import { fixture } from "./fixture";
 
@@ -109,13 +109,48 @@ describe("planTeam", () => {
     for (const n of plan.needs) for (const id of n.heroes) expect(plan.slots.map((s) => s.heroId)).toContain(id);
   });
 
-  it("picks first the open hero picked in the most games, only while two or more are open", () => {
+  it("picks first where waiting costs most against showing the hero, only while two or more are open", () => {
     const engine = new Engine(fixture());
     const plan = planTeam(engine, { slots: [] });
-    const rates = plan.slots.map((s) => engine.pickRate(s.heroId));
-    expect(plan.pickFirst).toMatchObject({ heroId: plan.slots[rates.indexOf(Math.max(...rates))]!.heroId });
+    const first = plan.pickFirst!;
+    expect(plan.slots.find((s) => s.position === first.position)!.heroId).toBe(first.heroId);
+    expect(first.takenChance).toBeGreaterThanOrEqual(0);
+    expect(first.takenChance).toBeLessThanOrEqual(1);
+    expect(first.gap).toBeGreaterThanOrEqual(0);
+    expect(first.exposed).toBeGreaterThanOrEqual(0);
+    expect(first.reason).toMatchObject({ lead: `${Math.round(first.takenChance * 100)}%`, text: expect.stringMatching(/^chance the enemy takes it; losing it costs the plan \d+\.\d, showing it now (costs|lets .+ answer it for) \d+\.\d$/) });
     const one = planTeam(engine, { slots: [1, 2, 3, 4].map((position) => ({ position: position as 1 | 2 | 3 | 4, heroId: position })) });
     expect(one.pickFirst).toBeNull();
+  });
+
+  it("counts the whole edge of a clear counter the enemy can still pick, and drops it once that counter is banned", () => {
+    const engine = new Engine(JSON.parse(readFileSync("test/fixtures/golden-snapshot.json", "utf8")) as Snapshot);
+    const ids = engine.heroes.map((h) => h.id);
+    const hasCounter = (id: number) =>
+      ids.some((e) => e !== id && clearMatchup({ edge: engine.matchupEdge(id, e), error: engine.matchupError(id, e) }) < 0);
+    // Leave open only the two planned heroes that have a clear counter, so the one picked first has one too.
+    const five = planTeam(engine, { slots: [] }).slots;
+    const open = five.filter((s) => hasCounter(s.heroId)).slice(0, 2);
+    expect(open).toHaveLength(2);
+    const slots = five.map((s) => ({ position: s.position, ...(open.includes(s) ? { favorites: [s.heroId] } : { heroId: s.heroId }) }));
+    const plan = planTeam(engine, { slots });
+    const { counter, exposed, reason } = plan.pickFirst!;
+    expect(counter!.edge).toBeLessThan(0);
+    expect(exposed).toBeGreaterThanOrEqual(-counter!.edge);
+    expect(reason.text).toContain(`lets ${engine.hero(counter!.heroId).name} answer it for ${(-counter!.edge).toFixed(1)}`);
+    const banned = planTeam(engine, { slots, bans: [counter!.heroId] });
+    expect(banned.pickFirst!.counter?.heroId).not.toBe(counter!.heroId);
+  });
+
+  it("with all five enemies in, nothing is left to lose or fear, so the most picked open hero goes first", () => {
+    const data = JSON.parse(readFileSync("test/fixtures/golden-snapshot.json", "utf8")) as Snapshot;
+    const engine = new Engine(data);
+    const open = planTeam(engine, { slots: [] });
+    const enemies = engine.heroes.map((h) => h.id).filter((id) => !open.slots.some((s) => s.heroId === id)).slice(0, 5);
+    const plan = planTeam(engine, { slots: [], enemies });
+    expect(plan.pickFirst).toMatchObject({ takenChance: 0, exposed: 0 });
+    const rates = plan.slots.map((s) => engine.pickRate(s.heroId));
+    expect(plan.pickFirst!.heroId).toBe(plan.slots[rates.indexOf(Math.max(...rates))]!.heroId);
   });
 
   it("builds Another Super Team with a different hero in every open slot, and says how far behind it is", () => {
