@@ -1334,7 +1334,7 @@ isOneToOne: false
                            },
 "solo_draft_status":
 { Args: { "draft": string }; Returns: {
-              "phone_age": number,"side": string,"watch_age": number
+              "phone_age": number,"phone_seen_at": string,"side": string,"watch_age": number,"watching_at": string
             }[]
                            },
 "stack_average_rank":

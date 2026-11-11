@@ -232,16 +232,18 @@ begin
 end;
 $$;
 
--- How many seconds ago the PC read Dota and the phone was open, counted on the server so the two devices' clocks
--- don't matter. Null when never or stopped.
+-- The side, the beat and phone times as stored (live updates carry the same values, so a page can tell a new one
+-- from an old one), and how many seconds ago each was, counted on the server so the devices' clocks don't matter.
+-- Null when never or stopped.
 create function public.solo_draft_status(draft uuid)
-returns table (side text, watch_age double precision, phone_age double precision)
+returns table (side text, watching_at timestamptz, phone_seen_at timestamptz, watch_age double precision,
+  phone_age double precision)
 language sql
 stable
 security invoker
 set search_path = ''
 as $$
-  select d.side,
+  select d.side, d.watching_at, d.phone_seen_at,
     extract(epoch from now() - d.watching_at)::double precision,
     extract(epoch from now() - d.phone_seen_at)::double precision
   from public.solo_drafts d
