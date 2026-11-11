@@ -28,6 +28,9 @@ name and picture; Steam and rank fields are written only by the server.
 | `friendships`     | `requester_id`, `addressee_id`, `status` (pending, accepted): one row per pair, made only through `send_friend_request` |
 | `parties`         | `id`, `leader_id`, `team_id` (optional), `created_at`, `closed_at` (set when the last player leaves) |
 | `party_members`   | `party_id`, `user_id`, `position` (1–5 this game, null = any), `joined_at`: 5 at most, one open party per player |
+| `solo_drafts`     | `id`, `user_id`, `created_at`, `ended_at`, `side`, `watching_at` (the PC last read Dota), `phone_seen_at` (a following phone was open): one open draft per player, ended after 2 hours untouched |
+| `solo_draft_actions` | `id`, `draft_id`, `kind` (ally, enemy, ban, remove), `hero_id`, `position`, `device` (the browser tab): added only through `add_solo_draft_action`, replayed in id order |
+| `phone_sign_ins`  | `code_hash` (sha256 of a code from `create_phone_sign_in`), `user_id`, `expires_at` (60 seconds): used once by `phone-sign-in`, never readable by players |
 | `party_invites`   | `party_id`, `user_id`, `invited_by`, `status` (pending, accepted, declined), `created_at` |
 | `party_links`     | `party_id`, `code` (the secret in the invite link), `expires_at`: closed to users, read through `party_link()` |
 | `party_kicks`     | `party_id`, `user_id`: players the leader removed, who can't rejoin by link; closed to users |
@@ -77,6 +80,12 @@ checks Steam's answer, creates the Supabase user on first login, syncs the profi
 browser to `<SITE_URL>/auth/confirm` with a one-time token that the website turns into a normal
 session. Every account gets a placeholder email `<SteamID64>@steam.invalid` that never receives mail,
 so one SteamID is always one account.
+
+**`phone-sign-in`**: signs a phone in to the account of the PC it follows (Phone Follows Your PC). The PC's
+Draft page gets a code from `create_phone_sign_in` and shows a QR code of `<SITE_URL>/follow#code=...`. The phone's
+`/follow` page posts the code here as a form with one tap. The function uses the code up (`redeem_phone_sign_in`,
+once, within 60 seconds) and sends the browser to `<SITE_URL>/auth/confirm` with a one-time token, like
+`steam-login`. A bad, used or expired code goes to `<SITE_URL>/login?error=phone`.
 
 **`sync-profile`**: the website calls `supabase.functions.invoke("sync-profile")` for a signed-in
 Steam user. It refreshes at most every 10 minutes. Rank and hero record only show if the user has

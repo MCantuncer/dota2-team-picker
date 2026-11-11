@@ -416,6 +416,10 @@ enabled = true
 [functions.steam-login]
 verify_jwt = false
 
+# Called by the phone's /follow page before it has a session; the one-time code is the proof.
+[functions.phone-sign-in]
+verify_jwt = false
+
 # Called by pg_cron, which has no user token; the function checks a shared secret instead.
 [functions.build-reports]
 verify_jwt = false
