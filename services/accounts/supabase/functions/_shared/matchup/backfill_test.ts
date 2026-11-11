@@ -1,6 +1,7 @@
 import { assertEquals } from "jsr:@std/assert@1";
 import { backfillPlan, type BackfillSnapshot, patchVersion, runBackfill } from "./backfill.ts";
 import type { CachedSlice, LookupDeps } from "./lookup.ts";
+import type { Slice } from "./queries.ts";
 
 /** Seven heroes; 1 and 2 play carry (2 more often), 3 plays mid, 4 to 7 play nothing anywhere. */
 const SNAPSHOT: BackfillSnapshot = {
@@ -39,19 +40,26 @@ Deno.test("sends the newest skill build version, as the site does", () => {
 });
 
 /** A lookup stand-in where every slice is already cached and fresh, unless `busy`. */
-function deps(busy = false): LookupDeps & { lookups: number } {
+function deps(busy = false, cached = true): LookupDeps & { lookups: number } {
   const d = {
     lookups: 0,
     freeAt: () => Promise.resolve(busy ? new Date(Date.now() + 60_000).toISOString() : null),
     noteBusy: () => Promise.resolve(),
     readCache(heroes: number[], enemies: number[]): Promise<CachedSlice[]> {
       d.lookups++;
-      if (busy) return Promise.resolve([]);
+      if (busy || !cached) return Promise.resolve([]);
       const at = new Date().toISOString();
-      // Every hero of the plan is cached at both positions it plays; a backfill lookup asks for one hero.
+      // Every hero of the plan is cached at both positions it plays.
       return Promise.resolve(
         [1, 2].flatMap((position) =>
-          enemies.map((enemy) => ({ hero: heroes[0]!, position, enemy, games: [], fetchedAt: at }))
+          enemies.map((enemy) => ({
+            // A backfill lookup asks for one hero.
+            hero: heroes[0]!,
+            position,
+            enemy,
+            games: [],
+            fetchedAt: at,
+          }))
         ),
       );
     },
@@ -68,7 +76,7 @@ function deps(busy = false): LookupDeps & { lookups: number } {
 Deno.test("runs the whole plan when nothing stops it", async () => {
   const d = deps();
   const done = await runBackfill(d, backfillPlan(SNAPSHOT, 2), 186, Date.now() + 60_000);
-  assertEquals(done, { lookups: 6, fresh: 18, games: 0 });
+  assertEquals(done, { lookups: 6, fresh: 18, games: 0, failed: 0 });
 });
 
 Deno.test("stops at the first lookup STRATZ is busy for, and when the time is up", async () => {
@@ -76,4 +84,13 @@ Deno.test("stops at the first lookup STRATZ is busy for, and when the time is up
   assertEquals((await runBackfill(busy, backfillPlan(SNAPSHOT, 2), 186, Date.now() + 60_000)).stoppedBy, "stratz-busy");
   assertEquals(busy.lookups, 1);
   assertEquals((await runBackfill(deps(), backfillPlan(SNAPSHOT, 2), 186, Date.now() - 1)).lookups, 0);
+});
+
+Deno.test("skips a failing lookup, stops after three in a row, and stops when this hour's share is spent", async () => {
+  const failing = { ...deps(false, false), claim: (s: Slice[]) => Promise.resolve(s) };
+  const failed = await runBackfill(failing, backfillPlan(SNAPSHOT, 2), 186, Date.now() + 60_000);
+  assertEquals([failed.lookups, failed.failed, failed.stoppedBy], [3, 3, "stratz-failed"]);
+  const spent = { ...failing, takeStratz: () => Promise.resolve(false) };
+  const done = await runBackfill(spent, backfillPlan(SNAPSHOT, 2), 186, Date.now() + 60_000);
+  assertEquals([done.lookups, done.stoppedBy], [1, "stratz-budget"]);
 });

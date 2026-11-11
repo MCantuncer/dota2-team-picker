@@ -3,8 +3,9 @@ name: Matchup backfill
 # Fills the matchup cache ahead of drafts (services/accounts/supabase/functions/
 # _shared/matchup/backfill.ts): the most played heroes of each position against
 # every enemy, through the live lookup, so it waits for the hero data refresh
-# and stops on a 429. Each run takes at most 400 of the 600 STRATZ calls an hour
-# and carries on where the last stopped.
+# and stops on a 429. It stops taking STRATZ calls once 400 of the 600 a UTC
+# hour are taken (users' lookups keep the rest) and carries on where the last
+# run stopped.
 on:
   schedule:
     - cron: "40 * * * *"
@@ -48,4 +49,8 @@ jobs:
           # Slark carry first: Can's Mage Slayer question (2026-11-11). Filled rows are skipped, so it costs
           # nothing once done.
           FIRST: ${{ inputs.first || '93:1' }}
-        run: npx deno run --node-modules-dir=none --no-lock --allow-net --allow-env supabase/functions/_shared/matchup/backfill.ts
+        run: >-
+          npx deno run --node-modules-dir=none --no-lock
+          --allow-net=odigcdwsvajkbvcxeskj.supabase.co,api.stratz.com
+          --allow-env=SUPABASE_URL,SUPABASE_SECRET_KEY,STRATZ_TOKEN,HEROES_PER_POSITION,FIRST
+          supabase/functions/_shared/matchup/backfill.ts

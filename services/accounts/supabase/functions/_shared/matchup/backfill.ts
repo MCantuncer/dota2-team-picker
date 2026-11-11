@@ -17,9 +17,9 @@ import { postStratz } from "./stratz.ts";
 
 /** Heroes of each position to fill, most played first. */
 export const HEROES_PER_POSITION = 10;
-/** The backfill stops taking STRATZ calls once this hour's calls reach this, of the 600 users share. */
+/** The backfill stops taking STRATZ calls once this UTC hour's calls (users' and its own) reach this, of 600. */
 export const BACKFILL_HOURLY_CAP = 400;
-/** A run started at :40 stops by about :15, before the hero data refresh (02, 06, 10 and 14:17 UTC) starts. */
+/** A run started at :40 stops by about :10, before the hero data refresh (02, 06, 10 and 14:17 UTC) starts. */
 const RUN_MS = 30 * 60 * 1000;
 /** Enemies per lookup: the most one lookup takes. */
 const ENEMIES_PER_LOOKUP = 5;
@@ -87,8 +87,10 @@ export function patchVersion(snapshot: BackfillSnapshot): number {
   return latest;
 }
 
-/** Why a run stopped early: STRATZ is busy, this hour's share is spent, or STRATZ failed. */
-const STOPS = new Set(["stratz-busy", "stratz-budget", "stratz-failed"]);
+/** Why a run stops early: STRATZ is busy or this hour's share is spent. */
+const STOPS = new Set(["stratz-busy", "stratz-budget"]);
+/** A failed lookup is skipped (the next run tries it again); this many in a row stop the run. */
+export const MAX_FAILURES_IN_A_ROW = 3;
 
 /** Runs the plan until it is done, a lookup says STRATZ can't be asked now, or `until`. */
 export async function runBackfill(
@@ -96,10 +98,10 @@ export async function runBackfill(
   plan: BackfillLookup[],
   version: number,
   until: number,
-): Promise<{ lookups: number; fresh: number; games: number; stoppedBy?: string }> {
-  let lookups = 0, fresh = 0, games = 0;
+): Promise<{ lookups: number; fresh: number; games: number; failed: number; stoppedBy?: string }> {
+  let lookups = 0, fresh = 0, games = 0, failed = 0, inARow = 0;
   for (const step of plan) {
-    if (deps.now() >= until) return { lookups, fresh, games, stoppedBy: "time" };
+    if (deps.now() >= until) return { lookups, fresh, games, failed, stoppedBy: "time" };
     const result = await lookupMatchups(deps, {
       ours: [{ hero: step.hero, position: step.position }],
       theirs: step.enemies,
@@ -113,9 +115,15 @@ export async function runBackfill(
       }
     }
     const stop = result.reasons.find((r) => STOPS.has(r));
-    if (stop) return { lookups, fresh, games, stoppedBy: stop };
+    if (stop) return { lookups, fresh, games, failed, stoppedBy: stop };
+    if (result.reasons.includes("stratz-failed")) {
+      failed++;
+      if (++inARow >= MAX_FAILURES_IN_A_ROW) return { lookups, fresh, games, failed, stoppedBy: "stratz-failed" };
+    } else {
+      inARow = 0;
+    }
   }
-  return { lookups, fresh, games };
+  return { lookups, fresh, games, failed };
 }
 
 function env(name: string): string {
@@ -140,9 +148,12 @@ async function main() {
   // FIRST is "hero:position" pairs, comma separated, like "93:1".
   const first = (Deno.env.get("FIRST") ?? "").split(",").filter(Boolean).map((pair) => {
     const [hero, position] = pair.split(":").map(Number);
-    if (!Number.isSafeInteger(hero) || !Number.isSafeInteger(position)) throw new Error(`Bad FIRST entry ${pair}`);
-    // Both checked as integers just above.
-    return { hero: hero as number, position: position as number };
+    if (
+      hero === undefined || position === undefined || !Number.isSafeInteger(hero) || !Number.isSafeInteger(position)
+    ) {
+      throw new Error(`Bad FIRST entry ${pair}`);
+    }
+    return { hero, position };
   });
   const plan = backfillPlan(snapshot, perPosition, first);
 
@@ -153,10 +164,9 @@ async function main() {
       if (error) throw error;
       return data;
     },
-    async noteBusy(until) {
-      const { error } = await admin.rpc("note_stratz_busy", { until: new Date(until).toISOString() });
-      if (error) throw error;
-    },
+    // A 429 here may be the backfill's own address or volume, so it stops this run without holding users'
+    // lookups back; if STRATZ refuses them too, their own 429 holds every lookup back.
+    noteBusy: () => Promise.resolve(),
     async readCache(heroes, enemies, v) {
       const since = new Date(Date.now() - KEEP_DAYS * 24 * 60 * 60 * 1000).toISOString();
       const { data, error } = await admin.from("matchup_guides")
@@ -199,9 +209,11 @@ async function main() {
   const done = await runBackfill(deps, plan, version, Date.now() + RUN_MS);
   console.log(
     `version ${version}: ${plan.length} lookups planned (${perPosition} heroes per position); ` +
-      `made ${done.lookups}; ${done.fresh} slices now fresh, with ${done.games} games` +
+      `made ${done.lookups} (${done.failed} failed); ${done.fresh} slices now fresh, with ${done.games} games` +
       (done.stoppedBy ? `; stopped: ${done.stoppedBy}` : "; the plan is done"),
   );
+  // Shown on the run page, so lookups failing again and again don't go unseen.
+  if (done.failed > 0) console.log(`::warning::${done.failed} backfill lookups failed; see the log above`);
 }
 
 if (import.meta.main) {
