@@ -63,14 +63,19 @@ const plan = planTeam(engine, {
   rankBracket: values.rank ? (Number(values.rank) as RankBracket) : undefined,
 });
 
+const line = (r: { lead: string; text: string }) => `${r.lead} ${r.text}`;
 for (const s of plan.slots) {
   const tag = s.locked ? " (picked)" : s.inPool ? "" : " (outside pool)";
   console.log(`Pos ${s.position}: ${s.name}${tag}`);
-  for (const r of s.reasons) console.log(`     - ${r}`);
-  if (s.alternatives.length) {
-    const alts = s.alternatives.map((a) => `${a.name}${a.inPool ? "" : "*"} ${a.scoreDelta.toFixed(1)}`);
-    console.log(`     backups: ${alts.join(", ")}`);
-  }
+  for (const r of s.reasons) console.log(`     - ${line(r)}`);
+}
+console.log("Why it works:");
+for (const r of plan.why) console.log(`     - ${line(r)}`);
+if (plan.another) {
+  const five = plan.another.slots.map((s) => `${s.name}${s.same ? " (same)" : ""}`).join(", ");
+  console.log(`Another Super Team: ${five}`);
+  console.log(`     ${plan.another.verdict}`);
+  for (const r of plan.another.why) console.log(`     - ${line(r)}`);
 }
 console.log(plan.gamePlan);
 console.log(`Team score ${plan.score >= 0 ? "+" : ""}${plan.score.toFixed(1)}`);
