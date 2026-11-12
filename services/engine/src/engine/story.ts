@@ -68,6 +68,11 @@ export interface Story {
   headline: string;
   /** The minute our team is ready to fight (our second key item), if it comes. */
   ready?: number;
+  /**
+   * Our ready minute against the enemy item our fights race (their carry's key item, else their first), when
+   * both are known: the same two the headline compares, so a timeline can draw the window between them.
+   */
+  race?: { ready: number; theirs: Spike };
   chapters: Chapter[];
 }
 
@@ -252,7 +257,13 @@ export function gameStory(facts: StoryFacts): Story {
     const to = Number.isFinite(c.to) ? c.to : null;
     return { phase: c.phase, from: c.from, to, ours, theirs, action: act.short, text };
   }).filter((c) => c.text);
-  return { headline: headline(facts), ...(ready !== undefined ? { ready } : {}), chapters };
+  const raced = carrySpike(facts) ?? byMinute(facts.theirSpikes ?? [])[0];
+  return {
+    headline: headline(facts),
+    ...(ready !== undefined ? { ready } : {}),
+    ...(ready !== undefined && raced ? { race: { ready, theirs: raced } } : {}),
+    chapters,
+  };
 }
 
 /** Words in a piece of text, as the word caps count them. */

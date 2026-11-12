@@ -1,9 +1,9 @@
 import { SURE_POSITION_ODDS, chooseDangerHeroes, dangerLine } from "./danger";
-import { pickFallbacks, type Scaling } from "./fallbacks";
+import { pickFallbacks, type Scaling, type Situation } from "./fallbacks";
 import { withEffects } from "./item-effects";
 import { enemyList, threatRows, type EnemyNote, type ThreatRow } from "./enemy-list";
 import { laneAdjusted } from "./lane-items";
-import { laneOdds, pairText } from "./lane-odds";
+import { laneOdds, pairLane, pairText, type PairLane } from "./lane-odds";
 import type { MatchupGame } from "./matchup-talents";
 import { skillPlan, type SkillPlan } from "./skill-plan";
 import { gameStory, ourWindow, type Story, type Timing } from "./story";
@@ -60,6 +60,12 @@ export interface LanePlan {
   laneNet?: number;
   /** The lane result that decides the verdict, as a line ("Juggernaut wins 31% and loses 44% of ..."). */
   pairLine?: string;
+  /**
+   * Each of our laners against each guessed enemy laner with lane results (won, drawn, lost of games), so a
+   * player's own pair can be drawn as a bar. `weight` is the chance (0 to 1) the enemy plays this lane, so the
+   * likeliest pair is the player's own. Left out when no pair has lane data.
+   */
+  pairs?: (PairLane & { weight: number })[];
   verdict: LaneVerdict;
   text: string;
 }
@@ -72,6 +78,8 @@ export interface PlayerPlan {
   job: string;
   /** What to do if their lane or items go wrong, at most two lines. */
   fallbacks: string[];
+  /** The situation of each fallback line, same order ("laneLost", "keyItemLate", "carryFree"). */
+  fallbackSituations?: Situation[];
   /** The five enemies as this player meets them, in-lane first (see enemy-list.ts). */
   enemies: EnemyNote[];
   /** The same enemies as rows, one per answer item or shared threat, so an answer is said once. */
@@ -80,6 +88,11 @@ export interface PlayerPlan {
   skills?: SkillPlan;
   /** What high-rank wins this patch bought when the key item was late (see itemJourney). */
   journey?: ItemJourney;
+  /**
+   * The item that decides this player's timing (see keyItem) and the minute after which it is late, the same
+   * minute the "No X by N min?" fallback names. Left out when the build has no such item.
+   */
+  keyItem?: { itemId: number; name: string; lateMinute?: number };
 }
 
 /**
@@ -117,6 +130,8 @@ export interface GamePlan {
   players: PlayerPlan[];
   /** What the team does if it is behind or ahead at 20 minutes. */
   teamFallbacks: string[];
+  /** The situation of each team fallback line, same order ("behindAt20", "aheadAt20"). */
+  teamFallbackSituations?: Situation[];
   /** The game in four timed chapters with a one-line headline. */
   story: Story;
 }
@@ -286,7 +301,21 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     const verdict: LaneVerdict = odds?.verdict ?? (edge >= LANE_CLEAR_EDGE ? "win" : edge <= -LANE_CLEAR_EDGE ? "hard" : "even");
     const pairLine = odds && pairText(odds.key, name);
     const text = [laneText(verdict, listNames(theirs.map(name))), pairLine ?? ""].filter(Boolean).join(" ");
-    return { name: lane.name, ours, theirs, edge: round(edge), verdict, text, ...(odds ? { laneNet: round(odds.net * 100), pairLine } : {}) };
+    const weightOf = (id: number) => Math.round(lane.theirs.reduce((s, p) => s + (theirOdds[input.theirs.indexOf(id)]?.[p] ?? 0), 0) * 100) / 100;
+    const pairs = ours.flatMap((o) => theirs.flatMap((t) => {
+      const pair = pairLane(engine.data, o, t, bracket);
+      return pair ? [{ ...pair, weight: weightOf(t) }] : [];
+    }));
+    return {
+      name: lane.name,
+      ours,
+      theirs,
+      edge: round(edge),
+      verdict,
+      text,
+      ...(odds ? { laneNet: round(odds.net * 100), pairLine } : {}),
+      ...(pairs.length ? { pairs } : {}),
+    };
   });
 
   // The enemy hero who beats the most of our heroes, by summed matchup edge.
@@ -412,18 +441,19 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   const carryItem = keyItem(engine, carry?.build ?? null, carry?.heroId, 1);
   const enemyAt = (p: Position) => (theirByPos.has(p) ? name(theirByPos.get(p)!) : undefined); // has() checked.
   const enemyCarry = theirCarry !== undefined ? name(theirCarry) : undefined;
+  // With a journey, the Story's late minute is the map's, so both say the same "late after".
+  players.forEach((p) => {
+    const item = keyItem(engine, p.build, p.heroId, p.position);
+    const lateMinute = p.journey?.late ?? item?.lateMinute;
+    if (item) p.keyItem = { itemId: item.itemId, name: item.name, ...(lateMinute !== undefined ? { lateMinute } : {}) };
+  });
   const picked = pickFallbacks({
-    players: players.map((p) => {
-      const item = keyItem(engine, p.build, p.heroId, p.position);
-      // With a journey, the Story's late minute is the map's, so both say the same "late after".
-      const lateMinute = p.journey?.late ?? item?.lateMinute;
-      return {
-        position: p.position,
-        hero: name(p.heroId),
-        lane: laneOf(p.heroId).verdict,
-        ...(item ? { keyItem: { name: item.name, lateMinute } } : {}),
-      };
-    }),
+    players: players.map((p) => ({
+      position: p.position,
+      hero: name(p.heroId),
+      lane: laneOf(p.heroId).verdict,
+      ...(p.keyItem ? { keyItem: { name: p.keyItem.name, lateMinute: p.keyItem.lateMinute } } : {}),
+    })),
     offLaneHard: lanes[2]!.verdict === "hard", // LANES has three entries, the off lane last.
     scaling: scaling(timing(ourStyle?.key), timing(theirStyle?.key)),
     ourCarry: carry && name(carry.heroId),
@@ -431,7 +461,11 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     enemyCarry,
     enemyOfflaner: enemyAt(3),
   });
-  players.forEach((p, i) => (p.fallbacks = picked.players[i]!)); // Same order as players.
+  players.forEach((p, i) => {
+    // Same order as players.
+    p.fallbacks = picked.players[i]!;
+    if (p.fallbacks.length) p.fallbackSituations = picked.playerSituations[i]!;
+  });
 
   const wonLane = lanes.find((l) => l.verdict === "win");
   const hardLane = lanes.find((l) => l.verdict === "hard");
@@ -479,6 +513,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     roadmap,
     players,
     teamFallbacks: picked.team,
+    ...(picked.team.length ? { teamFallbackSituations: picked.teamSituations } : {}),
     story: gameStory({
       ourTiming,
       theirTiming,

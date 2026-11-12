@@ -37,6 +37,9 @@ export interface TalentTier {
   pick: number | null;
   /** The one most players take in general, or null as for `pick`. */
   usual: number | null;
+  /** The share (0 to 1) of recent games that took the usual talent, and how many games that counts. Not on "no-data" tiers. */
+  usualShare?: number;
+  usualGames?: number;
   /** "general" while the matchup games aren't in, or when none reached this tier; "no-data" when no pick is shown. */
   result: TalentResult | "general" | "no-data";
   reason: string;
@@ -54,6 +57,8 @@ export interface SkillPlan {
   names: Record<number, string>;
   /** Why this order, with its numbers; or why there is none. */
   buildReason: string;
+  /** The numbers in buildReason when there is an order: `wins` of `of` high-rank wins used it (`share`, 0 to 1). */
+  agreement?: { wins: number; of: number; share: number };
   /** Every tier of the hero's tree, level 10 first. */
   talents: TalentTier[];
   /** Shown once under the tree when matchup games reached at least one tier. */
@@ -131,7 +136,7 @@ export function skillPlan(
     if (options.length !== 2) return [];
     const g = general.find((t) => t.tier === tier);
     if (!g) return [noData(tier, options)];
-    const base = { tier, level: g.level, options, usual: g.id };
+    const base = { tier, level: g.level, options, usual: g.id, usualShare: g.share, usualGames: g.games };
     const c = choices.find((x) => x.tier === tier);
     if (c) {
       const odds = oddsLabel(c);
@@ -146,6 +151,7 @@ export function skillPlan(
     levels: found?.build?.levels ?? null,
     names,
     buildReason: buildReason(found, patch),
+    ...(found?.build ? { agreement: { wins: found.build.groupMatches, of: found.matches, share: found.build.share } } : {}),
     talents,
     ...(choices.length ? { note: SAMPLE_NOTE } : {}),
     live,

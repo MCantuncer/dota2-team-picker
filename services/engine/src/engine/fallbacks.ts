@@ -158,7 +158,13 @@ export interface GameFacts {
  * off lane is hard; last because it repeats the lane problem). The team gets both the
  * "behind at 20" and "ahead at 20" lines for whichever side scales better.
  */
-export function pickFallbacks(facts: GameFacts): { players: string[][]; team: string[] } {
+export function pickFallbacks(facts: GameFacts): {
+  players: string[][];
+  team: string[];
+  /** The situation of each line, same order as `players` and `team`, so a page can place it without reading it. */
+  playerSituations: Situation[][];
+  teamSituations: Situation[];
+} {
   const shared: FallbackSlots = {
     ourCarry: facts.ourCarry,
     ourKeyItem: facts.ourKeyItem,
@@ -173,14 +179,23 @@ export function pickFallbacks(facts: GameFacts): { players: string[][]; team: st
       // Only with a carry to name: a lineup without one has nobody farming free.
       ...(p.position >= 4 && facts.offLaneHard && facts.enemyCarry ? (["carryFree"] as const) : []),
     ];
-    return situations
-      .map((s) => fallbackFor(s, p.position, slots))
-      .filter((line): line is string => line !== null)
-      .slice(0, MAX_FALLBACKS);
+    return lines(situations, (s) => fallbackFor(s, p.position, slots));
   });
-  const team = (["behindAt20", "aheadAt20"] as const)
-    .map((s) => fallbackFor(s, "team", shared, facts.scaling))
-    .filter((line): line is string => line !== null)
+  const team = lines(["behindAt20", "aheadAt20"], (s) => fallbackFor(s, "team", shared, facts.scaling));
+  return {
+    players: players.map((p) => p.map((l) => l.text)),
+    team: team.map((l) => l.text),
+    playerSituations: players.map((p) => p.map((l) => l.situation)),
+    teamSituations: team.map((l) => l.situation),
+  };
+}
+
+/** The lines that fill, in order, with their situations, at most MAX_FALLBACKS. */
+function lines(situations: readonly Situation[], fill: (s: Situation) => string | null): { situation: Situation; text: string }[] {
+  return situations
+    .flatMap((situation) => {
+      const text = fill(situation);
+      return text === null ? [] : [{ situation, text }];
+    })
     .slice(0, MAX_FALLBACKS);
-  return { players, team };
 }

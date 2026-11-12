@@ -16,6 +16,8 @@ export interface EnemyNote {
   laneSure: boolean;
   /** The one thing that makes this hero dangerous, in a short line. */
   threat: string;
+  /** What kind of threat the line is, for an icon and a short title: "tank" for heroes not to focus. */
+  kind?: Threat | "tank";
   /** Item ids in this player's path that answer the hero; empty when no item does. */
   answers: number[];
   /** What to do instead, when no item answers the hero. */
@@ -85,11 +87,13 @@ export function enemyList(build: ItemBuild | null, enemies: EnemyFacts[]): Enemy
       const first = THREAT_ORDER.find((t) => threats.has(t));
       const tank = threats.has("disable") ? INITIATOR_TANK : TANK;
       const line = DONT_FOCUS.has(hero.name) ? tank : first ? THREAT_LINE[first] : NOTHING;
+      const kind = DONT_FOCUS.has(hero.name) ? "tank" : first;
       return {
         heroId: hero.id,
         inLane,
         laneSure,
         threat: line.threat,
+        ...(kind ? { kind } : {}),
         answers,
         ...(answers.length ? {} : { tip: line.tip }),
         ...(spell ? { spell } : {}),
@@ -101,7 +105,7 @@ export function enemyList(build: ItemBuild | null, enemies: EnemyFacts[]): Enemy
 export interface ThreatRow {
   /** The enemies in this row, lane enemies first, each with its own threat (an answer item covers the
    * heroes, not every threat they bring). */
-  enemies: Pick<EnemyNote, "heroId" | "inLane" | "laneSure" | "threat">[];
+  enemies: Pick<EnemyNote, "heroId" | "inLane" | "laneSure" | "threat" | "kind">[];
   /** The item in this player's path that answers them all, when one does. */
   answer?: number;
   /** What to do instead, when no item answers them. */
@@ -126,8 +130,8 @@ export function threatRows(notes: EnemyNote[]): ThreatRow[] {
     const key = answer !== undefined ? `item:${answer}` : `threat:${note.threat}`;
     const row: ThreatRow =
       rows.get(key) ?? { enemies: [], ...(answer !== undefined ? { answer } : note.tip !== undefined ? { tip: note.tip } : {}) };
-    const { heroId, inLane, laneSure, threat } = note;
-    row.enemies.push({ heroId, inLane, laneSure, threat });
+    const { heroId, inLane, laneSure, threat, kind } = note;
+    row.enemies.push({ heroId, inLane, laneSure, threat, ...(kind ? { kind } : {}) });
     rows.set(key, row);
   }
   return [...rows.values()];

@@ -16,9 +16,11 @@ function data(): Snapshot {
 
 describe("pairLane", () => {
   it("uses the rank group when it has the pair, all ranks otherwise", () => {
-    expect(pairLane(data(), 1, 2)).toEqual({ hero: 1, enemy: 2, games: 1000, won: 500, drawn: 200, lost: 300 });
+    expect(pairLane(data(), 1, 2)).toEqual({ hero: 1, enemy: 2, games: 1000, won: 500, drawn: 200, lost: 300, allRanks: true });
     expect(pairLane(data(), 1, 2, 5)?.games).toBe(800);
-    expect(pairLane(data(), 1, 3, 5)?.games).toBe(1000);
+    expect(pairLane(data(), 1, 2, 5)?.allRanks).toBeUndefined();
+    // The rank group has no lane data for this pair, so the counts say they are from every rank.
+    expect(pairLane(data(), 1, 3, 5)).toMatchObject({ games: 1000, allRanks: true });
     expect(pairLane(data(), 2, 1)).toBeUndefined();
   });
 });

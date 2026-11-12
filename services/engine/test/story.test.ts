@@ -122,8 +122,14 @@ describe("gameStory", () => {
     expect(race(18)).toBe("Fight from 15 min, before Spectre has Radiance at 18.");
     expect(race(16)).toBe("Both teams are ready at 15 min: fight once your items are in, not before.");
     expect(race(12)).toBe("Spectre has Radiance at 12: hold fights until 15 min.");
+    // The same two minutes come as numbers, so the timeline can draw the window.
+    const raced = (minute: number) =>
+      gameStory(facts({ spikes, theirSpikes: [{ hero: "Spectre", item: "Radiance", minute }], enemyCarry: "Spectre" })).race;
+    expect(raced(18)).toEqual({ ready: 15, theirs: { hero: "Spectre", item: "Radiance", minute: 18 } });
+    expect(raced(12)?.theirs.minute).toBe(12);
     // Without their carry's item there is nothing to race.
     expect(gameStory(facts({ spikes })).headline).toBe("Win the fights around your item timings.");
+    expect(gameStory(facts({ spikes })).race).toBeUndefined();
   });
 
   it("tells each lane what to do from its verdict, never sending the mid on a template rotation", () => {
