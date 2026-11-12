@@ -6,6 +6,11 @@ name: Matchup backfill
 # and stops on a 429. It stops taking STRATZ calls once 400 of the 600 a UTC
 # hour are taken (users' lookups keep the rest) and carries on where the last
 # run stopped.
+#
+# GitHub starts the hourly schedule only a few times a day (5 runs in 27 hours on
+# 2026-11-11), so one run keeps going: after each pass it waits for the next UTC
+# hour's STRATZ budget and runs again, for about 5 hours, then starts the next
+# run itself until the plan is done. The schedule stays as a backup.
 on:
   schedule:
     - cron: "40 * * * *"
@@ -20,6 +25,8 @@ on:
 
 permissions:
   contents: read
+  # To start the next run when this one ends (the last step).
+  actions: write
 
 concurrency:
   group: matchup-backfill
@@ -28,7 +35,8 @@ concurrency:
 jobs:
   backfill:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    # About 5 hours of passes (PASSES_MINUTES) plus the last pass and setup.
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v7
         with:
@@ -39,6 +47,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Fill the cache
+        id: fill
         working-directory: services/accounts
         # Only this step gets the keys: install scripts don't need them.
         env:
@@ -49,8 +58,36 @@ jobs:
           # Slark carry first: Can's Mage Slayer question (2026-11-11). Filled rows are skipped, so it costs
           # nothing once done.
           FIRST: ${{ inputs.first || '93:1' }}
-        run: >-
-          npx deno run --node-modules-dir=none --no-lock
-          --allow-net=odigcdwsvajkbvcxeskj.supabase.co,api.stratz.com
-          --allow-env=SUPABASE_URL,SUPABASE_SECRET_KEY,STRATZ_TOKEN,HEROES_PER_POSITION,FIRST
-          supabase/functions/_shared/matchup/backfill.ts
+          PASSES_MINUTES: "300"
+        # One pass per UTC hour until the plan is done or PASSES_MINUTES are up. A pass that fails (the
+        # snapshot download, Supabase, the timeout) is tried again next hour; three in a row stop the run.
+        run: |
+          set +e
+          end=$(( $(date +%s) + PASSES_MINUTES * 60 ))
+          errors=0
+          while :; do
+            # A pass stops itself after 30 minutes between lookups; the timeout catches a hung download.
+            timeout 40m npx deno run --node-modules-dir=none --no-lock \
+              --allow-net=odigcdwsvajkbvcxeskj.supabase.co,api.stratz.com \
+              --allow-env=SUPABASE_URL,SUPABASE_SECRET_KEY,STRATZ_TOKEN,HEROES_PER_POSITION,FIRST \
+              supabase/functions/_shared/matchup/backfill.ts | tee pass.log
+            if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+              errors=$(( errors + 1 ))
+              if [ "$errors" -ge 3 ]; then echo "::error::Three backfill passes in a row failed"; exit 1; fi
+            else
+              errors=0
+            fi
+            # Done only on a clean finish: a pass with failed lookups leaves slices for the next one.
+            if grep -q "(0 failed).*the plan is done" pass.log; then echo "done=true" >> "$GITHUB_OUTPUT"; break; fi
+            # The STRATZ budget is per UTC hour: start 2 minutes into the next one.
+            next=$(( ( $(date +%s) / 3600 + 1 ) * 3600 + 120 ))
+            if [ "$next" -ge "$end" ]; then break; fi
+            sleep $(( next - $(date +%s) ))
+          done
+      - name: Start the next run
+        if: steps.fill.outputs.done != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEROES_PER_POSITION: ${{ inputs.heroes_per_position || '10' }}
+          FIRST: ${{ inputs.first || '93:1' }}
+        run: gh workflow run matchup-backfill.yml --repo "$GITHUB_REPOSITORY" --ref main -f heroes_per_position="$HEROES_PER_POSITION" -f first="$FIRST"
