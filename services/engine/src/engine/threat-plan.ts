@@ -60,7 +60,10 @@ export interface DraftThreat {
   have: AnswerEdge[];
   /** Which stair step your team is on: 0, 1 or 2 (two or more answers). */
   step: 0 | 1 | 2;
-  /** Open answers for each empty seat, where the pick engine agrees he does worse against them, worst for him first. */
+  /**
+   * Open answers for each empty seat, where the pick engine agrees he does worse against them, worst for him first.
+   * Each hero shows once, at the empty seat he is played at most.
+   */
   open: { position: Position; heroes: AnswerEdge[] }[];
   lanes: ThreatLane[];
   pace?: ThreatPace;
@@ -106,15 +109,27 @@ export function draftThreats(engine: Engine, input: DraftThreatsInput): { main?:
   const answerIds = first.answers.map((a) => a.hero);
   const taken = new Set([...allies, ...input.enemies, ...(input.bans ?? [])]);
   const filled = new Set(input.allies.flatMap((a) => (a.position ? [a.position] : [])));
-  const open = allies.length >= 5 ? [] : POSITIONS.filter((p) => !filled.has(p)).map((seat) => ({
-    position: seat,
-    heroes: answerIds
-      .filter((h) => !taken.has(h) && engine.data.heroes[h] && engine.fit(h)[seat] >= SEAT_SHARE)
-      .map(edge)
-      .filter((a) => a.edge < 0)
-      .sort((a, b) => a.edge - b.edge)
-      .slice(0, OPEN_PER_SEAT),
-  })).filter((s) => s.heroes.length > 0);
+  const seats = allies.length >= 5 ? [] : POSITIONS.filter((p) => !filled.has(p));
+  // Each open answer shows once, at the empty seat he is played at most.
+  const seatOf = (h: number) => {
+    const fit = engine.fit(h);
+    const best = seats.reduce<Position | undefined>((b, p) => (b === undefined || fit[p] > fit[b] ? p : b), undefined);
+    return best !== undefined && fit[best] >= SEAT_SHARE ? best : undefined;
+  };
+  const candidates = answerIds
+    .filter((h) => !taken.has(h) && engine.data.heroes[h])
+    .map((h) => ({ ...edge(h), seat: seatOf(h) }))
+    .filter((a) => a.seat !== undefined && a.edge < 0)
+    .sort((a, b) => a.edge - b.edge);
+  const open = seats
+    .map((seat) => ({
+      position: seat,
+      heroes: candidates
+        .filter((a) => a.seat === seat)
+        .slice(0, OPEN_PER_SEAT)
+        .map(({ hero, edge: e }) => ({ hero, edge: e })),
+    }))
+    .filter((s) => s.heroes.length > 0);
   return {
     main: {
       hero: first.hero,
