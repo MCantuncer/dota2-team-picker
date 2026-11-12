@@ -1,4 +1,5 @@
 import type { StairStep, ThreatPlan } from "./threat";
+import type { PickWhy } from "./why";
 
 /** Dota 2 positions: 1 carry, 2 mid, 3 offlane, 4 soft support, 5 hard support. */
 export type Position = 1 | 2 | 3 | 4 | 5;
@@ -369,4 +370,6 @@ export interface Suggestion {
   tags: string[];
   /** The hero's hard counters, to show apart from the reasons. */
   hardCounters: HardCounterNote[];
+  /** The numbers behind every score part, for the Why details. Set on every hero `suggest` returns. */
+  why?: PickWhy;
 }
