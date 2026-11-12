@@ -81,7 +81,9 @@ describe("enemyList", () => {
   it("says when a hero needs nothing special", () => {
     const [sniper] = enemyList(null, [{ hero: hero(999, "Test Hero", []), inLane: false, laneSure: false }]);
     expect(sniper).toMatchObject({ threat: "No special threat", answers: [] });
-    expect(enemyList(null, [{ hero: LICH, inLane: false, laneSure: false }])[0]!.threat).toBe("Magic burst");
+    expect(sniper!.kind).toBeUndefined();
+    // The threat's kind travels with its line, for an icon and a short title.
+    expect(enemyList(null, [{ hero: LICH, inLane: false, laneSure: false }])[0]).toMatchObject({ threat: "Magic burst", kind: "magicBurst" });
   });
 });
 
@@ -95,6 +97,11 @@ describe("threatRows", () => {
     ...(tip ? { tip } : {}),
   });
   const ids = (rows: ThreatRow[]) => rows.map((r) => [r.enemies.map((e) => e.heroId), r.answer ?? r.tip]);
+
+  it("keeps each enemy's threat kind in its row", () => {
+    const rows = threatRows([{ ...note(56, "Goes invisible", [], "Dust"), kind: "invisible" }, note(30, "No special threat", [], "Play your game")]);
+    expect(rows.map((r) => r.enemies[0]!.kind)).toEqual(["invisible", undefined]);
+  });
 
   it("says one answer once: every enemy it answers shares a row, each with its own threat", () => {
     const dust = "Ask your support for Dust and Sentries before fights";

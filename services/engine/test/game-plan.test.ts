@@ -88,12 +88,15 @@ describe("gamePlan", () => {
     expect(safe.laneNet).toBeLessThan(-5);
     expect(safe.text).toContain("Medusa wins 30% and loses 45% of 5,000 lanes against Terrorblade.");
     // Every pair with lane data, so a player's own lane can be drawn, not only the deciding pair.
-    expect(safe.pairs).toEqual([
-      { hero: 94, enemy: 109, games: 5000, won: 1500, drawn: 1250, lost: 2250 },
-      { hero: 94, enemy: 30, games: 3000, won: 900, drawn: 1000, lost: 1100 },
-      { hero: 5, enemy: 109, games: 4000, won: 1100, drawn: 1400, lost: 1500 },
-      { hero: 5, enemy: 30, games: 4000, won: 1300, drawn: 1400, lost: 1300 },
+    // No bracket, so every count is from all ranks; weight is the chance the enemy plays this lane.
+    expect(safe.pairs?.map(({ weight: _, ...p }) => p)).toEqual([
+      { hero: 94, enemy: 109, games: 5000, won: 1500, drawn: 1250, lost: 2250, allRanks: true },
+      { hero: 94, enemy: 30, games: 3000, won: 900, drawn: 1000, lost: 1100, allRanks: true },
+      { hero: 5, enemy: 109, games: 4000, won: 1100, drawn: 1400, lost: 1500, allRanks: true },
+      { hero: 5, enemy: 30, games: 4000, won: 1300, drawn: 1400, lost: 1300, allRanks: true },
     ]);
+    for (const p of safe.pairs!) expect(p.weight).toBeGreaterThan(0);
+    for (const p of safe.pairs!) expect(p.weight).toBeLessThanOrEqual(1);
     // A lane without any lane data has no pairs.
     expect(gamePlan(new Engine(d), { ours, theirs }).lanes.find((l) => l.name === "Mid")!.pairs).toBeUndefined();
   });
@@ -172,6 +175,9 @@ describe("gamePlan", () => {
       "Anti-Mage is farming free? Pressure that lane before 10 min. After that, take towers on the other side.",
     ]);
     expect(lines(5)[0]).toBe("Anti-Mage is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.");
+    // Each line's situation, so a page can place it without reading the sentence.
+    expect(plan.players.find((p) => p.position === 4)!.fallbackSituations).toEqual(["laneLost", "carryFree"]);
+    expect(plan.players.find((p) => p.position === 1)!.fallbackSituations).toBeUndefined();
     // The won safe lane and the even mid get no lines, and no build means no item line.
     expect(lines(1)).toEqual([]);
     expect(lines(2)).toEqual([]);
@@ -183,6 +189,7 @@ describe("gamePlan", () => {
       "Behind at 20? Defend towers together and only fight with your key spells ready.",
       "Ahead at 20? Take Roshan and push one lane together with the Aegis.",
     ]);
+    expect(plan.teamFallbackSituations).toEqual(["behindAt20", "aheadAt20"]);
   });
 });
 

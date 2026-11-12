@@ -1,5 +1,5 @@
 import { SURE_POSITION_ODDS, chooseDangerHeroes, dangerLine } from "./danger";
-import { pickFallbacks, type Scaling } from "./fallbacks";
+import { pickFallbacks, type Scaling, type Situation } from "./fallbacks";
 import { withEffects } from "./item-effects";
 import { enemyList, threatRows, type EnemyNote, type ThreatRow } from "./enemy-list";
 import { laneAdjusted } from "./lane-items";
@@ -62,9 +62,10 @@ export interface LanePlan {
   pairLine?: string;
   /**
    * Each of our laners against each guessed enemy laner with lane results (won, drawn, lost of games), so a
-   * player's own pair can be drawn as a bar. Left out when no pair has lane data.
+   * player's own pair can be drawn as a bar. `weight` is the chance (0 to 1) the enemy plays this lane, so the
+   * likeliest pair is the player's own. Left out when no pair has lane data.
    */
-  pairs?: PairLane[];
+  pairs?: (PairLane & { weight: number })[];
   verdict: LaneVerdict;
   text: string;
 }
@@ -77,6 +78,8 @@ export interface PlayerPlan {
   job: string;
   /** What to do if their lane or items go wrong, at most two lines. */
   fallbacks: string[];
+  /** The situation of each fallback line, same order ("laneLost", "keyItemLate", "carryFree"). */
+  fallbackSituations?: Situation[];
   /** The five enemies as this player meets them, in-lane first (see enemy-list.ts). */
   enemies: EnemyNote[];
   /** The same enemies as rows, one per answer item or shared threat, so an answer is said once. */
@@ -127,6 +130,8 @@ export interface GamePlan {
   players: PlayerPlan[];
   /** What the team does if it is behind or ahead at 20 minutes. */
   teamFallbacks: string[];
+  /** The situation of each team fallback line, same order ("behindAt20", "aheadAt20"). */
+  teamFallbackSituations?: Situation[];
   /** The game in four timed chapters with a one-line headline. */
   story: Story;
 }
@@ -296,7 +301,11 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     const verdict: LaneVerdict = odds?.verdict ?? (edge >= LANE_CLEAR_EDGE ? "win" : edge <= -LANE_CLEAR_EDGE ? "hard" : "even");
     const pairLine = odds && pairText(odds.key, name);
     const text = [laneText(verdict, listNames(theirs.map(name))), pairLine ?? ""].filter(Boolean).join(" ");
-    const pairs = ours.flatMap((o) => theirs.flatMap((t) => pairLane(engine.data, o, t, bracket) ?? []));
+    const weightOf = (id: number) => Math.round(lane.theirs.reduce((s, p) => s + (theirOdds[input.theirs.indexOf(id)]?.[p] ?? 0), 0) * 100) / 100;
+    const pairs = ours.flatMap((o) => theirs.flatMap((t) => {
+      const pair = pairLane(engine.data, o, t, bracket);
+      return pair ? [{ ...pair, weight: weightOf(t) }] : [];
+    }));
     return {
       name: lane.name,
       ours,
@@ -452,7 +461,11 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     enemyCarry,
     enemyOfflaner: enemyAt(3),
   });
-  players.forEach((p, i) => (p.fallbacks = picked.players[i]!)); // Same order as players.
+  players.forEach((p, i) => {
+    // Same order as players.
+    p.fallbacks = picked.players[i]!;
+    if (p.fallbacks.length) p.fallbackSituations = picked.playerSituations[i]!;
+  });
 
   const wonLane = lanes.find((l) => l.verdict === "win");
   const hardLane = lanes.find((l) => l.verdict === "hard");
@@ -500,6 +513,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     roadmap,
     players,
     teamFallbacks: picked.team,
+    ...(picked.team.length ? { teamFallbackSituations: picked.teamSituations } : {}),
     story: gameStory({
       ourTiming,
       theirTiming,

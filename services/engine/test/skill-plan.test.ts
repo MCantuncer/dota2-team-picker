@@ -70,6 +70,7 @@ describe("skillPlan", () => {
   it("still shows the whole tree when the weekly builds don't have the position", () => {
     const p = plan(data(), 18, 1, ENEMIES, undefined);
     expect(p.levels).toBeNull();
+    expect(p.agreement).toBeUndefined();
     expect(p.buildReason).toBe("No high-rank skill builds for this hero in this position yet.");
     expect(p.talents.map((t) => [t.level, t.pick, t.result])).toEqual([
       [10, null, "no-data"],
@@ -81,6 +82,8 @@ describe("skillPlan", () => {
     const p = plan(data(), 18, 3, ENEMIES, undefined);
     expect(p.live).toBe("loading");
     expect(p.levels).toEqual([1, 2, 2, 1, 2, 4, 2, 1, 1, 10]);
+    // The order's agreement as numbers, the same ones buildReason says.
+    expect(p.agreement).toEqual({ wins: 78, of: 120, share: 0.65 });
     expect(p.names[4]).toBe("God's Strength");
     expect(tiers(p)).toEqual([
       [10, "general"],

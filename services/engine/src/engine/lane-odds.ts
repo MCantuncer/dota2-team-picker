@@ -19,6 +19,8 @@ export interface PairLane {
   won: number;
   drawn: number;
   lost: number;
+  /** Set when the rank group had no lane data, so these counts are from every rank. */
+  allRanks?: true;
 }
 
 export interface LaneOdds {
@@ -32,10 +34,11 @@ export interface LaneOdds {
 /** Hero `a`'s lane against `b` at this rank, or for every rank when the rank group has too few games. */
 export function pairLane(data: Snapshot, a: number, b: number, bracket?: RankBracket): PairLane | undefined {
   const at = (slice: string): LaneCounts | undefined => data.laneOutcomes?.[slice]?.[String(a)]?.[String(b)];
-  const c = (bracket ? at(String(rankGroup(bracket))) : undefined) ?? at("0");
+  const ranked = bracket ? at(String(rankGroup(bracket))) : undefined;
+  const c = ranked ?? at("0");
   if (!c) return undefined;
   const [games, won, drawn, lost] = c;
-  return games > 0 ? { hero: a, enemy: b, games, won, drawn, lost } : undefined;
+  return games > 0 ? { hero: a, enemy: b, games, won, drawn, lost, ...(ranked ? {} : { allRanks: true as const }) } : undefined;
 }
 
 const netOf = (p: PairLane) => (p.won - p.lost) / p.games;

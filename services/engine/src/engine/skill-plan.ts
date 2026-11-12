@@ -57,6 +57,8 @@ export interface SkillPlan {
   names: Record<number, string>;
   /** Why this order, with its numbers; or why there is none. */
   buildReason: string;
+  /** The numbers in buildReason when there is an order: `wins` of `of` high-rank wins used it (`share`, 0 to 1). */
+  agreement?: { wins: number; of: number; share: number };
   /** Every tier of the hero's tree, level 10 first. */
   talents: TalentTier[];
   /** Shown once under the tree when matchup games reached at least one tier. */
@@ -149,6 +151,7 @@ export function skillPlan(
     levels: found?.build?.levels ?? null,
     names,
     buildReason: buildReason(found, patch),
+    ...(found?.build ? { agreement: { wins: found.build.groupMatches, of: found.matches, share: found.build.share } } : {}),
     talents,
     ...(choices.length ? { note: SAMPLE_NOTE } : {}),
     live,
