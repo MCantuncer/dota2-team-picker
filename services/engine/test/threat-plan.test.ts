@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Engine } from "../src/engine/score";
 import type { ThreatPlan } from "../src/engine/threat";
-import { draftThreats, MIN_PACE_GAMES, threatLanes, threatPace } from "../src/engine/threat-plan";
+import { dangerOf, draftThreats, MIN_PACE_GAMES, threatLanes, threatPace } from "../src/engine/threat-plan";
 import type { Snapshot } from "../src/engine/types";
 import { fixture } from "./fixture";
 
@@ -30,7 +30,7 @@ function data(): Snapshot {
 
 describe("draftThreats", () => {
   it("gives the plan for a dangerous enemy core: your answers, your step and open answers per empty seat", () => {
-    const { main, others } = draftThreats(new Engine(data()), { allies: [{ heroId: 3, position: 2 }], enemies: [1] });
+    const [main, ...others] = draftThreats(new Engine(data()), { allies: [{ heroId: 3, position: 2 }], enemies: [1] });
     expect(main?.hero).toBe(1);
     expect(main?.position).toBe(1);
     expect(main?.have.map((a) => a.hero)).toEqual([3]);
@@ -54,7 +54,7 @@ describe("draftThreats", () => {
     const d = data();
     // Now the engine agrees on Support Four, who plays pos 4 and 5 as often (the first wins the tie).
     d.matchups[1] = { 4: { games: 1000, wins: 420 }, 5: { games: 1000, wins: 400 }, 7: { games: 1000, wins: 380 } };
-    const { main } = draftThreats(new Engine(d), { allies: [{ heroId: 3, position: 2 }], enemies: [1] });
+    const [main] = draftThreats(new Engine(d), { allies: [{ heroId: 3, position: 2 }], enemies: [1] });
     expect(main?.open.map((s) => [s.position, s.heroes.map((a) => a.hero)])).toEqual([
       [3, [5, 7]],
       [4, [4]],
@@ -62,7 +62,7 @@ describe("draftThreats", () => {
   });
 
   it("counts two or more answers as the last step and leaves out taken heroes", () => {
-    const { main } = draftThreats(new Engine(data()), {
+    const [main] = draftThreats(new Engine(data()), {
       allies: [{ heroId: 3, position: 2 }, { heroId: 5, position: 3 }],
       enemies: [1],
       bans: [7],
@@ -74,17 +74,26 @@ describe("draftThreats", () => {
   it("gives no plan for an enemy support or without plans", () => {
     const d = data();
     d.threatPlans!.plans = [plan(6, [3], 10)];
-    expect(draftThreats(new Engine(d), { allies: [], enemies: [6] }).main).toBeUndefined();
+    expect(draftThreats(new Engine(d), { allies: [], enemies: [6] })).toEqual([]);
     delete d.threatPlans;
-    expect(draftThreats(new Engine(d), { allies: [], enemies: [1] })).toEqual({ others: [] });
+    expect(draftThreats(new Engine(d), { allies: [], enemies: [1] })).toEqual([]);
   });
 
-  it("gives the full plan to the biggest drop and one line to the others", () => {
+  it("gives every dangerous core a plan, highest win rate against your team's answers first", () => {
     const d = data();
-    d.threatPlans!.plans = [plan(1, [3, 5], 10), plan(2, [5], 8)];
-    const { main, others } = draftThreats(new Engine(d), { allies: [{ heroId: 5, position: 3 }], enemies: [2, 1] });
-    expect(main?.hero).toBe(1);
-    expect(others).toEqual([{ hero: 2, step: 1 }]);
+    d.threatPlans!.plans = [plan(1, [3, 5], 10), plan(2, [7], 8)];
+    // Offlane Five answers Carry One (51% with one answer); Mid Two has none of his answers on your team (56%).
+    const threats = draftThreats(new Engine(d), { allies: [{ heroId: 5, position: 3 }], enemies: [1, 2] });
+    expect(threats.map((t) => [t.hero, t.step, dangerOf(t)])).toEqual([
+      [2, 0, 56],
+      [1, 1, 51],
+    ]);
+  });
+
+  it("breaks a tie in win rate by the bigger drop", () => {
+    const d = data();
+    d.threatPlans!.plans = [plan(2, [7], 8), plan(1, [3], 10)];
+    expect(draftThreats(new Engine(d), { allies: [], enemies: [2, 1] }).map((t) => t.hero)).toEqual([1, 2]);
   });
 });
 
