@@ -87,6 +87,11 @@ describe("skillPlan", () => {
       [13, "general"],
     ]);
     expect(p.note).toBeUndefined();
+    // The usual talent's share as numbers, for the tree's share bars.
+    expect(p.talents.map((t) => [t.usualShare, t.usualGames])).toEqual([
+      [0.55, 110],
+      [0.8, 60],
+    ]);
   });
 
   it("decides each tier from the matchup games once they are in", () => {

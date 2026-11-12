@@ -87,6 +87,15 @@ describe("gamePlan", () => {
     expect(safe.verdict).toBe("hard");
     expect(safe.laneNet).toBeLessThan(-5);
     expect(safe.text).toContain("Medusa wins 30% and loses 45% of 5,000 lanes against Terrorblade.");
+    // Every pair with lane data, so a player's own lane can be drawn, not only the deciding pair.
+    expect(safe.pairs).toEqual([
+      { hero: 94, enemy: 109, games: 5000, won: 1500, drawn: 1250, lost: 2250 },
+      { hero: 94, enemy: 30, games: 3000, won: 900, drawn: 1000, lost: 1100 },
+      { hero: 5, enemy: 109, games: 4000, won: 1100, drawn: 1400, lost: 1500 },
+      { hero: 5, enemy: 30, games: 4000, won: 1300, drawn: 1400, lost: 1300 },
+    ]);
+    // A lane without any lane data has no pairs.
+    expect(gamePlan(new Engine(d), { ours, theirs }).lanes.find((l) => l.name === "Mid")!.pairs).toBeUndefined();
   });
 
   it("names combos and hard counters, and claims no window from the style lists", () => {
@@ -289,6 +298,8 @@ describe("gamePlan item journey", () => {
     const plan = medusa(withTimings());
     expect(plan.journey).toBeUndefined();
     expect(plan.fallbacks.join(" ")).toContain("No Radiance by 18 min?");
+    // The key item behind that line, with the same late minute, for the timeline's flag.
+    expect(plan.keyItem).toEqual({ itemId: 137, name: "Radiance", lateMinute: 18 });
   });
 
   it("attaches the late path and uses its late minute in the Story's line", () => {
@@ -297,5 +308,6 @@ describe("gamePlan item journey", () => {
     );
     expect(plan.journey).toMatchObject({ itemId: 137, late: 20, games: 14, steps: [[151, 19, 8], [137, 26, 9]] });
     expect(plan.fallbacks.join(" ")).toContain("No Radiance by 20 min?");
+    expect(plan.keyItem).toMatchObject({ itemId: 137, lateMinute: 20 });
   });
 });

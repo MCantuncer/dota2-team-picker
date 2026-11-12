@@ -37,6 +37,9 @@ export interface TalentTier {
   pick: number | null;
   /** The one most players take in general, or null as for `pick`. */
   usual: number | null;
+  /** The share (0 to 1) of recent games that took the usual talent, and how many games that counts. Not on "no-data" tiers. */
+  usualShare?: number;
+  usualGames?: number;
   /** "general" while the matchup games aren't in, or when none reached this tier; "no-data" when no pick is shown. */
   result: TalentResult | "general" | "no-data";
   reason: string;
@@ -131,7 +134,7 @@ export function skillPlan(
     if (options.length !== 2) return [];
     const g = general.find((t) => t.tier === tier);
     if (!g) return [noData(tier, options)];
-    const base = { tier, level: g.level, options, usual: g.id };
+    const base = { tier, level: g.level, options, usual: g.id, usualShare: g.share, usualGames: g.games };
     const c = choices.find((x) => x.tier === tier);
     if (c) {
       const odds = oddsLabel(c);

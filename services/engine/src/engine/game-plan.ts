@@ -3,7 +3,7 @@ import { pickFallbacks, type Scaling } from "./fallbacks";
 import { withEffects } from "./item-effects";
 import { enemyList, threatRows, type EnemyNote, type ThreatRow } from "./enemy-list";
 import { laneAdjusted } from "./lane-items";
-import { laneOdds, pairText } from "./lane-odds";
+import { laneOdds, pairLane, pairText, type PairLane } from "./lane-odds";
 import type { MatchupGame } from "./matchup-talents";
 import { skillPlan, type SkillPlan } from "./skill-plan";
 import { gameStory, ourWindow, type Story, type Timing } from "./story";
@@ -60,6 +60,11 @@ export interface LanePlan {
   laneNet?: number;
   /** The lane result that decides the verdict, as a line ("Juggernaut wins 31% and loses 44% of ..."). */
   pairLine?: string;
+  /**
+   * Each of our laners against each guessed enemy laner with lane results (won, drawn, lost of games), so a
+   * player's own pair can be drawn as a bar. Left out when no pair has lane data.
+   */
+  pairs?: PairLane[];
   verdict: LaneVerdict;
   text: string;
 }
@@ -80,6 +85,11 @@ export interface PlayerPlan {
   skills?: SkillPlan;
   /** What high-rank wins this patch bought when the key item was late (see itemJourney). */
   journey?: ItemJourney;
+  /**
+   * The item that decides this player's timing (see keyItem) and the minute after which it is late, the same
+   * minute the "No X by N min?" fallback names. Left out when the build has no such item.
+   */
+  keyItem?: { itemId: number; name: string; lateMinute?: number };
 }
 
 /**
@@ -286,7 +296,17 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     const verdict: LaneVerdict = odds?.verdict ?? (edge >= LANE_CLEAR_EDGE ? "win" : edge <= -LANE_CLEAR_EDGE ? "hard" : "even");
     const pairLine = odds && pairText(odds.key, name);
     const text = [laneText(verdict, listNames(theirs.map(name))), pairLine ?? ""].filter(Boolean).join(" ");
-    return { name: lane.name, ours, theirs, edge: round(edge), verdict, text, ...(odds ? { laneNet: round(odds.net * 100), pairLine } : {}) };
+    const pairs = ours.flatMap((o) => theirs.flatMap((t) => pairLane(engine.data, o, t, bracket) ?? []));
+    return {
+      name: lane.name,
+      ours,
+      theirs,
+      edge: round(edge),
+      verdict,
+      text,
+      ...(odds ? { laneNet: round(odds.net * 100), pairLine } : {}),
+      ...(pairs.length ? { pairs } : {}),
+    };
   });
 
   // The enemy hero who beats the most of our heroes, by summed matchup edge.
@@ -412,18 +432,19 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   const carryItem = keyItem(engine, carry?.build ?? null, carry?.heroId, 1);
   const enemyAt = (p: Position) => (theirByPos.has(p) ? name(theirByPos.get(p)!) : undefined); // has() checked.
   const enemyCarry = theirCarry !== undefined ? name(theirCarry) : undefined;
+  // With a journey, the Story's late minute is the map's, so both say the same "late after".
+  players.forEach((p) => {
+    const item = keyItem(engine, p.build, p.heroId, p.position);
+    const lateMinute = p.journey?.late ?? item?.lateMinute;
+    if (item) p.keyItem = { itemId: item.itemId, name: item.name, ...(lateMinute !== undefined ? { lateMinute } : {}) };
+  });
   const picked = pickFallbacks({
-    players: players.map((p) => {
-      const item = keyItem(engine, p.build, p.heroId, p.position);
-      // With a journey, the Story's late minute is the map's, so both say the same "late after".
-      const lateMinute = p.journey?.late ?? item?.lateMinute;
-      return {
-        position: p.position,
-        hero: name(p.heroId),
-        lane: laneOf(p.heroId).verdict,
-        ...(item ? { keyItem: { name: item.name, lateMinute } } : {}),
-      };
-    }),
+    players: players.map((p) => ({
+      position: p.position,
+      hero: name(p.heroId),
+      lane: laneOf(p.heroId).verdict,
+      ...(p.keyItem ? { keyItem: { name: p.keyItem.name, lateMinute: p.keyItem.lateMinute } } : {}),
+    })),
     offLaneHard: lanes[2]!.verdict === "hard", // LANES has three entries, the off lane last.
     scaling: scaling(timing(ourStyle?.key), timing(theirStyle?.key)),
     ourCarry: carry && name(carry.heroId),
