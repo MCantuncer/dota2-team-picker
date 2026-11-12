@@ -2,8 +2,18 @@ import { mergeHardCounters } from "./data-hard-counters";
 import { HARD_COUNTERS, hardCountersOf, type HardCounter } from "./hard-counters";
 import { list, namedPoints, ordinal, pickLines, points, RANK_NAMES, ROLE_NAMES, summaryOf, type Line, type Warning } from "./reasons";
 import { blindPickRisk, openSlots, pickChance } from "./risk";
-import { guessEnemyPositions, knownPositions, LANE_OPPONENTS, positionFit, type PositionFit } from "./positions";
-import { NEED_SHORT, traitsOf, unmetNeeds } from "./traits";
+import {
+  FIT_FULL,
+  FIT_ZERO,
+  guessEnemyPositions,
+  hasPositionCounts,
+  knownPositions,
+  LANE_OPPONENTS,
+  positionFit,
+  type PositionFit,
+} from "./positions";
+import { NEED_SHORT, traitsOf, unmetNeeds, type Need } from "./traits";
+import type { PairWhy, PickWhy } from "./why";
 import {
   phaseOf,
   POSITIONS,
@@ -267,6 +277,36 @@ export class Engine {
   }
 
   /**
+   * The numbers behind matchupEdge (sign -1) or synergyEdge (sign 1), before any lane weight: the games seen in the
+   * rank group (all ranks without a rank), the win rate the two heroes' usual win rates predict, and the rate counted
+   * after weighing few games. Mirrors `edge`, which stays lean because it runs for every pair; a test keeps them equal.
+   */
+  pairFacts(a: number, b: number, sign: 1 | -1, bracket?: RankBracket) {
+    const key = a < b ? `${a}-${b}` : `${b}-${a}`;
+    const group = bracket ? rankGroup(bracket) : undefined;
+    const all = sign === -1 ? this.data.matchups[a]?.[b] : this.data.synergy[key];
+    const withoutA = sign === -1 ? b : undefined;
+    const withoutB = sign === -1 ? a : undefined;
+    const wrA = this.sampleWinRate(a, withoutA, 0, 0.5);
+    const wrB = this.sampleWinRate(b, withoutB, 0, 0.5);
+    const expected = 0.5 + (wrA - 0.5) + sign * (wrB - 0.5);
+    const counted = shrink(all, expected, PRIOR_GAMES.matchup);
+    if (!group) return { group: 0 as const, seen: all ?? null, allRanks: null, expected, counted, edge: (counted - expected) * 100 };
+    const inGroup = sign === -1 ? this.data.rankMatchups?.[group]?.[a]?.[b] : this.data.rankSynergy?.[group]?.[key];
+    const groupExpected =
+      0.5 + (this.sampleWinRate(a, withoutA, group, wrA) - 0.5) + sign * (this.sampleWinRate(b, withoutB, group, wrB) - 0.5);
+    const groupCounted = shrink(inGroup, groupExpected + (counted - expected), PRIOR_GAMES.rankMatchup);
+    return {
+      group,
+      seen: inGroup ?? null,
+      allRanks: all ?? null,
+      expected: groupExpected,
+      counted: groupCounted,
+      edge: (groupCounted - groupExpected) * 100,
+    };
+  }
+
+  /**
    * A hero's win rate over its matchup row (all ranks, or one rank group), leaving out the games
    * against `without`, shrunk toward `prior`. Every game is in the row once per enemy, so the
    * games are divided by 5 to weigh the record by real games.
@@ -308,9 +348,9 @@ export class Engine {
     });
   }
 
-  /** Points for how natural the hero is in a position, 0 for an average fit. */
+  /** Points for how natural the hero is in a position, 0 for an average fit (FIT_ZERO), full from FIT_FULL. */
   positionScore(id: number, pos: Position): number {
-    return WEIGHTS.positionFit * (Math.min(this.fit(id)[pos], 0.6) - 0.3);
+    return WEIGHTS.positionFit * (Math.min(this.fit(id)[pos], FIT_FULL) - FIT_ZERO);
   }
 
   /** Share of games (0-1) the hero is picked in, by either team. */
@@ -329,15 +369,15 @@ export class Engine {
     enemies: number[],
     laneChance: number[],
     bracket?: RankBracket,
-  ): { enemy: number; edge: number; error: number; lane: boolean }[] {
+  ): { enemy: number; edge: number; error: number; lane: boolean; hardGap: number | null }[] {
     const hard = this.hardCounters.get(id) ?? [];
     return enemies.map((enemy, i) => {
       const weight = 1 + WEIGHTS.laneOpponent * laneChance[i]!;
       const edge = this.matchupEdge(id, enemy, bracket) * weight;
       const gap = hard.find((hc) => hc.counter === enemy)?.gap;
       const lane = laneChance[i]! > 0.5;
-      if (gap !== undefined && -gap < edge) return { enemy, edge: -gap, error: 0, lane };
-      return { enemy, edge, error: this.matchupError(id, enemy) * weight, lane };
+      if (gap !== undefined && -gap < edge) return { enemy, edge: -gap, error: 0, lane, hardGap: gap };
+      return { enemy, edge, error: this.matchupError(id, enemy) * weight, lane, hardGap: null };
     });
   }
 
@@ -370,6 +410,8 @@ export class Engine {
     const where = input.rankBracket ? ` at ${RANK_NAMES[input.rankBracket - 1]}` : "";
 
     const results: Suggestion[] = [];
+    // The Why details of each candidate, built only for the heroes the list returns.
+    const whys = new Map<number, () => PickWhy>();
     for (const hero of candidates) {
       const fit = this.fit(hero.id);
 
@@ -393,7 +435,7 @@ export class Engine {
         const weight = isPartner ? 1 + WEIGHTS.lanePartner : 1;
         const edge = this.synergyEdge(hero.id, a, input.rankBracket) * weight;
         const error = this.synergyError(hero.id, a) * weight;
-        return { name: this.hero(a).name, value: edge, error, note: isPartner ? "your lane partner" : undefined };
+        return { name: this.hero(a).name, value: edge, error, note: isPartner ? "your lane partner" : undefined, isPartner, weight };
       });
       const synergy = synergies.reduce((s, x) => s + x.value, 0);
       const friends = synergies.filter((x) => clearMatchup({ edge: x.value, error: x.error }) > 0);
@@ -477,9 +519,12 @@ export class Engine {
       // A hard counter still open is a gamble, costing its gap times the chance the enemy takes it.
       // A counter on the enemy team is already in the counter part, and neither is in the risk above.
       const hardCounters = this.hardCounterNotes(hero.id, input);
+      const gambles: { heroId: number; gap: number; chance: number; cost: number }[] = [];
       for (const note of hardCounters) {
         if (note.status !== "open") continue;
-        pickSafety -= note.gap * Math.min(1, pickChance(slots, note.counterId) * GAMBLE_PICK_BOOST);
+        const chance = Math.min(1, pickChance(slots, note.counterId) * GAMBLE_PICK_BOOST);
+        pickSafety -= note.gap * chance;
+        gambles.push({ heroId: note.counterId, gap: note.gap, chance, cost: note.gap * chance });
       }
 
       const w = this.partWeights;
@@ -507,6 +552,75 @@ export class Engine {
       // The player's own record is a sample too: a hero they won 19 of 29 games on could be a 55% hero for them.
       const recordError = mine && mine.games > 0 ? personalError(mine) * w.comfort : 0;
       variance += recordError ** 2;
+      const pair = (other: number, sign: 1 | -1, weight: number, part: number, points: number, error: number) => ({
+        heroId: other,
+        ...this.pairFacts(hero.id, other, sign, input.rankBracket),
+        laneChance: 0,
+        isPartner: false,
+        weight,
+        hardGap: null,
+        points,
+        error: round(error * part),
+      });
+      whys.set(hero.id, () => ({
+        counters: edges.map((x, i): PairWhy => ({
+          ...pair(x.enemy, -1, 1 + WEIGHTS.laneOpponent * laneChance[i]!, w.counter, round(x.edge * w.counter), x.error),
+          laneChance: laneChance[i]!,
+          hardGap: x.hardGap,
+        })),
+        synergy: input.allies.map(
+          ({ heroId: a }, i): PairWhy => ({
+            ...pair(a, 1, synergies[i]!.weight, w.synergy, round(synergies[i]!.value * w.synergy), synergies[i]!.error),
+            isPartner: synergies[i]!.isPartner,
+          }),
+        ),
+        meta: {
+          seen: this.gamesAt(hero.id, input.rankBracket),
+          bracket: input.rankBracket ?? null,
+          rate: wr,
+          place: place ?? null,
+          points: breakdown.meta,
+        },
+        roleFit: {
+          position: pos,
+          share: fit[pos],
+          isMeasured: hasPositionCounts(this.data.positions?.[hero.id]),
+          zeroAt: FIT_ZERO,
+          fullAt: FIT_FULL,
+          maxPoints: round(WEIGHTS.positionFit * (FIT_FULL - FIT_ZERO) * w.positionFit),
+          points: breakdown.positionFit,
+        },
+        teamNeeds: {
+          needs: needs.map((need: Need) => ({ need, isCovered: covered.includes(need) })),
+          allies: allies.length,
+          each: round(needWeight * w.teamNeeds),
+          points: breakdown.teamNeeds,
+        },
+        comfort: {
+          favorite: favorites.has(hero.id) ? round(WEIGHTS.favorite * w.comfort) : 0,
+          top: top.has(hero.id) ? round(WEIGHTS.top * w.comfort) : 0,
+          record:
+            mine && mine.games > 0
+              ? { ...mine, counted: shrink(mine, 0.5, PRIOR_GAMES.personal), points: round(personal * w.comfort) }
+              : null,
+          points: breakdown.comfort,
+        },
+        flex: {
+          positions: otherPositions.map((p) => ({ position: p, share: fit[p] })),
+          picksSoFar,
+          points: breakdown.flex,
+        },
+        pickSafety: {
+          risk: round((mineRisk ? mineRisk.risk - avgRisk : 0) * w.pickSafety),
+          threats: mineRisk?.threats ?? [],
+          banned: mineRisk && mineRisk.banLift >= BAN_LIFT_REASON ? mineRisk.banned : [],
+          banLift: round((mineRisk?.banLift ?? 0) * w.pickSafety),
+          phase: phaseEdge === undefined ? null : round(phaseEdge * w.pickSafety),
+          gambles: gambles.map((g) => ({ heroId: g.heroId, gap: g.gap, chance: g.chance, points: round(-g.cost * w.pickSafety) })),
+          points: breakdown.pickSafety,
+        },
+        weights: w,
+      }));
       results.push({
         heroId: hero.id,
         name: hero.name,
@@ -531,7 +645,17 @@ export class Engine {
       s.place = { rank: i + 1, of: results.length };
       s.summary = summaryOf(s.breakdown, { ...s.place, pos });
     });
-    return results.slice(0, input.count ?? 8);
+    const shown = results.slice(0, input.count ?? 8);
+    for (const s of shown) s.why = whys.get(s.heroId)!(); // Every result has one.
+    return shown;
+  }
+
+  /** The hero's games and wins at a rank bracket (1-8), or over all of them. */
+  private gamesAt(id: number, bracket?: RankBracket): GamesWins {
+    const s = this.data.bracketStats[id];
+    if (!s) return { games: 0, wins: 0 };
+    const use = bracket ? [bracket - 1] : s.picks.map((_, i) => i);
+    return { games: sum(use.map((i) => s.picks[i] ?? 0)), wins: sum(use.map((i) => s.wins[i] ?? 0)) };
   }
 
   /** "likely your lane", "only 56 games" or both, for a matchup named on a card. */

@@ -5,6 +5,14 @@ export type PositionFit = Record<Position, number>;
 /** Below this many games, STRATZ position counts are too thin to use on their own. */
 const MIN_POSITION_GAMES = 200;
 
+/** A hero played in a position this share of its games gets no role fit points; from FIT_FULL it gets them all. */
+export const FIT_ZERO = 0.3;
+export const FIT_FULL = 0.6;
+
+/** True when a hero's position counts hold enough games to be used, so its fit is measured rather than guessed. */
+export const hasPositionCounts = (positions: number[] | undefined) =>
+  !!positions && positions.reduce((s, g) => s + g, 0) >= MIN_POSITION_GAMES;
+
 /**
  * How likely a hero is to be played in each position, summing to 1.
  *
@@ -18,7 +26,7 @@ export function positionFit(
   lanes: Snapshot["laneRoles"][string] | undefined,
   positions?: number[],
 ): PositionFit {
-  if (positions && positions.reduce((s, g) => s + g, 0) >= MIN_POSITION_GAMES) {
+  if (positions && hasPositionCounts(positions)) {
     const [p1 = 0, p2 = 0, p3 = 0, p4 = 0, p5 = 0] = positions;
     return normalize({ 1: p1, 2: p2, 3: p3, 4: p4, 5: p5 });
   }
