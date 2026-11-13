@@ -42,12 +42,13 @@ select public.answer_party_invite(:'party', true);
 select is((select count(*)::int from public.party_view()), 2, 'accepting joins the party');
 select is_empty('select * from public.my_party_invites()', 'an accepted invite no longer pops up');
 select tests.sign_out();
-select tests.sign_in_as('lead@example.com');
-select public.invite_to_party(:'p4'), public.invite_to_party(:'p5'), public.invite_to_party(:'p6');
-select tests.sign_out();
+-- Every invite holds a seat, so the teammate declines first to make room for three more.
 select tests.sign_in_as('mate@example.com');
 select public.answer_party_invite(:'party', false);
 select throws_ok(format('select public.answer_party_invite(%L, true)', :'party'), 'P0002', null, 'a declined invite is closed');
+select tests.sign_out();
+select tests.sign_in_as('lead@example.com');
+select public.invite_to_party(:'p4'), public.invite_to_party(:'p5'), public.invite_to_party(:'p6');
 select tests.sign_out();
 select tests.sign_in_as('p4@example.com');
 select public.answer_party_invite(:'party', true);
@@ -64,8 +65,10 @@ insert into public.party_invites (party_id, user_id, invited_by) values (:'party
 select tests.sign_in_as('stranger@example.com');
 select throws_ok(format('select public.answer_party_invite(%L, true)', :'party'), '54000', null, 'a sixth player cannot join');
 
--- Positions, and the leader leaving.
+-- Positions, and the leader leaving. Everyone here joined in one transaction, so the pal is
+-- made the earliest joiner by hand.
 select tests.sign_out();
+update public.party_members set joined_at = now() - interval '1 hour' where user_id = :'pal';
 select tests.sign_in_as('pal@example.com');
 select public.set_party_position(3::smallint);
 select tests.sign_out();
