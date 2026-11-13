@@ -1,7 +1,7 @@
 import { SURE_POSITION_ODDS, chooseDangerHeroes, dangerLine } from "./danger";
 import { pickFallbacks, type Scaling, type Situation } from "./fallbacks";
 import { withEffects } from "./item-effects";
-import { enemyList, threatRows, type EnemyNote, type ThreatRow } from "./enemy-list";
+import { enemyList, threatRows, type EnemyNote, type ThreatRow, type TipFacts } from "./enemy-list";
 import { laneAdjusted } from "./lane-items";
 import { laneOdds, pairLane, pairText, type PairLane } from "./lane-odds";
 import type { MatchupGame } from "./matchup-talents";
@@ -364,7 +364,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     const exact = build?.timings !== "around";
     if (!exact && engine.fit(id)[position] < SURE_POSITION_ODDS) return undefined;
     const item = keyItem(engine, build, id, position);
-    return item && { itemId: item.itemId, name: item.name, minute: item.minute, exact };
+    return item && { itemId: item.itemId, name: item.name, img: item.img, minute: item.minute, exact };
   };
   // Their cores who start fights with a Blink Dagger, from a sure minute, earliest first.
   const initiators = [...theirByPos]
@@ -388,6 +388,21 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       window: ourWindow(timing(ourStyle?.key), timing(theirStyle?.key)),
     });
   });
+
+  // This game's enemies and their sure key item minutes, so each tile's tip names them (see gameTip).
+  const positionOf = (id: number) => [...theirByPos].find(([, h]) => h === id)?.[0];
+  const enemyFacts = input.theirs.map((id) => ({ hero: engine.hero(id), ...(positionOf(id) !== undefined ? { position: positionOf(id) } : {}) }));
+  const enemyKeyItems = new Map(
+    enemyFacts.flatMap(({ hero, position }) => {
+      const item = position !== undefined ? sureKeyItem(hero.id, position) : undefined;
+      return item ? [[hero.id, { itemId: item.itemId, name: item.name, img: item.img, minute: item.minute }] as const] : [];
+    }),
+  );
+  const itemArt = (key: string) => {
+    const found = Object.entries(engine.data.items ?? {}).find(([, item]) => item.key === key);
+    return found ? { itemId: Number(found[0]), img: found[1].img } : undefined;
+  };
+  const tipItems = { dust: itemArt("dust"), blink: itemArt("blink") };
 
   const players = input.ours.map((p): PlayerPlan => {
     const usual = itemBuild(engine.data, p.heroId, p.position, input.theirs, bracket);
@@ -415,6 +430,13 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
         };
       }),
     );
+    const tipFacts: TipFacts = {
+      me: { hero: engine.hero(p.heroId), position: p.position },
+      allies: input.ours.filter((a) => a.heroId !== p.heroId).map((a) => ({ hero: engine.hero(a.heroId), position: a.position })),
+      enemies: enemyFacts,
+      keyItems: enemyKeyItems,
+      items: tipItems,
+    };
     return {
       heroId: p.heroId,
       position: p.position,
@@ -430,7 +452,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       ),
       fallbacks: [],
       enemies,
-      threatRows: threatRows(enemies),
+      threatRows: threatRows(enemies, tipFacts),
       ...(skills ? { skills } : {}),
       ...(journey ? { journey } : {}),
     };

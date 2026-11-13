@@ -32,10 +32,10 @@ Vs Shadow Shaman (lane, guessed): Magic burst. buy Black King Bar.
 Vs Drow Ranger: Locks you down. Keep distance until their disable is used.
 Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Crystal Maiden: Magic burst. buy Black King Bar.
-Watch Legion Commander: Stay spread so one combo can't catch two.
+Watch Legion Commander: Legion Commander gets Blink Dagger at 15 min: from then, stay spread when Legion Commander is missing.
 Watch Shadow Shaman, Crystal Maiden: buy Black King Bar.
-Watch Drow Ranger: Keep distance until their disable is used.
-Watch Pudge: Don't focus them: kill their damage dealers first.
+Watch Drow Ranger: Keep your distance until Drow Ranger's Marksmanship is used.
+Watch Pudge: Hit Drow Ranger and Legion Commander first: Pudge soaks your damage.
 If it goes wrong: Lane lost? Ask for a lane swap or a rotation before 7 min, and skip trades until Radiance.
 If it goes wrong: No Radiance by 18 min? Don't show on the map without it. Farm the side Legion Commander is not on.
 
@@ -54,9 +54,9 @@ Vs Drow Ranger: Locks you down. Keep distance until their disable is used.
 Vs Legion Commander: Magic burst. Stay spread so one combo can't catch two.
 Vs Shadow Shaman: Magic burst. buy Black King Bar.
 Vs Crystal Maiden: Magic burst. buy Black King Bar.
-Watch Pudge: Don't focus them: kill their damage dealers first.
-Watch Drow Ranger: Keep distance until their disable is used.
-Watch Legion Commander: Stay spread so one combo can't catch two.
+Watch Pudge: Hit Drow Ranger and Legion Commander first: Pudge soaks your damage.
+Watch Drow Ranger: Keep your distance until Drow Ranger's Marksmanship is used.
+Watch Legion Commander: Legion Commander gets Blink Dagger at 15 min: from then, stay spread when Legion Commander is missing.
 Watch Shadow Shaman, Crystal Maiden: buy Black King Bar.
 If it goes wrong: Lane lost? Stop contesting runes. Push the wave, farm the near jungle, and wait for your pos 4 to rotate.
 If it goes wrong: No Maelstrom by 18 min? Stop rotating and farm mid and the near camps until it is done.
@@ -76,10 +76,10 @@ Vs Crystal Maiden (lane, guessed): Magic burst. buy Black King Bar.
 Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Legion Commander: Magic burst. Stay spread so one combo can't catch two.
 Vs Shadow Shaman: Magic burst. buy Black King Bar.
-Watch Drow Ranger: Keep distance until their disable is used.
+Watch Drow Ranger: Keep your distance until Drow Ranger's Marksmanship is used.
 Watch Crystal Maiden, Shadow Shaman: buy Black King Bar.
-Watch Pudge: Don't focus them: kill their damage dealers first.
-Watch Legion Commander: Stay spread so one combo can't catch two.
+Watch Pudge: Hit Drow Ranger and Legion Commander first: Pudge soaks your damage.
+Watch Legion Commander: Legion Commander gets Blink Dagger at 15 min: from then, stay spread when Legion Commander is missing.
 If it goes wrong: Lane lost? Stop contesting Drow Ranger. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 21 min? Don't start fights without it. Stay behind your cores and soak damage.
 
@@ -99,8 +99,8 @@ Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their dama
 Vs Legion Commander: Magic burst. buy Force Staff.
 Vs Shadow Shaman: Magic burst. buy Glimmer Cape.
 Watch Drow Ranger, Legion Commander: buy Force Staff.
-Watch Crystal Maiden: Stay spread so one combo can't catch two.
-Watch Pudge: Don't focus them: kill their damage dealers first.
+Watch Crystal Maiden: Stay spread when Crystal Maiden is missing from the map.
+Watch Pudge: Hit Drow Ranger and Legion Commander first: Pudge soaks your damage.
 Watch Shadow Shaman: buy Glimmer Cape.
 If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Wraith King.
 If it goes wrong: Drow Ranger is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
@@ -121,7 +121,7 @@ Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their dama
 Vs Crystal Maiden: Magic burst. Stay spread so one combo can't catch two.
 Watch Legion Commander, Drow Ranger: buy Force Staff.
 Watch Shadow Shaman: buy Glimmer Cape.
-Watch Pudge: Don't focus them: kill their damage dealers first.
-Watch Crystal Maiden: Stay spread so one combo can't catch two.
+Watch Pudge: Hit Drow Ranger and Legion Commander first: Pudge soaks your damage.
+Watch Crystal Maiden: Stay spread when Crystal Maiden is missing from the map.
 If it goes wrong: Lane lost? Let Wraith King take every last hit. Pull the near camp and keep a ward on the rune.
 If it goes wrong: Drow Ranger is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.

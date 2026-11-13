@@ -24,9 +24,9 @@ Vs Pudge (lane, guessed): Starts fights and soaks your damage. Don't focus them:
 Vs Vengeful Spirit: Magic burst. Stay spread so one combo can't catch two.
 Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
 Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
-Watch Tidehunter, Pudge: Don't focus them: kill their damage dealers first.
-Watch Vengeful Spirit, Storm Spirit: Stay spread so one combo can't catch two.
-Watch Witch Doctor: Kill them first or fight short and decisive.
+Watch Tidehunter, Pudge: Hit Vengeful Spirit and Storm Spirit first: Tidehunter and Pudge soak your damage.
+Watch Vengeful Spirit, Storm Spirit: Stay spread when Vengeful Spirit and Storm Spirit are missing from the map.
+Watch Witch Doctor: Kill Witch Doctor first, or keep the fight short.
 
 ### Pos 2 Ember Spirit
 Timings: rank
@@ -43,9 +43,9 @@ Vs Witch Doctor: Heals their team through fights. Kill them first or fight short
 Vs Tidehunter: Starts fights and soaks your damage. buy Black King Bar.
 Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Watch Storm Spirit, Tidehunter: buy Black King Bar.
-Watch Vengeful Spirit: Stay spread so one combo can't catch two.
-Watch Witch Doctor: Kill them first or fight short and decisive.
-Watch Pudge: Don't focus them: kill their damage dealers first.
+Watch Vengeful Spirit: Stay spread when Vengeful Spirit is missing from the map.
+Watch Witch Doctor: Kill Witch Doctor first, or keep the fight short.
+Watch Pudge: Hit Vengeful Spirit and Storm Spirit first: Pudge soaks your damage.
 If it goes wrong: No Spirit Vessel by 15 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Mars
@@ -61,10 +61,10 @@ Vs Witch Doctor (lane): Heals their team through fights. buy Magic Wand.
 Vs Tidehunter: Starts fights and soaks your damage. buy Black King Bar.
 Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Storm Spirit: Magic burst. buy Black King Bar.
-Watch Vengeful Spirit: Stay spread so one combo can't catch two.
+Watch Vengeful Spirit: Stay spread when Vengeful Spirit is missing from the map.
 Watch Witch Doctor: buy Magic Wand.
 Watch Tidehunter, Storm Spirit: buy Black King Bar.
-Watch Pudge: Don't focus them: kill their damage dealers first.
+Watch Pudge: Hit Vengeful Spirit and Storm Spirit first: Pudge soaks your damage.
 If it goes wrong: Lane lost? Stop contesting Vengeful Spirit. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay behind your cores and soak damage.
 
@@ -83,10 +83,10 @@ Vs Witch Doctor (lane): Heals their team through fights. buy Magic Wand.
 Vs Tidehunter: Starts fights and soaks your damage. buy Glimmer Cape, Force Staff.
 Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
-Watch Vengeful Spirit, Storm Spirit: Stay spread so one combo can't catch two.
+Watch Vengeful Spirit, Storm Spirit: Stay spread when Vengeful Spirit and Storm Spirit are missing from the map.
 Watch Witch Doctor: buy Magic Wand.
 Watch Tidehunter: buy Glimmer Cape.
-Watch Pudge: Don't focus them: kill their damage dealers first.
+Watch Pudge: Hit Vengeful Spirit and Storm Spirit first: Pudge soaks your damage.
 If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Ursa.
 If it goes wrong: Vengeful Spirit is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 
@@ -97,7 +97,7 @@ Vs Pudge (lane, guessed): Starts fights and soaks your damage. Don't focus them:
 Vs Vengeful Spirit: Magic burst. Stay spread so one combo can't catch two.
 Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
 Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
-Watch Tidehunter, Pudge: Don't focus them: kill their damage dealers first.
-Watch Vengeful Spirit, Storm Spirit: Stay spread so one combo can't catch two.
-Watch Witch Doctor: Kill them first or fight short and decisive.
+Watch Tidehunter, Pudge: Hit Vengeful Spirit and Storm Spirit first: Tidehunter and Pudge soak your damage.
+Watch Vengeful Spirit, Storm Spirit: Stay spread when Vengeful Spirit and Storm Spirit are missing from the map.
+Watch Witch Doctor: Kill Witch Doctor first, or keep the fight short.
 If it goes wrong: Vengeful Spirit is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.

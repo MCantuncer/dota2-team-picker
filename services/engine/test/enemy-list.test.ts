@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { enemyList, threatRows, type EnemyNote, type ThreatRow } from "../src/engine/enemy-list";
+import { enemyList, threatRows, type EnemyNote, type ThreatRow, type TipFacts } from "../src/engine/enemy-list";
 import type { ItemBuild } from "../src/engine/item-build";
 import type { HeroInfo } from "../src/engine/types";
 
@@ -139,5 +139,70 @@ describe("threatRows", () => {
       [[4], undefined],
     ]);
     expect(rows[2]).not.toHaveProperty("tip");
+  });
+});
+
+describe("game tips", () => {
+  const SF = hero(11, "Shadow Fiend", ["Carry", "Nuker"]);
+  const PUDGE = hero(14, "Pudge", ["Disabler", "Initiator", "Durable", "Nuker"]);
+  const RIKI = hero(32, "Riki", ["Carry", "Escape", "Disabler"]);
+  const SPECTRE = hero(67, "Spectre", ["Carry", "Durable", "Escape"]);
+  const LINA = hero(25, "Lina", ["Support", "Carry", "Nuker", "Disabler"]);
+  const JUGG = hero(8, "Juggernaut", ["Carry", "Pusher", "Escape"]);
+  const CM = hero(5, "Crystal Maiden", ["Support", "Disabler", "Nuker"]);
+  const MARS = hero(129, "Mars", ["Carry", "Initiator", "Disabler", "Durable"]);
+  const SNAP = hero(128, "Snapfire", ["Support", "Nuker", "Disabler"]);
+  const facts = (me: HeroInfo, position: 1 | 2 | 3 | 4 | 5, keyItems: TipFacts["keyItems"] = new Map()): TipFacts => ({
+    me: { hero: me, position },
+    allies: ([
+      { hero: JUGG, position: 1 },
+      { hero: LINA, position: 2 },
+      { hero: MARS, position: 3 },
+      { hero: SNAP, position: 4 },
+      { hero: CM, position: 5 },
+    ] as const).filter((a) => a.hero.id !== me.id),
+    enemies: [
+      { hero: SPECTRE, position: 1 },
+      { hero: SF, position: 2 },
+      { hero: AXE, position: 3 },
+      { hero: RIKI, position: 4 },
+      { hero: PUDGE, position: 5 },
+    ],
+    keyItems,
+    items: { dust: { itemId: 40, img: "/dust.png" }, blink: { itemId: 1, img: "/blink.png" } },
+  });
+  const rowsFor = (f: TipFacts) => threatRows(enemyList(null, f.enemies.map((e) => ({ hero: e.hero, inLane: false, laneSure: true }))), f);
+  const tipFor = (rows: ThreatRow[], heroId: number) => rows.find((r) => r.enemies.some((e) => e.heroId === heroId));
+
+  it("tells the player to hit the enemy cores past the tanks, by name and face", () => {
+    const row = tipFor(rowsFor(facts(JUGG, 1)), 2)!;
+    expect(row.enemies.map((e) => e.heroId)).toEqual([2, 14]);
+    expect(row.tip).toBe("Hit Spectre and Shadow Fiend first: Axe and Pudge soak your damage");
+    expect(row.tipArt).toEqual({ heroes: [67, 11], side: "enemy" });
+  });
+
+  it("names the teammates who bring Dust, or tells a support to carry it", () => {
+    expect(tipFor(rowsFor(facts(JUGG, 1)), 32)).toMatchObject({ tip: "Ask Snapfire and Crystal Maiden for Dust and Sentries before fighting Riki", tipArt: { item: 40, img: "/dust.png" } });
+    expect(tipFor(rowsFor(facts(SNAP, 4)), 32)?.tip).toBe("Carry Dust and a Sentry Ward for Riki");
+  });
+
+  it("names an enemy's sure key item minute, and stays general without one", () => {
+    const radiance = new Map([[67, { itemId: 137, name: "Radiance", img: "/radiance.png", minute: 18 }]]);
+    expect(tipFor(rowsFor(facts(JUGG, 1, radiance)), 67)).toMatchObject({ tip: "Spectre gets Radiance at 18 min: fight before it, never head on after", tipArt: { item: 137, img: "/radiance.png" } });
+    expect(tipFor(rowsFor(facts(JUGG, 1)), 67)?.tip).toBe("Catch Spectre hurt, never fight head on");
+  });
+
+  it("sends a right-click player to fight an evasive enemy next to teammates with spells", () => {
+    const base = facts(JUGG, 1);
+    const pa = { ...base, enemies: [{ hero: PA, position: 1 as const }, ...base.enemies.slice(1)] };
+    expect(tipFor(rowsFor(pa), 44)).toMatchObject({ tip: "Fight Phantom Assassin next to Lina and Snapfire: spells don't miss, right clicks do", tipArt: { heroes: [25, 128], side: "ally" } });
+    const asLina = { ...facts(LINA, 2), enemies: pa.enemies };
+    expect(tipFor(rowsFor(asLina), 44)?.tip).toBe("Fight Phantom Assassin with your spells: right clicks miss");
+  });
+
+  it("keeps the general tip without this game's facts", () => {
+    const rows = threatRows(enemyList(null, [{ hero: AXE, inLane: false, laneSure: true }]));
+    expect(rows[0]?.tip).toBe("Don't focus them: kill their damage dealers first");
+    expect(rows[0]).not.toHaveProperty("tipArt");
   });
 });

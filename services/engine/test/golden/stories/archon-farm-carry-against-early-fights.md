@@ -34,8 +34,8 @@ Vs Troll Warlord: Evasion: right clicks miss. Fight them with spells, not right 
 Vs Huskar: Heals their team through fights. Kill them first or fight short and decisive.
 Vs Jakiro: Magic burst. buy Black King Bar.
 Watch Dark Seer, Snapfire, Jakiro: buy Black King Bar.
-Watch Troll Warlord: Fight them with spells, not right clicks.
-Watch Huskar: Kill them first or fight short and decisive.
+Watch Troll Warlord: Fight Troll Warlord with your spells: right clicks miss.
+Watch Huskar: Kill Huskar first, or keep the fight short.
 If it goes wrong: No Battle Fury by 17 min? Don't show on the map without it. Farm the side Dark Seer is not on.
 
 ### Pos 2 Lina
@@ -53,7 +53,7 @@ Vs Dark Seer: Locks you down. buy Black King Bar.
 Vs Snapfire: Magic burst. buy Black King Bar.
 Vs Jakiro: Magic burst. buy Black King Bar.
 Watch Huskar: buy Magic Wand.
-Watch Troll Warlord: Fight them with spells, not right clicks.
+Watch Troll Warlord: Fight Troll Warlord with your spells: right clicks miss.
 Watch Dark Seer, Snapfire, Jakiro: buy Black King Bar.
 If it goes wrong: No Maelstrom by 18 min? Stop rotating and farm mid and the near camps until it is done.
 
@@ -71,9 +71,9 @@ Vs Jakiro (lane): Magic burst. buy Black King Bar.
 Vs Huskar: Heals their team through fights. Kill them first or fight short and decisive.
 Vs Dark Seer: Locks you down. buy Black King Bar, Lotus Orb.
 Vs Snapfire: Magic burst. buy Black King Bar, Lotus Orb.
-Watch Troll Warlord: Fight them with spells, not right clicks.
+Watch Troll Warlord: Fight Troll Warlord with your spells: right clicks miss.
 Watch Jakiro, Dark Seer, Snapfire: buy Black King Bar.
-Watch Huskar: Kill them first or fight short and decisive.
+Watch Huskar: Kill Huskar first, or keep the fight short.
 If it goes wrong: Lane lost? Stop contesting Troll Warlord. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 22 min? Don't start fights without it. Stay behind your cores and soak damage.
 
@@ -94,8 +94,8 @@ Vs Dark Seer: Locks you down. Keep distance until their disable is used.
 Vs Snapfire: Magic burst. Stay spread so one combo can't catch two.
 Watch Troll Warlord, Huskar: buy Force Staff.
 Watch Jakiro: buy Magic Wand.
-Watch Dark Seer: Keep distance until their disable is used.
-Watch Snapfire: Stay spread so one combo can't catch two.
+Watch Dark Seer: Keep your distance until Dark Seer's Wall of Replica is used.
+Watch Snapfire: Stay spread when Snapfire is missing from the map.
 If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Anti-Mage.
 If it goes wrong: Troll Warlord is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 
@@ -114,7 +114,7 @@ Vs Snapfire (lane, guessed): Magic burst. buy Glimmer Cape.
 Vs Troll Warlord: Evasion: right clicks miss. buy Force Staff.
 Vs Huskar: Heals their team through fights. buy Force Staff.
 Vs Jakiro: Magic burst. buy Glimmer Cape.
-Watch Dark Seer: Keep distance until their disable is used.
+Watch Dark Seer: Keep your distance until Dark Seer's Wall of Replica is used.
 Watch Snapfire, Jakiro: buy Glimmer Cape.
 Watch Troll Warlord, Huskar: buy Force Staff.
 If it goes wrong: Troll Warlord is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.
