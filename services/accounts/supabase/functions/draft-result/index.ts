@@ -117,23 +117,33 @@ Deno.serve(async (req) => {
 });
 
 /**
- * The Dota accounts to search: the draft's saved players, or while it is open, the
- * party's members with Steam linked.
+ * The Dota accounts to search: the draft's saved players and seated players, or while it
+ * is open, the party's members and seated players with Steam linked.
  */
 async function draftAccountIds(draftId: string, partyId: string): Promise<number[]> {
-  const { data: players, error } = await admin.from("draft_players").select("account_id").eq("draft_id", draftId)
-    .not("account_id", "is", null);
-  if (error) throw error;
-  if (players.length) return players.flatMap((p) => (p.account_id ? [p.account_id] : []));
-  const { data: members, error: memberError } = await admin.from("party_members").select("user_id").eq(
-    "party_id",
-    partyId,
-  );
-  if (memberError) throw memberError;
+  const [players, seated] = await Promise.all([
+    admin.from("draft_players").select("account_id").eq("draft_id", draftId).not("account_id", "is", null),
+    admin.from("draft_search_accounts").select("account_id").eq("draft_id", draftId),
+  ]);
+  if (players.error) throw players.error;
+  if (seated.error) throw seated.error;
+  if (players.data.length || seated.data.length) {
+    const saved = [
+      ...players.data.flatMap((p) => (p.account_id ? [p.account_id] : [])),
+      ...seated.data.map((s) => s.account_id),
+    ];
+    return [...new Set(saved)];
+  }
+  const [members, seats] = await Promise.all([
+    admin.from("party_members").select("user_id").eq("party_id", partyId),
+    admin.from("party_seats").select("user_id").eq("party_id", partyId),
+  ]);
+  if (members.error) throw members.error;
+  if (seats.error) throw seats.error;
   const { data: profiles, error: profileError } = await admin
     .from("profiles")
     .select("steam_id")
-    .in("id", members.map((m) => m.user_id))
+    .in("id", [...members.data, ...seats.data].map((m) => m.user_id))
     .not("steam_id", "is", null);
   if (profileError) throw profileError;
   return profiles.flatMap((p) => (p.steam_id ? [steamIdToAccountId(p.steam_id)] : []));

@@ -75,6 +75,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"draft_search_accounts": {
+                  Row: {
+                    "account_id": number,"draft_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "account_id": number,"draft_id": string
+                  }
+                  Update: {
+                    "account_id"?: number,"draft_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "draft_search_accounts_draft_id_fkey"
+      columns: ["draft_id"]
+isOneToOne: false
+      referencedRelation: "party_drafts"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"draft_suggestions": {
                   Row: {
                     "draft_id": string,"first_shown_at": string,"heroes": (number)[],"list_rule": string | null,"outside": (number)[] | null,"position": number,"scores": (number)[],"updated_at": string,"user_id": string,"win_chance": number | null
@@ -1072,6 +1092,9 @@ isOneToOne: false
 { Args: { "max_rows"?: number }; Returns: {
               "account_ids": (number)[],"allies": (number)[],"created_at": string,"draft_id": string
             }[]
+                           },
+"copy_board_to_party_draft":
+{ Args: { "actions": Json,"draft": string }; Returns: undefined
                            },
 "create_phone_sign_in":
 { Args: Record<PropertyKey, never>; Returns: string
