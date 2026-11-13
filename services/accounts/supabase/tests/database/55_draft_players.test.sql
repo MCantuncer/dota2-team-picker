@@ -28,8 +28,8 @@ select public.end_party_draft(:'draft');
 select tests.sign_out();
 select results_eq(
   format('select user_id, account_id, position::int, hero_id::int from public.draft_players where draft_id = %L order by user_id = %L', :'draft', :'pal'),
-  format($$values (%L::uuid, null::bigint, null::int, null::int), (%L::uuid, 10::bigint, 4, null::int)$$, :'lead', :'pal'),
-  'ending the draft saves both members, with the account and the position they were shown suggestions for');
+  format($$values (%L::uuid, null::bigint, 1, null::int), (%L::uuid, 10::bigint, 4, null::int)$$, :'lead', :'pal'),
+  'ending the draft saves both members, with the account and the position they were shown suggestions for, else their seat');
 
 -- Someone joins after the game.
 select tests.sign_out();
