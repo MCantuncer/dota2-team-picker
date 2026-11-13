@@ -32,10 +32,10 @@ Vs Nyx Assassin (lane): Goes invisible. Ask your support for Dust and Sentries b
 Vs Spectre: Strong passives. Fight them when they are low, not head on.
 Vs Ember Spirit: Magic burst. Stay spread so one combo can't catch two.
 Vs Disruptor: Magic burst. buy Black King Bar.
-Watch Bristleback: Don't focus them: kill their damage dealers first.
-Watch Nyx Assassin: Ask your support for Dust and Sentries before fights.
-Watch Spectre: Fight them when they are low, not head on.
-Watch Ember Spirit: Stay spread so one combo can't catch two.
+Watch Bristleback: Hit Spectre and Ember Spirit first: Bristleback soaks your damage.
+Watch Nyx Assassin: Ask Earthshaker and Oracle for Dust and Sentries before fighting Nyx Assassin.
+Watch Spectre: Spectre gets Radiance at 19 min: fight before it, never head on after.
+Watch Ember Spirit: Stay spread when Ember Spirit is missing from the map.
 Watch Disruptor: buy Black King Bar.
 If it goes wrong: No Battle Fury by 18 min? Don't show on the map without it. Farm the side Bristleback is not on.
 
@@ -53,10 +53,10 @@ Vs Spectre: Strong passives. Fight them when they are low, not head on.
 Vs Bristleback: Tank who soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Nyx Assassin: Goes invisible. Ask your support for Dust and Sentries before fights.
 Vs Disruptor: Magic burst. buy Black King Bar.
-Watch Ember Spirit: Stay spread so one combo can't catch two.
-Watch Spectre: Fight them when they are low, not head on.
-Watch Bristleback: Don't focus them: kill their damage dealers first.
-Watch Nyx Assassin: Ask your support for Dust and Sentries before fights.
+Watch Ember Spirit: Stay spread when Ember Spirit is missing from the map.
+Watch Spectre: Spectre gets Radiance at 19 min: fight before it, never head on after.
+Watch Bristleback: Hit Spectre and Ember Spirit first: Bristleback soaks your damage.
+Watch Nyx Assassin: Ask Earthshaker and Oracle for Dust and Sentries before fighting Nyx Assassin.
 Watch Disruptor: buy Black King Bar.
 If it goes wrong: Lane lost? Stop contesting runes. Push the wave, farm the near jungle, and wait for your pos 4 to rotate.
 If it goes wrong: No Meteor Hammer by 14 min? Stop rotating and farm mid and the near camps until it is done.
@@ -75,11 +75,11 @@ Vs Disruptor (lane): Magic burst. buy Black King Bar.
 Vs Ember Spirit: Magic burst. Stay spread so one combo can't catch two.
 Vs Bristleback: Tank who soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Nyx Assassin: Goes invisible. Ask your support for Dust and Sentries before fights.
-Watch Spectre: Fight them when they are low, not head on.
+Watch Spectre: Spectre gets Radiance at 19 min: fight before it, never head on after.
 Watch Disruptor: buy Black King Bar.
-Watch Ember Spirit: Stay spread so one combo can't catch two.
-Watch Bristleback: Don't focus them: kill their damage dealers first.
-Watch Nyx Assassin: Ask your support for Dust and Sentries before fights.
+Watch Ember Spirit: Stay spread when Ember Spirit is missing from the map.
+Watch Bristleback: Hit Spectre and Ember Spirit first: Bristleback soaks your damage.
+Watch Nyx Assassin: Ask Earthshaker and Oracle for Dust and Sentries before fighting Nyx Assassin.
 If it goes wrong: Lane lost? Stop contesting Spectre. Farm the jungle and stay alive for the first fights.
 If it goes wrong: No Blink Dagger by 16 min? Don't start fights without it. Stay behind your cores and soak damage.
 
@@ -97,10 +97,10 @@ Vs Disruptor (lane): Magic burst. Stay spread so one combo can't catch two.
 Vs Ember Spirit: Magic burst. Stay spread so one combo can't catch two.
 Vs Bristleback: Tank who soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Nyx Assassin: Goes invisible. Ask your support for Dust and Sentries before fights.
-Watch Spectre: Fight them when they are low, not head on.
-Watch Disruptor, Ember Spirit: Stay spread so one combo can't catch two.
-Watch Bristleback: Don't focus them: kill their damage dealers first.
-Watch Nyx Assassin: Ask your support for Dust and Sentries before fights.
+Watch Spectre: Spectre gets Radiance at 19 min: fight before it, never head on after.
+Watch Disruptor, Ember Spirit: Stay spread when Disruptor and Ember Spirit are missing from the map.
+Watch Bristleback: Hit Spectre and Ember Spirit first: Bristleback soaks your damage.
+Watch Nyx Assassin: Carry Dust and a Sentry Ward for Nyx Assassin.
 If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Faceless Void.
 If it goes wrong: Spectre is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 
@@ -120,6 +120,6 @@ Vs Spectre: Strong passives. buy Force Staff.
 Vs Ember Spirit: Magic burst. buy Ghost Scepter, Force Staff.
 Vs Disruptor: Magic burst. Stay spread so one combo can't catch two.
 Watch Bristleback, Spectre, Ember Spirit: buy Force Staff.
-Watch Nyx Assassin: Ask your support for Dust and Sentries before fights.
-Watch Disruptor: Stay spread so one combo can't catch two.
+Watch Nyx Assassin: Carry Dust and a Sentry Ward for Nyx Assassin.
+Watch Disruptor: Disruptor gets Blink Dagger at 26 min: from then, stay spread when Disruptor is missing.
 If it goes wrong: Spectre is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.

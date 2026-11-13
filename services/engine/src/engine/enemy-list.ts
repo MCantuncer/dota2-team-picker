@@ -5,8 +5,8 @@
  */
 import { DONT_FOCUS } from "./danger";
 import { KEY_SPELLS, type KeySpell } from "./data-key-spells";
-import { threatsOf, type ItemBuild, type Threat } from "./item-build";
-import type { HeroInfo } from "./types";
+import { listNames, threatsOf, type ItemBuild, type Threat } from "./item-build";
+import type { HeroInfo, Position } from "./types";
 
 export interface EnemyNote {
   heroId: number;
@@ -110,6 +110,120 @@ export interface ThreatRow {
   answer?: number;
   /** What to do instead, when no item answers them. */
   tip?: string;
+  /** The art beside the tip (see TipArt), when the tip names heroes, an item or a spell from this game. */
+  tipArt?: TipArt;
+}
+
+/**
+ * The picture that goes with a tip, so it reads at a glance: the heroes it names (the enemies to hit, or the
+ * teammates to fight next to), the item it names (an enemy's key item, Dust), or the spell to wait out.
+ */
+export type TipArt = { heroes: number[]; side: "ally" | "enemy" } | { item: number; img: string } | { spell: string };
+
+/** This game's heroes and minutes, so a tip names them instead of a rule that fits any game. */
+export interface TipFacts {
+  me: { hero: HeroInfo; position: Position };
+  /** This player's four teammates. */
+  allies: { hero: HeroInfo; position: Position }[];
+  /** All five enemies, with the position the engine guessed for each (sure or not). */
+  enemies: { hero: HeroInfo; position?: Position }[];
+  /**
+   * An enemy's key item (see game-plan.ts keyItem), only with a sure minute: the Game Story's danger lines
+   * use the same rule, so the tile and the story never disagree on when it lands.
+   */
+  keyItems: ReadonlyMap<number, { itemId: number; name: string; img: string; minute: number }>;
+  /** The items some tips name, with their art. */
+  items: { dust?: { itemId: number; img: string }; blink?: { itemId: number; img: string } };
+}
+
+/** At most this many heroes named in a tip, so it stays one line of art and one sentence. */
+const TIP_HEROES = 2;
+
+/**
+ * A tip for this row that names this game's heroes, spells and minutes (Can 2026-11-13: "Stay spread so one
+ * combo can't catch two" fits any game). Undefined when the row has no threat kind or the facts can't
+ * name anything, so the general tip stays.
+ */
+export function gameTip(row: ThreatRow, facts: TipFacts, spells: ReadonlyMap<number, KeySpell>): { text: string; art?: TipArt } | undefined {
+  const kind = row.enemies[0]?.kind;
+  const hero = (id: number) => facts.enemies.find((e) => e.hero.id === id)?.hero;
+  const heroes = row.enemies.flatMap((e) => hero(e.heroId) ?? []);
+  const names = listNames(heroes.map((h) => h.name));
+  const first = heroes[0];
+  if (!kind || !first) return undefined;
+  const byPosition = <T extends { position?: Position }>(list: T[]) => [...list].sort((a, b) => (a.position ?? 9) - (b.position ?? 9));
+  // The first sure key item among the row's heroes, earliest first.
+  const timing = heroes
+    .flatMap((h) => {
+      const item = facts.keyItems.get(h.id);
+      return item ? [{ hero: h, ...item }] : [];
+    })
+    .sort((a, b) => a.minute - b.minute)[0];
+  const spellNames = (ids: number[]) =>
+    ids.flatMap((id) => {
+      const s = spells.get(id);
+      const h = hero(id);
+      return s && h ? [`${h.name}'s ${s.name}`] : [];
+    });
+  const firstSpell = row.enemies.map((e) => spells.get(e.heroId)).find((s) => s !== undefined);
+  switch (kind) {
+    case "tank": {
+      // Hit the damage instead: the enemy cores who are not tanks, by position, the carry first.
+      const targets = byPosition(facts.enemies.filter((e) => !DONT_FOCUS.has(e.hero.name) && !row.enemies.some((r) => r.heroId === e.hero.id)))
+        .filter((e) => e.position === undefined || e.position <= 3)
+        .slice(0, TIP_HEROES);
+      if (!targets.length) return undefined;
+      return {
+        text: `Hit ${listNames(targets.map((t) => t.hero.name))} first: ${names} ${heroes.length > 1 ? "soak" : "soaks"} your damage`,
+        art: { heroes: targets.map((t) => t.hero.id), side: "enemy" },
+      };
+    }
+    case "evasion": {
+      // Spells don't miss: use this player's own, or fight next to the teammates who have them.
+      const casts = (p: { hero: HeroInfo }) => p.hero.roles.includes("Nuker");
+      if (casts(facts.me)) return { text: `Fight ${names} with your spells: right clicks miss`, art: { heroes: [facts.me.hero.id], side: "ally" } };
+      const with2 = byPosition(facts.allies.filter(casts)).slice(0, TIP_HEROES);
+      if (!with2.length) return undefined;
+      return {
+        text: `Fight ${names} next to ${listNames(with2.map((c) => c.hero.name))}: spells don't miss, right clicks do`,
+        art: { heroes: with2.map((c) => c.hero.id), side: "ally" },
+      };
+    }
+    case "invisible": {
+      const dust = facts.items.dust;
+      const art = dust ? { item: dust.itemId, img: dust.img } : undefined;
+      if (facts.me.position >= 4) return { text: `Carry Dust and a Sentry Ward for ${names}`, ...(art ? { art } : {}) };
+      const supports = facts.allies.filter((a) => a.position >= 4).map((a) => a.hero.name);
+      if (!supports.length) return undefined;
+      return { text: `Ask ${listNames(supports)} for Dust and Sentries before fighting ${names}`, ...(art ? { art } : {}) };
+    }
+    case "heal":
+      return { text: `Kill ${names} first, or keep the fight short`, art: { heroes: heroes.map((h) => h.id).slice(0, TIP_HEROES), side: "enemy" } };
+    case "illusions":
+      return { text: `Find the real ${names} and hit only that one`, art: { heroes: heroes.map((h) => h.id).slice(0, TIP_HEROES), side: "enemy" } };
+    case "passives":
+      if (timing) return { text: `${timing.hero.name} gets ${timing.name} at ${timing.minute} min: fight before it, never head on after`, art: { item: timing.itemId, img: timing.img } };
+      return { text: `Catch ${names} hurt, never fight head on`, art: { heroes: heroes.map((h) => h.id).slice(0, TIP_HEROES), side: "enemy" } };
+    case "physicalCarry":
+      if (timing) return { text: `${timing.hero.name} gets ${timing.name} at ${timing.minute} min: fight before it`, art: { item: timing.itemId, img: timing.img } };
+      return { text: `Fight ${names} early, before the big items`, art: { heroes: heroes.map((h) => h.id).slice(0, TIP_HEROES), side: "enemy" } };
+    case "magicBurst": {
+      // A Blink Dagger is when burst starts coming from the fog.
+      const blink = timing && timing.itemId === facts.items.blink?.itemId ? timing : undefined;
+      if (blink) return { text: `${blink.hero.name} gets Blink Dagger at ${blink.minute} min: from then, stay spread when ${blink.hero.name} is missing`, art: { item: blink.itemId, img: blink.img } };
+      return { text: `Stay spread when ${names} ${heroes.length > 1 ? "are" : "is"} missing from the map`, ...(firstSpell ? { art: { spell: firstSpell.key } } : {}) };
+    }
+    case "disable": {
+      const named = spellNames(row.enemies.map((e) => e.heroId));
+      if (!named.length || !firstSpell) return undefined;
+      return { text: `Keep your distance until ${listNames(named)} ${named.length > 1 ? "are" : "is"} used`, art: { spell: firstSpell.key } };
+    }
+    case "unattackable": {
+      const named = spellNames(row.enemies.map((e) => e.heroId));
+      if (!named.length || !firstSpell) return undefined;
+      return { text: `Wait out ${listNames(named)} before you commit`, art: { spell: firstSpell.key } };
+    }
+  }
 }
 
 /**
@@ -118,7 +232,7 @@ export interface ThreatRow {
  * covers the most enemies (ties by path order); enemies without one group by their threat. Rows keep
  * the order of their first enemy, lane enemies first.
  */
-export function threatRows(notes: EnemyNote[]): ThreatRow[] {
+export function threatRows(notes: EnemyNote[], facts?: TipFacts): ThreatRow[] {
   const covers = new Map<number, number>();
   for (const n of notes) for (const id of n.answers) covers.set(id, (covers.get(id) ?? 0) + 1);
   // Path order breaks ties: reduce keeps the earlier answer unless a later one covers more enemies.
@@ -134,5 +248,11 @@ export function threatRows(notes: EnemyNote[]): ThreatRow[] {
     row.enemies.push({ heroId, inLane, laneSure, threat, ...(kind ? { kind } : {}) });
     rows.set(key, row);
   }
-  return [...rows.values()];
+  if (!facts) return [...rows.values()];
+  const spells = new Map(notes.flatMap((n) => (n.spell ? [[n.heroId, n.spell] as const] : [])));
+  return [...rows.values()].map((row) => {
+    if (row.tip === undefined) return row;
+    const tip = gameTip(row, facts, spells);
+    return tip ? { ...row, tip: tip.text, ...(tip.art ? { tipArt: tip.art } : {}) } : row;
+  });
 }

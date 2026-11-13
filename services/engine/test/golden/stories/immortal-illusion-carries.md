@@ -31,9 +31,9 @@ Vs Hoodwink (lane): Magic burst. buy Black King Bar.
 Vs Naga Siren: Illusions split your damage. Hit the real hero: it is the one their team protects.
 Vs Pangolier: Magic burst. buy Black King Bar.
 Vs Treant Protector: Goes invisible. buy Black King Bar.
-Watch Primal Beast: Don't focus them: kill their damage dealers first.
+Watch Primal Beast: Hit Naga Siren and Pangolier first: Primal Beast soaks your damage.
 Watch Hoodwink, Pangolier, Treant Protector: buy Black King Bar.
-Watch Naga Siren: Hit the real hero: it is the one their team protects.
+Watch Naga Siren: Find the real Naga Siren and hit only that one.
 If it goes wrong: No Manta Style by 20 min? Don't show on the map without it. Farm the side Primal Beast is not on.
 
 ### Pos 2 Templar Assassin
@@ -51,8 +51,8 @@ Vs Primal Beast: Starts fights and soaks your damage. Don't focus them: kill the
 Vs Hoodwink: Magic burst. buy Black King Bar.
 Vs Treant Protector: Goes invisible. buy Black King Bar.
 Watch Pangolier, Hoodwink, Treant Protector: buy Black King Bar.
-Watch Naga Siren: Hit the real hero: it is the one their team protects.
-Watch Primal Beast: Don't focus them: kill their damage dealers first.
+Watch Naga Siren: Find the real Naga Siren and hit only that one.
+Watch Primal Beast: Hit Naga Siren and Pangolier first: Primal Beast soaks your damage.
 If it goes wrong: No Desolator by 22 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Mars
@@ -68,9 +68,9 @@ Vs Treant Protector (lane): Goes invisible. buy Black King Bar.
 Vs Pangolier: Magic burst. buy Black King Bar.
 Vs Primal Beast: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Hoodwink: Magic burst. buy Black King Bar.
-Watch Naga Siren: Hit the real hero: it is the one their team protects.
+Watch Naga Siren: Find the real Naga Siren and hit only that one.
 Watch Treant Protector, Pangolier, Hoodwink: buy Black King Bar.
-Watch Primal Beast: Don't focus them: kill their damage dealers first.
+Watch Primal Beast: Hit Naga Siren and Pangolier first: Primal Beast soaks your damage.
 If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay behind your cores and soak damage.
 
 ### Pos 4 Tusk
@@ -89,9 +89,9 @@ Vs Pangolier: Magic burst. buy Force Staff.
 Vs Primal Beast: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Hoodwink: Magic burst. Stay spread so one combo can't catch two.
 Watch Naga Siren, Pangolier: buy Force Staff.
-Watch Treant Protector: Ask your support for Dust and Sentries before fights.
-Watch Primal Beast: Don't focus them: kill their damage dealers first.
-Watch Hoodwink: Stay spread so one combo can't catch two.
+Watch Treant Protector: Carry Dust and a Sentry Ward for Treant Protector.
+Watch Primal Beast: Hit Naga Siren and Pangolier first: Primal Beast soaks your damage.
+Watch Hoodwink: Stay spread when Hoodwink is missing from the map.
 
 ### Pos 5 Disruptor
 Timings: all
@@ -107,7 +107,7 @@ Vs Hoodwink (lane): Magic burst. buy Glimmer Cape.
 Vs Naga Siren: Illusions split your damage. Hit the real hero: it is the one their team protects.
 Vs Pangolier: Magic burst. buy Glimmer Cape.
 Vs Treant Protector: Goes invisible. Ask your support for Dust and Sentries before fights.
-Watch Primal Beast: Don't focus them: kill their damage dealers first.
+Watch Primal Beast: Hit Naga Siren and Pangolier first: Primal Beast soaks your damage.
 Watch Hoodwink, Pangolier: buy Glimmer Cape.
-Watch Naga Siren: Hit the real hero: it is the one their team protects.
-Watch Treant Protector: Ask your support for Dust and Sentries before fights.
+Watch Naga Siren: Find the real Naga Siren and hit only that one.
+Watch Treant Protector: Carry Dust and a Sentry Ward for Treant Protector.
