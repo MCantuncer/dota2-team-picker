@@ -33,26 +33,29 @@ export function clock(s: number): string {
   return `${s < 0 ? "-" : ""}${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
 }
 
-const LANES: Record<string, string> = { top: "top", mid: "mid", bot: "bottom" };
+const LANES: Record<string, string> = { top: "Top", mid: "Mid", bot: "Bottom" };
 
-/** "npc_dota_goodguys_tower2_top" reads "top Tier 2"; barracks and the Ancient likewise. */
+/**
+ * "npc_dota_goodguys_tower2_top" reads "Tier 2 Top Tower"; barracks and the Ancient likewise.
+ * The same names as the site's deaths list (web src/lib/player-game.ts buildingName).
+ */
 export function buildingName(key: string): string {
   const name = key.replace(/^npc_dota_(goodguys|badguys)_/, "");
   const tower = /^tower(\d)(?:_(top|mid|bot))?$/.exec(name);
-  if (tower) return tower[2] ? `${LANES[tower[2]]} Tier ${tower[1]}` : `Tier ${tower[1]}`;
+  if (tower) return tower[2] ? `Tier ${tower[1]} ${LANES[tower[2]]} Tower` : `Tier ${tower[1]} Tower`;
   const rax = /^(range|melee)_rax_(top|mid|bot)$/.exec(name);
-  if (rax) return `${LANES[rax[2] ?? ""]} ${rax[1] === "range" ? "ranged" : "melee"} barracks`;
+  if (rax) return `${LANES[rax[2] ?? ""]} ${rax[1] === "range" ? "Ranged" : "Melee"} Barracks`;
   return name === "fort" ? "Ancient" : name.replace(/_/g, " ");
 }
 
-/** "your top Tier 2" or "your top Tier 2 and mid Tier 1"; null when nothing fell. */
+/** "your Tier 2 Top Tower" or "your Tier 2 Top Tower and Tier 1 Mid Tower"; null when nothing fell. */
 function buildings(d: DeathFact): string | null {
   const names = d.buildingsLost.map(buildingName);
   if (!names.length) return null;
   return `your ${names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`}`;
 }
 
-/** "your top Tier 2 fell while you were dead 46 seconds", or null. */
+/** "your Tier 2 Top Tower fell while you were dead 46 seconds", or null. */
 function fell(d: DeathFact): string | null {
   const lost = buildings(d);
   return lost ? `${lost} fell while you were dead ${d.timeDead} seconds` : null;
