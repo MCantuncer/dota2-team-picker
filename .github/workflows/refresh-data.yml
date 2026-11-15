@@ -66,6 +66,14 @@ jobs:
         continue-on-error: true
         working-directory: services/engine
         run: npm run fit-win-chance -- --out "$RUNNER_TEMP/win-chance.md" && cat "$RUNNER_TEMP/win-chance.md" >> "$GITHUB_STEP_SUMMARY"
+      # Score yesterday's fair public ranked games (about 4,000, from the OpenDota
+      # explorer) into eval/public-edges.json, refit the win range bands on the last
+      # 21 days and check them on the newest quarter. Only bands that pass go into
+      # the data. If this step fails, the data keeps the last checked bands.
+      - name: Fit the draft win range
+        continue-on-error: true
+        working-directory: services/engine
+        run: npm run fit-win-range -- --out "$RUNNER_TEMP/win-range.md" ${{ inputs.dry_run && '--dry-run' || '' }} && cat "$RUNNER_TEMP/win-range.md" >> "$GITHUB_STEP_SUMMARY"
       - if: ${{ !inputs.dry_run }}
         run: npm run upload-data -w services/engine
       # Recent ranked games for the engine backtest, saved to eval/ in the same
