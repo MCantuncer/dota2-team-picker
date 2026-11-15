@@ -7,9 +7,13 @@
 import { buildFacts, FACTS_VERSION, type HeroCard, type ItemCost } from "../report/facts.ts";
 import { isRadiantSlot, type Match, type MatchPlayer } from "../report/match.ts";
 import type { Position } from "../trends/games.ts";
+import { type FightScore, scoreDeaths, tookRuneBefore, type WardsUp, wardsUpAt } from "./fights.ts";
 
-/** Bump with any change to GameSummary's shape, and keep readers able to read older ones. */
-export const SUMMARY_VERSION = 1;
+/**
+ * Bump with any change to GameSummary's shape, and keep readers able to read older ones.
+ * 2: each death has the gold fed, its fight, the wards up and where the killer came from.
+ */
+export const SUMMARY_VERSION = 2;
 const LANE_MINUTE = 10;
 const HERO_KEY_PREFIX = "npc_dota_hero_";
 
@@ -39,10 +43,21 @@ export interface DeathFact {
   isKillerFromMid: boolean | null;
   /** The team's buildings destroyed while this player was dead, by OpenDota key. */
   buildingsLost: string[];
+  /** The rest is missing on version 1 summaries. Gold the killer got, null when not given. */
+  goldFed?: number | null;
+  /** The fight this death was part of, counted over all ten players' deaths. */
+  fight?: FightScore | null;
+  /** Observer wards each side had up anywhere on the map; null without ward data. */
+  wardsUp?: WardsUp | null;
+  /** True when the killer laned somewhere else than this player; null when lanes are unknown. */
+  isKillerFromOtherLane?: boolean | null;
+  /** True when the killer took a power rune in the minute before; null without a rune log. */
+  didKillerTakeRune?: boolean | null;
 }
 
 export interface GameSummary {
-  version: typeof SUMMARY_VERSION;
+  /** Older versions stay readable: fields added later are optional. */
+  version: 1 | typeof SUMMARY_VERSION;
   factsVersion: typeof FACTS_VERSION;
   matchId: number;
   /** Unix seconds. */
@@ -139,17 +154,28 @@ function deathsOf(
   heroIdsByKey: Record<string, number>,
 ): DeathFact[] | null {
   if (!me.deathsLog) return null;
+  const fights = scoreDeaths(match, me);
   // Our buildings: Radiant's are "goodguys", Dire's "badguys".
   const ourBuildings = isRadiant ? "npc_dota_goodguys_" : "npc_dota_badguys_";
-  return me.deathsLog.map((d) => {
+  return me.deathsLog.map((d, i) => {
     const killerHeroId = d.killer?.startsWith(HERO_KEY_PREFIX) ? heroIdsByKey[d.killer] ?? null : null;
     const killer = killerHeroId === null ? undefined : enemies.find((p) => p.heroId === killerHeroId);
-    const isKillerFromMid = !killer || killer.lane === null || me.lane === null
-      ? null
-      : killer.lane === 2 && me.lane !== 2;
+    const lanesKnown = killer !== undefined && killer.lane !== null && me.lane !== null;
     const buildingsLost = (match.buildingKills ?? [])
       .filter((b) => b.key.startsWith(ourBuildings) && b.time >= d.time && b.time <= d.time + d.timeDead)
       .map((b) => b.key);
-    return { time: d.time, goldLost: d.goldLost, timeDead: d.timeDead, killerHeroId, isKillerFromMid, buildingsLost };
+    return {
+      time: d.time,
+      goldLost: d.goldLost,
+      timeDead: d.timeDead,
+      killerHeroId,
+      isKillerFromMid: lanesKnown ? killer.lane === 2 && me.lane !== 2 : null,
+      buildingsLost,
+      goldFed: d.goldFed,
+      fight: fights?.[i] ?? null,
+      wardsUp: wardsUpAt(match, isRadiant, d.time),
+      isKillerFromOtherLane: lanesKnown ? killer.lane !== me.lane : null,
+      didKillerTakeRune: killer ? tookRuneBefore(killer, d.time) : null,
+    };
   });
 }

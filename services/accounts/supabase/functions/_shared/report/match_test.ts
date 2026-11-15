@@ -26,7 +26,7 @@ Deno.test("a parsed match gives every field game feedback reads", () => {
 Deno.test("reads who landed the killing blow from the deaths log", () => {
   const match = readOpenDotaMatch(fixture("all-pick-9072422905.json"));
   const first = match.players[0]?.deathsLog?.[0];
-  assertEquals(first, { time: 344, goldLost: 56, timeDead: 24, killer: "npc_dota_hero_lina" });
+  assertEquals(first, { time: 344, goldLost: 56, timeDead: 24, goldFed: 289, killer: "npc_dota_hero_lina" });
 });
 
 Deno.test("building kills come in time order with the building's key", () => {
@@ -41,4 +41,21 @@ Deno.test("an unparsed match leaves the parsed only fields empty", () => {
   assertEquals(match.buildingKills, null);
   assertEquals(match.players[0]?.lastHitsByMinute, null);
   assertEquals(match.players[0]?.xpByMinute, null);
+});
+
+Deno.test("observer wards end when destroyed or after six minutes", () => {
+  const raw = fixture("all-pick-9072422905.json") as { players: Record<string, unknown>[] };
+  const players = raw.players.map((p, i) =>
+    i === 0
+      ? {
+        ...p,
+        obs_log: [{ time: 100, ehandle: 1 }, { time: 200, ehandle: 2 }],
+        obs_left_log: [{ time: 150, ehandle: 1 }],
+        runes_log: [{ time: 0, key: "5" }, { time: 361, key: "0" }, { time: 480, key: 3 }, { time: 600, key: "7" }],
+      }
+      : p
+  );
+  const me = readOpenDotaMatch({ ...raw, players }).players[0];
+  assertEquals(me?.observerWards, [{ placedS: 100, goneS: 150 }, { placedS: 200, goneS: 560 }]);
+  assertEquals(me?.powerRunesS, [361, 480], "bounty and water runes are not power runes");
 });

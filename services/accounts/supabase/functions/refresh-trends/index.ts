@@ -258,10 +258,10 @@ function factsDeps(
     staleFindings: async () => {
       // Recent rows only: older ones fall out of the feedback window and are purged soon.
       const { data, error } = await admin.from("player_game_facts").select("user_id, match_id, summary")
-        .eq("summary_version", SUMMARY_VERSION).lt("findings_version", FINDINGS_VERSION)
+        .lte("summary_version", SUMMARY_VERSION).lt("findings_version", FINDINGS_VERSION)
         .gte("started_at", daysAgo(KEEP_DAYS)).limit(STALE_FINDINGS_PER_RUN);
       if (error) throw error;
-      // Safe: rows with this summary_version hold a GameSummary the job wrote.
+      // Safe: rows with a summary_version hold a GameSummary the job wrote; older versions only lack optional fields.
       return data.map((r) => ({
         user_id: r.user_id,
         match_id: r.match_id,
@@ -280,9 +280,9 @@ function factsDeps(
     },
     refreshFeedback: async (userId) => {
       const { data, error } = await admin.from("player_game_facts").select("summary").eq("user_id", userId)
-        .eq("summary_version", SUMMARY_VERSION).gte("started_at", daysAgo(WINDOW_DAYS));
+        .lte("summary_version", SUMMARY_VERSION).gte("started_at", daysAgo(WINDOW_DAYS));
       if (error) throw error;
-      // Safe: rows with this summary_version hold a GameSummary the job wrote.
+      // Safe: rows with a summary_version hold a GameSummary the job wrote; older versions only lack optional fields.
       const summaries = data.map((r) => r.summary as unknown as GameSummary);
       const fb = buildPlayerFeedback(summaries, names, Date.now() / 1000);
       const at = (s: number | null) => (s === null ? null : new Date(s * 1000).toISOString());

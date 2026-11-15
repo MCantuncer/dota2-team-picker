@@ -33,7 +33,8 @@ Deno.test("sums up laning at 10 minutes against the lane opponent", () => {
 Deno.test("each death names the killer and the buildings lost while dead", () => {
   const deaths = summarizeGame(input())?.deaths ?? [];
   assertEquals(deaths.length, 8);
-  assertEquals(deaths[0], {
+  const { time, goldLost, timeDead, killerHeroId, isKillerFromMid, buildingsLost } = deaths[0] ?? {};
+  assertEquals({ time, goldLost, timeDead, killerHeroId, isKillerFromMid, buildingsLost }, {
     time: 344,
     goldLost: 56,
     timeDead: 24,
@@ -77,4 +78,47 @@ Deno.test("an unparsed match keeps only the basic numbers", () => {
 
 Deno.test("returns null when the account didn't play the match", () => {
   assertEquals(summarizeGame(input({ accountId: 42 })), null);
+});
+
+// Sven (account 1005) played the safe lane for Dire and won 36/7/23.
+const svenInput = (): SummaryInput => ({
+  match: readOpenDotaMatch(
+    JSON.parse(Deno.readTextFileSync(new URL("./fixtures/sven-9073477575.json", import.meta.url))),
+  ),
+  accountId: 1005,
+  startTime: 1_794_000_000,
+  position: 1,
+  items: {},
+  heroIdsByKey: {
+    npc_dota_hero_legion_commander: 104,
+    npc_dota_hero_necrolyte: 36,
+    npc_dota_hero_nyx_assassin: 88,
+  },
+});
+
+Deno.test("each death carries its fight, the gold fed and the wards up on the map", () => {
+  const s = summarizeGame(svenInput());
+  assertEquals(s?.version, 2);
+  const deaths = s?.deaths ?? [];
+  assertEquals(
+    deaths.map((d) => [d.time, d.killerHeroId, d.goldFed, d.fight?.label]),
+    [
+      [847, 88, 537, "caught_alone"],
+      [1084, 36, 535, "lost_fight"],
+      [1189, 36, 544, "lost_fight"],
+      [1321, 104, 565, "caught_alone"],
+      [2405, 104, 2346, "close_win"],
+      [2555, 104, 1913, "good_trade"],
+      [2709, 36, 1997, "good_trade"],
+    ],
+  );
+  assertEquals(deaths[3]?.wardsUp, { ours: 0, theirs: 4 }, "22:01: no observers of ours anywhere");
+  assertEquals(deaths[0]?.wardsUp, { ours: 4, theirs: 0 }, "14:07: the other way round");
+});
+
+Deno.test("an unparsed match has no deaths, so no fights either", () => {
+  const input = svenInput();
+  const raw = JSON.parse(Deno.readTextFileSync(new URL("./fixtures/sven-9073477575.json", import.meta.url)));
+  const s = summarizeGame({ ...input, match: readOpenDotaMatch({ ...raw, version: null }) });
+  assertEquals(s?.deaths, null);
 });
