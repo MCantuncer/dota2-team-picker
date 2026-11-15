@@ -58,8 +58,8 @@ describe("dangerLine", () => {
   });
 
   it("still names the danger without item data", () => {
-    expect(dangerLine({ hero: "Medusa", kind: "carry", isSure: false })).toBe("Medusa: Their likely carry.");
-    expect(dangerLine({ hero: "Magnus", kind: "initiator", isSure: false })).toBe("Magnus: Starts their fights.");
+    expect(dangerLine({ hero: "Medusa", kind: "carry", isSure: false })).toBe("Medusa: Likely enemy carry.");
+    expect(dangerLine({ hero: "Magnus", kind: "initiator", isSure: false })).toBe("Magnus: Starts the enemy's fights.");
   });
 
   it("keeps two danger heroes with the longest names inside the word budget", () => {

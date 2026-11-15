@@ -3,7 +3,7 @@
 Headline: Hard mid: Puck wins 19% and loses 52% of 534 lanes against Shadow Fiend.
 
 - 0 to 10 min: Puck has a hard mid against Shadow Fiend. Puck wins 19% and loses 52% of 534 lanes against Shadow Fiend.
-- 10 to 20 min: Juggernaut's Battle Fury at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Their Phantom Assassin has Battle Fury at 15.
+- 10 to 20 min: Juggernaut's Battle Fury at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Enemy Phantom Assassin has Battle Fury at 15.
 - 20 to 30 min: Roshan from 20 min, once three key items are in.
 
 Danger heroes:
@@ -26,8 +26,8 @@ First: Battle Fury 14/16 {Cleave for fast farm.}
 Next: Manta Style 23/24, Blink Dagger 27/33 {Start fights from 1,200 range.}, Butterfly 29/30
 Late: Monkey King Bar 33/37 [Against Phantom Assassin: don't skip it] {Most of your hits go through evasion.}
 Job: Your timing is Battle Fury at 14 min. Axe has Blink Dagger at 14 min.
-Vs Axe (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
-Vs Witch Doctor (lane, guessed): Heals their team through fights. Kill them first or fight short and decisive.
+Vs Axe (lane): Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
+Vs Witch Doctor (lane, guessed): Heals the enemy team through fights. Kill them first or fight short and decisive.
 Vs Phantom Assassin: Evasion: right clicks miss. buy Monkey King Bar.
 Vs Shadow Fiend: Magic burst. Stay spread so one combo can't catch two.
 Vs Lich: Magic burst. Stay spread so one combo can't catch two.
@@ -47,8 +47,8 @@ Late: Aghanim's Scepter 34/36, Octarine Core 35
 Job: Your timing is Blink Dagger at 19 min. Shadow Fiend has Eul's Scepter of Divinity at 11 min.
 Vs Shadow Fiend (lane): Magic burst. buy Infused Raindrops.
 Vs Phantom Assassin: Evasion: right clicks miss. Fight them with spells, not right clicks.
-Vs Axe: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
-Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
+Vs Axe: Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
+Vs Witch Doctor: Heals the enemy team through fights. Kill them first or fight short and decisive.
 Vs Lich: Magic burst. Stay spread so one combo can't catch two.
 Watch Shadow Fiend: buy Infused Raindrops.
 Watch Phantom Assassin: Fight Phantom Assassin with your spells: right clicks miss.
@@ -67,8 +67,8 @@ Job: Your timing is Blink Dagger at 15 min. Phantom Assassin has Battle Fury at 
 Vs Phantom Assassin (lane): Evasion: right clicks miss. Fight them with spells, not right clicks.
 Vs Lich (lane, guessed): Magic burst. buy Infused Raindrops.
 Vs Shadow Fiend: Magic burst. Stay spread so one combo can't catch two.
-Vs Axe: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
-Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
+Vs Axe: Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
+Vs Witch Doctor: Heals the enemy team through fights. Kill them first or fight short and decisive.
 Watch Phantom Assassin: Fight Phantom Assassin next to Puck and Lion: spells don't miss, right clicks do.
 Watch Lich: buy Infused Raindrops.
 Watch Shadow Fiend: Stay spread when Shadow Fiend is missing from the map.
@@ -88,7 +88,7 @@ Vs Phantom Assassin (lane): Evasion: right clicks miss. buy Force Staff.
 Vs Lich (lane, guessed): Magic burst. buy Infused Raindrops, Glimmer Cape.
 Vs Shadow Fiend: Magic burst. buy Glimmer Cape, Force Staff.
 Vs Axe: Starts fights and soaks your damage. buy Force Staff.
-Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
+Vs Witch Doctor: Heals the enemy team through fights. Kill them first or fight short and decisive.
 Watch Phantom Assassin, Shadow Fiend, Axe: buy Force Staff.
 Watch Lich: buy Glimmer Cape.
 Watch Witch Doctor: Kill Witch Doctor first, or keep the fight short.
@@ -103,7 +103,7 @@ Next: Glimmer Cape 24/31 [Against Shadow Fiend, Witch Doctor and Lich: don't ski
 Late: Black King Bar 35/42 {Stops disables from Witch Doctor. Berserker's Call and Death Ward still go through it.}, Aghanim's Scepter 37/42
 Job: Your timing is Blink Dagger at 23 min. Axe has Blink Dagger at 14 min.
 Vs Axe (lane): Starts fights and soaks your damage. buy Force Staff.
-Vs Witch Doctor (lane, guessed): Heals their team through fights. buy Magic Wand.
+Vs Witch Doctor (lane, guessed): Heals the enemy team through fights. buy Magic Wand.
 Vs Phantom Assassin: Evasion: right clicks miss. buy Force Staff.
 Vs Shadow Fiend: Magic burst. buy Glimmer Cape, Force Staff.
 Vs Lich: Magic burst. buy Glimmer Cape.

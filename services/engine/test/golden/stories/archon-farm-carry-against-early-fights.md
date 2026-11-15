@@ -3,8 +3,8 @@
 Headline: Hard off lane: Centaur Warrunner wins 30% and loses 44% of 964 lanes against Jakiro.
 
 - 0 to 10 min: Anti-Mage and Warlock win the safe lane against Dark Seer and Snapfire. Centaur Warrunner and Mirana have a hard off lane against Troll Warlord and Jakiro. Warlock wins 51% and loses 24% of 416 lanes against Dark Seer. Centaur Warrunner wins 30% and loses 44% of 964 lanes against Jakiro.
-- 10 to 20 min: Anti-Mage's Battle Fury at 15 and Lina's Maelstrom at 16: ready to fight at 16. Their Troll Warlord has Battle Fury at 15.
-- 20 to 30 min: Their Dark Seer has Blink Dagger at 21. Roshan from 20 min, once three key items are in.
+- 10 to 20 min: Anti-Mage's Battle Fury at 15 and Lina's Maelstrom at 16: ready to fight at 16. Enemy Troll Warlord has Battle Fury at 15.
+- 20 to 30 min: Enemy Dark Seer has Blink Dagger at 21. Roshan from 20 min, once three key items are in.
 
 Danger heroes:
 - Huskar: Blink Dagger at 14 min. Strong against Anti-Mage.
@@ -30,7 +30,7 @@ Job: Your timing is Battle Fury at 15 min. Dark Seer has Blink Dagger at 21 min.
 Vs Dark Seer (lane): Locks you down. buy Black King Bar.
 Vs Snapfire (lane, guessed): Magic burst. buy Black King Bar.
 Vs Troll Warlord: Evasion: right clicks miss. Fight them with spells, not right clicks.
-Vs Huskar: Heals their team through fights. Kill them first or fight short and decisive.
+Vs Huskar: Heals the enemy team through fights. Kill them first or fight short and decisive.
 Vs Jakiro: Magic burst. buy Black King Bar.
 Watch Dark Seer, Snapfire, Jakiro: buy Black King Bar.
 Watch Troll Warlord: Fight Troll Warlord with your spells: right clicks miss.
@@ -45,7 +45,7 @@ First: Maelstrom 16/18
 Next: Yasha and Kaya 24/31, Aghanim's Scepter 25, Shadow Blade 26/29
 Late: Black King Bar 32/36 [Against Dark Seer, Snapfire and Jakiro: don't skip it] {Spell immunity for the big fights. Troll Warlord's bash and Life Break still go through it.}
 Job: Your timing is Maelstrom at 16 min. Huskar has Blink Dagger at 14 min.
-Vs Huskar (lane): Heals their team through fights. buy Magic Wand.
+Vs Huskar (lane): Heals the enemy team through fights. buy Magic Wand.
 Vs Troll Warlord: Evasion: right clicks miss. Fight them with spells, not right clicks.
 Vs Dark Seer: Locks you down. buy Black King Bar.
 Vs Snapfire: Magic burst. buy Black King Bar.
@@ -65,7 +65,7 @@ If needed: Black King Bar 31 [Against Dark Seer, Snapfire and Jakiro] instead of
 Job: Your timing is Blink Dagger at 18 min. Troll Warlord has Battle Fury at 15 min.
 Vs Troll Warlord (lane): Evasion: right clicks miss. Fight them with spells, not right clicks.
 Vs Jakiro (lane): Magic burst. buy Black King Bar.
-Vs Huskar: Heals their team through fights. Kill them first or fight short and decisive.
+Vs Huskar: Heals the enemy team through fights. Kill them first or fight short and decisive.
 Vs Dark Seer: Locks you down. buy Black King Bar, Lotus Orb.
 Vs Snapfire: Magic burst. buy Black King Bar, Lotus Orb.
 Watch Troll Warlord: Fight Troll Warlord with your spells: right clicks miss.
@@ -84,8 +84,8 @@ If needed: Force Staff 28 [Against Troll Warlord and Huskar] instead of Mekansm
 Job: Your timing is Rod of Atos at 20 min. Troll Warlord has Battle Fury at 15 min.
 Vs Troll Warlord (lane): Evasion: right clicks miss. buy Force Staff.
 Vs Jakiro (lane): Magic burst. buy Magic Wand.
-Vs Huskar: Heals their team through fights. buy Force Staff.
-Vs Dark Seer: Locks you down. Keep distance until their disable is used.
+Vs Huskar: Heals the enemy team through fights. buy Force Staff.
+Vs Dark Seer: Locks you down. Keep distance until the disable is used.
 Vs Snapfire: Magic burst. Stay spread so one combo can't catch two.
 Watch Troll Warlord, Huskar: buy Force Staff.
 Watch Jakiro: buy Magic Wand.
@@ -102,10 +102,10 @@ Next: Aghanim's Shard 24/27, Aether Lens 25/31
 Late: Aghanim's Scepter 32/38, Refresher Orb 41/45
 If needed: Force Staff 27/28 [Against Troll Warlord and Huskar] instead of Aether Lens
 Job: Your timing is Glimmer Cape at 21 min. Dark Seer has Blink Dagger at 21 min.
-Vs Dark Seer (lane): Locks you down. Keep distance until their disable is used.
+Vs Dark Seer (lane): Locks you down. Keep distance until the disable is used.
 Vs Snapfire (lane, guessed): Magic burst. buy Glimmer Cape.
 Vs Troll Warlord: Evasion: right clicks miss. buy Force Staff.
-Vs Huskar: Heals their team through fights. buy Force Staff.
+Vs Huskar: Heals the enemy team through fights. buy Force Staff.
 Vs Jakiro: Magic burst. buy Glimmer Cape.
 Watch Dark Seer: Keep your distance until Dark Seer's Wall of Replica is used.
 Watch Snapfire, Jakiro: buy Glimmer Cape.

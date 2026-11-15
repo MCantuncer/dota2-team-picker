@@ -53,18 +53,18 @@ const MAX_ANSWERS = 3;
 const THREAT_ORDER: Threat[] = ["illusions", "evasion", "invisible", "heal", "passives", "magicBurst", "disable", "physicalCarry", "unattackable"];
 
 const THREAT_LINE: Record<Threat, { threat: string; tip: string }> = {
-  illusions: { threat: "Illusions split your damage", tip: "Hit the real hero: it is the one their team protects" },
+  illusions: { threat: "Illusions split your damage", tip: "Hit the real hero: it is the one the enemy team protects" },
   evasion: { threat: "Evasion: right clicks miss", tip: "Fight them with spells, not right clicks" },
   invisible: { threat: "Goes invisible", tip: "Ask your support for Dust and Sentries before fights" },
-  heal: { threat: "Heals their team through fights", tip: "Kill them first or fight short and decisive" },
+  heal: { threat: "Heals the enemy team through fights", tip: "Kill them first or fight short and decisive" },
   unattackable: { threat: "Makes heroes unable to be attacked", tip: "Dispel it, or wait it out before you commit" },
   passives: { threat: "Strong passives", tip: "Fight them when they are low, not head on" },
   magicBurst: { threat: "Magic burst", tip: "Stay spread so one combo can't catch two" },
-  disable: { threat: "Locks you down", tip: "Keep distance until their disable is used" },
-  physicalCarry: { threat: "Right-click carry who grows late", tip: "Fight before their big item, not after" },
+  disable: { threat: "Locks you down", tip: "Keep distance until the disable is used" },
+  physicalCarry: { threat: "Right-click carry who grows late", tip: "Fight before this hero's big item, not after" },
 };
-const TANK = { threat: "Tank who soaks your damage", tip: "Don't focus them: kill their damage dealers first" };
-const INITIATOR_TANK = { threat: "Starts fights and soaks your damage", tip: "Don't focus them: kill their damage dealers first" };
+const TANK = { threat: "Tank who soaks your damage", tip: "Don't focus them: kill the enemy damage dealers first" };
+const INITIATOR_TANK = { threat: "Starts fights and soaks your damage", tip: "Don't focus them: kill the enemy damage dealers first" };
 const NOTHING = { threat: "No special threat", tip: "Play your lane: nothing to buy for them" };
 
 export interface EnemyFacts {

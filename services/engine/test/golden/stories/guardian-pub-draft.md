@@ -3,8 +3,8 @@
 Headline: Fight from 16 min, before Drow Ranger has Manta Style at 24.
 
 - 0 to 10 min: Wraith King and Lion have a hard safe lane against Legion Commander and Shadow Shaman. Lion wins 30% and loses 46% of 2,306 lanes against Legion Commander.
-- 10 to 20 min: Sniper's Maelstrom at 16 and Axe's Blink Dagger at 16: ready to fight at 16. Their Legion Commander has Blink Dagger at 15.
-- 20 to 30 min: Their Drow Ranger has Manta Style at 24. Roshan from 20 min, once three key items are in.
+- 10 to 20 min: Sniper's Maelstrom at 16 and Axe's Blink Dagger at 16: ready to fight at 16. Enemy Legion Commander has Blink Dagger at 15.
+- 20 to 30 min: Enemy Drow Ranger has Manta Style at 24. Roshan from 20 min, once three key items are in.
 
 Danger heroes:
 - Drow Ranger: Manta Style at 24 min.
@@ -28,8 +28,8 @@ Late: Black King Bar 32/36 [Against Drow Ranger, Shadow Shaman and Crystal Maide
 Job: Your timing is Radiance at 17 min. Legion Commander has Blink Dagger at 15 min.
 Vs Legion Commander (lane): Magic burst. Stay spread so one combo can't catch two.
 Vs Shadow Shaman (lane, guessed): Magic burst. buy Black King Bar.
-Vs Drow Ranger: Locks you down. Keep distance until their disable is used.
-Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Drow Ranger: Locks you down. Keep distance until the disable is used.
+Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Crystal Maiden: Magic burst. buy Black King Bar.
 Watch Legion Commander: Legion Commander gets Blink Dagger at 15 min: from then, stay spread when Legion Commander is missing.
 Watch Shadow Shaman, Crystal Maiden: buy Black King Bar.
@@ -46,8 +46,8 @@ Next: Hurricane Pike 26/31, Specialist's Array 27/32, Shadow Blade 28/33
 Late: Daedalus 36/41
 If needed: Black King Bar 32 [Against Drow Ranger, Shadow Shaman and Crystal Maiden] instead of Shadow Blade
 Job: Your timing is Maelstrom at 16 min.
-Vs Pudge (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
-Vs Drow Ranger: Locks you down. Keep distance until their disable is used.
+Vs Pudge (lane): Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
+Vs Drow Ranger: Locks you down. Keep distance until the disable is used.
 Vs Legion Commander: Magic burst. Stay spread so one combo can't catch two.
 Vs Shadow Shaman: Magic burst. buy Black King Bar.
 Vs Crystal Maiden: Magic burst. buy Black King Bar.
@@ -66,9 +66,9 @@ Next: Blink Dagger 16/21 {Start fights from 1,200 range.}, Blade Mail 18/22
 Late: Black King Bar 30/31 [Against Drow Ranger, Shadow Shaman and Crystal Maiden: don't skip it] {Spell immunity for the big fights. Meat Hook and Duel still go through it.}, Kaya 34/35
 If needed: Lotus Orb 32 [Against Drow Ranger, Pudge and Legion Commander] instead of Kaya
 Job: Your timing is Blink Dagger at 16 min. Drow Ranger has Manta Style at 24 min.
-Vs Drow Ranger (lane): Locks you down. Keep distance until their disable is used.
+Vs Drow Ranger (lane): Locks you down. Keep distance until the disable is used.
 Vs Crystal Maiden (lane, guessed): Magic burst. buy Black King Bar.
-Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Legion Commander: Magic burst. Stay spread so one combo can't catch two.
 Vs Shadow Shaman: Magic burst. buy Black King Bar.
 Watch Drow Ranger: Keep your distance until Drow Ranger's Marksmanship is used.
@@ -88,7 +88,7 @@ If needed: Glimmer Cape 25/26 [Against Pudge, Legion Commander and Shadow Shaman
 Job: Your timing is Blink Dagger at 25 min. Drow Ranger has Manta Style at 24 min.
 Vs Drow Ranger (lane): Locks you down. buy Force Staff.
 Vs Crystal Maiden (lane, guessed): Magic burst. Stay spread so one combo can't catch two.
-Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Legion Commander: Magic burst. buy Force Staff.
 Vs Shadow Shaman: Magic burst. buy Glimmer Cape.
 Watch Drow Ranger, Legion Commander: buy Force Staff.
@@ -108,7 +108,7 @@ Job: Your timing is Blink Dagger at 18 min. Legion Commander has Blink Dagger at
 Vs Legion Commander (lane): Magic burst. buy Force Staff.
 Vs Shadow Shaman (lane, guessed): Magic burst. buy Glimmer Cape.
 Vs Drow Ranger: Locks you down. buy Force Staff.
-Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Crystal Maiden: Magic burst. Stay spread so one combo can't catch two.
 Watch Legion Commander, Drow Ranger: buy Force Staff.
 Watch Shadow Shaman: buy Glimmer Cape.

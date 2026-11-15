@@ -312,7 +312,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     .sort((a, b) => b.edge - a.edge)[0];
   const fears = [
     ...(threat && threat.edge >= THREAT_TOTAL_EDGE && threat.beats.length
-      ? [`${name(threat.t)} is their biggest threat: strong against ${listNames(threat.beats.map(name))}. Focus or lock them down first`]
+      ? [`${name(threat.t)} is the enemy's biggest threat: strong against ${listNames(threat.beats.map(name))}. Focus or lock them down first`]
       : []),
     ...theirCombos.map((c) => `${name(c.a)} + ${name(c.b)}: ${c.text}`),
     ...input.ours.flatMap((p) => {
@@ -489,9 +489,9 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       phase: "Mid game (10 to 25 min)",
       text:
         ourTiming === "early" || theirTiming === "late"
-          ? "This is your window: group up, take towers and Roshan before their carries are ready."
+          ? "This is your window: group up, take towers and Roshan before the enemy carries are ready."
           : theirTiming === "early"
-            ? "Their strongest time: defend high ground together and fight only on your terms."
+            ? "The enemy's strongest time: defend high ground together and fight only on your terms."
             : `Fight around your core items${firstCombo ? ` and open with ${firstCombo.text}` : ""}.`,
     },
     {
@@ -500,7 +500,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
         ourTiming === "late" || theirTiming === "early"
           ? "You are stronger now: take Roshan, then end with the Aegis."
           : theirTiming === "late"
-            ? "Their carries are stronger: fight only with buyback and a big opening spell, never in a long fight."
+            ? "The enemy carries are stronger: fight only with buyback and a big opening spell, never in a long fight."
             : "Keep vision on Roshan and catch one hero before each objective.",
     },
   ];

@@ -64,6 +64,6 @@ export function dangerLine(f: DangerFacts): string {
   const item = f.item && `${f.item.name} ${f.isSure ? "at" : "around"} ${f.item.minute} min.`;
   const beats = f.kind === "threat" ? `Strong against ${f.beats?.length ? listNames(f.beats) : "your team"}.` : undefined;
   // A carry or initiator is only chosen with a sure item minute; the kind is the fact left without one.
-  const what = item || beats ? undefined : f.kind === "carry" ? "Their likely carry." : "Starts their fights.";
+  const what = item || beats ? undefined : f.kind === "carry" ? "Likely enemy carry." : "Starts the enemy's fights.";
   return `${f.hero}: ${[item, beats, what].filter(Boolean).join(" ")}`;
 }
