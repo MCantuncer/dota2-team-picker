@@ -6,6 +6,7 @@
  */
 import type { Position } from "../trends/games.ts";
 import { clock, deathFindings } from "./deaths.ts";
+import { farmLines, laneFinding } from "./lane.ts";
 import type { DeathFact, GameSummary, Percentiles } from "./summary.ts";
 
 export { clock };
@@ -14,9 +15,10 @@ export { clock };
  * Bump with any change to what the rules find or say. Saved game findings on an older version
  * are worked out again from their summary. 2: deaths percentiles read the right way round
  * (OpenDota already flips them). 3: deaths judged by fight from the game's own data, and no
- * fixed tips: a "what to change" line only comes from the game itself.
+ * fixed tips: a "what to change" line only comes from the game itself. 4: a game's lane and farm
+ * cards name its rivals and minutes.
  */
-export const FINDINGS_VERSION = 3;
+export const FINDINGS_VERSION = 4;
 /** Games a trend finding needs behind it. */
 export const MIN_TREND_GAMES = 4;
 /** How far from the middle (0.5) a percentile must sit: 15 points over games, 25 in one game. */
@@ -147,9 +149,12 @@ export function gameFindings(game: GameSummary, names: Names, limit = 4): Findin
   for (const rule of PERCENTILE_RULES) {
     const f = percentileFinding(rule, [game], SINGLE_GAME_GAP, 1, names);
     // With fight data, a death is a problem only through the fight it was in.
-    if (f && !(hasFights && f.kind === "deaths" && f.tone === "problem")) found.push(f);
+    if (!f || (hasFights && f.kind === "deaths" && f.tone === "problem")) continue;
+    found.push(f.kind === "farm" ? { ...f, happened: [...f.happened, ...farmLines(game, names) ?? []] } : f);
   }
-  const lane = laningFinding([game], SINGLE_LANE_GOLD, 1, names);
+  const lane = game.lane
+    ? laneFinding(game, names, SINGLE_LANE_GOLD)
+    : laningFinding([game], SINGLE_LANE_GOLD, 1, names);
   if (lane) found.push(lane);
   if (hasFights) found.push(...deathFindings(game, names));
   else {

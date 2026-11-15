@@ -1,6 +1,6 @@
 import { assertAlmostEquals, assertEquals } from "jsr:@std/assert@1";
 import { readOpenDotaMatch } from "../report/match.ts";
-import { summarizeGame, type SummaryInput } from "./summary.ts";
+import { summarizeGame, SUMMARY_VERSION, type SummaryInput } from "./summary.ts";
 
 const raw = (): Record<string, unknown> =>
   JSON.parse(Deno.readTextFileSync(new URL("../report/fixtures/all-pick-9072422905.json", import.meta.url)));
@@ -98,7 +98,7 @@ const svenInput = (): SummaryInput => ({
 
 Deno.test("each death carries its fight, the gold fed and the wards up on the map", () => {
   const s = summarizeGame(svenInput());
-  assertEquals(s?.version, 2);
+  assertEquals(s?.version, SUMMARY_VERSION);
   const deaths = s?.deaths ?? [];
   assertEquals(
     deaths.map((d) => [d.time, d.killerHeroId, d.goldFed, d.fight?.label]),
