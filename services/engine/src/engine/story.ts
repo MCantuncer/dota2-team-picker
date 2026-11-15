@@ -169,12 +169,14 @@ const against = (lane: LaneFact) => (lane.theirs.length ? ` against ${listNames(
  * Which lane we win and which is hard, with the real lane result behind each verdict. Facts only: the lines that
  * told each lane what to do ("take their tower", "skip trades") said the same in every game (Can, 2026-11-15).
  */
-function laneText(f: StoryFacts): string {
+function laneText(f: StoryFacts, short = false): string {
   const verb = (lane: LaneFact, one: string, many: string) => (lane.ours.length === 1 ? one : many);
-  const won = f.wonLane && `${who(f.wonLane)} ${verb(f.wonLane, "wins", "win")} the ${f.wonLane.name}${against(f.wonLane)}.`;
-  const hard = f.hardLane && `${who(f.hardLane)} ${verb(f.hardLane, "has", "have")} a hard ${f.hardLane.name}${against(f.hardLane)}.`;
-  // The real lane result behind each verdict, so the reason can be checked.
-  const facts = [f.wonLane?.fact, f.hardLane?.fact].filter(Boolean);
+  const vs = (lane: LaneFact) => (short ? "" : against(lane));
+  const won = f.wonLane && `${who(f.wonLane)} ${verb(f.wonLane, "wins", "win")} the ${f.wonLane.name}${vs(f.wonLane)}.`;
+  const hard = f.hardLane && `${who(f.hardLane)} ${verb(f.hardLane, "has", "have")} a hard ${f.hardLane.name}${vs(f.hardLane)}.`;
+  // The real lane result behind each verdict, so the reason can be checked. The short line under the game clock
+  // leaves it to the Lanes board, which draws the same numbers (Can, 2026-11-15: the long caption read as a wall).
+  const facts = short ? [] : [f.wonLane?.fact, f.hardLane?.fact].filter(Boolean);
   return [won, hard, ...facts].filter(Boolean).join(" ") || "Every lane is even.";
 }
 
@@ -207,7 +209,7 @@ function action(chapter: number, f: StoryFacts, inWindow: (m: number) => boolean
   const roshan = nthMinute(f.spikes, ROSHAN_SPIKES);
   switch (chapter) {
     case 0:
-      return same(laneText(f));
+      return { short: laneText(f, true), long: laneText(f) };
     case 1:
       if (earlyIsOurs) {
         if (!theirs) return same("Group up and take towers.");

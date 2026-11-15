@@ -137,6 +137,15 @@ describe("gameStory", () => {
       "Puck has a hard mid against Pudge.",
     );
     expect(gameStory(facts()).chapters[0]!.text).toBe("Every lane is even.");
+    // Under the game clock the lane chapter is one short line; the numbers stay in the text and on the Lanes board.
+    const lanes = gameStory(
+      facts({
+        wonLane: { name: "safe lane", ours: ["Juggernaut", "Crystal Maiden"], theirs: ["Axe"], fact: "Crystal Maiden wins 42% of 1,547 lanes against Axe." },
+        hardLane: { name: "mid", ours: ["Puck"], theirs: ["Shadow Fiend"], fact: "Puck loses 55% of 1,320 lanes against Shadow Fiend." },
+      }),
+    ).chapters[0]!;
+    expect(lanes.action).toBe("Juggernaut and Crystal Maiden win the safe lane. Puck has a hard mid.");
+    expect(lanes.text).toContain("Puck loses 55% of 1,320 lanes against Shadow Fiend.");
   });
 
   it("plays early against a late game team, and late against an early one", () => {
