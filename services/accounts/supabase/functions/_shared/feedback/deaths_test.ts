@@ -42,7 +42,7 @@ Deno.test("Ursa 21/4/11: a stomp shows only the costliest death, with no advice"
   const found = deathFindings(summary("ursa-9073776545.json", 1000), names);
   assertEquals(found.map((f) => f.headline), ["Costliest Death"]);
   assertEquals(found[0]?.happened, [
-    "37:39: Rubick killed you in a fight your side lost 4 for 0. You were dead 101 seconds and your top Tier 2 fell.",
+    "37:39: Rubick killed you in a fight your side lost 4 for 0. You were dead 101 seconds and your Tier 2 Top Tower fell.",
   ]);
   assertEquals(found[0]?.cost, "2,163 gold to Rubick, almost as much as your other 3 deaths together (2,228).");
   assertEquals(found[0]?.change, null);
@@ -61,7 +61,7 @@ Deno.test("Sven 36/7/23: caught alone, lost fights and good trades, each from th
   assertEquals(alone?.cost, "1,102 gold to Nyx Assassin and Legion Commander, 82 seconds dead.");
   assertEquals(lost?.happened, [
     "18:04: your side lost 5 for 2 (the fight started at 17:42), Necrophos got the kill on you.",
-    "19:49: your side lost 2 for 0, Necrophos got the kill on you, your top Tier 2 fell while you were dead 46 seconds.",
+    "19:49: your side lost 2 for 0, Necrophos got the kill on you, your Tier 2 Top Tower fell while you were dead 46 seconds.",
   ]);
   assertEquals(good?.happened, [
     "42:35: you died, and your side won the fight 1 for 3.",
@@ -116,7 +116,7 @@ Deno.test("a stomp with only cheap deaths shows nothing", () => {
     [death("caught_alone"), death("lost_fight", { goldFed: 500, buildingsLost: ["npc_dota_badguys_tower1_mid"] })],
     0.8,
   );
-  assertEquals(deathFindings(costly, names)[0]?.happened[0]?.endsWith("and your mid Tier 1 fell."), true);
+  assertEquals(deathFindings(costly, names)[0]?.happened[0]?.endsWith("and your Tier 1 Mid Tower fell."), true);
 });
 
 Deno.test("first blood before the horn is said as it is", () => {
@@ -167,6 +167,13 @@ Deno.test("building keys read as the player says them", () => {
       "npc_dota_goodguys_melee_rax_bot",
       "npc_dota_badguys_fort",
     ].map(buildingName),
-    ["top Tier 2", "bottom Tier 1", "Tier 4", "mid ranged barracks", "bottom melee barracks", "Ancient"],
+    [
+      "Tier 2 Top Tower",
+      "Tier 1 Bottom Tower",
+      "Tier 4 Tower",
+      "Mid Ranged Barracks",
+      "Bottom Melee Barracks",
+      "Ancient",
+    ],
   );
 });

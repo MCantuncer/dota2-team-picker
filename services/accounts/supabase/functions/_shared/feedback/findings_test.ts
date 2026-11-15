@@ -58,7 +58,7 @@ const tones = (fs: Finding[]) => fs.map((f) => `${f.tone}:${f.kind}`);
 Deno.test("strong farm over 6 games is a strength, explained with the player's numbers", () => {
   const games = Array.from({ length: 6 }, () => game({ pct: { goldPerMin: 0.85, lastHitsPerMin: 0.8 } }));
   const [farm] = trendFindings(games, names);
-  assertEquals(farm?.headline, "Strong farm");
+  assertEquals(farm?.headline, "Strong Farm");
   assertEquals(
     farm?.pattern,
     "Across 6 games on Monkey King, you had more farm (GPM and last hits) than 83% " +
@@ -72,7 +72,7 @@ Deno.test("many deaths is a problem with no fixed tip, and few deaths a strength
   // OpenDota flips deaths: a low percentile means more deaths than most games.
   const many = trendFindings(Array.from({ length: 5 }, () => game({ pct: { deathsPerMin: 0.2 } })), names);
   assertEquals(tones(many), ["problem:deaths"]);
-  assertEquals(many[0]?.headline, "Too many deaths");
+  assertEquals(many[0]?.headline, "Too Many Deaths");
   assertStringIncludes(many[0]?.pattern ?? "", "more deaths per minute than 80%");
   assertEquals(many[0]?.change, null, "no generic advice");
   const few = trendFindings(Array.from({ length: 5 }, () => game({ pct: { deathsPerMin: 0.8 } })), names);
@@ -99,7 +99,7 @@ Deno.test("Can's Sven game, 9/1/14 in 34 minutes, is a strength for deaths, not 
   const found = gameFindings(sven, { hero: (id) => (id === 18 ? "Sven" : `Hero ${id}`) });
   assertEquals(tones(found).sort(), ["strength:deaths", "strength:laning"]);
   const deaths = found.find((f) => f.kind === "deaths");
-  assertEquals(deaths?.headline, "You stay alive");
+  assertEquals(deaths?.headline, "You Stay Alive");
   assertEquals(deaths?.happened, ["Sven: fewer deaths per minute than 96% of Sven games"]);
   assertEquals(deaths?.pattern, null, "one game says it in its own line");
   assertEquals(deaths?.change, null);
