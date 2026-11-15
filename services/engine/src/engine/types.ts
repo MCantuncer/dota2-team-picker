@@ -110,6 +110,20 @@ export interface Snapshot {
     games: number;
     byKnown: Record<string, { a: number; b: number }>;
   };
+  /**
+   * What drafts like this really won: Radiant's win rate on fair public ranked games, by Radiant's
+   * draft edge once all 10 heroes are picked, with its 95% range. Band i holds edges from cuts[i - 1]
+   * up to (not including) cuts[i]; the first and last bands are open. Only present when the check on
+   * newer games passed (see backtest/win-range.ts).
+   */
+  winRange?: {
+    fittedAt: string;
+    /** Games the bands were fitted on, and the days they were played on. */
+    games: number;
+    days: { from: string; to: string };
+    cuts: number[];
+    bands: { games: number; won: number; low: number; high: number }[];
+  };
   /** Shop items by item id, for item builds. Recipes and items with no cost are left out. */
   items?: Record<string, ItemInfo>;
   /** How often each item is bought on each hero, by game phase, from OpenDota. Keyed by hero id. */
