@@ -113,7 +113,9 @@ async function main() {
   if (values.out) writeFileSync(values.out, `${report}\n`);
 
   if (dryRun) return;
-  if (model && check?.passes) snapshot.winRange = model;
+  if (model && check?.passes) {
+    snapshot.winRange = { ...model, check: check.bands.map((b) => ({ games: b.games, won: Math.round(b.won * 10000) / 10000 })) };
+  }
   else delete snapshot.winRange;
   writeFileSync(values.snapshot!, JSON.stringify(snapshot));
   console.log(snapshot.winRange ? `Saved the win range to ${values.snapshot}` : `No win range in ${values.snapshot}`);

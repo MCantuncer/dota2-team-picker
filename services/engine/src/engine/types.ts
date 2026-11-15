@@ -123,6 +123,8 @@ export interface Snapshot {
     days: { from: string; to: string };
     cuts: number[];
     bands: { games: number; won: number; low: number; high: number }[];
+    /** Per band, the newer games the check used and Radiant's win rate on them, for the Proof Page. */
+    check?: { games: number; won: number }[];
   };
   /** Shop items by item id, for item builds. Recipes and items with no cost are left out. */
   items?: Record<string, ItemInfo>;
