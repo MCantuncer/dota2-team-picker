@@ -3,7 +3,7 @@
  * builds in the game plan. One request for the item list, then one per hero for its item
  * popularity, so they are refreshed once a day rather than on every run.
  */
-import type { ItemInfo, ItemPhases, Snapshot } from "../engine/types";
+import type { ItemAbility, ItemInfo, ItemPhases, ItemStat, Snapshot } from "../engine/types";
 
 const ITEMS_MAX_AGE_DAYS = 1;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -18,6 +18,8 @@ export interface ItemConstantRow {
   cost?: unknown;
   img?: unknown;
   components?: unknown;
+  attrib?: unknown;
+  abilities?: unknown;
 }
 
 /** OpenDota's /heroes/{id}/itemPopularity: times bought per item id in each phase. */
@@ -44,6 +46,45 @@ function lowerLevel(key: string, cost: number, rows: Record<string, ItemConstant
   return typeof below === "number" && below < cost ? lower : undefined;
 }
 
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+
+/** A shop line that adds to the hero: "+ {value} Health", "+ {value}% Evasion". Lines like "COOLDOWN: {value}" are not bonuses. */
+const BONUS = /^\+ ?\{value\}(%?) (.+)$/;
+
+/** "Damage (MELEE)" as "Damage (Melee)": the site writes no word in capitals. */
+const titleWords = (label: string) => label.replace(/\b([A-Z])([A-Z]{2,})\b/g, (_, first: string, rest: string) => first + rest.toLowerCase());
+
+/**
+ * The bonuses an item adds to its hero, from the shop lines in OpenDota's `attrib`. An item with levels lists every
+ * level's amount ("200 / 210 / 220"), so the amount of this level is kept (`dagon_2` is level 2). Zero amounts are
+ * left out: OpenDota lists some bonuses an item no longer gives (Skadi's Health) as 0.
+ */
+export function toItemStats(key: string, attrib: unknown): ItemStat[] {
+  if (!Array.isArray(attrib)) return [];
+  const level = Number(/_(\d+)$/.exec(key)?.[1] ?? 1);
+  return attrib.flatMap((row) => {
+    if (!isRecord(row) || typeof row.display !== "string") return [];
+    const line = BONUS.exec(row.display.trim());
+    if (!line || (typeof row.value !== "string" && typeof row.value !== "number")) return [];
+    const levels = String(row.value).split("/").map((v) => v.trim());
+    const amount = levels[Math.min(level, levels.length) - 1];
+    if (amount === undefined || amount === "" || !Number.isFinite(Number(amount)) || Number(amount) === 0) return [];
+    const n = Number(amount);
+    return [{ value: `${n > 0 ? "+" : ""}${n}${line[1]}`, label: titleWords(line[2]!.trim()) }]; // The pattern has two groups.
+  });
+}
+
+/** The item's own spells by name. OpenDota's "upgrade" lines are what Aghanim's adds to a hero, not the item's spell. */
+export function toItemAbilities(abilities: unknown): ItemAbility[] {
+  if (!Array.isArray(abilities)) return [];
+  return abilities.flatMap((a): ItemAbility[] => {
+    if (!isRecord(a) || typeof a.title !== "string" || !a.title.trim()) return [];
+    if (a.type === "passive") return [{ kind: "passive", name: a.title.trim() }];
+    if (a.type === "active" || a.type === "toggle" || a.type === "use") return [{ kind: "active", name: a.title.trim() }];
+    return [];
+  });
+}
+
 /** Turns OpenDota's item constants into items by id, dropping recipes and free items. */
 export function toItems(rows: Record<string, ItemConstantRow>): Record<string, ItemInfo> {
   const idByKey = new Map<string, number>();
@@ -55,6 +96,8 @@ export function toItems(rows: Record<string, ItemConstantRow>): Record<string, I
     const listed = Array.isArray(row.components) ? row.components : [];
     const lower = lowerLevel(key, row.cost, rows);
     const components = listed.length || lower === undefined ? listed : [lower];
+    const stats = toItemStats(key, row.attrib);
+    const abilities = toItemAbilities(row.abilities);
     items[row.id] = {
       key,
       name: row.dname,
@@ -65,6 +108,8 @@ export function toItems(rows: Record<string, ItemConstantRow>): Record<string, I
         const id = typeof c === "string" ? idByKey.get(c) : undefined;
         return id === undefined ? [] : [id];
       }),
+      ...(stats.length ? { stats } : {}),
+      ...(abilities.length ? { abilities } : {}),
     };
   }
   return items;
