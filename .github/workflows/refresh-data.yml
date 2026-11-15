@@ -84,6 +84,14 @@ jobs:
       - name: Save ranked games for the backtest
         continue-on-error: true
         run: npm run collect-matches -w services/engine -- --max 300 ${{ inputs.dry_run && '--dry-run' || '' }}
+      # The Proof Page numbers (proof.json in the bucket): the engine and two rivals
+      # on the newest 4,000 saved games of the last 28 days, each scored with the
+      # hero data copy built before it. Once a day: a newer proof.json is kept.
+      - name: Build the Proof Page numbers
+        continue-on-error: true
+        timeout-minutes: 15
+        working-directory: services/engine
+        run: npm run proof -- --out "$RUNNER_TEMP/proof.md" ${{ inputs.dry_run && '--dry-run' || '' }} && cat "$RUNNER_TEMP/proof.md" >> "$GITHUB_STEP_SUMMARY"
       - name: Open a review issue for the new patch
         if: ${{ steps.fetch.outputs.new_patch && !inputs.dry_run }}
         env:

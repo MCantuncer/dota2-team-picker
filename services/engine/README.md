@@ -122,6 +122,17 @@ saved games and puts both tables in the "Engine backtest" job summary, so an eng
 its effect before it merges. PRs that don't touch the engine skip it, since both sides would print
 the same tables.
 
+### Proof Page numbers
+
+`npm run proof` scores the newest 4,000 saved games of the last 28 days the same way as the live
+backtest (each game with the daily copy built before it) and writes what the public Proof Page
+shows to `proof.json` in the bucket (`src/backtest/proof.ts`): the win lift of the engine's top 3
+and of both rivals, a running line of the engine's lift day by day, the lift by rank group,
+position and pick round, and the six newest picks where a player took the engine's first choice
+(one per hero, wins and losses alike), plus the checked win range bands of the same run. The refresh
+Action runs it once a day; a `proof.json`
+newer than 20 hours is left as it is.
+
 ## Fixed drafts
 
 `npm run compare-drafts` prints the top 8 suggestions, with their reasons, for a fixed set of drafts
@@ -294,6 +305,7 @@ bucket in Supabase Storage (created by a migration in `services/accounts`):
 | File                      | Use                                                            |
 | ------------------------- | -------------------------------------------------------------- |
 | `snapshot.json`           | The latest data. The website reads it, cached for 5 minutes.   |
+| `proof.json`              | The Proof Page numbers (see "Proof Page numbers").             |
 | `daily/<YYYY-MM-DD>.json` | A copy per day, to compare days or roll back a bad run.        |
 | `eval/matches-<YYYY-MM>.json` | Ranked games saved for the backtest (see below).          |
 | `eval/public-edges.json`  | Draft edges of fair public games for the win range.            |
