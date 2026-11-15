@@ -2,7 +2,7 @@ name: Refresh hero data
 
 on:
   # Four runs a day, off the hour (GitHub delays jobs queued on the hour).
-  # 4 x 250 pages plus 4 x up to 140 requests for backtest games stays
+  # 4 x 250 pages plus 4 x up to 300 requests for backtest games stays
   # inside OpenDota's free daily allowance (the collector stops early when it runs low).
   # The last run starts 14:17 UTC and the lookups are free again by about
   # 15:45 UTC (later when GitHub delays the run), before the evening games in
@@ -66,13 +66,24 @@ jobs:
         continue-on-error: true
         working-directory: services/engine
         run: npm run fit-win-chance -- --out "$RUNNER_TEMP/win-chance.md" && cat "$RUNNER_TEMP/win-chance.md" >> "$GITHUB_STEP_SUMMARY"
+      # Score yesterday's fair public ranked games (about 4,000, from the OpenDota
+      # explorer) into eval/public-edges.json, refit the win range bands on the last
+      # 21 days and check them on the newest quarter. Only bands that pass go into
+      # the data. If this step fails, the data keeps the last checked bands.
+      - name: Fit the draft win range
+        continue-on-error: true
+        working-directory: services/engine
+        run: npm run fit-win-range -- --out "$RUNNER_TEMP/win-range.md" ${{ inputs.dry_run && '--dry-run' || '' }} && cat "$RUNNER_TEMP/win-range.md" >> "$GITHUB_STEP_SUMMARY"
       - if: ${{ !inputs.dry_run }}
         run: npm run upload-data -w services/engine
       # Recent ranked games for the engine backtest, saved to eval/ in the same
       # bucket. A failure here must not hold back the hero data uploaded above.
+      # 300 a run gives about 420 complete games a day (about a third have more than
+      # 10 pick rows and are skipped), so the Proof Page reaches 15,000 games in
+      # about five weeks instead of fifteen.
       - name: Save ranked games for the backtest
         continue-on-error: true
-        run: npm run collect-matches -w services/engine -- --max 100 ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: npm run collect-matches -w services/engine -- --max 300 ${{ inputs.dry_run && '--dry-run' || '' }}
       # The Proof Page numbers (proof.json in the bucket): the engine and two rivals
       # on the newest 4,000 saved games of the last 28 days, each scored with the
       # hero data copy built before it. Once a day: a newer proof.json is kept.

@@ -163,6 +163,25 @@ Only a model that passes is saved as `winModel` in the snapshot; without one, `w
 null and nothing is shown. The refresh Action refits it on every run and puts the check table in
 its job summary.
 
+### Win range
+
+The saved games over-count Radiant wins (the old feed they came from leaned Radiant), so the win
+range is fitted on fair public games instead. `npm run fit-win-range` adds each missing day of the
+last 21 to `eval/public-edges.json` in the bucket: one OpenDota explorer query for that day's ranked
+All Pick games over 15 minutes (one game in 120, about 4,000), each scored with `draftEdge` on the
+`daily/` copy of the day before, so nothing from the game's own day leaks in. Only Radiant's edge
+and the result are kept. The explorer has no pick order, so only the 10-hero draft is fitted.
+
+The games are cut into 10 bands of Radiant's edge (narrow at the ends, wider in the middle), and
+each band keeps Radiant's real win rate with its 95% range. The bands count the side, because
+Radiant wins about 53% of even drafts: `winRange(model, radiantEdge, radiant)` gives Radiant its
+band and Dire the other side of it. The bands are fitted on the older three quarters of the games
+and checked on the newest quarter: every band with at least 300 newer games must land inside the
+combined noise, or the band's favourite must have won more than shown (by at most 5 points past
+the noise). A careful range is fine; a range that shows a side too high is not. Only bands that
+pass are saved as `winRange` in the snapshot. The refresh Action runs this on every run and puts
+the check table in its job summary.
+
 ## WCST team plan
 
 WCST (Wombo-Combo Super Team) plans all five heroes for a Captain mode team at once, and
@@ -288,6 +307,7 @@ bucket in Supabase Storage (created by a migration in `services/accounts`):
 | `proof.json`              | The Proof Page numbers (see "Proof Page numbers").             |
 | `daily/<YYYY-MM-DD>.json` | A copy per day, to compare days or roll back a bad run.        |
 | `eval/matches-<YYYY-MM>.json` | Ranked games saved for the backtest (see below).          |
+| `eval/public-edges.json`  | Draft edges of fair public games for the win range.            |
 
 Public URL: `https://odigcdwsvajkbvcxeskj.supabase.co/storage/v1/object/public/hero-data/snapshot.json`.
 The upload needs the project's secret key in the repo's `SUPABASE_SECRET_KEY` Actions secret
@@ -321,8 +341,8 @@ lane (STRATZ), when he finishes his big item with the win rates of early and lat
 
 ### Games for the backtest
 
-After the upload, each run also saves about 100 new ranked All Pick games
-(`npm run collect-matches -- --max 100`), one file per month under `eval/`. The games are drawn at
+After the upload, each run also saves up to 300 new ranked All Pick games
+(`npm run collect-matches -- --max 300`), one file per month under `eval/`. The games are drawn at
 random from the OpenDota explorer's ranked All Pick games that started 2 to 8 hours earlier, so they are
 a fair sample: the `/publicMatches` feed used before was not (Radiant won 60.5% of the 2,297 games
 saved from it, against 53.0% of 80,514 explorer games over the same days). For each game it keeps
