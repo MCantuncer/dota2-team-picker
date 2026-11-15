@@ -52,7 +52,7 @@ Deno.test("a problem from last week that is gone this week shows as improved", (
   const lastWeek = [8, 9, 10, 11].map((d) => game(d, 0.1));
   const thisWeek = [1, 2, 3, 4].map((d) => game(d, 0.5));
   const fb = buildPlayerFeedback([...thisWeek, ...lastWeek], names, NOW_S);
-  assertEquals(fb.improved, [{ kind: "deaths", headline: "Too many deaths" }]);
+  assertEquals(fb.improved, [{ kind: "deaths", headline: "Too Many Deaths" }]);
 });
 
 Deno.test("improved needs enough parsed games in both weeks", () => {

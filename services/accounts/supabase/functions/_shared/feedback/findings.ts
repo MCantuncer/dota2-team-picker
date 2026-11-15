@@ -7,6 +7,7 @@
 import type { Position } from "../trends/games.ts";
 import { clock, deathFindings } from "./deaths.ts";
 import { farmLines, laneFinding } from "./lane.ts";
+import { teamLines } from "./team.ts";
 import type { DeathFact, GameSummary, Percentiles } from "./summary.ts";
 
 export { clock };
@@ -16,9 +17,10 @@ export { clock };
  * are worked out again from their summary. 2: deaths percentiles read the right way round
  * (OpenDota already flips them). 3: deaths judged by fight from the game's own data, and no
  * fixed tips: a "what to change" line only comes from the game itself. 4: a game's lane and farm
- * cards name its rivals and minutes.
+ * cards name its rivals and minutes. 5: damage, towers and healing cards put the player next to
+ * both sides, healing is judged for supports, and headlines are in Title Case.
  */
-export const FINDINGS_VERSION = 4;
+export const FINDINGS_VERSION = 5;
 /** Games a trend finding needs behind it. */
 export const MIN_TREND_GAMES = 4;
 /** How far from the middle (0.5) a percentile must sit: 15 points over games, 25 in one game. */
@@ -83,6 +85,8 @@ interface PercentileRule {
   headlines: Record<Tone, string>;
   /** The habit a game is split on for the win % line, e.g. "below median farm". */
   weakHabit: string;
+  /** Leaves a game out, e.g. healing for a hero that healed nobody. */
+  isFor?: (g: GameSummary) => boolean;
 }
 
 const PERCENTILE_RULES: PercentileRule[] = [
@@ -92,7 +96,7 @@ const PERCENTILE_RULES: PercentileRule[] = [
     roles: ["core"],
     better: "more farm (GPM and last hits)",
     worse: "less farm (GPM and last hits)",
-    headlines: { strength: "Strong farm", problem: "Low farm" },
+    headlines: { strength: "Strong Farm", problem: "Low Farm" },
     weakHabit: "below median farm",
   },
   {
@@ -101,7 +105,7 @@ const PERCENTILE_RULES: PercentileRule[] = [
     roles: ["core", "support"],
     better: "more hero damage per minute",
     worse: "less hero damage per minute",
-    headlines: { strength: "High hero damage", problem: "Low hero damage" },
+    headlines: { strength: "High Hero Damage", problem: "Low Hero Damage" },
     weakHabit: "below median hero damage",
   },
   {
@@ -110,7 +114,7 @@ const PERCENTILE_RULES: PercentileRule[] = [
     roles: ["core", "support"],
     better: "fewer deaths per minute",
     worse: "more deaths per minute",
-    headlines: { strength: "You stay alive", problem: "Too many deaths" },
+    headlines: { strength: "You Stay Alive", problem: "Too Many Deaths" },
     weakHabit: "above median deaths",
   },
   {
@@ -119,8 +123,19 @@ const PERCENTILE_RULES: PercentileRule[] = [
     roles: ["core"],
     better: "more tower damage",
     worse: "less tower damage",
-    headlines: { strength: "Strong tower pressure", problem: "Little tower damage" },
+    headlines: { strength: "Strong Tower Pressure", problem: "Little Tower Damage" },
     weakHabit: "below median tower damage",
+  },
+  {
+    kind: "healing",
+    read: (p) => p.heroHealingPerMin,
+    roles: ["support"],
+    better: "more healing per minute",
+    worse: "less healing per minute",
+    headlines: { strength: "Strong Healing", problem: "Low Healing" },
+    weakHabit: "below median healing",
+    // A hero with no healing spell or item heals nobody; its percentile says nothing.
+    isFor: (g) => g.card.heroHealing > 0,
   },
 ];
 
@@ -150,7 +165,8 @@ export function gameFindings(game: GameSummary, names: Names, limit = 4): Findin
     const f = percentileFinding(rule, [game], SINGLE_GAME_GAP, 1, names);
     // With fight data, a death is a problem only through the fight it was in.
     if (!f || (hasFights && f.kind === "deaths" && f.tone === "problem")) continue;
-    found.push(f.kind === "farm" ? { ...f, happened: [...f.happened, ...farmLines(game, names) ?? []] } : f);
+    const detail = f.kind === "farm" ? farmLines(game, names) : teamLines(game, f.kind, names);
+    found.push({ ...f, happened: [...f.happened, ...detail ?? []] });
   }
   const lane = game.lane
     ? laneFinding(game, names, SINGLE_LANE_GOLD)
@@ -164,7 +180,7 @@ export function gameFindings(game: GameSummary, names: Names, limit = 4): Findin
         kind: "early_deaths",
         tone: "problem",
         score: early.length,
-        headline: `${early.length} deaths before 10 minutes`,
+        headline: `${early.length} Deaths Before 10 Minutes`,
         happened: early.map((d) => deathLine(d, names)),
         pattern: null,
         cost: `${sum(early.map((d) => d.goldLost))} gold lost and ${sum(early.map((d) => d.timeDead))} seconds dead.`,
@@ -185,7 +201,8 @@ function percentileFinding(
 ): Finding | null {
   const rows = games.flatMap((g) => {
     const value = g.percentiles ? rule.read(g.percentiles) : null;
-    return value === null || !rule.roles.includes(roleOf(g.position)) ? [] : [{ g, value }];
+    const fits = rule.roles.includes(roleOf(g.position)) && (rule.isFor?.(g) ?? true);
+    return value === null || !fits ? [] : [{ g, value }];
   });
   if (rows.length < minGames) return null;
   const mean = average(rows.map((r) => r.value));
@@ -226,7 +243,7 @@ function laningFinding(games: GameSummary[], gold: number, minGames: number, nam
     kind: "laning",
     tone,
     score: (Math.abs(mean) / gold) * rows.length * 0.15,
-    headline: tone === "strength" ? "You win your lanes" : "You fall behind in lane",
+    headline: tone === "strength" ? "You Win Your Lanes" : "You Fall Behind in Lane",
     happened: rows.map((r) =>
       `${names.hero(r.g.heroId)}: ${r.diff >= 0 ? "+" : ""}${r.diff} gold against your lane opponent at 10:00, ` +
       `${r.g.lastHitsAt10 ?? "?"} last hits and ${r.g.deniesAt10 ?? "?"} denies`
@@ -255,7 +272,7 @@ function earlyDeathsFinding(games: GameSummary[], names: Names): Finding | null 
     kind: "early_deaths",
     tone: "problem",
     score: perGame * parsed.length * 0.2,
-    headline: "Early deaths are costing your lanes",
+    headline: "Early Deaths Are Costing Your Lanes",
     happened: early.map((e) => `${names.hero(e.g.heroId)}: ${deathLine(e.d, names)}`),
     pattern: rotationPattern(deaths, names) ??
       `You died ${early.length} times before 10 minutes in ${gamesWithEarly.length} of your last ${parsed.length} games.`,

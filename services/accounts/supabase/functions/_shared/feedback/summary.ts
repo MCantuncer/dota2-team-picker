@@ -9,13 +9,15 @@ import { isRadiantSlot, type Match, type MatchPlayer } from "../report/match.ts"
 import type { Position } from "../trends/games.ts";
 import { type FightScore, scoreDeaths, tookRuneBefore, type WardsUp, wardsUpAt } from "./fights.ts";
 import { type FarmDetail, farmDetail, type LaneDetail, laneDetail } from "./lane.ts";
+import { type TeamDetail, teamDetail } from "./team.ts";
 
 /**
  * Bump with any change to GameSummary's shape, and keep readers able to read older ones.
  * 2: each death has the gold fed, its fight, the wards up and where the killer came from.
  * 3: the lane minute by minute against each rival, and last hits every 10 minutes.
+ * 4: hero damage, tower damage and healing of all ten heroes.
  */
-export const SUMMARY_VERSION = 3;
+export const SUMMARY_VERSION = 4;
 const LANE_MINUTE = 10;
 const HERO_KEY_PREFIX = "npc_dota_hero_";
 
@@ -59,7 +61,7 @@ export interface DeathFact {
 
 export interface GameSummary {
   /** Older versions stay readable: fields added later are optional. */
-  version: 1 | 2 | typeof SUMMARY_VERSION;
+  version: 1 | 2 | 3 | typeof SUMMARY_VERSION;
   factsVersion: typeof FACTS_VERSION;
   matchId: number;
   /** Unix seconds. */
@@ -82,6 +84,8 @@ export interface GameSummary {
   lane?: LaneDetail | null;
   /** Version 3 and up; null when unparsed or shorter than 10 minutes. */
   farm?: FarmDetail | null;
+  /** Version 4 and up. */
+  team?: TeamDetail;
 }
 
 export interface SummaryInput {
@@ -127,6 +131,7 @@ export function summarizeGame({ match, accountId, startTime, position, items, he
     deaths: match.isParsed ? deathsOf(me, enemies, isRadiant, match, heroIdsByKey) : null,
     lane: hasLane ? laneDetail(me, enemies) : null,
     farm: match.isParsed ? farmDetail(me, enemies, match.durationS) : null,
+    team: teamDetail(match, isRadiant),
   };
 }
 
