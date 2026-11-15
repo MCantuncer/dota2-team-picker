@@ -81,6 +81,12 @@ describe("proofOf", () => {
   }
   const proof = proofOf(records, "2026-11-21T03:00:00Z")!;
 
+  it("carries the win range it was given", () => {
+    expect(proof.winRange).toBeNull();
+    const winRange = { fittedAt: "x", games: 1, days: { from: "a", to: "b" }, cuts: [], bands: [{ games: 1, won: 0.5, low: 0.4, high: 0.6 }] };
+    expect(proofOf(records, "now", winRange)!.winRange).toBe(winRange);
+  });
+
   it("counts games, picks and days", () => {
     expect(proof).toMatchObject({ from: "2026-11-01", to: "2026-11-20", games: 200, picks: 2000 });
     expect(proof.rivals.engine.top3.picks).toBe(667);

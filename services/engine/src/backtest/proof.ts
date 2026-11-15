@@ -6,7 +6,7 @@
  */
 import type { EvalMatch } from "../data/eval-matches";
 import type { Engine } from "../engine/score";
-import { rankGroup, type Position } from "../engine/types";
+import { rankGroup, type Position, type Snapshot } from "../engine/types";
 import { bracketOf, draftAt, engineSuggester, metaSuggester, popularSuggester } from "./backtest";
 
 const TOP = 8;
@@ -127,6 +127,8 @@ export interface Proof {
    * result, so the page shows real games rather than chosen wins.
    */
   examples: ProofExample[];
+  /** The checked win range bands of the same run, for the page's win chance check; null when none passed. */
+  winRange: Snapshot["winRange"] | null;
 }
 
 const dayOf = (t: number) => new Date(t * 1000).toISOString().slice(0, 10);
@@ -144,7 +146,7 @@ function groupBy(records: PickRecord[], key: (r: PickRecord) => string | null): 
 }
 
 /** All the Proof Page numbers from scored picks. Null when there are none. */
-export function proofOf(records: PickRecord[], computedAt: string): Proof | null {
+export function proofOf(records: PickRecord[], computedAt: string, winRange: Snapshot["winRange"] | null = null): Proof | null {
   if (records.length === 0) return null;
   const sorted = [...records].sort((a, b) => a.startTime - b.startTime);
   const rivals = Object.fromEntries(
@@ -188,5 +190,6 @@ export function proofOf(records: PickRecord[], computedAt: string): Proof | null
     byRole: groupBy(sorted, (r) => String(r.position)),
     byRound: groupBy(sorted, (r) => String(r.round)),
     examples,
+    winRange,
   };
 }

@@ -129,7 +129,8 @@ backtest (each game with the daily copy built before it) and writes what the pub
 shows to `proof.json` in the bucket (`src/backtest/proof.ts`): the win lift of the engine's top 3
 and of both rivals, a running line of the engine's lift day by day, the lift by rank group,
 position and pick round, and the six newest picks where a player took the engine's first choice
-(one per hero, wins and losses alike). The refresh Action runs it once a day; a `proof.json`
+(one per hero, wins and losses alike), plus the checked win range bands of the same run. The refresh
+Action runs it once a day; a `proof.json`
 newer than 20 hours is left as it is.
 
 ## Fixed drafts

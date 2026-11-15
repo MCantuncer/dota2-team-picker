@@ -3,9 +3,12 @@
  * games, each scored with the daily hero data copy built before it started. Runs at most once a
  * day: a proof.json newer than --min-age-hours is left as it is.
  *
- *   SUPABASE_URL=... SUPABASE_SECRET_KEY=... npm run proof -- [--days 28] [--max-games 4000] [--min-age-hours 20] [--json proof.json] [--out summary.md] [--dry-run]
+ * The win range bands come from --snapshot (the refresh's data, just fitted), so the page's win chance check
+ * shows the bands the Draft page uses.
+ *
+ *   SUPABASE_URL=... SUPABASE_SECRET_KEY=... npm run proof -- [--snapshot data/snapshot.json] [--days 28] [--max-games 4000] [--min-age-hours 20] [--json proof.json] [--out summary.md] [--dry-run]
  */
-import { writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { createClient } from "@supabase/supabase-js";
 import { copyDays, dailySource, scoreByCopy } from "../src/backtest/live";
@@ -14,10 +17,12 @@ import { loadEvalGames, loadHeroData, monthPaths } from "../src/data/eval-store"
 import { HERO_DATA_URL } from "../src/data/pull";
 import { BUCKET } from "../src/data/upload";
 import { Engine } from "../src/engine/score";
+import type { Snapshot } from "../src/engine/types";
 
 const { values } = parseArgs({
   options: {
     days: { type: "string", default: "28" },
+    snapshot: { type: "string", default: "data/snapshot.json" },
     "max-games": { type: "string", default: "4000" },
     "min-age-hours": { type: "string", default: "20" },
     json: { type: "string" },
@@ -101,7 +106,8 @@ async function main() {
     },
     (snapshot, group) => records.push(...pickRecords(new Engine(snapshot), group)),
   );
-  const proof = proofOf(records, new Date().toISOString());
+  const snapshot = existsSync(values.snapshot!) ? (JSON.parse(readFileSync(values.snapshot!, "utf8")) as Snapshot) : null;
+  const proof = proofOf(records, new Date().toISOString(), snapshot?.winRange ?? null);
   if (!proof) throw new Error("No game could be scored with a hero data copy built before it");
 
   const text = summary(proof);
