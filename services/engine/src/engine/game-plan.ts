@@ -1,12 +1,12 @@
 import { SURE_POSITION_ODDS, chooseDangerHeroes, dangerLine } from "./danger";
-import { pickFallbacks, type Scaling, type Situation } from "./fallbacks";
+import { keyItemLateLine, type Situation } from "./fallbacks";
 import { withEffects } from "./item-effects";
 import { enemyList, threatRows, type EnemyNote, type ThreatRow, type TipFacts } from "./enemy-list";
 import { laneAdjusted } from "./lane-items";
 import { laneOdds, pairLane, pairText, type PairLane } from "./lane-odds";
 import type { MatchupGame } from "./matchup-talents";
 import { skillPlan, type SkillPlan } from "./skill-plan";
-import { gameStory, ourWindow, type Story, type Timing } from "./story";
+import { gameStory, type Story, type Timing } from "./story";
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
 import { isUpgradedBoots, itemBuild, KEY_ITEM_MIN_COST, listNames, type BuildItem, type ItemBuild } from "./item-build";
 import { guessEnemyPositions, knownPositions, type PositionFit } from "./positions";
@@ -74,11 +74,11 @@ export interface PlayerPlan {
   heroId: number;
   position: Position;
   build: ItemBuild | null;
-  /** What this player does to win, in a sentence or two. */
+  /** What this player's game turns on: their key item minute, their lane enemy's, their combo. Empty when none is known. */
   job: string;
-  /** What to do if their lane or items go wrong, at most two lines. */
+  /** What high-rank wins did when this player's plan went wrong, only where measured (see fallbacks.ts). */
   fallbacks: string[];
-  /** The situation of each fallback line, same order ("laneLost", "keyItemLate", "carryFree"). */
+  /** The situation of each fallback line, same order ("keyItemLate"). */
   fallbackSituations?: Situation[];
   /** The five enemies as this player meets them, in-lane first (see enemy-list.ts). */
   enemies: EnemyNote[];
@@ -128,10 +128,6 @@ export interface GamePlan {
   danger: string[];
   roadmap: { phase: string; text: string }[];
   players: PlayerPlan[];
-  /** What the team does if it is behind or ahead at 20 minutes. */
-  teamFallbacks: string[];
-  /** The situation of each team fallback line, same order ("behindAt20", "aheadAt20"). */
-  teamFallbackSituations?: Situation[];
   /** The game in four timed chapters with a one-line headline. */
   story: Story;
 }
@@ -194,10 +190,10 @@ function winCondition(ours: GamePlan["ourStyle"], theirs: GamePlan["theirStyle"]
   return plan;
 }
 
+/** The lane's verdict as a fact, without advice: the real lane result follows it when the snapshot has one. */
 function laneText(verdict: LaneVerdict, theirNames: string): string {
-  if (verdict === "win") return `You should win this lane against ${theirNames}: trade often and pressure them.`;
-  if (verdict === "hard") return `Hard lane against ${theirNames}: farm safely, give up kills less than you give up creeps.`;
-  return `Even lane against ${theirNames}: the better last hits win it.`;
+  const against = theirNames ? ` against ${theirNames}` : "";
+  return `${{ win: "Winning", even: "Even", hard: "Hard" }[verdict]} lane${against}.`;
 }
 
 /**
@@ -236,34 +232,24 @@ export function itemJourney(
   return { itemId: key.itemId, late: paths.late, running: paths.running, onTime: paths.onTime, games, steps: steps.slice(first), keyLater };
 }
 
+/**
+ * What this player's game turns on, from this draft only: their key item minute, the minute the enemy they meet
+ * most in lane gets theirs, and their combo. Empty when none is known; no role advice, since that said the same
+ * thing in every game (Can, 2026-11-15).
+ */
 function playerJob(
-  position: Position,
-  name: string,
-  isInitiator: boolean,
-  item: ItemBuild["core"][number] | undefined,
-  window: Timing,
-  hasCarry: boolean,
-  combo?: string,
+  item: { name: string; minute: number; around: boolean } | undefined,
+  laneEnemy: { hero: string; item: string; minute: number; around: boolean } | undefined,
+  combo: string | undefined,
 ): string {
-  const theirLane = hasCarry ? "their carry's lane" : "their safe lane";
-  const timingText = item ? ` Your timing is ${item.name} around minute ${item.minute}.` : "";
-  const comboText = combo ? ` Set up ${combo}.` : "";
-  switch (position) {
-    case 1:
-      return window === "early"
-        ? `Farm fast, then join every push: this game should end before 30 minutes.${timingText}${comboText}`
-        : `Farm and carry the late game; join fights once your items are in.${timingText}${comboText}`;
-    case 2:
-      return `Win your lane, then use runes to help the side lanes.${timingText}${comboText}`;
-    case 3:
-      return isInitiator
-        ? `Make ${theirLane} hard, then start the team's fights as ${name}.${timingText}${comboText}`
-        : `Make ${theirLane} hard and soak damage at the front in fights.${timingText}${comboText}`;
-    case 4:
-      return `Help win the off lane, then look for kills around the map with your mid.${timingText}${comboText}`;
-    case 5:
-      return `Keep your carry alive in lane and place vision; save your key spell for their dive.${timingText}${comboText}`;
-  }
+  const at = (x: { minute: number; around: boolean }) => `${x.around ? "around" : "at"} ${x.minute} min`;
+  return [
+    item && `Your timing is ${item.name} ${at(item)}.`,
+    laneEnemy && `${laneEnemy.hero} has ${laneEnemy.item} ${at(laneEnemy)}.`,
+    combo && `Set up ${combo}.`,
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 /** The game plan for a finished draft. Needs all ten heroes. */
@@ -385,7 +371,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       kind,
       ...(item ? { item: { name: item.name, minute: item.minute } } : {}),
       isSure: item?.exact ?? false,
-      window: ourWindow(timing(ourStyle?.key), timing(theirStyle?.key)),
+      beats: ourIds.filter((o) => engine.matchupEdge(id, o, bracket) >= THREAT_EDGE).map(name),
     });
   });
 
@@ -404,6 +390,20 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
   };
   const tipItems = { dust: itemArt("dust"), blink: itemArt("blink") };
 
+  /**
+   * The key item of the enemy a lane meets most (the likeliest laner first, see LanePlan.pairs), else of the first
+   * enemy laner with a sure one, for the player's line: "Shadow Fiend has Eul's Scepter of Divinity at 11 min."
+   */
+  const laneEnemyItem = (lane: LanePlan) => {
+    const byWeight = [...(lane.pairs ?? [])].sort((a, b) => b.weight - a.weight).map((pair) => pair.enemy);
+    for (const id of [...byWeight, ...lane.theirs]) {
+      const position = positionOf(id);
+      const item = position !== undefined ? sureKeyItem(id, position) : undefined;
+      if (item) return { hero: name(id), item: item.name, minute: item.minute, around: !item.exact };
+    }
+    return undefined;
+  };
+
   const players = input.ours.map((p): PlayerPlan => {
     const usual = itemBuild(engine.data, p.heroId, p.position, input.theirs, bracket);
     const lane = lanes.find((l) => l.ours.includes(p.heroId))!; // Every position is in a lane.
@@ -412,13 +412,13 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     const build = laned && items ? withEffects(laned, input.theirs.map((id) => engine.hero(id)), items) : laned;
     const combo = ourCombos.find((c) => c.a === p.heroId || c.b === p.heroId);
     const partner = combo && name(combo.a === p.heroId ? combo.b : combo.a);
-    const isInitiator = traitsOf(engine.hero(p.heroId)).has("initiation");
     const { matchups } = input;
     // A hero's null (its lookup failed) stays null; a hero missing from the answer had no games.
     const answered = typeof matchups === "object" && matchups !== null;
     const games = answered ? (matchups[p.heroId] === undefined ? [] : matchups[p.heroId]) : matchups;
     const skills = skillPlan(engine.data, p.heroId, p.position, input.theirs.map(name), games);
     const journey = itemJourney(engine, build, p.heroId, p.position);
+    const mine = keyItem(engine, build, p.heroId, p.position);
     const enemies = enemyList(
       build,
       input.theirs.map((id, i) => {
@@ -442,12 +442,8 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       position: p.position,
       build,
       job: playerJob(
-        p.position,
-        name(p.heroId),
-        isInitiator,
-        keyItem(engine, build, p.heroId, p.position),
-        ourWindow(timing(ourStyle?.key), timing(theirStyle?.key)),
-        theirCarry !== undefined,
+        mine && { name: mine.name, minute: mine.minute, around: build?.timings === "around" },
+        laneEnemyItem(lane),
         combo && `${combo.text} with ${partner}`,
       ),
       fallbacks: [],
@@ -458,35 +454,19 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     };
   });
 
-  const laneOf = (heroId: number) => lanes.find((l) => l.ours.includes(heroId))!; // Every position is in a lane.
   const carry = players.find((p) => p.position === 1);
-  const carryItem = keyItem(engine, carry?.build ?? null, carry?.heroId, 1);
-  const enemyAt = (p: Position) => (theirByPos.has(p) ? name(theirByPos.get(p)!) : undefined); // has() checked.
   const enemyCarry = theirCarry !== undefined ? name(theirCarry) : undefined;
   // With a journey, the Story's late minute is the map's, so both say the same "late after".
   players.forEach((p) => {
     const item = keyItem(engine, p.build, p.heroId, p.position);
     const lateMinute = p.journey?.late ?? item?.lateMinute;
     if (item) p.keyItem = { itemId: item.itemId, name: item.name, ...(lateMinute !== undefined ? { lateMinute } : {}) };
-  });
-  const picked = pickFallbacks({
-    players: players.map((p) => ({
-      position: p.position,
-      hero: name(p.heroId),
-      lane: laneOf(p.heroId).verdict,
-      ...(p.keyItem ? { keyItem: { name: p.keyItem.name, lateMinute: p.keyItem.lateMinute } } : {}),
-    })),
-    offLaneHard: lanes[2]!.verdict === "hard", // LANES has three entries, the off lane last.
-    scaling: scaling(timing(ourStyle?.key), timing(theirStyle?.key)),
-    ourCarry: carry && name(carry.heroId),
-    ourKeyItem: carryItem?.name,
-    enemyCarry,
-    enemyOfflaner: enemyAt(3),
-  });
-  players.forEach((p, i) => {
-    // Same order as players.
-    p.fallbacks = picked.players[i]!;
-    if (p.fallbacks.length) p.fallbackSituations = picked.playerSituations[i]!;
+    // Cores only: a support's late Glimmer Cape doesn't change the game's plan.
+    const late = p.position <= 3 && item && p.journey && keyItemLateLine({ item: item.name, late: p.journey.late, games: p.journey.games, steps: p.journey.steps }, engine.data.items);
+    if (late) {
+      p.fallbacks = [late];
+      p.fallbackSituations = ["keyItemLate"];
+    }
   });
 
   const wonLane = lanes.find((l) => l.verdict === "win");
@@ -534,8 +514,6 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     danger,
     roadmap,
     players,
-    teamFallbacks: picked.team,
-    ...(picked.team.length ? { teamFallbackSituations: picked.teamSituations } : {}),
     story: gameStory({
       ourTiming,
       theirTiming,
@@ -557,12 +535,6 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       enemyCarry,
     }),
   };
-}
-
-/** Which team gets stronger later, from the same decision as the story (see ourWindow). */
-function scaling(ours: Timing, theirs: Timing): Scaling {
-  const window = ourWindow(ours, theirs);
-  return window === "late" ? "ours" : window === "early" ? "theirs" : "even";
 }
 
 const round = (x: number) => Math.round(x * 10) / 10;

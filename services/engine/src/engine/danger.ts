@@ -1,6 +1,8 @@
+import { listNames } from "./item-build";
+
 /**
  * Danger heroes for the Game Story: the one or two enemies who decide the game, each with when
- * they come online and what our team does about it. Only their cores (pos 1 to 3) count: a support
+ * they come online and which of our heroes they beat. Only their cores (pos 1 to 3) count: a support
  * who wins matchups still dies first in a fight. Their timing is their first big item, the one
  * their power comes from (Phantom Assassin's Battle Fury or Desolator, not her late BKB).
  */
@@ -28,10 +30,10 @@ export interface DangerFacts {
    */
   kind: "threat" | "carry" | "initiator";
   item?: { name: string; minute: number };
-  /** When the game is ours to win (see story.ts ourWindow): a late window means we don't race their carry. */
-  window?: "early" | "late" | null;
   /** False when the minute comes from a build mixed over the hero's positions, so it is only "around". */
   isSure: boolean;
+  /** Our heroes this enemy beats in this rank's matchup data, by name, for a threat. */
+  beats?: string[];
 }
 
 /**
@@ -53,18 +55,15 @@ export function chooseDangerHeroes(
     .map((id) => ({ id, kind: kind(id) }));
 }
 
-/** "Faceless Void: Black King Bar at 21 min. Take fights and towers before then." */
+/**
+ * "Shadow Fiend: Eul's Scepter of Divinity at 11 min. Strong against Puck and Mars." Only what the data measured:
+ * the enemy's key item minute, and for a threat the heroes of ours it beats. No hand-written advice
+ * (Can, 2026-11-15: no generic Game Story lines).
+ */
 export function dangerLine(f: DangerFacts): string {
-  const answer =
-    f.kind === "carry"
-      ? f.window === "late"
-        ? "Defend until your core items are in, then fight."
-        : "Take fights and towers before then."
-      : f.kind === "initiator"
-        ? "From then, spread out and watch the fog."
-        : DONT_FOCUS.has(f.hero)
-        ? "Don't focus them: kill their damage dealers first."
-        : "Lock them down first in every fight.";
-  if (!f.item) return `${f.hero}: ${f.kind === "carry" ? "farms fast. Take fights early." : answer}`;
-  return `${f.hero}: ${f.item.name} ${f.isSure ? "at" : "around"} ${f.item.minute} min. ${answer}`;
+  const item = f.item && `${f.item.name} ${f.isSure ? "at" : "around"} ${f.item.minute} min.`;
+  const beats = f.kind === "threat" ? `Strong against ${f.beats?.length ? listNames(f.beats) : "your team"}.` : undefined;
+  // A carry or initiator is only chosen with a sure item minute; the kind is the fact left without one.
+  const what = item || beats ? undefined : f.kind === "carry" ? "Their likely carry." : "Starts their fights.";
+  return `${f.hero}: ${[item, beats, what].filter(Boolean).join(" ")}`;
 }

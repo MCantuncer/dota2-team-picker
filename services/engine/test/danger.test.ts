@@ -35,43 +35,42 @@ describe("chooseDangerHeroes", () => {
 });
 
 describe("dangerLine", () => {
-  it("gives the item minute and the answer", () => {
+  it("gives the item minute and nothing hand-written", () => {
     expect(dangerLine({ hero: "Faceless Void", kind: "carry", item: { name: "Black King Bar", minute: 21 }, isSure: true })).toBe(
-      "Faceless Void: Black King Bar at 21 min. Take fights and towers before then.",
+      "Faceless Void: Black King Bar at 21 min.",
+    );
+    expect(dangerLine({ hero: "Tidehunter", kind: "initiator", item: { name: "Blink Dagger", minute: 19 }, isSure: true })).toBe(
+      "Tidehunter: Blink Dagger at 19 min.",
     );
   });
 
   it("says around when the enemy's position is a close guess", () => {
-    expect(dangerLine({ hero: "Lion", kind: "threat", item: { name: "Blink Dagger", minute: 14 }, isSure: false })).toBe(
-      "Lion: Blink Dagger around 14 min. Lock them down first in every fight.",
+    expect(dangerLine({ hero: "Lion", kind: "threat", item: { name: "Blink Dagger", minute: 14 }, isSure: false, beats: ["Puck"] })).toBe(
+      "Lion: Blink Dagger around 14 min. Strong against Puck.",
     );
   });
 
-  it("doesn't race their carry when the late game is ours", () => {
-    expect(dangerLine({ hero: "Drow Ranger", kind: "carry", item: { name: "Manta Style", minute: 24 }, isSure: true, window: "late" })).toBe(
-      "Drow Ranger: Manta Style at 24 min. Defend until your core items are in, then fight.",
+  it("names the heroes a threat beats, or the team when no single matchup is clear", () => {
+    expect(dangerLine({ hero: "Bristleback", kind: "threat", isSure: true, beats: ["Puck", "Mars", "Lina"] })).toBe(
+      "Bristleback: Strong against Puck, Mars and Lina.",
     );
+    expect(dangerLine({ hero: "Bristleback", kind: "threat", isSure: true, beats: [] })).toBe("Bristleback: Strong against your team.");
   });
 
-  it("tells the team to spread out once an initiator has their item", () => {
-    expect(dangerLine({ hero: "Tidehunter", kind: "initiator", item: { name: "Blink Dagger", minute: 19 }, isSure: true })).toBe(
-      "Tidehunter: Blink Dagger at 19 min. From then, spread out and watch the fog.",
-    );
-  });
-
-  it("tells the team not to focus a tank first", () => {
-    expect(dangerLine({ hero: "Bristleback", kind: "threat", item: { name: "Consecrated Wraps", minute: 16 }, isSure: true })).toBe(
-      "Bristleback: Consecrated Wraps at 16 min. Don't focus them: kill their damage dealers first.",
-    );
-  });
-
-  it("still warns without item data", () => {
-    expect(dangerLine({ hero: "Medusa", kind: "carry", isSure: false })).toBe("Medusa: farms fast. Take fights early.");
+  it("still names the danger without item data", () => {
+    expect(dangerLine({ hero: "Medusa", kind: "carry", isSure: false })).toBe("Medusa: Their likely carry.");
+    expect(dangerLine({ hero: "Magnus", kind: "initiator", isSure: false })).toBe("Magnus: Starts their fights.");
   });
 
   it("keeps two danger heroes with the longest names inside the word budget", () => {
     const lines = [
-      dangerLine({ hero: "Outworld Devourer", kind: "threat", item: { name: "Aghanim's Scepter", minute: 25 }, isSure: false }),
+      dangerLine({
+        hero: "Outworld Devourer",
+        kind: "threat",
+        item: { name: "Aghanim's Scepter", minute: 25 },
+        isSure: false,
+        beats: ["Keeper of the Light", "Ancient Apparition", "Shadow Fiend"],
+      }),
       dangerLine({ hero: "Keeper of the Light", kind: "carry", item: { name: "Eye of Skadi", minute: 31 }, isSure: true }),
     ];
     expect(lines.reduce((n, l) => n + wordCount(l), 0)).toBeLessThanOrEqual(STORY_WORDS.danger);

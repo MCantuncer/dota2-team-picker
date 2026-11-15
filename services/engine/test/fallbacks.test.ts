@@ -1,113 +1,30 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { FALLBACKS, JUNGLE_HEROES, MAX_FALLBACKS, fallbackFor, fillFallback, pickFallbacks, type FallbackSlots, type Scaling, type Situation } from "../src/engine/fallbacks";
-import type { Position, Snapshot } from "../src/engine/types";
+import { keyItemLateLine } from "../src/engine/fallbacks";
+import type { ItemInfo } from "../src/engine/types";
 
-/** Every slot filled, with the longest hero and item names in the data. */
-const LONG: Required<FallbackSlots> = {
-  hero: "Outworld Devourer",
-  item: "Aghanim's Scepter",
-  minute: 24,
-  ourCarry: "Keeper of the Light",
-  enemyCarry: "Outworld Devourer",
-  enemyOfflaner: "Centaur Warrunner",
-  ourKeyItem: "Aghanim's Scepter",
-  enemyKeyItem: "Black King Bar",
-  enemyMinute: 21,
-};
+const item = (key: string, name: string): ItemInfo => ({ key, name, cost: 1000, img: `/items/${key}.png`, components: [] });
+const ITEMS: Record<string, ItemInfo> = { 1: item("blink", "Blink Dagger"), 2: item("witch_blade", "Witch Blade") };
 const words = (text: string) => text.split(/\s+/).filter(Boolean).length;
 
-describe("fallback templates", () => {
-  it("only name slots that exist", () => {
-    const known = new Set(Object.keys(LONG));
-    for (const t of FALLBACKS) for (const [, slot] of t.text.matchAll(/\{(\w+)\}/g)) expect(known).toContain(slot);
-  });
-
-  it("stay short enough for two to fit a player's card, even with the longest names", () => {
-    // The card has 110 words; two fallbacks may take at most half of it.
-    for (const t of FALLBACKS) expect(words(fillFallback(t, LONG)!), t.text).toBeLessThanOrEqual(25);
-  });
-
-  it("never use the em dash", () => {
-    for (const t of FALLBACKS) expect(t.text).not.toContain("\u2014");
-  });
-
-  it("name real heroes in the jungle list", () => {
-    const data = JSON.parse(readFileSync("data/snapshot.json", "utf8")) as Snapshot;
-    const names = new Set(Object.values(data.heroes).map((h) => h.name));
-    for (const name of JUNGLE_HEROES) expect(names, name).toContain(name);
-  });
-});
-
-describe("fallbackFor", () => {
-  it("sends a carry who jungles well to the jungle, and one who doesn't to ask for help", () => {
-    expect(fallbackFor("laneLost", 1, { hero: "Faceless Void", item: "Maelstrom" })).toBe(
-      "Lane lost? Leave it at 5 to 6 min for the jungle and farm toward Maelstrom. Ask your supports to stack 2 camps.",
-    );
-    expect(fallbackFor("laneLost", 1, { hero: "Medusa", item: "Manta Style" })).toBe(
-      "Lane lost? Ask for a lane swap or a rotation before 7 min, and skip trades until Manta Style.",
+describe("keyItemLateLine", () => {
+  it("answers a late key item with what late high-rank wins bought next", () => {
+    expect(keyItemLateLine({ item: "Blink Dagger", late: 20, games: 48, steps: [[2, 18, 31], [1, 24, 20]] }, ITEMS)).toBe(
+      "No Blink Dagger by 20 min? 31 of 48 high-rank wins without it bought Witch Blade next, around 18 min.",
     );
   });
 
-  it("falls back to a variant without the missing value", () => {
-    expect(fallbackFor("keyItemLate", 1, { hero: "Juggernaut", item: "Black King Bar", minute: 24 })).toBe(
-      "No Black King Bar by 24 min? Don't show on the map without it. Farm behind your towers.",
-    );
-    expect(fallbackFor("laneLost", 3, {})).toBe("Lane lost? Stop contesting the lane. Farm the jungle and stay alive for the first fights.");
+  it("gives no line when nothing was measured", () => {
+    expect(keyItemLateLine({ item: "Blink Dagger", late: 20, games: 48, steps: [] }, ITEMS)).toBeNull();
+    // An item the snapshot can't name, or no item list at all.
+    expect(keyItemLateLine({ item: "Blink Dagger", late: 20, games: 48, steps: [[99, 18, 31]] }, ITEMS)).toBeNull();
+    expect(keyItemLateLine({ item: "Blink Dagger", late: 20, games: 48, steps: [[2, 18, 31]] }, undefined)).toBeNull();
+    expect(keyItemLateLine({ item: "Blink Dagger", late: 20, games: 0, steps: [[2, 18, 31]] }, ITEMS)).toBeNull();
   });
 
-  it("returns null when no line fits", () => {
-    expect(fallbackFor("keyItemLate", 2, {})).toBeNull();
-    expect(fallbackFor("carryFree", 1, LONG)).toBeNull();
-  });
-
-  it("picks the team line by who scales better", () => {
-    const team = (situation: Situation, scaling: Scaling) => fallbackFor(situation, "team", { ourCarry: "Juggernaut", ourKeyItem: "Black King Bar" }, scaling);
-    expect(team("behindAt20", "ours")).toBe("Behind at 20? Defend high ground until Juggernaut has Black King Bar. Catch their pos 4 and 5 out of position.");
-    expect(team("behindAt20", "theirs")).toMatch(/^Behind at 20\? Don't wait for the late game/);
-    // With no sure enemy carry, the window itself is the deadline.
-    expect(team("aheadAt20", "theirs")).toBe("Ahead at 20? Take Roshan, then siege high ground with the Aegis before 30 min.");
-    expect(team("aheadAt20", "even")).toBe("Ahead at 20? Take Roshan and push one lane together with the Aegis.");
-  });
-
-  it("has a lane-lost line for every position", () => {
-    for (const p of [1, 2, 3, 4, 5] as Position[]) expect(fallbackFor("laneLost", p, {}), `pos ${p}`).not.toBeNull();
-  });
-});
-
-describe("pickFallbacks", () => {
-  const player = (position: Position, lane: "win" | "even" | "hard", keyItem?: { name: string; lateMinute?: number }) => ({
-    position,
-    hero: position === 1 ? "Faceless Void" : "Lion",
-    lane,
-    ...(keyItem ? { keyItem } : {}),
-  });
-
-  it("orders lane lost, key item late, then their carry is free, two at most", () => {
-    const { players } = pickFallbacks({
-      players: [player(1, "hard", { name: "Maelstrom", lateMinute: 16 }), player(4, "hard"), player(2, "even", { name: "Black King Bar" })],
-      offLaneHard: true,
-      scaling: "even",
-      enemyCarry: "Medusa",
-    });
-    expect(players[0]).toEqual([
-      "Lane lost? Leave it at 5 to 6 min for the jungle and farm toward Maelstrom. Ask your supports to stack 2 camps.",
-      "No Maelstrom by 16 min? Don't show on the map without it. Farm behind your towers.",
-    ]);
-    expect(players[1]).toEqual([
-      "Lane lost? Leave it after 4 min. Gank mid, or stack camps for your carry.",
-      "Medusa is farming free? Pressure that lane before 10 min. After that, take towers on the other side.",
-    ]);
-    // No late minute yet, so no item line.
-    expect(players[2]).toEqual([]);
-  });
-
-  it("gives the team both lines, at most two", () => {
-    const { team } = pickFallbacks({ players: [], offLaneHard: false, scaling: "ours", ourCarry: "Medusa", ourKeyItem: "Manta Style" });
-    expect(team).toEqual([
-      "Behind at 20? Defend high ground until Medusa has Manta Style. Catch their pos 4 and 5 out of position.",
-      "Ahead at 20? Keep vision in their jungle, take safe towers, and let Medusa farm to full items.",
-    ]);
-    expect(team.length).toBeLessThanOrEqual(MAX_FALLBACKS);
+  it("stays short enough for the game clock, even with long item names", () => {
+    const long = { ...ITEMS, 3: item("ultimate_scepter", "Aghanim's Scepter"), 4: item("guardian_greaves", "Guardian Greaves") };
+    const line = keyItemLateLine({ item: "Aghanim's Scepter", late: 28, games: 1200, steps: [[4, 26, 640]] }, long)!;
+    expect(words(line)).toBeLessThanOrEqual(25);
+    expect(line).not.toContain("\u2014");
   });
 });

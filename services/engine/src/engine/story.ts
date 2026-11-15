@@ -130,8 +130,11 @@ function headline(f: StoryFacts): string {
   }
   const lane = [f.hardLane, f.wonLane].find((l) => l?.fact);
   if (lane) return lane === f.hardLane ? `Hard ${lane.name}: ${lane.fact}` : `Your ${lane.name} to press: ${lane.fact}`;
-  if (ready !== undefined && theirs) return `Both teams are ready at ${ready} min: fight once your items are in, not before.`;
-  return "Win the fights around your item timings.";
+  if (ready !== undefined && theirs) return `Both teams are ready at ${ready} min.`;
+  if (ready !== undefined) return `Ready to fight at ${ready} min, once two key items are in.`;
+  const unmeasured = f.hardLane ?? f.wonLane;
+  if (unmeasured) return unmeasured === f.hardLane ? `Hard ${unmeasured.name}${against(unmeasured)}.` : `Your ${unmeasured.name} to press${against(unmeasured)}.`;
+  return "Every lane is even.";
 }
 
 const itemAt = (s: Spike) => `${s.hero}'s ${s.item} ${atMinute(s)}`;
@@ -163,21 +166,16 @@ const who = (lane: LaneFact) => (lane.ours.length ? listNames(lane.ours) : `the 
 const against = (lane: LaneFact) => (lane.theirs.length ? ` against ${listNames(lane.theirs)}` : "");
 
 /**
- * What each lane does, from the lane verdicts: the won lane takes the tower, a hard off lane plays
- * for experience and a hard core lane for safe farm. A rotation plan would need to know where their supports go, which a draft can't.
+ * Which lane we win and which is hard, with the real lane result behind each verdict. Facts only: the lines that
+ * told each lane what to do ("take their tower", "skip trades") said the same in every game (Can, 2026-11-15).
  */
 function laneText(f: StoryFacts): string {
   const verb = (lane: LaneFact, one: string, many: string) => (lane.ours.length === 1 ? one : many);
-  const won = f.wonLane && `${who(f.wonLane)} ${verb(f.wonLane, "wins", "win")} the ${f.wonLane.name}${against(f.wonLane)}: take their tower.`;
-  // An offlaner needs levels; a carry or mid in a hard lane still needs farm.
-  const hard =
-    f.hardLane &&
-    (f.hardLane.name === "off lane"
-      ? `Survive the off lane${against(f.hardLane)}: just get levels.`
-      : `${f.hardLane.ours[0] ?? "Our core"} farms safely in the ${f.hardLane.name}${against(f.hardLane)}: skip trades.`);
+  const won = f.wonLane && `${who(f.wonLane)} ${verb(f.wonLane, "wins", "win")} the ${f.wonLane.name}${against(f.wonLane)}.`;
+  const hard = f.hardLane && `${who(f.hardLane)} ${verb(f.hardLane, "has", "have")} a hard ${f.hardLane.name}${against(f.hardLane)}.`;
   // The real lane result behind each verdict, so the reason can be checked.
   const facts = [f.wonLane?.fact, f.hardLane?.fact].filter(Boolean);
-  return [won, hard, ...facts].filter(Boolean).join(" ") || "Every lane is even: the better last hits win.";
+  return [won, hard, ...facts].filter(Boolean).join(" ") || "Every lane is even.";
 }
 
 /**

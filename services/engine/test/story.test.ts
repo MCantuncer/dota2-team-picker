@@ -25,7 +25,7 @@ describe("gameStory", () => {
     );
     // Nothing measured says how the late game goes, so there is no "30 min on" chapter.
     expect(story.chapters.map((c) => c.phase)).toEqual(["0 to 10 min", "10 to 20 min", "20 to 30 min"]);
-    expect(story.chapters[0]!.text).toBe("Juggernaut and Crystal Maiden win the safe lane against Mars: take their tower. Survive the off lane against Axe and Witch Doctor: just get levels.");
+    expect(story.chapters[0]!.text).toBe("Juggernaut and Crystal Maiden win the safe lane against Mars. Magnus and Lion have a hard off lane against Axe and Witch Doctor.");
     // Our first two items are one moment, and the only one in their chapter; theirs is their carry's.
     expect(story.chapters[1]!.text).toBe(
       "Puck's Witch Blade at 12 and Magnus's Blink Dagger at 14: ready to fight at 14. Their Phantom Assassin has Battle Fury at 17. Open fights with Reverse Polarity into Sven's God's Strength cleave.",
@@ -120,7 +120,7 @@ describe("gameStory", () => {
     const race = (minute: number) =>
       gameStory(facts({ spikes, theirSpikes: [{ hero: "Spectre", item: "Radiance", minute }], enemyCarry: "Spectre" })).headline;
     expect(race(18)).toBe("Fight from 15 min, before Spectre has Radiance at 18.");
-    expect(race(16)).toBe("Both teams are ready at 15 min: fight once your items are in, not before.");
+    expect(race(16)).toBe("Both teams are ready at 15 min.");
     expect(race(12)).toBe("Spectre has Radiance at 12: hold fights until 15 min.");
     // The same two minutes come as numbers, so the timeline can draw the window.
     const raced = (minute: number) =>
@@ -128,15 +128,15 @@ describe("gameStory", () => {
     expect(raced(18)).toEqual({ ready: 15, theirs: { hero: "Spectre", item: "Radiance", minute: 18 } });
     expect(raced(12)?.theirs.minute).toBe(12);
     // Without their carry's item there is nothing to race.
-    expect(gameStory(facts({ spikes })).headline).toBe("Win the fights around your item timings.");
+    expect(gameStory(facts({ spikes })).headline).toBe("Ready to fight at 15 min, once two key items are in.");
     expect(gameStory(facts({ spikes })).race).toBeUndefined();
   });
 
-  it("tells each lane what to do from its verdict, never sending the mid on a template rotation", () => {
+  it("says each lane's verdict as a fact, with no hand-written advice", () => {
     expect(gameStory(facts({ hardLane: { name: "mid", ours: ["Puck"], theirs: ["Pudge"] } })).chapters[0]!.text).toBe(
-      "Puck farms safely in the mid against Pudge: skip trades.",
+      "Puck has a hard mid against Pudge.",
     );
-    expect(gameStory(facts()).chapters[0]!.text).toBe("Every lane is even: the better last hits win.");
+    expect(gameStory(facts()).chapters[0]!.text).toBe("Every lane is even.");
   });
 
   it("plays early against a late game team, and late against an early one", () => {
@@ -171,7 +171,7 @@ describe("gameStory", () => {
     const spectre = [{ hero: "Spectre", item: "Radiance", minute: 18, around: true }];
     expect(gameStory(facts({ theirTiming: "early", spikes })).chapters[1]!.text).toMatch(/: fight back from 17\./);
     const story = gameStory(facts({ spikes, theirSpikes: spectre, enemyCarry: "Spectre" }));
-    expect(story.headline).toBe("Both teams are ready at 17 min: fight once your items are in, not before.");
+    expect(story.headline).toBe("Both teams are ready at 17 min.");
     expect(story.chapters[1]!.text).toContain("Their Spectre has Radiance around 18.");
   });
 
