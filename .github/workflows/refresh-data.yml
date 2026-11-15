@@ -2,7 +2,7 @@ name: Refresh hero data
 
 on:
   # Four runs a day, off the hour (GitHub delays jobs queued on the hour).
-  # 4 x 250 pages plus 4 x up to 140 requests for backtest games stays
+  # 4 x 250 pages plus 4 x up to 300 requests for backtest games stays
   # inside OpenDota's free daily allowance (the collector stops early when it runs low).
   # The last run starts 14:17 UTC and the lookups are free again by about
   # 15:45 UTC (later when GitHub delays the run), before the evening games in
@@ -78,9 +78,12 @@ jobs:
         run: npm run upload-data -w services/engine
       # Recent ranked games for the engine backtest, saved to eval/ in the same
       # bucket. A failure here must not hold back the hero data uploaded above.
+      # 300 a run gives about 420 complete games a day (about a third have more than
+      # 10 pick rows and are skipped), so the Proof Page reaches 15,000 games in
+      # about five weeks instead of fifteen.
       - name: Save ranked games for the backtest
         continue-on-error: true
-        run: npm run collect-matches -w services/engine -- --max 100 ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: npm run collect-matches -w services/engine -- --max 300 ${{ inputs.dry_run && '--dry-run' || '' }}
       - name: Open a review issue for the new patch
         if: ${{ steps.fetch.outputs.new_patch && !inputs.dry_run }}
         env:
