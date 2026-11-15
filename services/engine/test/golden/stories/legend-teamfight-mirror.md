@@ -2,21 +2,20 @@
 
 Headline: Hard mid: Puck wins 19% and loses 52% of 534 lanes against Shadow Fiend.
 
-- 0 to 10 min: Puck farms safely in the mid against Shadow Fiend: skip trades. Puck wins 19% and loses 52% of 534 lanes against Shadow Fiend.
+- 0 to 10 min: Puck has a hard mid against Shadow Fiend. Puck wins 19% and loses 52% of 534 lanes against Shadow Fiend.
 - 10 to 20 min: Juggernaut's Battle Fury at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Their Phantom Assassin has Battle Fury at 15.
 - 20 to 30 min: Roshan from 20 min, once three key items are in.
 
 Danger heroes:
-- Phantom Assassin: Battle Fury at 15 min. Take fights and towers before then.
-- Axe: Blink Dagger at 14 min. From then, spread out and watch the fog.
-
-If the game goes wrong:
-- Behind at 20? Defend towers together and only fight with your key spells ready.
-- Ahead at 20? Take Roshan and push one lane together with the Aegis.
+- Phantom Assassin: Battle Fury at 15 min.
+- Axe: Blink Dagger at 14 min.
 
 Lane Safe lane: Juggernaut + Crystal Maiden vs Axe + Witch Doctor, even
+  Even lane against Axe and Witch Doctor. Juggernaut wins 37% and loses 38% of 4,467 lanes against Witch Doctor.
 Lane Mid: Puck vs Shadow Fiend, hard
+  Hard lane against Shadow Fiend. Puck wins 19% and loses 52% of 534 lanes against Shadow Fiend.
 Lane Off lane: Mars + Lion vs Phantom Assassin + Lich, hard
+  Hard lane against Phantom Assassin and Lich. Mars wins 21% and loses 55% of 2,522 lanes against Witch Doctor.
 
 ### Pos 1 Juggernaut
 Timings: rank
@@ -26,7 +25,7 @@ Boots: Power Treads 7 {Attack speed and a stat to switch.}, or Phase Boots 8
 First: Battle Fury 14/16 {Cleave for fast farm.}
 Next: Manta Style 23/24, Blink Dagger 27/33 {Start fights from 1,200 range.}, Butterfly 29/30
 Late: Monkey King Bar 33/37 [Against Phantom Assassin: don't skip it] {Most of your hits go through evasion.}
-Job: Farm and carry the late game; join fights once your items are in. Your timing is Battle Fury around minute 14.
+Job: Your timing is Battle Fury at 14 min. Axe has Blink Dagger at 14 min.
 Vs Axe (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
 Vs Witch Doctor (lane, guessed): Heals their team through fights. Kill them first or fight short and decisive.
 Vs Phantom Assassin: Evasion: right clicks miss. buy Monkey King Bar.
@@ -36,7 +35,6 @@ Watch Axe: Hit Phantom Assassin and Shadow Fiend first: Axe soaks your damage.
 Watch Witch Doctor: Kill Witch Doctor first, or keep the fight short.
 Watch Phantom Assassin: buy Monkey King Bar.
 Watch Shadow Fiend, Lich: Stay spread when Shadow Fiend and Lich are missing from the map.
-If it goes wrong: No Battle Fury by 16 min? Don't show on the map without it. Farm the side Axe is not on.
 
 ### Pos 2 Puck
 Timings: all
@@ -46,7 +44,7 @@ Boots: Power Treads 10 {Attack speed and a stat to switch.}
 First: Witch Blade 14/16
 Next: Blink Dagger 19/20 {Start fights from 1,200 range.}, Eul's Scepter of Divinity 26/28
 Late: Aghanim's Scepter 34/36, Octarine Core 35
-Job: Win your lane, then use runes to help the side lanes. Your timing is Blink Dagger around minute 19.
+Job: Your timing is Blink Dagger at 19 min. Shadow Fiend has Eul's Scepter of Divinity at 11 min.
 Vs Shadow Fiend (lane): Magic burst. buy Infused Raindrops.
 Vs Phantom Assassin: Evasion: right clicks miss. Fight them with spells, not right clicks.
 Vs Axe: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
@@ -57,8 +55,6 @@ Watch Phantom Assassin: Fight Phantom Assassin with your spells: right clicks mi
 Watch Axe: Hit Phantom Assassin and Shadow Fiend first: Axe soaks your damage.
 Watch Witch Doctor: Kill Witch Doctor first, or keep the fight short.
 Watch Lich: Stay spread when Lich is missing from the map.
-If it goes wrong: Lane lost? Stop contesting runes. Push the wave, farm the near jungle, and wait for your pos 4 to rotate.
-If it goes wrong: No Blink Dagger by 20 min? Stop rotating and farm mid and the near camps until it is done.
 
 ### Pos 3 Mars
 Timings: all
@@ -67,7 +63,7 @@ Lane: Bracer 2, Magic Wand 4, Infused Raindrops 4 [Against Lich's magic burst], 
 Boots: Phase Boots 10 {Armor and a burst of speed.}
 First: Blink Dagger 15/17 {Start fights from 1,200 range.}
 Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24 {-6 armor on your target.}, Black King Bar 29/31 {Stops disables from Witch Doctor. Berserker's Call and Death Ward still go through it.}
-Job: Make their carry's lane hard, then start the team's fights as Mars. Your timing is Blink Dagger around minute 15.
+Job: Your timing is Blink Dagger at 15 min. Phantom Assassin has Battle Fury at 15 min.
 Vs Phantom Assassin (lane): Evasion: right clicks miss. Fight them with spells, not right clicks.
 Vs Lich (lane, guessed): Magic burst. buy Infused Raindrops.
 Vs Shadow Fiend: Magic burst. Stay spread so one combo can't catch two.
@@ -78,8 +74,6 @@ Watch Lich: buy Infused Raindrops.
 Watch Shadow Fiend: Stay spread when Shadow Fiend is missing from the map.
 Watch Axe: Hit Phantom Assassin and Shadow Fiend first: Axe soaks your damage.
 Watch Witch Doctor: Kill Witch Doctor first, or keep the fight short.
-If it goes wrong: Lane lost? Stop contesting Phantom Assassin. Farm the jungle and stay alive for the first fights.
-If it goes wrong: No Blink Dagger by 17 min? Don't start fights without it. Stay behind your cores and soak damage.
 
 ### Pos 4 Lion
 Timings: rank
@@ -89,7 +83,7 @@ Boots: Tranquil Boots 7
 First: Blink Dagger 17/20 {Start fights from 1,200 range.}
 Next: Glimmer Cape 26/27 [Against Shadow Fiend, Witch Doctor and Lich: don't skip it] {Invisibility and a magic damage barrier.}, Force Staff 28/31 [Against Phantom Assassin, Shadow Fiend and Axe: don't skip it] {Pushes you out of trouble.}, Aether Lens 29/35
 Late: Aghanim's Scepter 34/38
-Job: Help win the off lane, then look for kills around the map with your mid. Your timing is Blink Dagger around minute 17.
+Job: Your timing is Blink Dagger at 17 min. Phantom Assassin has Battle Fury at 15 min.
 Vs Phantom Assassin (lane): Evasion: right clicks miss. buy Force Staff.
 Vs Lich (lane, guessed): Magic burst. buy Infused Raindrops, Glimmer Cape.
 Vs Shadow Fiend: Magic burst. buy Glimmer Cape, Force Staff.
@@ -98,8 +92,6 @@ Vs Witch Doctor: Heals their team through fights. Kill them first or fight short
 Watch Phantom Assassin, Shadow Fiend, Axe: buy Force Staff.
 Watch Lich: buy Glimmer Cape.
 Watch Witch Doctor: Kill Witch Doctor first, or keep the fight short.
-If it goes wrong: Lane lost? Leave it after 4 min. Gank mid, or stack camps for Juggernaut.
-If it goes wrong: Phantom Assassin is farming free? Pressure that lane before 10 min. After that, take towers on the other side.
 
 ### Pos 5 Crystal Maiden
 Timings: rank
@@ -109,7 +101,7 @@ Boots: Tranquil Boots 8
 First: Blink Dagger 23/26 {Start fights from 1,200 range.}
 Next: Glimmer Cape 24/31 [Against Shadow Fiend, Witch Doctor and Lich: don't skip it] {Invisibility and a magic damage barrier.}, Force Staff 25/31 [Against Phantom Assassin, Shadow Fiend and Axe: don't skip it] {Pushes you out of trouble.}
 Late: Black King Bar 35/42 {Stops disables from Witch Doctor. Berserker's Call and Death Ward still go through it.}, Aghanim's Scepter 37/42
-Job: Keep your carry alive in lane and place vision; save your key spell for their dive. Your timing is Blink Dagger around minute 23.
+Job: Your timing is Blink Dagger at 23 min. Axe has Blink Dagger at 14 min.
 Vs Axe (lane): Starts fights and soaks your damage. buy Force Staff.
 Vs Witch Doctor (lane, guessed): Heals their team through fights. buy Magic Wand.
 Vs Phantom Assassin: Evasion: right clicks miss. buy Force Staff.
@@ -118,4 +110,3 @@ Vs Lich: Magic burst. buy Glimmer Cape.
 Watch Axe, Phantom Assassin, Shadow Fiend: buy Force Staff.
 Watch Witch Doctor: buy Magic Wand.
 Watch Lich: buy Glimmer Cape.
-If it goes wrong: Phantom Assassin is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.

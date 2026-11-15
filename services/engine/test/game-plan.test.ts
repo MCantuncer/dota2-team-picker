@@ -87,6 +87,8 @@ describe("gamePlan", () => {
     expect(safe.verdict).toBe("hard");
     expect(safe.laneNet).toBeLessThan(-5);
     expect(safe.text).toContain("Medusa wins 30% and loses 45% of 5,000 lanes against Terrorblade.");
+    // The pair that line tells, for the game clock's lane bar.
+    expect(safe.keyPair).toEqual({ hero: 94, enemy: 109, games: 5000, won: 1500, drawn: 1250, lost: 2250, allRanks: true });
     // Every pair with lane data, so a player's own lane can be drawn, not only the deciding pair.
     // No bracket, so every count is from all ranks; weight is the chance the enemy plays this lane.
     expect(safe.pairs?.map(({ weight: _, ...p }) => p)).toEqual([
@@ -105,6 +107,8 @@ describe("gamePlan", () => {
     const hardCounters = [{ hero: 94, counter: 1, gap: 9, names: "Medusa < Anti-Mage" }];
     const plan = gamePlan(new Engine(data(), { hardCounters }), { ours, theirs });
     expect(plan.ourCombos).toEqual(["Magnus + Sven: Reverse Polarity into Sven's God's Strength cleave"]);
+    // When a chapter opens fights with it, the story names its heroes so the game clock can draw their spells.
+    if (plan.story.combo) expect(plan.story.combo.heroes).toEqual(["Magnus", "Sven"]);
     expect(plan.fears).toContain("Medusa is hard countered by Anti-Mage: play carefully around them");
     expect(plan.theirStyle?.key).toBe("lategame");
     // Style labels barely change who wins short or long games (richer Game Story research), so no minute
@@ -135,11 +139,6 @@ describe("gamePlan", () => {
     d.positions![1] = [200, 0, 0, 400, 400];
     // With no sure minute to race, not a danger hero.
     expect(gamePlan(new Engine(d), { ours, theirs }).danger).toEqual([]);
-    // Their safe lane beats our off lane, so our supports get a line naming him as their carry.
-    d.matchups[18] = { 1: { games: 2000, wins: 600 } };
-    d.matchups[1] = { 18: { games: 2000, wins: 1400 } };
-    const plan = gamePlan(new Engine(d), { ours, theirs });
-    expect(plan.players.flatMap((p) => p.fallbacks).join(" ")).toContain("Anti-Mage is farming free?");
   });
 
   it("gives an enemy's item minute only when it comes from their position", () => {
@@ -154,43 +153,32 @@ describe("gamePlan", () => {
     expect(line()).toBeUndefined();
   });
 
-  it("gives every player a job, and no build without item data", () => {
+  it("gives each player only this draft's facts, and no build without item data", () => {
     const plan = gamePlan(new Engine(data()), { ours, theirs });
     expect(plan.players.map((p) => p.position)).toEqual([1, 2, 3, 4, 5]);
-    expect(plan.players[2]!.job).toContain("start the team's fights as Sven");
-    expect(plan.players[1]!.job).toContain("Set up Reverse Polarity into Sven's God's Strength cleave with Sven");
+    // No item data: the combo is the only fact left, and no role advice fills the gap.
+    expect(plan.players[1]!.job).toBe("Set up Reverse Polarity into Sven's God's Strength cleave with Sven.");
+    expect(plan.players[0]!.job).toBe("");
     expect(plan.players.every((p) => p.build === null)).toBe(true);
   });
 
-  it("adds fallbacks for a hard lane and for the team, shaped by who scales better", () => {
+  it("says a hard lane as a fact, with no hand-written advice for it or for the team", () => {
     const hard = data();
     // Their safe lane (Anti-Mage) crushes our offlaner Sven, so the off lane is hard.
     hard.matchups[18] = { 1: { games: 2000, wins: 600 } };
     hard.matchups[1] = { 18: { games: 2000, wins: 1400 } };
     const plan = gamePlan(new Engine(hard), { ours, theirs });
-    expect(plan.lanes.find((l) => l.name === "Off lane")!.verdict).toBe("hard");
-    const lines = (pos: number) => plan.players.find((p) => p.position === pos)!.fallbacks;
-    expect(lines(3)).toEqual(["Lane lost? Stop contesting Anti-Mage. Farm the jungle and stay alive for the first fights."]);
-    expect(lines(4)).toEqual([
-      "Lane lost? Leave it after 4 min. Gank mid, or stack camps for Medusa.",
-      "Anti-Mage is farming free? Pressure that lane before 10 min. After that, take towers on the other side.",
-    ]);
-    expect(lines(5)[0]).toBe("Anti-Mage is farming free? Ward their jungle so your cores can catch them, and buy a Smoke before your own items.");
-    // Each line's situation, so a page can place it without reading the sentence.
-    expect(plan.players.find((p) => p.position === 4)!.fallbackSituations).toEqual(["laneLost", "carryFree"]);
-    expect(plan.players.find((p) => p.position === 1)!.fallbackSituations).toBeUndefined();
-    // The won safe lane and the even mid get no lines, and no build means no item line.
-    expect(lines(1)).toEqual([]);
-    expect(lines(2)).toEqual([]);
-    // No item race and no lane results in this snapshot: the plain headline, never a style claim.
-    expect(plan.story.headline).toBe("Win the fights around your item timings.");
-    expect(plan.story.chapters[0]!.text).toBe("Medusa and Crystal Maiden win the safe lane against Terrorblade and Witch Doctor: take their tower. Survive the off lane against Anti-Mage and Lich: just get levels.");
-    // Their late-game style label no longer says they scale better.
-    expect(plan.teamFallbacks).toEqual([
-      "Behind at 20? Defend towers together and only fight with your key spells ready.",
-      "Ahead at 20? Take Roshan and push one lane together with the Aegis.",
-    ]);
-    expect(plan.teamFallbackSituations).toEqual(["behindAt20", "aheadAt20"]);
+    const offLane = plan.lanes.find((l) => l.name === "Off lane")!;
+    expect(offLane.verdict).toBe("hard");
+    expect(offLane.text).toBe("Hard lane against Anti-Mage and Lich.");
+    // Nothing measured what to do after a lost lane, so nobody gets a line for it.
+    expect(plan.players.every((p) => p.fallbacks.length === 0 && p.fallbackSituations === undefined)).toBe(true);
+    // No item race and no lane results in this snapshot: the hard lane is the headline.
+    expect(plan.story.headline).toBe("Hard off lane against Anti-Mage and Lich.");
+    expect(plan.story.chapters[0]!.text).toBe(
+      "Medusa and Crystal Maiden win the safe lane against Terrorblade and Witch Doctor. Sven and Lion have a hard off lane against Anti-Mage and Lich.",
+    );
+    expect(plan).not.toHaveProperty("teamFallbacks");
   });
 });
 
@@ -305,8 +293,9 @@ describe("gamePlan item journey", () => {
   it("keeps the build's late minute without a journey", () => {
     const plan = medusa(withTimings());
     expect(plan.journey).toBeUndefined();
-    expect(plan.fallbacks.join(" ")).toContain("No Radiance by 18 min?");
-    // The key item behind that line, with the same late minute, for the timeline's flag.
+    // Nothing measured what late wins bought instead, so no line.
+    expect(plan.fallbacks).toEqual([]);
+    // The key item, with its late minute, for the timeline's flag.
     expect(plan.keyItem).toEqual({ itemId: 137, name: "Radiance", lateMinute: 18 });
   });
 
@@ -315,7 +304,8 @@ describe("gamePlan item journey", () => {
       withTimings({ 137: { late: 20, running: 50, onTime: 36, path: { games: 14, steps: [[151, 19, 8], [137, 26, 9]], keyLater: 9 } } }),
     );
     expect(plan.journey).toMatchObject({ itemId: 137, late: 20, games: 14, steps: [[151, 19, 8], [137, 26, 9]] });
-    expect(plan.fallbacks.join(" ")).toContain("No Radiance by 20 min?");
+    expect(plan.fallbacks).toEqual(["No Radiance by 20 min? 8 of 14 high-rank wins without it bought Armlet of Mordiggian next, around 19 min."]);
+    expect(plan.fallbackSituations).toEqual(["keyItemLate"]);
     expect(plan.keyItem).toMatchObject({ itemId: 137, lateMinute: 20 });
   });
 });

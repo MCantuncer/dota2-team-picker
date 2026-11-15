@@ -25,7 +25,7 @@ describe("gameStory", () => {
     );
     // Nothing measured says how the late game goes, so there is no "30 min on" chapter.
     expect(story.chapters.map((c) => c.phase)).toEqual(["0 to 10 min", "10 to 20 min", "20 to 30 min"]);
-    expect(story.chapters[0]!.text).toBe("Juggernaut and Crystal Maiden win the safe lane against Mars: take their tower. Survive the off lane against Axe and Witch Doctor: just get levels.");
+    expect(story.chapters[0]!.text).toBe("Juggernaut and Crystal Maiden win the safe lane against Mars. Magnus and Lion have a hard off lane against Axe and Witch Doctor.");
     // Our first two items are one moment, and the only one in their chapter; theirs is their carry's.
     expect(story.chapters[1]!.text).toBe(
       "Puck's Witch Blade at 12 and Magnus's Blink Dagger at 14: ready to fight at 14. Their Phantom Assassin has Battle Fury at 17. Open fights with Reverse Polarity into Sven's God's Strength cleave.",
@@ -33,6 +33,36 @@ describe("gameStory", () => {
     expect(story.chapters[2]!.text).toBe("Sven's Black King Bar at 24. Roshan from 20 min, once three key items are in.");
     // Our second item at 14 beats their carry's at 17.
     expect(story.headline).toBe("Fight from 14 min, before Phantom Assassin has Battle Fury at 17.");
+  });
+
+  it("marks what each chapter is about, with the combo's heroes and Roshan's three items for the game clock", () => {
+    const story = gameStory(
+      facts({
+        spikes: [
+          { hero: "Juggernaut", item: "Battle Fury", minute: 15 },
+          { hero: "Mars", item: "Blink Dagger", minute: 15 },
+          { hero: "Puck", item: "Blink Dagger", minute: 19 },
+          { hero: "Sven", item: "Black King Bar", minute: 24 },
+        ],
+        combo: "Arena of Blood with Mortimer Kisses inside",
+        comboHeroes: ["Mars", "Snapfire"],
+      }),
+    );
+    expect(story.chapters.map((c) => c.focus)).toEqual(["lanes", "combo", "roshan"]);
+    expect(story.combo).toEqual({ heroes: ["Mars", "Snapfire"], text: "Arena of Blood with Mortimer Kisses inside" });
+    expect(story.roshan).toEqual({ minute: 20, spikes: [
+      { hero: "Juggernaut", item: "Battle Fury", minute: 15 },
+      { hero: "Mars", item: "Blink Dagger", minute: 15 },
+      { hero: "Puck", item: "Blink Dagger", minute: 19 },
+    ] });
+  });
+
+  it("leaves the combo and Roshan off when no chapter tells them", () => {
+    // Ending early takes towers in the second chapter and the Aegis in the third, so neither is drawn.
+    const story = gameStory(facts({ ourTiming: "early", spikes: [{ hero: "Puck", item: "Witch Blade", minute: 12 }, { hero: "Mars", item: "Blink Dagger", minute: 14 }, { hero: "Sven", item: "Black King Bar", minute: 18 }], combo: "Arena of Blood with Mortimer Kisses inside", comboHeroes: ["Mars", "Snapfire"] }));
+    expect(story.combo).toBeUndefined();
+    expect(story.roshan).toBeUndefined();
+    expect(story.chapters[0]!.focus).toBe("lanes");
   });
 
   it("leads with the measured lane when no item race is clear, the hard lane first", () => {
@@ -120,7 +150,7 @@ describe("gameStory", () => {
     const race = (minute: number) =>
       gameStory(facts({ spikes, theirSpikes: [{ hero: "Spectre", item: "Radiance", minute }], enemyCarry: "Spectre" })).headline;
     expect(race(18)).toBe("Fight from 15 min, before Spectre has Radiance at 18.");
-    expect(race(16)).toBe("Both teams are ready at 15 min: fight once your items are in, not before.");
+    expect(race(16)).toBe("Both teams are ready at 15 min.");
     expect(race(12)).toBe("Spectre has Radiance at 12: hold fights until 15 min.");
     // The same two minutes come as numbers, so the timeline can draw the window.
     const raced = (minute: number) =>
@@ -128,15 +158,24 @@ describe("gameStory", () => {
     expect(raced(18)).toEqual({ ready: 15, theirs: { hero: "Spectre", item: "Radiance", minute: 18 } });
     expect(raced(12)?.theirs.minute).toBe(12);
     // Without their carry's item there is nothing to race.
-    expect(gameStory(facts({ spikes })).headline).toBe("Win the fights around your item timings.");
+    expect(gameStory(facts({ spikes })).headline).toBe("Ready to fight at 15 min, once two key items are in.");
     expect(gameStory(facts({ spikes })).race).toBeUndefined();
   });
 
-  it("tells each lane what to do from its verdict, never sending the mid on a template rotation", () => {
+  it("says each lane's verdict as a fact, with no hand-written advice", () => {
     expect(gameStory(facts({ hardLane: { name: "mid", ours: ["Puck"], theirs: ["Pudge"] } })).chapters[0]!.text).toBe(
-      "Puck farms safely in the mid against Pudge: skip trades.",
+      "Puck has a hard mid against Pudge.",
     );
-    expect(gameStory(facts()).chapters[0]!.text).toBe("Every lane is even: the better last hits win.");
+    expect(gameStory(facts()).chapters[0]!.text).toBe("Every lane is even.");
+    // Under the game clock the lane chapter is one short line; the numbers stay in the text and on the Lanes board.
+    const lanes = gameStory(
+      facts({
+        wonLane: { name: "safe lane", ours: ["Juggernaut", "Crystal Maiden"], theirs: ["Axe"], fact: "Crystal Maiden wins 42% of 1,547 lanes against Axe." },
+        hardLane: { name: "mid", ours: ["Puck"], theirs: ["Shadow Fiend"], fact: "Puck loses 55% of 1,320 lanes against Shadow Fiend." },
+      }),
+    ).chapters[0]!;
+    expect(lanes.action).toBe("Juggernaut and Crystal Maiden win the safe lane. Puck has a hard mid.");
+    expect(lanes.text).toContain("Puck loses 55% of 1,320 lanes against Shadow Fiend.");
   });
 
   it("plays early against a late game team, and late against an early one", () => {
@@ -171,7 +210,7 @@ describe("gameStory", () => {
     const spectre = [{ hero: "Spectre", item: "Radiance", minute: 18, around: true }];
     expect(gameStory(facts({ theirTiming: "early", spikes })).chapters[1]!.text).toMatch(/: fight back from 17\./);
     const story = gameStory(facts({ spikes, theirSpikes: spectre, enemyCarry: "Spectre" }));
-    expect(story.headline).toBe("Both teams are ready at 17 min: fight once your items are in, not before.");
+    expect(story.headline).toBe("Both teams are ready at 17 min.");
     expect(story.chapters[1]!.text).toContain("Their Spectre has Radiance around 18.");
   });
 

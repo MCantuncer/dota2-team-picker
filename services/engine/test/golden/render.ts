@@ -13,11 +13,10 @@ export function storyText(title: string, plan: GamePlan, heroName: (id: number) 
   for (const c of plan.story.chapters) lines.push(`- ${c.phase}: ${c.text}`);
   lines.push("", "Danger heroes:");
   for (const d of plan.danger) lines.push(`- ${d}`);
-  lines.push("", "If the game goes wrong:");
-  for (const f of plan.teamFallbacks) lines.push(`- ${f}`);
   lines.push("");
   for (const l of plan.lanes) {
     lines.push(`Lane ${l.name}: ${l.ours.map(heroName).join(" + ")} vs ${l.theirs.map(heroName).join(" + ")}, ${l.verdict}`);
+    lines.push(`  ${l.text}`);
   }
   for (const p of plan.players) {
     lines.push("", `### Pos ${p.position} ${heroName(p.heroId)}`);
