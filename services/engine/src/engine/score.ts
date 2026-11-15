@@ -1,5 +1,4 @@
-import { mergeHardCounters } from "./data-hard-counters";
-import { HARD_COUNTERS, hardCountersOf, type HardCounter } from "./hard-counters";
+import { hardCountersOf, type HardCounter } from "./hard-counters";
 import { list, namedPoints, ordinal, pickLines, points, RANK_NAMES, ROLE_NAMES, summaryOf, type Line, type Warning } from "./reasons";
 import { blindPickRisk, openSlots, pickChance } from "./risk";
 import {
@@ -158,7 +157,7 @@ export class Engine {
   readonly partWeights: ScoreWeights;
 
   /**
-   * `hardCounters` replaces the hand-checked list and the data's, for tests. `scoreWeights`
+   * `hardCounters` replaces the data's hard counters, for tests. `scoreWeights`
    * replaces the data's learned weights; null uses the hand-set weights alone.
    */
   constructor(
@@ -166,8 +165,8 @@ export class Engine {
     options: { hardCounters?: readonly HardCounter[]; scoreWeights?: ScoreWeights | null } = {},
   ) {
     this.partWeights = options.scoreWeights === undefined ? (data.scoreWeights?.weights ?? HAND_WEIGHTS) : (options.scoreWeights ?? HAND_WEIGHTS);
-    // The hand-checked list plus the pairs found in the data; tests pass their own list instead.
-    this.hardCounters = hardCountersOf(options.hardCounters ?? mergeHardCounters(HARD_COUNTERS, data.dataHardCounters));
+    // The pairs the refresh found in the data; tests pass their own list instead.
+    this.hardCounters = hardCountersOf(options.hardCounters ?? data.dataHardCounters ?? []);
     this.heroes = Object.values(data.heroes).sort((a, b) => a.id - b.id);
     for (const h of this.heroes) {
       this.fits.set(h.id, positionFit(h, data.laneRoles[h.id], data.positions?.[h.id]));
@@ -360,9 +359,9 @@ export class Engine {
 
   /**
    * Counter points against each enemy; likely lane opponents (from `laneChances`) count extra.
-   * A hard counter on the enemy team costs at least its listed gap, so the match data and the
-   * hand-checked list are never added up twice. `error` is the edge's standard error, weighted
-   * the same way; 0 for a listed hard counter, which is checked rather than measured.
+   * A hard counter on the enemy team costs at least its gap at all ranks, even where the rank's
+   * games show less, and is never added on top of the matchup. `error` is the edge's standard
+   * error, weighted the same way.
    */
   counterEdges(
     id: number,
@@ -376,8 +375,9 @@ export class Engine {
       const edge = this.matchupEdge(id, enemy, bracket) * weight;
       const gap = hard.find((hc) => hc.counter === enemy)?.gap;
       const lane = laneChance[i]! > 0.5;
-      if (gap !== undefined && -gap < edge) return { enemy, edge: -gap, error: 0, lane, hardGap: gap };
-      return { enemy, edge, error: this.matchupError(id, enemy) * weight, lane, hardGap: null };
+      const error = this.matchupError(id, enemy) * weight;
+      if (gap !== undefined && -gap < edge) return { enemy, edge: -gap, error, lane, hardGap: gap };
+      return { enemy, edge, error, lane, hardGap: null };
     });
   }
 
@@ -683,7 +683,7 @@ export class Engine {
   }
 
   /**
-   * Where each hand-checked hard counter of a hero stands in the draft: on the enemy team, still
+   * Where each hard counter of a hero stands in the draft: on the enemy team, still
    * open while the enemy has picks left, or out (banned or on your team). A counter that can no
    * longer be picked by anyone is left out.
    */

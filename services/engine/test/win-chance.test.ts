@@ -20,7 +20,8 @@ function synthetic(a: number, b: number, n: number, known = 10): Sample[] {
 }
 
 describe("draftEdge", () => {
-  const engine = new Engine(fixture());
+  // Hero 2 is a hard counter of hero 1 (gap 6.5).
+  const engine = new Engine(fixture(), { hardCounters: [{ hero: 1, counter: 2, gap: 6.5, names: "Carry One < Two" }] });
 
   it("favours the side with the counter and is the same from the other side, reversed", () => {
     const edge = draftEdge(engine, [3], [5]);
@@ -34,7 +35,6 @@ describe("draftEdge", () => {
   });
 
   it("counts a hard counter's full gap once, from either side", () => {
-    // Hero 2 is on the hand-checked list as a hard counter of hero 1 (gap 6.5).
     expect(draftEdge(engine, [1], [2])).toBeCloseTo(-6.5, 6);
     expect(draftEdge(engine, [2], [1])).toBeCloseTo(6.5, 6);
   });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { updateDataHardCounters } from "../src/data/fetch";
-import { findHardCounters, holdHardCounters, MIN_GAMES, mergeHardCounters, PER_HERO } from "../src/engine/data-hard-counters";
+import { findHardCounters, holdHardCounters, MIN_GAMES, PER_HERO } from "../src/engine/data-hard-counters";
 import { Engine } from "../src/engine/score";
 import type { Snapshot } from "../src/engine/types";
 import { fixture } from "./fixture";
@@ -59,18 +59,6 @@ describe("holdHardCounters", () => {
     const gone = holdHardCounters([], second.streaks);
     expect(gone.list).toEqual([]);
     expect(gone.streaks).toEqual({});
-  });
-});
-
-describe("mergeHardCounters", () => {
-  it("keeps the hand list as is and adds only new pairs", () => {
-    const hand = [{ hero: 3, counter: 6, gap: 8, names: "hand" }];
-    const data = [
-      { hero: 3, counter: 6, gap: 5.5, names: "data" },
-      { hero: 2, counter: 5, gap: 6, names: "data 2" },
-    ];
-    expect(mergeHardCounters(hand, data).map((hc) => hc.names)).toEqual(["hand", "data 2"]);
-    expect(mergeHardCounters(hand)).toEqual(hand);
   });
 });
 
