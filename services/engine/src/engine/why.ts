@@ -28,7 +28,7 @@ export interface PairWhy {
   isPartner: boolean;
   /** The multiplier on `edge`: up to 1.5 for a lane opponent, 1.5 for the lane partner, else 1. */
   weight: number;
-  /** A listed hard counter on the enemy team: its points are at least this many lost, not the games. */
+  /** A hard counter on the enemy team: its points are at least this many lost (its gap at all ranks). */
   hardGap: number | null;
   /** Score points, `edge` x `weight` x the part's weight (or minus `hardGap`). */
   points: number;

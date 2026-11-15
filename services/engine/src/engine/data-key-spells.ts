@@ -1,7 +1,7 @@
 /**
  * Each hero's one spell that hurts you most in a fight, with a short line on what it does to you, for
  * Their Threats (Can 2026-11-04 chose one row per enemy spell, as on the approved Game Story mockup).
- * Kept by hand, like the hard counters: OpenDota has no "most dangerous spell". Keys are Dota's internal
+ * Kept by hand: OpenDota has no "most dangerous spell". Keys are Dota's internal
  * ability names (they name the ability art); matched by hero display name.
  */
 export interface KeySpell {

@@ -11,7 +11,7 @@ export type WinModel = NonNullable<Snapshot["winModel"]>;
 export function draftEdge(engine: Engine, ours: number[], theirs: number[], bracket?: RankBracket): number {
   const meta = (ids: number[]) => ids.reduce((s, id) => s + (engine.winRate(id, bracket) - 0.5) * 100, 0);
   // Each matchup is the average of both heroes' view of it; a hard counter on either side sets
-  // at least its listed gap, so it counts once and in full.
+  // at least its gap, so it counts once and in full.
   const matchup = (o: number, t: number) => {
     let edge = (engine.matchupEdge(o, t, bracket) - engine.matchupEdge(t, o, bracket)) / 2;
     const [ours] = engine.counterEdges(o, [t], [0], bracket);

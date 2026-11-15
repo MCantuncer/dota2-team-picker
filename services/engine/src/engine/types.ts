@@ -66,7 +66,7 @@ export interface Snapshot {
    * refresh) or, when missing, our own sample of public matches (added to on each refresh).
    */
   matchupsFrom?: { source: "stratz"; at: string };
-  /** Hard counters found in the counts (see data-hard-counters.ts), used next to the hand list. */
+  /** Hard counters found in the counts (see data-hard-counters.ts), the engine's only hard counters. */
   dataHardCounters?: { hero: number; counter: number; gap: number; names: string }[];
   /** Refreshes in a row each "hero-counter" pair has been past the line, for the hold. */
   hardCounterStreaks?: Record<string, number>;
@@ -327,7 +327,7 @@ export interface ScoreBreakdown {
 /** A multiplier per score part. */
 export type ScoreWeights = Record<keyof ScoreBreakdown, number>;
 
-/** A hand-checked hard counter of a hero and where it stands in the draft, with a line to show. */
+/** A hard counter of a hero and where it stands in the draft, with a line to show. */
 export interface HardCounterNote {
   counterId: number;
   /** Win-rate points the hero loses with this counter on the enemy team. */

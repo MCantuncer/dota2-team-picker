@@ -1,9 +1,10 @@
 /**
- * Hard counters found in the match data, for every hero, next to the hand-checked list in
- * hard-counters.ts. A pair counts when the hero does at least MIN_GAP points worse than its and
- * the enemy's win rates predict (the engine's matchup edge, not the raw win rate) over at least
- * MIN_GAMES games at all ranks, and has done so on HOLD_RUNS refreshes in a row, so a pair near
- * the line does not flip on and off. Each hero keeps its PER_HERO worst.
+ * Hard counters found in the match data, for every hero. They are the engine's only hard counters:
+ * no pair is kept by hand, and the list follows the data on every refresh. A pair counts when the
+ * hero does at least MIN_GAP points worse than its and the enemy's win rates predict (the engine's
+ * matchup edge, not the raw win rate) over at least MIN_GAMES games at all ranks, and has done so
+ * on HOLD_RUNS refreshes in a row, so a pair near the line does not flip on and off. Each hero
+ * keeps its PER_HERO worst.
  */
 import type { HardCounter } from "./hard-counters";
 import type { Snapshot } from "./types";
@@ -45,10 +46,4 @@ export function holdHardCounters(found: HardCounter[], streaks: Record<string, n
   const next: Record<string, number> = {};
   for (const hc of found) next[`${hc.hero}-${hc.counter}`] = (streaks[`${hc.hero}-${hc.counter}`] ?? 0) + 1;
   return { list: found.filter((hc) => next[`${hc.hero}-${hc.counter}`]! >= HOLD_RUNS), streaks: next };
-}
-
-/** The hand-checked list plus the data's pairs it doesn't already have. */
-export function mergeHardCounters(hand: readonly HardCounter[], fromData: readonly HardCounter[] = []): HardCounter[] {
-  const known = new Set(hand.map((hc) => `${hc.hero}-${hc.counter}`));
-  return [...hand, ...fromData.filter((hc) => !known.has(`${hc.hero}-${hc.counter}`))];
 }

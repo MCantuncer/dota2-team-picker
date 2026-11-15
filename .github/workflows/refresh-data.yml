@@ -83,7 +83,6 @@ jobs:
 
           The hand-kept lists don't update themselves. Check them against the patch notes:
 
-          - [ ] Hard counters (\`services/engine/src/engine/hard-counters.ts\`): re-check each pair once about a week of $PATCH games is in.
           - [ ] Spell combos and team styles (\`services/engine/src/engine/gameplan.ts\`).
           - [ ] Traits for new or reworked heroes (\`services/engine/src/engine/traits.ts\`)."
       # Runs even when a step above failed, so the lookups don't wait for the

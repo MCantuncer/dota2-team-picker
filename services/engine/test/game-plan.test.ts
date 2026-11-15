@@ -102,7 +102,8 @@ describe("gamePlan", () => {
   });
 
   it("names combos and hard counters, and claims no window from the style lists", () => {
-    const plan = gamePlan(new Engine(data()), { ours, theirs });
+    const hardCounters = [{ hero: 94, counter: 1, gap: 9, names: "Medusa < Anti-Mage" }];
+    const plan = gamePlan(new Engine(data(), { hardCounters }), { ours, theirs });
     expect(plan.ourCombos).toEqual(["Magnus + Sven: Reverse Polarity into Sven's God's Strength cleave"]);
     expect(plan.fears).toContain("Medusa is hard countered by Anti-Mage: play carefully around them");
     expect(plan.theirStyle?.key).toBe("lategame");

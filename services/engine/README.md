@@ -51,17 +51,15 @@ Every part of the score is in win-rate percentage points, so `+2.0` roughly mean
   can still be picked"). Once the saved ranked games of this patch hold 3,000 games (`pickPhase`), how
   the hero does when its team picks it in this round of the draft is added too ("Wins more as a
   last-round pick"). The rounds follow Ranked All Pick: two picks, two picks, then the last.
-- **Hard counters**: a hand-checked list ([`src/engine/hard-counters.ts`](src/engine/hard-counters.ts)) of 17
-  pairs where one hero ruins another by a specific mechanic, such as Anti-Mage against Medusa. With the
-  counter on the enemy team, the matchup costs at least the listed gap ("Hard countered by Anti-Mage").
+- **Hard counters**: pairs where one hero makes another much worse, such as Anti-Mage against Medusa,
+  found in the match data on every refresh ([`src/engine/data-hard-counters.ts`](src/engine/data-hard-counters.ts)):
+  the hero does 5 or more points worse than both heroes' win rates predict, over 1,000 or more games
+  at all ranks, on two refreshes in a row, at most the 3 worst per hero. They go in the snapshot's
+  `dataHardCounters`; no pair is kept by hand, so the list follows the data and each patch. With the
+  counter on the enemy team, the matchup costs at least the gap ("Hard countered by Anti-Mage").
   While the counter can still be picked, the hero loses the gap times the chance the enemy takes it (the same chance as in pick safety, which leaves hard counters out)
   ("Gamble: Anti-Mage still available"). Once it is banned or on your team, there is no cost and the
   reason says "Anti-Mage is out, safe to pick".
-  Next to that list, the refresh finds hard counters in the match data for every hero
-  ([`src/engine/data-hard-counters.ts`](src/engine/data-hard-counters.ts)): a pair where the hero does
-  5 or more points worse than both heroes' win rates predict, over 1,000 or more games at all ranks,
-  on two refreshes in a row, at most the 3 worst per hero. They go in `dataHardCounters` and count
-  the same way; a pair already on the hand list keeps the hand list's gap.
 
 Small samples are pulled toward the expected value, so a 3-0 matchup does not look like a sure win.
 
@@ -254,8 +252,8 @@ The snapshot records the patch its counts are for (`patch`). When OpenDota lists
   start than nothing while new games come in, and small samples are already pulled toward
   neutral by the engine.
 - only games played since the patch came out are counted.
-- the Action opens a GitHub issue to review the hand-kept lists (hard counters, combos and
-  styles, hero traits) against the patch notes.
+- the Action opens a GitHub issue to review the hand-kept lists (combos and styles, hero traits)
+  against the patch notes. Hard counters follow the data on their own.
 
 New heroes show up through `/heroStats` on the next run. Until they have games, their matchups
 count as neutral.
