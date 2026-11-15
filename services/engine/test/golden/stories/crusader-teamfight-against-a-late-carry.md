@@ -3,7 +3,7 @@
 Headline: Fight from 13 min, before Spectre has Radiance at 19.
 
 - 0 to 10 min: Invoker has a hard mid against Ember Spirit. Invoker wins 29% and loses 43% of 2,093 lanes against Ember Spirit.
-- 10 to 20 min: Invoker's Meteor Hammer at 12 and Magnus's Blink Dagger at 13: ready to fight at 13. Their Spectre has Radiance at 19. Open fights with Chronosphere into Sun Strike and Chaos Meteor.
+- 10 to 20 min: Invoker's Meteor Hammer at 12 and Magnus's Blink Dagger at 13: ready to fight at 13. Enemy Spectre has Radiance at 19. Open fights with Chronosphere into Sun Strike and Chaos Meteor.
 - 20 to 30 min: Roshan from 20 min, once three key items are in.
 
 Danger heroes:
@@ -26,7 +26,7 @@ First: Mask of Madness 14/15
 Next: Battle Fury 16/18 {Cleave for fast farm.}, Mjollnir 24/25 {Attack speed and chain lightning.}, Manta Style 26/27
 Late: Black King Bar 32/35 [Against Ember Spirit, Nyx Assassin and Disruptor: don't skip it] {Spell immunity for the big fights.}
 Job: Your timing is Battle Fury at 16 min. Bristleback has Consecrated Wraps at 16 min. Set up Chronosphere into Sun Strike and Chaos Meteor with Invoker.
-Vs Bristleback (lane): Tank who soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Bristleback (lane): Tank who soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Nyx Assassin (lane): Goes invisible. Ask your support for Dust and Sentries before fights.
 Vs Spectre: Strong passives. Fight them when they are low, not head on.
 Vs Ember Spirit: Magic burst. Stay spread so one combo can't catch two.
@@ -48,7 +48,7 @@ Late: Aghanim's Scepter 31/41, Black King Bar 32/41 [Against Ember Spirit, Nyx A
 Job: Your timing is Meteor Hammer at 12 min. Ember Spirit has Spirit Vessel at 14 min. Set up Chronosphere into Sun Strike and Chaos Meteor with Faceless Void.
 Vs Ember Spirit (lane): Magic burst. Stay spread so one combo can't catch two.
 Vs Spectre: Strong passives. Fight them when they are low, not head on.
-Vs Bristleback: Tank who soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Bristleback: Tank who soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Nyx Assassin: Goes invisible. Ask your support for Dust and Sentries before fights.
 Vs Disruptor: Magic burst. buy Black King Bar.
 Watch Ember Spirit: Stay spread when Ember Spirit is missing from the map.
@@ -69,7 +69,7 @@ Job: Your timing is Blink Dagger at 13 min. Spectre has Radiance at 19 min.
 Vs Spectre (lane): Strong passives. Fight them when they are low, not head on.
 Vs Disruptor (lane): Magic burst. buy Black King Bar.
 Vs Ember Spirit: Magic burst. Stay spread so one combo can't catch two.
-Vs Bristleback: Tank who soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Bristleback: Tank who soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Nyx Assassin: Goes invisible. Ask your support for Dust and Sentries before fights.
 Watch Spectre: Spectre gets Radiance at 19 min: fight before it, never head on after.
 Watch Disruptor: buy Black King Bar.
@@ -89,7 +89,7 @@ Job: Your timing is Blink Dagger at 17 min. Spectre has Radiance at 19 min.
 Vs Spectre (lane): Strong passives. Fight them when they are low, not head on.
 Vs Disruptor (lane): Magic burst. Stay spread so one combo can't catch two.
 Vs Ember Spirit: Magic burst. Stay spread so one combo can't catch two.
-Vs Bristleback: Tank who soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Bristleback: Tank who soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Nyx Assassin: Goes invisible. Ask your support for Dust and Sentries before fights.
 Watch Spectre: Spectre gets Radiance at 19 min: fight before it, never head on after.
 Watch Disruptor, Ember Spirit: Stay spread when Disruptor and Ember Spirit are missing from the map.

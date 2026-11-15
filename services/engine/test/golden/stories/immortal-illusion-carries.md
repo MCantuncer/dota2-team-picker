@@ -3,8 +3,8 @@
 Headline: Your safe lane to press: Disruptor wins 62% and loses 15% of 308 lanes against Primal Beast.
 
 - 0 to 10 min: Terrorblade and Disruptor win the safe lane against Primal Beast and Hoodwink. Disruptor wins 62% and loses 15% of 308 lanes against Primal Beast.
-- 10 to 20 min: Mars's Blink Dagger at 15 and Templar Assassin's Desolator at 17: ready to fight at 17. Their Naga Siren has Manta Style at 17.
-- 20 to 30 min: Their Pangolier has Blink Dagger at 20. Roshan from 20 min, once three key items are in.
+- 10 to 20 min: Mars's Blink Dagger at 15 and Templar Assassin's Desolator at 17: ready to fight at 17. Enemy Naga Siren has Manta Style at 17.
+- 20 to 30 min: Enemy Pangolier has Blink Dagger at 20. Roshan from 20 min, once three key items are in.
 
 Danger heroes:
 - Naga Siren: Manta Style at 17 min.
@@ -25,9 +25,9 @@ Boots: Power Treads 7 {Attack speed and a stat to switch.}
 First: Manta Style 19/20
 Late: Eye of Skadi 30/31 {Cuts the healing from Treant Protector; your hits slow.}, Hurricane Pike 32/41, Butterfly 33/41, Black King Bar 35/39 [Against Pangolier, Hoodwink and Treant Protector: don't skip it] {Spell immunity for the big fights. Pulverize still goes through it.}
 Job: Your timing is Manta Style at 19 min. Primal Beast has Blink Dagger at 15 min.
-Vs Primal Beast (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Primal Beast (lane): Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Hoodwink (lane): Magic burst. buy Black King Bar.
-Vs Naga Siren: Illusions split your damage. Hit the real hero: it is the one their team protects.
+Vs Naga Siren: Illusions split your damage. Hit the real hero: it is the one the enemy team protects.
 Vs Pangolier: Magic burst. buy Black King Bar.
 Vs Treant Protector: Goes invisible. buy Black King Bar.
 Watch Primal Beast: Hit Naga Siren and Pangolier first: Primal Beast soaks your damage.
@@ -44,8 +44,8 @@ Next: Dragon Lance 18/24, Blink Dagger 19/21 {Start fights from 1,200 range.}
 Late: Black King Bar 31/36 [Against Pangolier, Hoodwink and Treant Protector: don't skip it] {Spell immunity for the big fights. Pulverize still goes through it.}, Daedalus 32/34
 Job: Your timing is Desolator at 17 min. Pangolier has Blink Dagger at 20 min.
 Vs Pangolier (lane): Magic burst. buy Black King Bar.
-Vs Naga Siren: Illusions split your damage. Hit the real hero: it is the one their team protects.
-Vs Primal Beast: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Naga Siren: Illusions split your damage. Hit the real hero: it is the one the enemy team protects.
+Vs Primal Beast: Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Hoodwink: Magic burst. buy Black King Bar.
 Vs Treant Protector: Goes invisible. buy Black King Bar.
 Watch Pangolier, Hoodwink, Treant Protector: buy Black King Bar.
@@ -60,10 +60,10 @@ Boots: Phase Boots 10 {Armor and a burst of speed.}
 First: Blink Dagger 15/17 {Start fights from 1,200 range.}
 Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24 {-6 armor on your target.}, Black King Bar 29/31 [Against Pangolier, Hoodwink and Treant Protector: don't skip it] {Spell immunity for the big fights. Pulverize still goes through it.}
 Job: Your timing is Blink Dagger at 15 min. Naga Siren has Manta Style at 17 min.
-Vs Naga Siren (lane): Illusions split your damage. Hit the real hero: it is the one their team protects.
+Vs Naga Siren (lane): Illusions split your damage. Hit the real hero: it is the one the enemy team protects.
 Vs Treant Protector (lane): Goes invisible. buy Black King Bar.
 Vs Pangolier: Magic burst. buy Black King Bar.
-Vs Primal Beast: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Primal Beast: Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Hoodwink: Magic burst. buy Black King Bar.
 Watch Naga Siren: Find the real Naga Siren and hit only that one.
 Watch Treant Protector, Pangolier, Hoodwink: buy Black King Bar.
@@ -82,7 +82,7 @@ Job: Your timing is Blink Dagger at 19 min. Naga Siren has Manta Style at 17 min
 Vs Naga Siren (lane): Illusions split your damage. buy Force Staff.
 Vs Treant Protector (lane): Goes invisible. Ask your support for Dust and Sentries before fights.
 Vs Pangolier: Magic burst. buy Force Staff.
-Vs Primal Beast: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Primal Beast: Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Hoodwink: Magic burst. Stay spread so one combo can't catch two.
 Watch Naga Siren, Pangolier: buy Force Staff.
 Watch Treant Protector: Carry Dust and a Sentry Ward for Treant Protector.
@@ -98,9 +98,9 @@ First: Glimmer Cape 24/30 [Against Pangolier and Hoodwink] {Invisibility and a m
 Next: Aether Lens 25/28, Blink Dagger 26/28 {Start fights from 1,200 range.}, Force Staff 27/31 {Pushes you away from Naga Siren and Pangolier.}
 Late: Aghanim's Scepter 36/41
 Job: Your timing is Blink Dagger at 26 min. Primal Beast has Blink Dagger at 15 min.
-Vs Primal Beast (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Primal Beast (lane): Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Hoodwink (lane): Magic burst. buy Glimmer Cape.
-Vs Naga Siren: Illusions split your damage. Hit the real hero: it is the one their team protects.
+Vs Naga Siren: Illusions split your damage. Hit the real hero: it is the one the enemy team protects.
 Vs Pangolier: Magic burst. buy Glimmer Cape.
 Vs Treant Protector: Goes invisible. Ask your support for Dust and Sentries before fights.
 Watch Primal Beast: Hit Naga Siren and Pangolier first: Primal Beast soaks your damage.

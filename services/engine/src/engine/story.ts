@@ -119,7 +119,7 @@ const carrySpike = (f: StoryFacts) => f.theirSpikes?.find((s) => s.hero === f.en
 
 function headline(f: StoryFacts): string {
   if (f.theirTiming === "late" && f.ourTiming !== "late") {
-    return f.enemyCarry ? `Win before 30 minutes: their ${f.enemyCarry} outscales us.` : "Win before 30 minutes: they outscale us.";
+    return f.enemyCarry ? `Win before 30 minutes: the enemy ${f.enemyCarry} outscales us.` : "Win before 30 minutes: they outscale us.";
   }
   if (f.ourTiming === "late" && f.theirTiming !== "late") {
     return f.ourCarry ? `Survive to 30 minutes: our ${f.ourCarry} outscales them.` : "Survive to 30 minutes: we outscale them.";
@@ -132,7 +132,7 @@ function headline(f: StoryFacts): string {
     }
     return ready !== undefined ? `End early: ready at ${ready}, take towers before 30 minutes.` : "End early: take towers before 30 minutes.";
   }
-  if (f.theirTiming === "early") return "Survive their early pushes: we are stronger after 25 minutes.";
+  if (f.theirTiming === "early") return "Survive the enemy's early pushes: we are stronger after 25 minutes.";
   // No style claim: race our first two items against their carry's (or their first core's when they have
   // no carry), else the clearest measured lane.
   const ready = nthMinute(f.spikes, READY_SPIKES);
@@ -169,9 +169,9 @@ function ourSpikeText(inWindow: Spike[], ready: number | undefined, window: Timi
   return readyHere ? `${named}: ${go}.` : `${named}.`;
 }
 
-/** "Their Phantom Assassin has Battle Fury at 17." for the first of their spikes in a window. */
+/** "Enemy Phantom Assassin has Battle Fury at 17." for the first of their spikes in a window. */
 function theirSpikeText(first: Spike | undefined): string {
-  return first ? `Their ${first.hero} has ${first.item} ${atMinute(first)}.` : "";
+  return first ? `Enemy ${first.hero} has ${first.item} ${atMinute(first)}.` : "";
 }
 
 /** "Juggernaut and Crystal Maiden" or "the safe lane". */
@@ -231,9 +231,9 @@ function action(chapter: number, f: StoryFacts, inWindow: (m: number) => boolean
         const long = `Take towers before ${theirs.hero}'s ${theirs.item} ${atMinute(theirs)}.`;
         // In this chapter the item art shows their spike's minute; outside it the line keeps it.
         if (!inWindow(theirs.minute)) return same(long);
-        return { short: `Take towers before their ${theirs.item}.`, long, names: theirs };
+        return { short: `Take towers before ${theirs.hero}'s ${theirs.item}.`, long, names: theirs };
       }
-      if (f.theirTiming === "early") return same(f.ourCarry ? `Their strongest time: defend towers together while ${f.ourCarry} farms.` : "Their strongest time: defend towers together.");
+      if (f.theirTiming === "early") return same(f.ourCarry ? `The enemy's strongest time: defend towers together while ${f.ourCarry} farms.` : "The enemy's strongest time: defend towers together.");
       return f.combo ? { ...same(`Open fights with ${f.combo}.`), focus: "combo" } : same("");
     case 2:
       if (earlyIsOurs) return same("Take Roshan and end with the Aegis before 30 minutes.");

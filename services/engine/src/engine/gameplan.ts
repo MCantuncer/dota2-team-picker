@@ -23,7 +23,7 @@ export const STYLES: Record<Style, { label: string; plan: string; heroes: string
   },
   push: {
     label: "Push",
-    plan: "take towers early and end before their carries are ready",
+    plan: "take towers early and end before the enemy carries are ready",
     heroes: [
       "Death Prophet", "Leshrac", "Shadow Shaman", "Nature's Prophet", "Lycan", "Broodmother", "Pugna",
       "Jakiro", "Chen", "Beastmaster", "Visage", "Venomancer", "Luna", "Drow Ranger", "Tiny",

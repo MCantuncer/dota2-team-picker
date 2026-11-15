@@ -108,7 +108,7 @@ describe("threatRows", () => {
     const rows = threatRows([
       note(84, "Saves allies with buffs", [116], undefined, true),
       note(33, "Locks you down", [116], undefined, true),
-      note(30, "Heals their team through fights", [116]),
+      note(30, "Heals the enemy team through fights", [116]),
       note(56, "Goes invisible", [], dust),
     ]);
     expect(ids(rows)).toEqual([
@@ -118,7 +118,7 @@ describe("threatRows", () => {
     expect(rows[0]?.enemies.map((e) => [e.threat, e.inLane])).toEqual([
       ["Saves allies with buffs", true],
       ["Locks you down", true],
-      ["Heals their team through fights", false],
+      ["Heals the enemy team through fights", false],
     ]);
   });
 
@@ -202,7 +202,7 @@ describe("game tips", () => {
 
   it("keeps the general tip without this game's facts", () => {
     const rows = threatRows(enemyList(null, [{ hero: AXE, inLane: false, laneSure: true }]));
-    expect(rows[0]?.tip).toBe("Don't focus them: kill their damage dealers first");
+    expect(rows[0]?.tip).toBe("Don't focus them: kill the enemy damage dealers first");
     expect(rows[0]).not.toHaveProperty("tipArt");
   });
 });

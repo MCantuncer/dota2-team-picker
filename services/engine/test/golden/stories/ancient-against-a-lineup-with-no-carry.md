@@ -3,7 +3,7 @@
 Headline: Fight from 15 min, before Storm Spirit has Witch Blade at 17.
 
 - 0 to 10 min: Ursa and Silencer win the safe lane against Tidehunter and Pudge. Mars and Shadow Shaman have a hard off lane against Vengeful Spirit and Witch Doctor. Ursa wins 62% and loses 18% of 4,234 lanes against Tidehunter. Mars wins 21% and loses 55% of 2,522 lanes against Witch Doctor.
-- 10 to 20 min: Ember Spirit's Spirit Vessel at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Their Storm Spirit has Witch Blade at 17.
+- 10 to 20 min: Ember Spirit's Spirit Vessel at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Enemy Storm Spirit has Witch Blade at 17.
 
 Danger heroes:
 - Vengeful Spirit: Strong against Ursa and Ember Spirit.
@@ -18,10 +18,10 @@ Lane Off lane: Mars + Shadow Shaman vs Vengeful Spirit + Witch Doctor, hard
 
 ### Pos 1 Ursa
 Job: Tidehunter has Blink Dagger at 19 min.
-Vs Tidehunter (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
-Vs Pudge (lane, guessed): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Tidehunter (lane): Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
+Vs Pudge (lane, guessed): Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Vengeful Spirit: Magic burst. Stay spread so one combo can't catch two.
-Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
+Vs Witch Doctor: Heals the enemy team through fights. Kill them first or fight short and decisive.
 Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
 Watch Tidehunter, Pudge: Hit Vengeful Spirit and Storm Spirit first: Tidehunter and Pudge soak your damage.
 Watch Vengeful Spirit, Storm Spirit: Stay spread when Vengeful Spirit and Storm Spirit are missing from the map.
@@ -38,9 +38,9 @@ Late: Black King Bar 30/34 [Against Witch Doctor, Tidehunter and Storm Spirit: d
 Job: Your timing is Spirit Vessel at 14 min. Storm Spirit has Witch Blade at 17 min.
 Vs Storm Spirit (lane): Magic burst. buy Magic Wand, Black King Bar.
 Vs Vengeful Spirit: Magic burst. Stay spread so one combo can't catch two.
-Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
+Vs Witch Doctor: Heals the enemy team through fights. Kill them first or fight short and decisive.
 Vs Tidehunter: Starts fights and soaks your damage. buy Black King Bar.
-Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Watch Storm Spirit, Tidehunter: buy Black King Bar.
 Watch Vengeful Spirit: Stay spread when Vengeful Spirit is missing from the map.
 Watch Witch Doctor: Kill Witch Doctor first, or keep the fight short.
@@ -55,9 +55,9 @@ First: Blink Dagger 15/17 {Start fights from 1,200 range.}
 Next: Aghanim's Shard 21/22, Eul's Scepter of Divinity 22/25, Desolator 23/24 {-6 armor on your target.}, Black King Bar 29/31 [Against Witch Doctor, Tidehunter and Storm Spirit: don't skip it] {Spell immunity for the big fights. Nether Swap, Death Ward and Meat Hook still go through it.}
 Job: Your timing is Blink Dagger at 15 min. Witch Doctor has Glimmer Cape at 23 min.
 Vs Vengeful Spirit (lane): Magic burst. Stay spread so one combo can't catch two.
-Vs Witch Doctor (lane): Heals their team through fights. buy Magic Wand.
+Vs Witch Doctor (lane): Heals the enemy team through fights. buy Magic Wand.
 Vs Tidehunter: Starts fights and soaks your damage. buy Black King Bar.
-Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Storm Spirit: Magic burst. buy Black King Bar.
 Watch Vengeful Spirit: Stay spread when Vengeful Spirit is missing from the map.
 Watch Witch Doctor: buy Magic Wand.
@@ -75,9 +75,9 @@ Late: Aghanim's Scepter 36/42
 If needed: Force Staff 31/34 [Against Tidehunter] instead of Aghanim's Shard
 Job: Your timing is Blink Dagger at 20 min. Witch Doctor has Glimmer Cape at 23 min.
 Vs Vengeful Spirit (lane): Magic burst. Stay spread so one combo can't catch two.
-Vs Witch Doctor (lane): Heals their team through fights. buy Magic Wand.
+Vs Witch Doctor (lane): Heals the enemy team through fights. buy Magic Wand.
 Vs Tidehunter: Starts fights and soaks your damage. buy Glimmer Cape, Force Staff.
-Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
 Watch Vengeful Spirit, Storm Spirit: Stay spread when Vengeful Spirit and Storm Spirit are missing from the map.
 Watch Witch Doctor: buy Magic Wand.
@@ -86,10 +86,10 @@ Watch Pudge: Hit Vengeful Spirit and Storm Spirit first: Pudge soaks your damage
 
 ### Pos 5 Silencer
 Job: Tidehunter has Blink Dagger at 19 min.
-Vs Tidehunter (lane): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
-Vs Pudge (lane, guessed): Starts fights and soaks your damage. Don't focus them: kill their damage dealers first.
+Vs Tidehunter (lane): Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
+Vs Pudge (lane, guessed): Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Vengeful Spirit: Magic burst. Stay spread so one combo can't catch two.
-Vs Witch Doctor: Heals their team through fights. Kill them first or fight short and decisive.
+Vs Witch Doctor: Heals the enemy team through fights. Kill them first or fight short and decisive.
 Vs Storm Spirit: Magic burst. Stay spread so one combo can't catch two.
 Watch Tidehunter, Pudge: Hit Vengeful Spirit and Storm Spirit first: Tidehunter and Pudge soak your damage.
 Watch Vengeful Spirit, Storm Spirit: Stay spread when Vengeful Spirit and Storm Spirit are missing from the map.
