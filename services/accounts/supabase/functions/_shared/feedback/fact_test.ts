@@ -11,7 +11,7 @@ import {
   readNewGames,
 } from "./fact.ts";
 import { gameFindings } from "./findings.ts";
-import { type GameSummary, summarizeGame } from "./summary.ts";
+import { type GameSummary, summarizeGame, SUMMARY_VERSION } from "./summary.ts";
 
 const NOW = new Date("2026-11-03T12:00:00Z");
 const HOUR_MS = 60 * 60 * 1000;
@@ -80,7 +80,7 @@ const isBusy = (err: unknown) => err instanceof Busy;
 Deno.test("a parsed match is saved as parsed with its summary, using one call", async () => {
   const { deps, taken, parses } = stub(parsedRaw());
   const row = await buildFact(item(), deps, isBusy);
-  assertEquals([row?.status, row?.summary_version, row?.attempts, row?.error], ["parsed", 1, 0, null]);
+  assertEquals([row?.status, row?.summary_version, row?.attempts, row?.error], ["parsed", SUMMARY_VERSION, 0, null]);
   assertEquals((row?.summary as GameSummary).isParsed, true);
   assertEquals(Array.isArray(row?.findings), true, "the game's own findings come with it");
   assertEquals(row?.duration_s, parsedRaw().duration);

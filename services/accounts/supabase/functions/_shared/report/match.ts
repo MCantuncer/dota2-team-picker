@@ -8,8 +8,16 @@ export interface DeathLogEntry {
   time: number;
   goldLost: number;
   timeDead: number;
+  /** Gold the killer got for it. Null when not given. */
+  goldFed: number | null;
   /** Unit key of whoever landed the last hit, e.g. "npc_dota_hero_lina". Null when not given. */
   killer: string | null;
+}
+
+/** An observer ward from the moment it was placed until it expired or was destroyed. */
+export interface WardSpan {
+  placedS: number;
+  goneS: number;
 }
 
 /** Percentiles (0 to 1) for the benchmarks beyond the four every parsed match has. */
@@ -64,6 +72,10 @@ export interface MatchPlayer {
   observersPlaced: number | null;
   sentriesPlaced: number | null;
   wardsDestroyed: number | null;
+  /** Observer wards this player placed. Parsed only. */
+  observerWards: WardSpan[] | null;
+  /** When this player took a power rune (not bounty, water or wisdom). Parsed only. */
+  powerRunesS: number[] | null;
   /** Totals at each minute, from minute 0. Parsed only. */
   lastHitsByMinute: number[] | null;
   deniesByMinute: number[] | null;
@@ -114,6 +126,10 @@ const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFin
 const num = (o: Obj, key: string): number => (isNum(o[key]) ? o[key] : 0);
 const numOrNull = (o: Obj, key: string): number | null => (isNum(o[key]) ? o[key] : null);
 const numArray = (v: unknown): number[] | null => (Array.isArray(v) && v.every(isNum) ? v : null);
+/** Observers last 6 minutes unless destroyed first. */
+const OBSERVER_LIFE_S = 360;
+/** runes_log keys of power runes: double damage, haste, illusion, invisibility, regeneration, arcane, shield. */
+const POWER_RUNE_KEYS = new Set(["0", "1", "2", "3", "4", "6", "9"]);
 
 /** Slots 0-127 are Radiant, 128 and up Dire. */
 export const isRadiantSlot = (slot: number) => slot < 128;
@@ -182,6 +198,8 @@ function readPlayer(p: unknown, isParsed: boolean): MatchPlayer {
     observersPlaced: parsed(numOrNull(p, "obs_placed")),
     sentriesPlaced: parsed(numOrNull(p, "sen_placed")),
     wardsDestroyed: parsed(isNum(p.observer_kills) && isNum(p.sentry_kills) ? p.observer_kills + p.sentry_kills : null),
+    observerWards: parsed(readObserverWards(p.obs_log, p.obs_left_log)),
+    powerRunesS: parsed(readPowerRunes(p.runes_log)),
     benchmarks: readBenchmarks(p.benchmarks),
     otherBenchmarks: readOtherBenchmarks(p.benchmarks),
     damageReceived: parsed(readNumberMap(p.damage_inflictor_received)),
@@ -194,8 +212,32 @@ function readDeaths(v: unknown): DeathLogEntry[] | null {
     time: num(d, "time"),
     goldLost: num(d, "gold_lost"),
     timeDead: num(d, "time_dead"),
+    goldFed: numOrNull(d, "gold_fed"),
     killer: typeof d.key === "string" && d.key !== "" ? d.key : null,
   }));
+}
+
+/**
+ * Observer wards from obs_log, each ending at its obs_left_log entry (same ehandle) or when it
+ * expires. Null when the match has no ward log for the player.
+ */
+function readObserverWards(placed: unknown, left: unknown): WardSpan[] | null {
+  if (!Array.isArray(placed)) return null;
+  const goneAt = new Map<number, number>();
+  for (const l of Array.isArray(left) ? left.filter(isObj) : []) {
+    if (isNum(l.ehandle) && isNum(l.time)) goneAt.set(l.ehandle, l.time);
+  }
+  return placed.filter(isObj).flatMap((w) => {
+    if (!isNum(w.time)) return [];
+    const expires = w.time + OBSERVER_LIFE_S;
+    const gone = isNum(w.ehandle) ? goneAt.get(w.ehandle) : undefined;
+    return [{ placedS: w.time, goneS: gone !== undefined && gone < expires ? gone : expires }];
+  });
+}
+
+function readPowerRunes(v: unknown): number[] | null {
+  if (!Array.isArray(v)) return null;
+  return v.filter(isObj).flatMap((r) => (isNum(r.time) && POWER_RUNE_KEYS.has(String(r.key)) ? [r.time] : []));
 }
 
 function readPurchases(v: unknown): Purchase[] | null {
