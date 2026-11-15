@@ -24,6 +24,7 @@
     "backtest": "tsx scripts/backtest.ts",
     "fit-score-weights": "tsx scripts/fit-score-weights.ts",
     "fit-win-chance": "tsx scripts/fit-win-chance.ts",
+    "proof": "tsx scripts/proof.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
