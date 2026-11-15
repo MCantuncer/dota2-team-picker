@@ -20,6 +20,8 @@ export interface ItemConstantRow {
   components?: unknown;
   attrib?: unknown;
   abilities?: unknown;
+  cd?: unknown;
+  mc?: unknown;
 }
 
 /** OpenDota's /heroes/{id}/itemPopularity: times bought per item id in each phase. */
@@ -74,16 +76,36 @@ export function toItemStats(key: string, attrib: unknown): ItemStat[] {
   });
 }
 
-/** The item's own spells by name. OpenDota's "upgrade" lines are what Aghanim's adds to a hero, not the item's spell. */
+/** A tooltip line that is a number, like "Duration: 9s" or "Dispel Type: Basic Dispel". */
+const FACT_LINE = /^([A-Z][A-Za-z' -]{1,30}):\s*(.{1,40})$/;
+
+/** A spell's tooltip as its text and its number lines; the text's paragraphs are joined into one. */
+export function toSpellText(description: unknown): Pick<ItemAbility, "text" | "facts"> {
+  if (typeof description !== "string") return {};
+  const text: string[] = [];
+  const facts: { label: string; value: string }[] = [];
+  for (const raw of description.split("\n")) {
+    const line = raw.trim();
+    if (!line) continue;
+    const fact = FACT_LINE.exec(line);
+    if (fact) facts.push({ label: titleWords(fact[1]!.trim()), value: fact[2]!.trim() }); // The pattern has two groups.
+    else text.push(line);
+  }
+  return { ...(text.length ? { text: text.join(" ") } : {}), ...(facts.length ? { facts } : {}) };
+}
+
+/** The item's own spells with their tooltips. OpenDota's "upgrade" lines are what Aghanim's adds to a hero, not the item's spell. */
 export function toItemAbilities(abilities: unknown): ItemAbility[] {
   if (!Array.isArray(abilities)) return [];
   return abilities.flatMap((a): ItemAbility[] => {
     if (!isRecord(a) || typeof a.title !== "string" || !a.title.trim()) return [];
-    if (a.type === "passive") return [{ kind: "passive", name: a.title.trim() }];
-    if (a.type === "active" || a.type === "toggle" || a.type === "use") return [{ kind: "active", name: a.title.trim() }];
-    return [];
+    const kind = a.type === "passive" ? "passive" : a.type === "active" || a.type === "toggle" || a.type === "use" ? "active" : undefined;
+    return kind ? [{ kind, name: a.title.trim(), ...toSpellText(a.description) }] : [];
   });
 }
+
+/** A positive number of seconds or mana from the constants, which write `false` for none. */
+const positive = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : undefined);
 
 /** Turns OpenDota's item constants into items by id, dropping recipes and free items. */
 export function toItems(rows: Record<string, ItemConstantRow>): Record<string, ItemInfo> {
@@ -98,6 +120,10 @@ export function toItems(rows: Record<string, ItemConstantRow>): Record<string, I
     const components = listed.length || lower === undefined ? listed : [lower];
     const stats = toItemStats(key, row.attrib);
     const abilities = toItemAbilities(row.abilities);
+    // A cooldown or mana cost belongs to a spell the player uses; a passive's numbers are not shown as the item's.
+    const used = abilities.some((a) => a.kind === "active");
+    const cooldown = used ? positive(row.cd) : undefined;
+    const manaCost = used ? positive(row.mc) : undefined;
     items[row.id] = {
       key,
       name: row.dname,
@@ -110,6 +136,8 @@ export function toItems(rows: Record<string, ItemConstantRow>): Record<string, I
       }),
       ...(stats.length ? { stats } : {}),
       ...(abilities.length ? { abilities } : {}),
+      ...(cooldown ? { cooldown } : {}),
+      ...(manaCost ? { manaCost } : {}),
     };
   }
   return items;

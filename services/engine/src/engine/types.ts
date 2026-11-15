@@ -280,6 +280,9 @@ export interface ItemInfo {
   stats?: ItemStat[];
   /** The item's own spells, like Black King Bar's Avatar. Left out when none. */
   abilities?: ItemAbility[];
+  /** Seconds before the item can be used again, and the mana it costs, when it has a spell that is used. */
+  cooldown?: number;
+  manaCost?: number;
 }
 
 export interface ItemStat {
@@ -293,6 +296,10 @@ export interface ItemAbility {
   /** Used by the player (OpenDota's active, toggle and use) or always on. */
   kind: "active" | "passive";
   name: string;
+  /** What the spell does, as the shop's tooltip says it, without its number lines. */
+  text?: string;
+  /** The tooltip's number lines, like Duration `9s` or Dispel Type `Basic Dispel`. */
+  facts?: { label: string; value: string }[];
 }
 
 /** Times each item (by item id) was bought in each phase of the game: before the horn, then up to 10, 25 and after. */
