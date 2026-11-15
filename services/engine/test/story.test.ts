@@ -35,6 +35,36 @@ describe("gameStory", () => {
     expect(story.headline).toBe("Fight from 14 min, before Phantom Assassin has Battle Fury at 17.");
   });
 
+  it("marks what each chapter is about, with the combo's heroes and Roshan's three items for the game clock", () => {
+    const story = gameStory(
+      facts({
+        spikes: [
+          { hero: "Juggernaut", item: "Battle Fury", minute: 15 },
+          { hero: "Mars", item: "Blink Dagger", minute: 15 },
+          { hero: "Puck", item: "Blink Dagger", minute: 19 },
+          { hero: "Sven", item: "Black King Bar", minute: 24 },
+        ],
+        combo: "Arena of Blood with Mortimer Kisses inside",
+        comboHeroes: ["Mars", "Snapfire"],
+      }),
+    );
+    expect(story.chapters.map((c) => c.focus)).toEqual(["lanes", "combo", "roshan"]);
+    expect(story.combo).toEqual({ heroes: ["Mars", "Snapfire"], text: "Arena of Blood with Mortimer Kisses inside" });
+    expect(story.roshan).toEqual({ minute: 20, spikes: [
+      { hero: "Juggernaut", item: "Battle Fury", minute: 15 },
+      { hero: "Mars", item: "Blink Dagger", minute: 15 },
+      { hero: "Puck", item: "Blink Dagger", minute: 19 },
+    ] });
+  });
+
+  it("leaves the combo and Roshan off when no chapter tells them", () => {
+    // Ending early takes towers in the second chapter and the Aegis in the third, so neither is drawn.
+    const story = gameStory(facts({ ourTiming: "early", spikes: [{ hero: "Puck", item: "Witch Blade", minute: 12 }, { hero: "Mars", item: "Blink Dagger", minute: 14 }, { hero: "Sven", item: "Black King Bar", minute: 18 }], combo: "Arena of Blood with Mortimer Kisses inside", comboHeroes: ["Mars", "Snapfire"] }));
+    expect(story.combo).toBeUndefined();
+    expect(story.roshan).toBeUndefined();
+    expect(story.chapters[0]!.focus).toBe("lanes");
+  });
+
   it("leads with the measured lane when no item race is clear, the hard lane first", () => {
     const hard = { name: "off lane", ours: ["Sven"], theirs: ["Anti-Mage"], fact: "Sven wins 30% and loses 45% of 5,000 lanes against Anti-Mage." };
     const won = { name: "safe lane", ours: ["Medusa"], theirs: ["Lich"], fact: "Medusa wins 46% and loses 32% of 4,100 lanes against Lich." };

@@ -87,6 +87,8 @@ describe("gamePlan", () => {
     expect(safe.verdict).toBe("hard");
     expect(safe.laneNet).toBeLessThan(-5);
     expect(safe.text).toContain("Medusa wins 30% and loses 45% of 5,000 lanes against Terrorblade.");
+    // The pair that line tells, for the game clock's lane bar.
+    expect(safe.keyPair).toEqual({ hero: 94, enemy: 109, games: 5000, won: 1500, drawn: 1250, lost: 2250, allRanks: true });
     // Every pair with lane data, so a player's own lane can be drawn, not only the deciding pair.
     // No bracket, so every count is from all ranks; weight is the chance the enemy plays this lane.
     expect(safe.pairs?.map(({ weight: _, ...p }) => p)).toEqual([
@@ -104,6 +106,8 @@ describe("gamePlan", () => {
   it("names combos and hard counters, and claims no window from the style lists", () => {
     const plan = gamePlan(new Engine(data()), { ours, theirs });
     expect(plan.ourCombos).toEqual(["Magnus + Sven: Reverse Polarity into Sven's God's Strength cleave"]);
+    // When a chapter opens fights with it, the story names its heroes so the game clock can draw their spells.
+    if (plan.story.combo) expect(plan.story.combo.heroes).toEqual(["Magnus", "Sven"]);
     expect(plan.fears).toContain("Medusa is hard countered by Anti-Mage: play carefully around them");
     expect(plan.theirStyle?.key).toBe("lategame");
     // Style labels barely change who wins short or long games (richer Game Story research), so no minute

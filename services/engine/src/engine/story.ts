@@ -34,6 +34,8 @@ export interface StoryFacts {
   theirSpikes?: Spike[];
   /** Our first combo, like "Reverse Polarity into Sven's God's Strength cleave". */
   combo?: string;
+  /** The two heroes of that combo, by name, so the game clock can draw their spells. */
+  comboHeroes?: [string, string];
   ourCarry?: string;
   enemyCarry?: string;
 }
@@ -47,6 +49,12 @@ export interface LaneFact {
   fact?: string;
 }
 
+/**
+ * What a chapter's line is about, so the game clock can draw it as a picture: the three lanes, our combo, or
+ * Roshan with the key items that make us ready for him. Left out for a line with nothing more to draw.
+ */
+export type ChapterFocus = "lanes" | "combo" | "roshan";
+
 /** One timed chapter: the items that land in it and what to do. */
 export interface Chapter {
   phase: string;
@@ -59,6 +67,7 @@ export interface Chapter {
   theirs: Spike[];
   /** The one thing to do, short, without the minutes the item art already shows. */
   action: string;
+  focus?: ChapterFocus;
   /** The chapter as one sentence or three, for sharing as text. */
   text: string;
 }
@@ -73,6 +82,10 @@ export interface Story {
    * both are known: the same two the headline compares, so a timeline can draw the window between them.
    */
   race?: { ready: number; theirs: Spike };
+  /** Our first combo and its two heroes, when a chapter opens fights with it. */
+  combo?: { heroes: [string, string]; text: string };
+  /** The minute we are ready for Roshan (our third key item) and the three items that make it, when a chapter says so. */
+  roshan?: { minute: number; spikes: Spike[] };
   chapters: Chapter[];
 }
 
@@ -192,11 +205,12 @@ export function ourWindow(ourTiming: Timing, theirTiming: Timing): Timing {
   return null;
 }
 
-/** What to do in a chapter: the short line for the item art, the line for text, and the enemy spike it names. */
+/** What to do in a chapter: the short line for the item art, the line for text, the enemy spike it names and what it is about. */
 interface Action {
   short: string;
   long: string;
   names?: Spike;
+  focus?: ChapterFocus;
 }
 
 const same = (line: string): Action => ({ short: line, long: line });
@@ -209,7 +223,7 @@ function action(chapter: number, f: StoryFacts, inWindow: (m: number) => boolean
   const roshan = nthMinute(f.spikes, ROSHAN_SPIKES);
   switch (chapter) {
     case 0:
-      return { short: laneText(f, true), long: laneText(f) };
+      return { short: laneText(f, true), long: laneText(f), focus: "lanes" };
     case 1:
       if (earlyIsOurs) {
         if (!theirs) return same("Group up and take towers.");
@@ -220,11 +234,11 @@ function action(chapter: number, f: StoryFacts, inWindow: (m: number) => boolean
         return { short: `Take towers before their ${theirs.item}.`, long, names: theirs };
       }
       if (f.theirTiming === "early") return same(f.ourCarry ? `Their strongest time: defend towers together while ${f.ourCarry} farms.` : "Their strongest time: defend towers together.");
-      return same(f.combo ? `Open fights with ${f.combo}.` : "");
+      return f.combo ? { ...same(`Open fights with ${f.combo}.`), focus: "combo" } : same("");
     case 2:
       if (earlyIsOurs) return same("Take Roshan and end with the Aegis before 30 minutes.");
       // Not inside their strongest time (see the early headline).
-      if (roshan !== undefined && roshan < 30) return same(`Roshan from ${Math.max(roshan, f.theirTiming === "early" ? 25 : 20)} min, once three key items are in.`);
+      if (roshan !== undefined && roshan < 30) return { ...same(`Roshan from ${roshanMinute(f, roshan)} min, once three key items are in.`), focus: "roshan" };
       if (lateIsOurs) return same("Your items are in: take back the map.");
       return same("");
     default:
@@ -234,6 +248,9 @@ function action(chapter: number, f: StoryFacts, inWindow: (m: number) => boolean
       return same("");
   }
 }
+
+/** Roshan once three key items are in, never before 20 min, nor inside their strongest time (see the early headline). */
+const roshanMinute = (f: StoryFacts, ready: number) => Math.max(ready, f.theirTiming === "early" ? 25 : 20);
 
 export function gameStory(facts: StoryFacts): Story {
   const ready = nthMinute(facts.spikes, READY_SPIKES);
@@ -255,13 +272,17 @@ export function gameStory(facts: StoryFacts): Story {
     const spikeLines = isLast ? [] : [ourSpikeText(ours, ready, window), theirLine];
     const text = [...spikeLines, act.long].filter(Boolean).join(" ");
     const to = Number.isFinite(c.to) ? c.to : null;
-    return { phase: c.phase, from: c.from, to, ours, theirs, action: act.short, text };
+    return { phase: c.phase, from: c.from, to, ours, theirs, action: act.short, ...(act.focus ? { focus: act.focus } : {}), text };
   }).filter((c) => c.text);
+  const focus = (f: ChapterFocus) => chapters.some((c) => c.focus === f);
+  const roshan = nthMinute(facts.spikes, ROSHAN_SPIKES);
   const raced = carrySpike(facts) ?? byMinute(facts.theirSpikes ?? [])[0];
   return {
     headline: headline(facts),
     ...(ready !== undefined ? { ready } : {}),
     ...(ready !== undefined && raced ? { race: { ready, theirs: raced } } : {}),
+    ...(focus("combo") && facts.combo && facts.comboHeroes ? { combo: { heroes: facts.comboHeroes, text: facts.combo } } : {}),
+    ...(focus("roshan") && roshan !== undefined ? { roshan: { minute: roshanMinute(facts, roshan), spikes: byMinute(facts.spikes).slice(0, ROSHAN_SPIKES) } } : {}),
     chapters,
   };
 }

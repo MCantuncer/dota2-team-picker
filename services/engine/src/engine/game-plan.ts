@@ -66,6 +66,8 @@ export interface LanePlan {
    * likeliest pair is the player's own. Left out when no pair has lane data.
    */
   pairs?: (PairLane & { weight: number })[];
+  /** The pair `pairLine` tells: the one that decides the verdict (lane-odds.ts), so the game clock can draw its bar. */
+  keyPair?: PairLane;
   verdict: LaneVerdict;
   text: string;
 }
@@ -299,7 +301,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       edge: round(edge),
       verdict,
       text,
-      ...(odds ? { laneNet: round(odds.net * 100), pairLine } : {}),
+      ...(odds ? { laneNet: round(odds.net * 100), pairLine, keyPair: odds.key } : {}),
       ...(pairs.length ? { pairs } : {}),
     };
   });
@@ -530,7 +532,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
         const item = keyItem(engine, p.build, p.heroId, p.position);
         return item ? [{ hero: name(p.heroId), item: item.name, minute: item.minute, ...(p.build?.timings === "around" ? { around: true } : {}) }] : [];
       }),
-      combo: firstCombo?.text,
+      ...(firstCombo ? { combo: firstCombo.text, comboHeroes: [name(firstCombo.a), name(firstCombo.b)] as [string, string] } : {}),
       ourCarry: carry && name(carry.heroId),
       enemyCarry,
     }),
