@@ -285,9 +285,9 @@ bucket in Supabase Storage (created by a migration in `services/accounts`):
 | File                      | Use                                                            |
 | ------------------------- | -------------------------------------------------------------- |
 | `snapshot.json`           | The latest data. The website reads it, cached for 5 minutes.   |
+| `proof.json`              | The Proof Page numbers (see "Proof Page numbers").             |
 | `daily/<YYYY-MM-DD>.json` | A copy per day, to compare days or roll back a bad run.        |
 | `eval/matches-<YYYY-MM>.json` | Ranked games saved for the backtest (see below).          |
-| `proof.json`              | The Proof Page numbers (see "Proof Page numbers").             |
 
 Public URL: `https://odigcdwsvajkbvcxeskj.supabase.co/storage/v1/object/public/hero-data/snapshot.json`.
 The upload needs the project's secret key in the repo's `SUPABASE_SECRET_KEY` Actions secret
