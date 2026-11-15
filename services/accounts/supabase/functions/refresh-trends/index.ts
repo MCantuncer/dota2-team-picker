@@ -6,7 +6,7 @@
  * Reads the recent games of active Steam players whose check is due (from STRATZ when
  * STRATZ_TOKEN is set, and OpenDota) and opens hero pool cards (see _shared/trends/job.ts).
  * Then builds game feedback rows (player_game_facts, see _shared/feedback/fact.ts) for their
- * recent games. Last, while the run is still short, retries up to two My Heroes fills that
+ * recent games, and fetches saved games again when their summary is from an older version. Last, while the run is still short, retries up to two My Heroes fills that
  * failed before (due_hero_fills, see _shared/fill/run.ts). Returns what the run did.
  */
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -22,6 +22,7 @@ import {
   pickNewGames,
   readDueRows,
   readNewGames,
+  REFETCH_DAYS,
 } from "../_shared/feedback/fact.ts";
 import { FINDINGS_VERSION, gameFindings, type Names } from "../_shared/feedback/findings.ts";
 import { RETRY_FILLS_PER_RUN, retryDueFills, runFill } from "../_shared/fill/run.ts";
@@ -228,6 +229,18 @@ function factsDeps(
         .order("next_try_at").limit(MAX_FACT_CALLS);
       if (error) throw error;
       return readDueRows(data);
+    },
+    oldSummaries: async () => {
+      const { data, error } = await admin.from("player_game_facts").select(DUE_ROWS_SELECT)
+        .eq("status", "parsed").lt("summary_version", SUMMARY_VERSION).gte("started_at", daysAgo(REFETCH_DAYS))
+        .lte("next_try_at", new Date().toISOString()).order("started_at", { ascending: false }).limit(MAX_FACT_CALLS);
+      if (error) throw error;
+      return readDueRows(data);
+    },
+    postpone: async (item, until) => {
+      const { error } = await admin.from("player_game_facts").update({ next_try_at: until.toISOString() })
+        .eq("user_id", item.user_id).eq("match_id", item.match_id);
+      if (error) throw error;
     },
     newGames: async () => {
       const since = daysAgo(NEW_GAME_DAYS);
