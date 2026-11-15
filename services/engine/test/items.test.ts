@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fetchItems, itemsDue, toItemAbilities, toItemPhases, toItemStats, toItems } from "../src/data/items";
+import { fetchItems, itemsDue, toItemAbilities, toItemPhases, toItemStats, toItems, toSpellText } from "../src/data/items";
 import type { Snapshot } from "../src/engine/types";
 
 const constants = {
@@ -15,14 +15,19 @@ const constants = {
     components: ["blades_of_attack"],
     attrib: [{ key: "bonus_health", display: "+ {value} Health", value: "50" }],
     abilities: [{ type: "passive", title: "Sturdy" }],
+    cd: 10,
+    mc: false,
   },
+  wand: { id: 36, dname: "Magic Wand", cost: 450, img: "/items/wand.png", abilities: [{ type: "active", title: "Energy Charge" }], cd: 15, mc: false },
   aegis: { id: 117, dname: "Aegis of the Immortal", cost: 0, img: "/items/aegis.png" },
 };
 
 describe("toItems", () => {
   it("keeps shop items by id with their components and drops recipes and free items", () => {
     const items = toItems(constants);
-    expect(Object.keys(items).sort()).toEqual(["116", "2", "21", "73"]);
+    expect(Object.keys(items).sort()).toEqual(["116", "2", "21", "36", "73"]);
+    expect(items[36]).toMatchObject({ abilities: [{ kind: "active", name: "Energy Charge" }], cooldown: 15 });
+    expect(items[36]!.manaCost).toBeUndefined();
     // Mithril Hammer is not in the list, so it is left out of the components.
     expect(items[116]).toEqual({ key: "black_king_bar", name: "Black King Bar", cost: 4050, img: "/items/black_king_bar.png", components: [21] });
     expect(items[2]!.components).toEqual([]);
@@ -90,11 +95,30 @@ describe("toItemStats", () => {
   });
 });
 
+describe("toSpellText", () => {
+  it("splits the tooltip into its text and its number lines", () => {
+    expect(
+      toSpellText("Applies a basic dispel. Grants 60% magic resistance. \n\nIllusions take 300% damage. \n\nDuration: 9s \nDispel Type: Basic Dispel"),
+    ).toEqual({
+      text: "Applies a basic dispel. Grants 60% magic resistance. Illusions take 300% damage.",
+      facts: [
+        { label: "Duration", value: "9s" },
+        { label: "Dispel Type", value: "Basic Dispel" },
+      ],
+    });
+    // A sentence with a colon in it is text, not a number line.
+    expect(toSpellText("Note: when active, Unholy Strength grants +35 damage, +25 strength and +4 armor, but drains health.")).toEqual({
+      text: "Note: when active, Unholy Strength grants +35 damage, +25 strength and +4 armor, but drains health.",
+    });
+    expect(toSpellText(undefined)).toEqual({});
+  });
+});
+
 describe("toItemAbilities", () => {
   it("keeps the item's spells as active or passive, not Aghanim's upgrade lines", () => {
     expect(
       toItemAbilities([
-        { type: "active", title: "Avatar", description: "..." },
+        { type: "active", title: "Avatar", description: "Grants magic resistance.\n\nDuration: 9s" },
         { type: "toggle", title: "Unholy Strength" },
         { type: "use", title: "Devour" },
         { type: "passive", title: "Damage Block" },
@@ -102,7 +126,7 @@ describe("toItemAbilities", () => {
         { type: "active" },
       ]),
     ).toEqual([
-      { kind: "active", name: "Avatar" },
+      { kind: "active", name: "Avatar", text: "Grants magic resistance.", facts: [{ label: "Duration", value: "9s" }] },
       { kind: "active", name: "Unholy Strength" },
       { kind: "active", name: "Devour" },
       { kind: "passive", name: "Damage Block" },
