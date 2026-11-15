@@ -5,7 +5,7 @@
  * OpenDota call comes from the trends share of the daily budget first; the run stops when the
  * budget, the run cap or a rate limit says so.
  */
-import { buildFact, type FactItem, type FactRow } from "../feedback/fact.ts";
+import { buildFact, type FactItem, type FactRow, REFETCH_RETRY_MS, refetchFact } from "../feedback/fact.ts";
 import type { Finding } from "../feedback/findings.ts";
 import type { GameSummary } from "../feedback/summary.ts";
 import type { Match } from "../report/match.ts";
@@ -106,6 +106,10 @@ export interface FactsDeps {
   dueRows: () => Promise<FactItem[]>;
   /** Games with no row yet, picked by pickNewGames. */
   newGames: () => Promise<FactItem[]>;
+  /** Parsed rows with an older SUMMARY_VERSION from the last REFETCH_DAYS whose next try is due, newest first. */
+  oldSummaries: () => Promise<FactItem[]>;
+  /** Moves a row's next try to `until` without touching the rest of it. */
+  postpone: (item: FactItem, until: Date) => Promise<void>;
   fetchMatch: (matchId: number) => Promise<unknown | null>;
   requestParse: (matchId: number) => Promise<void>;
   summarize: (match: Match, item: FactItem) => GameSummary | null;
@@ -132,6 +136,8 @@ export interface TrendRunResult {
   facts: number;
   /** Saved games whose findings were worked out again under the current rules. */
   refound: number;
+  /** Saved games fetched again for the current summary (also counted in `factCalls`). */
+  refetched: number;
   /** Players whose feedback was worked out again. */
   feedback: number;
   factCalls: number;
@@ -156,6 +162,7 @@ export async function runTrends(deps: TrendDeps, maxCalls = MAX_RUN_CALLS): Prom
     facts: 0,
     feedback: 0,
     refound: 0,
+    refetched: 0,
     factCalls: 0,
     factsStopped: null,
   };
@@ -193,9 +200,10 @@ const isStop = (err: unknown) => err instanceof Stop || err instanceof OpenDotaB
 const stopReason = (err: unknown): StopReason => (err instanceof Stop ? err.reason : "rate limit");
 
 /**
- * Game feedback after the cards: drop old rows, then build due rows and new games until the
- * feedback cap, the daily budget or a rate limit stops it, then work out the feedback again for
- * each player with a new summary. One game's or player's error never stops the rest.
+ * Game feedback after the cards: drop old rows, then build due rows and new games, then fetch
+ * saved games with an older summary again, until the feedback cap, the daily budget or a rate
+ * limit stops it; then work out the feedback again for each player with a new summary. One
+ * game's or player's error never stops the rest.
  */
 async function runFacts(facts: FactsDeps, deps: TrendDeps, result: TrendRunResult) {
   const take = async (n: number) => {
@@ -238,6 +246,20 @@ async function runFacts(facts: FactsDeps, deps: TrendDeps, result: TrendRunResul
         if (row.findings) changed.add(row.user_id);
       } catch (err) {
         deps.log(`Saving game ${item.match_id} for ${item.user_id} failed`, err);
+      }
+    }
+    // Last, with what the run has left: saved games fetched again for the newer summary.
+    for (const item of await facts.oldSummaries()) {
+      const now = facts.now();
+      const row = await refetchFact(item, { take, ...facts, now }, isStop);
+      try {
+        if (row) {
+          await facts.save(row);
+          result.refetched++;
+          changed.add(row.user_id);
+        } else await facts.postpone(item, new Date(now.getTime() + REFETCH_RETRY_MS));
+      } catch (err) {
+        deps.log(`Saving game ${item.match_id} for ${item.user_id} again failed`, err);
       }
     }
   } catch (err) {

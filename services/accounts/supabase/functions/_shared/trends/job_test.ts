@@ -15,7 +15,7 @@ import {
 } from "./job.ts";
 
 const NOW_S = 1_800_000_000;
-const NO_FACTS = { facts: 0, feedback: 0, refound: 0, factCalls: 0, factsStopped: null };
+const NO_FACTS = { facts: 0, feedback: 0, refound: 0, refetched: 0, factCalls: 0, factsStopped: null };
 const HOUR_S = 3600;
 const MONKEY_KING = 114;
 
@@ -336,6 +336,8 @@ function factsStub(items: FactItem[], over: Partial<FactsDeps> = {}) {
     },
     dueRows: () => Promise.resolve(items.slice(0, 1)),
     newGames: () => Promise.resolve(items.slice(1)),
+    oldSummaries: () => Promise.resolve([]),
+    postpone: () => Promise.resolve(),
     // A match OpenDota doesn't know yet: a new game saves nothing, a saved row counts an error.
     fetchMatch: () => Promise.resolve(null),
     requestParse: () => Promise.resolve(),
@@ -435,4 +437,51 @@ Deno.test("findings saved under older rules are worked out again, and that playe
   assertEquals([result.refound, result.feedback, result.factCalls], [1, 1, 0], "no OpenDota calls");
   assertEquals(f.order, ["purge", "feedback u1"]);
   assertEquals(s.logged, ["Findings for game 8 of u2 failed"]);
+});
+
+Deno.test("saved games with an older summary are fetched again last, and wait a day when that fails", async () => {
+  const raw = JSON.parse(
+    Deno.readTextFileSync(new URL("../report/fixtures/all-pick-9072422905.json", import.meta.url)),
+  );
+  const old = [1, 2].map(factItem).map((it) => ({
+    ...it,
+    summary_version: 1,
+    created_at: it.started_at,
+    duration_s: 1,
+  }));
+  const postponed: string[] = [];
+  const fetched: number[] = [];
+  const f = factsStub([], {
+    dueRows: () => Promise.resolve([]),
+    newGames: () => Promise.resolve([factItem(3)]),
+    oldSummaries: () => Promise.resolve(old),
+    fetchMatch: (id) => {
+      fetched.push(id);
+      return Promise.resolve(id === 2 ? null : raw);
+    },
+    summarize: (match, item) =>
+      summarizeGame({ match, accountId: item.account_id, startTime: 0, position: 2, items: {}, heroIdsByKey: {} }),
+    postpone: (item, until) => {
+      postponed.push(`${item.match_id} ${until.toISOString()}`);
+      return Promise.resolve();
+    },
+  });
+  const s = stub([], { facts: f.facts });
+  const result = await runTrends(s.deps);
+  assertEquals(fetched, [3, 1, 2], "new games first");
+  assertEquals([result.refetched, result.facts, result.factCalls], [1, 1, 3]);
+  assertEquals(f.saved.map((r) => [r.match_id, r.status]), [[3, "parsed"], [1, "parsed"]]);
+  assertEquals(postponed, [`2 ${new Date(NOW_S * 1000 + 24 * 60 * 60 * 1000).toISOString()}`]);
+  assertEquals(f.order, ["purge", "feedback u1"]);
+});
+
+Deno.test("fetching saved games again stops at the run cap like the rest", async () => {
+  const old = Array.from({ length: MAX_FACT_CALLS + 3 }, (_, i) => ({ ...factItem(i + 1), summary_version: 1 }));
+  const f = factsStub([], {
+    dueRows: () => Promise.resolve([]),
+    newGames: () => Promise.resolve([]),
+    oldSummaries: () => Promise.resolve(old),
+  });
+  const result = await runTrends(stub([], { facts: f.facts }).deps);
+  assertEquals([result.factCalls, result.factsStopped, result.refetched], [MAX_FACT_CALLS, "run cap", 0]);
 });

@@ -187,6 +187,48 @@ function failure(item: FactItem, err: unknown, durationS: number | null, now: nu
   };
 }
 
+/** Saved parsed games with an older summary are fetched again when they started this recently. */
+export const REFETCH_DAYS = 30;
+/** A game that couldn't be fetched again waits this long before the next try. */
+export const REFETCH_RETRY_MS = DAY_MS;
+
+/**
+ * A parsed game saved with an older SUMMARY_VERSION, fetched again for the current summary and
+ * its findings: one call. Null when it can't give a parsed summary now (OpenDota lost the parse,
+ * the match is gone, an error): the saved row stays as it is and the caller tries again later.
+ * Budget refusals and rate limits are thrown on, so the run stops.
+ */
+export async function refetchFact(
+  item: FactItem,
+  deps: Pick<FactDeps, "take" | "fetchMatch" | "summarize" | "findingsOf" | "now">,
+  isStop: IsStop,
+): Promise<FactRow | null> {
+  try {
+    await deps.take(1);
+    const raw = await deps.fetchMatch(item.match_id);
+    if (raw === null) return null;
+    const match = readOpenDotaMatch(raw);
+    const summary = match.isParsed ? deps.summarize(match, item) : null;
+    if (!summary) return null;
+    return {
+      ...rowOf(item, match.durationS),
+      status: "parsed",
+      summary,
+      summary_version: SUMMARY_VERSION,
+      findings: deps.findingsOf(summary),
+      findings_version: FINDINGS_VERSION,
+      parse_requests: item.parse_requests,
+      parse_requested_at: item.parse_requested_at,
+      attempts: 0,
+      error: null,
+      next_try_at: deps.now.toISOString(),
+    };
+  } catch (err) {
+    if (isStop(err)) throw err;
+    return null;
+  }
+}
+
 /** A counted game from player_games, with the player's Steam account. */
 export type NewGame = Pick<
   FactItem,

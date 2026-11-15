@@ -9,6 +9,7 @@ import {
   pickNewGames,
   readDueRows,
   readNewGames,
+  refetchFact,
 } from "./fact.ts";
 import { gameFindings } from "./findings.ts";
 import { type GameSummary, summarizeGame, SUMMARY_VERSION } from "./summary.ts";
@@ -233,4 +234,38 @@ Deno.test("readers skip rows without a linked Steam account or with odd values",
   ]);
   assertEquals(due.length, 1, "a row needs its duration");
   assertEquals([due[0].position, due[0].duration_s, due[0].parse_requests, due[0].summary], [2, 1800, 2, { a: 1 }]);
+});
+
+const oldRow = () =>
+  item({
+    started_at: ago(20 * DAY_MS),
+    created_at: ago(20 * DAY_MS),
+    duration_s: 1800,
+    summary: { version: 1 },
+    summary_version: 1,
+  });
+
+Deno.test("a saved game is fetched again into the current summary, using one call", async () => {
+  const { deps, taken, parses } = stub(parsedRaw());
+  const row = await refetchFact(oldRow(), deps, isBusy);
+  assertEquals([row?.status, row?.summary_version, row?.findings_version !== undefined], [
+    "parsed",
+    SUMMARY_VERSION,
+    true,
+  ]);
+  assertEquals((row?.summary as GameSummary).version, SUMMARY_VERSION);
+  assertEquals([taken, parses], [[1], []]);
+});
+
+Deno.test("fetching again gives nothing when the match is unparsed, gone or broken, and asks for no parse", async () => {
+  for (const raw of [basicRaw(), null, { match_id: 1 }]) {
+    const { deps, parses } = stub(raw);
+    assertEquals(await refetchFact(oldRow(), deps, isBusy), null);
+    assertEquals(parses, []);
+  }
+});
+
+Deno.test("fetching again passes budget refusals and rate limits on", async () => {
+  const { deps } = stub(parsedRaw(), { take: () => Promise.reject(new Busy()) });
+  await assertRejects(() => refetchFact(oldRow(), deps, isBusy), Busy);
 });
