@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { collectMatches, type CollectDeps, type MonthStore } from "../src/data/collect";
+import { CANDIDATE_WINDOW_S, SAMPLE_EVERY, candidateQuery, collectMatches, shuffled, type CollectDeps, type MonthStore } from "../src/data/collect";
 import type { EvalMatch, MatchDetail } from "../src/data/eval-matches";
 import type { PublicMatch } from "../src/data/fetch";
 import type { Position } from "../src/engine/types";
@@ -42,13 +42,12 @@ function memoryStore(files: Record<string, EvalMatch[]> = {}): MonthStore & { fi
   };
 }
 
-function deps(over: Partial<CollectDeps> & { pages?: PublicMatch[][] } = {}): CollectDeps {
-  const pages = over.pages ?? [[listed(3), listed(2, { game_mode: 1 }), listed(1)]];
-  let page = 0;
+function deps(over: Partial<CollectDeps> & { rows?: PublicMatch[]; explorerError?: string } = {}): CollectDeps {
+  const rows = over.rows ?? [listed(3), listed(2, { game_mode: 1 }), listed(1)];
   return {
     store: memoryStore(),
     openDota: (async (path: string) => {
-      if (path.startsWith("/publicMatches")) return pages[page++] ?? [];
+      if (path.startsWith("/explorer")) return over.explorerError ? { err: over.explorerError } : { rows };
       const id = Number(path.split("/")[2]);
       if (id === 404) throw new Error("GET failed: HTTP 404");
       return detail(id);
@@ -67,7 +66,7 @@ describe("collectMatches", () => {
     const d = deps();
     const result = await collectMatches(d);
     expect(result.candidates).toBe(2);
-    expect(result.added.map((m) => m.id)).toEqual([3, 1]);
+    expect(result.added.map((m) => m.id).sort()).toEqual([1, 3]);
     const saved = (d.store as ReturnType<typeof memoryStore>).files[MONTH]!;
     expect(saved.map((m) => m.id)).toEqual([1, 3]);
     expect(saved[0]!.picks.every((p) => p.position !== null)).toBe(true);
@@ -78,13 +77,15 @@ describe("collectMatches", () => {
   it("skips games already saved and stops at --max", async () => {
     const old: EvalMatch = { id: 3, startTime: NOW - 7200, rankTier: null, radiantWin: true, picks: [], bans: [] };
     const store = memoryStore({ [MONTH]: [old] });
-    const result = await collectMatches(deps({ store, max: 1, pages: [[listed(3), listed(5), listed(4)]] }));
-    expect(result.added.map((m) => m.id)).toEqual([5]);
-    expect(store.files[MONTH]!.map((m) => m.id)).toEqual([3, 5]);
+    const result = await collectMatches(deps({ store, max: 1, rows: [listed(3), listed(5), listed(4)] }));
+    expect(result.added).toHaveLength(1);
+    const added = result.added[0]!.id;
+    expect([4, 5]).toContain(added);
+    expect(store.files[MONTH]!.map((m) => m.id)).toEqual([3, added]);
   });
 
   it("keeps the other games when one match fails to load", async () => {
-    const result = await collectMatches(deps({ pages: [[listed(404), listed(6)]] }));
+    const result = await collectMatches(deps({ rows: [listed(404), listed(6)] }));
     expect(result.added.map((m) => m.id)).toEqual([6]);
   });
 
@@ -105,7 +106,7 @@ describe("collectMatches", () => {
       bans: [],
     };
     const store = memoryStore({ [MONTH]: [missing] });
-    const result = await collectMatches(deps({ store, pages: [[]] }));
+    const result = await collectMatches(deps({ store, rows: [] }));
     expect(result.filled).toBe(1);
     expect(store.files[MONTH]![0]!.picks[0]!.position).toBe(1);
   });
@@ -122,8 +123,35 @@ describe("collectMatches", () => {
 
   it("reads the previous month too near the start of a month", async () => {
     const store = memoryStore();
-    await collectMatches(deps({ store, now: Date.UTC(2026, 10, 1, 12) / 1000, pages: [[]] }));
+    await collectMatches(deps({ store, now: Date.UTC(2026, 10, 1, 12) / 1000, rows: [] }));
     expect(store.load).toHaveBeenCalledWith("eval/matches-2026-10.json");
     expect(store.load).toHaveBeenCalledWith("eval/matches-2026-11.json");
+  });
+
+  it("fails when the explorer answers with an error, before saving anything", async () => {
+    const store = memoryStore();
+    await expect(collectMatches(deps({ store, explorerError: "statement timeout" }))).rejects.toThrow("statement timeout");
+    expect(store.save).not.toHaveBeenCalled();
+  });
+});
+
+describe("candidateQuery", () => {
+  it("reads one slice of ranked All Pick games that started in the window", () => {
+    const q = candidateQuery(NOW, 7);
+    expect(q).toContain(`start_time >= ${NOW - CANDIDATE_WINDOW_S.from}`);
+    expect(q).toContain(`start_time < ${NOW - CANDIDATE_WINDOW_S.to}`);
+    expect(q).toContain(`match_id % ${SAMPLE_EVERY} = 7`);
+    expect(q).toContain("lobby_type = 7 and game_mode = 22 and duration >= 900");
+  });
+});
+
+describe("shuffled", () => {
+  it("keeps every item, leaves the input alone and gives the same order for the same seed", () => {
+    const list = Array.from({ length: 50 }, (_, i) => i);
+    const a = shuffled(list, 123);
+    expect([...a].sort((x, y) => x - y)).toEqual(list);
+    expect(list[0]).toBe(0);
+    expect(shuffled(list, 123)).toEqual(a);
+    expect(a).not.toEqual(list);
   });
 });
