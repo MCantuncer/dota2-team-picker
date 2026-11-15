@@ -311,7 +311,10 @@ lane (STRATZ), when he finishes his big item with the win rates of early and lat
 ### Games for the backtest
 
 After the upload, each run also saves about 100 new ranked All Pick games
-(`npm run collect-matches -- --max 100`), one file per month under `eval/`. For each game it keeps
+(`npm run collect-matches -- --max 100`), one file per month under `eval/`. The games are drawn at
+random from the OpenDota explorer's ranked All Pick games that started 2 to 8 hours earlier, so they are
+a fair sample: the `/publicMatches` feed used before was not (Radiant won 60.5% of the 2,297 games
+saved from it, against 53.0% of 80,514 explorer games over the same days). For each game it keeps
 the order the 10 heroes were picked in, the bans, the average rank, who won, and each player's
 position from STRATZ (OpenDota only knows positions for parsed replays). STRATZ may not have placed
 a game that just ended, so later runs ask again for games up to 3 days old that still miss
