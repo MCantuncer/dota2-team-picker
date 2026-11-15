@@ -5,15 +5,18 @@
  * sentence quotes the player's own numbers.
  */
 import type { Position } from "../trends/games.ts";
+import { clock, deathFindings } from "./deaths.ts";
 import type { DeathFact, GameSummary, Percentiles } from "./summary.ts";
-import { type FindingKind, type Role, tipFor } from "./tips.ts";
+
+export { clock };
 
 /**
  * Bump with any change to what the rules find or say. Saved game findings on an older version
  * are worked out again from their summary. 2: deaths percentiles read the right way round
- * (OpenDota already flips them).
+ * (OpenDota already flips them). 3: deaths judged by fight from the game's own data, and no
+ * fixed tips: a "what to change" line only comes from the game itself.
  */
-export const FINDINGS_VERSION = 2;
+export const FINDINGS_VERSION = 3;
 /** Games a trend finding needs behind it. */
 export const MIN_TREND_GAMES = 4;
 /** How far from the middle (0.5) a percentile must sit: 15 points over games, 25 in one game. */
@@ -23,15 +26,15 @@ export const SINGLE_GAME_GAP = 0.25;
 const TREND_LANE_GOLD = 600;
 const SINGLE_LANE_GOLD = 1000;
 const EARLY_S = 10 * 60;
-/** Power runes spawn at 6:00 and every 2 minutes after. */
-const FIRST_POWER_RUNE_S = 6 * 60;
-const RUNE_EVERY_S = 2 * 60;
-const AFTER_RUNE_S = 60;
+/** Rotations are only named in the laning stage. */
+const ROTATION_BEFORE_S = 12 * 60;
 /** "With vs without" win % lines need this many games each side and this gap. */
 const MIN_SIDE_GAMES = 5;
 const MIN_WIN_GAP = 0.3;
 
+export type FindingKind = "early_deaths" | "deaths" | "laning" | "farm" | "damage" | "healing" | "towers";
 export type Tone = "strength" | "problem";
+type Role = "core" | "support";
 
 export interface Finding {
   kind: FindingKind;
@@ -43,7 +46,7 @@ export interface Finding {
   happened: string[];
   pattern: string | null;
   cost: string | null;
-  /** A reviewed tip, for problems only. */
+  /** What to change, worked out from the game itself; null when the data can't back one. */
   change: string | null;
   matchIds: number[];
 }
@@ -60,11 +63,6 @@ export function ordinal(n: number): string {
   const teen = n % 100 >= 11 && n % 100 <= 13;
   const suffix = teen ? "th" : ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th";
   return `${n}${suffix}`;
-}
-/** Game clock: "6:20", and "-1:46" before the horn. */
-export function clock(s: number): string {
-  const t = Math.floor(Math.abs(s));
-  return `${s < 0 ? "-" : ""}${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
 }
 const average = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 
@@ -138,31 +136,37 @@ export function trendFindings(games: GameSummary[], names: Names, limit = 3): Fi
   return topByTone(found, limit);
 }
 
-/** Up to `limit` strengths and problems in one game; none when nothing stood out. */
+/**
+ * Up to `limit` strengths and problems in one game; none when nothing stood out. Deaths are
+ * judged fight by fight (deaths.ts) when the summary has fight data; an older summary keeps
+ * the plain early deaths list.
+ */
 export function gameFindings(game: GameSummary, names: Names, limit = 4): Finding[] {
+  const hasFights = game.version >= 2 && game.deaths !== null;
   const found: Finding[] = [];
   for (const rule of PERCENTILE_RULES) {
     const f = percentileFinding(rule, [game], SINGLE_GAME_GAP, 1, names);
-    if (f) found.push(f);
+    // With fight data, a death is a problem only through the fight it was in.
+    if (f && !(hasFights && f.kind === "deaths" && f.tone === "problem")) found.push(f);
   }
   const lane = laningFinding([game], SINGLE_LANE_GOLD, 1, names);
   if (lane) found.push(lane);
-  const early = (game.deaths ?? []).filter((d) => d.time < EARLY_S);
-  if (early.length >= 2) {
-    found.push({
-      kind: "early_deaths",
-      tone: "problem",
-      score: early.length,
-      headline: `${early.length} deaths before 10 minutes`,
-      happened: early.map((d) => deathLine(d, names)),
-      pattern: null,
-      cost: `${sum(early.map((d) => d.goldLost))} gold lost and ${sum(early.map((d) => d.timeDead))} seconds dead.`,
-      change: tipFor("early_deaths", roleOf(game.position), {
-        killer: topKiller(early, names) ?? "the enemy",
-        minute: "10",
-      }),
-      matchIds: [game.matchId],
-    });
+  if (hasFights) found.push(...deathFindings(game, names));
+  else {
+    const early = (game.deaths ?? []).filter((d) => d.time < EARLY_S);
+    if (early.length >= 2) {
+      found.push({
+        kind: "early_deaths",
+        tone: "problem",
+        score: early.length,
+        headline: `${early.length} deaths before 10 minutes`,
+        happened: early.map((d) => deathLine(d, names)),
+        pattern: null,
+        cost: `${sum(early.map((d) => d.goldLost))} gold lost and ${sum(early.map((d) => d.timeDead))} seconds dead.`,
+        change: null,
+        matchIds: [game.matchId],
+      });
+    }
   }
   return topByTone(found, limit);
 }
@@ -185,7 +189,6 @@ function percentileFinding(
   const heroes = [...new Set(rows.map((r) => names.hero(r.g.heroId)))].join(", ");
   // "fewer deaths per minute than 96%" above the middle, "more deaths per minute than 80%" below.
   const compare = (p: number) => (p >= 0.5 ? `${rule.better} than ${pct(p)}%` : `${rule.worse} than ${pct(1 - p)}%`);
-  const role = roleOf(rows[0]?.g.position ?? null);
   return {
     kind: rule.kind,
     tone,
@@ -203,18 +206,9 @@ function percentileFinding(
       (g) => rows.some((r) => r.g === g && r.value < 0.5),
       rule.weakHabit,
     ),
-    change: tone === "problem"
-      ? tipFor(rule.kind, role, { deaths: deathCount(rows.map((r) => r.g.card.deaths)) })
-      : null,
+    change: null,
     matchIds: rows.map((r) => r.g.matchId),
   };
-}
-
-/** "6 times in this game" for one game, "about 6 times per game" over several. */
-function deathCount(deaths: number[]): string {
-  const n = Math.round(average(deaths));
-  const times = n === 1 ? "once" : `${n} times`;
-  return deaths.length === 1 ? `${times} in this game` : `about ${times} per game`;
 }
 
 function laningFinding(games: GameSummary[], gold: number, minGames: number, names: Names): Finding | null {
@@ -238,7 +232,7 @@ function laningFinding(games: GameSummary[], gold: number, minGames: number, nam
       } your lane opponent at 10 minutes.`
       : null,
     cost: winSplit(games, (g) => (g.laneNetWorthDiffAt10 ?? 0) < 0, "a lost lane"),
-    change: tone === "problem" ? tipFor("laning", roleOf(rows[0]?.g.position ?? null), { value: String(-mean) }) : null,
+    change: null,
     matchIds: rows.map((r) => r.g.matchId),
   };
 }
@@ -258,7 +252,7 @@ function earlyDeathsFinding(games: GameSummary[], names: Names): Finding | null 
     score: perGame * parsed.length * 0.2,
     headline: "Early deaths are costing your lanes",
     happened: early.map((e) => `${names.hero(e.g.heroId)}: ${deathLine(e.d, names)}`),
-    pattern: runePattern(deaths) ??
+    pattern: rotationPattern(deaths, names) ??
       `You died ${early.length} times before 10 minutes in ${gamesWithEarly.length} of your last ${parsed.length} games.`,
     cost: [
       `${sum(deaths.map((d) => d.goldLost))} gold lost and ${
@@ -266,23 +260,23 @@ function earlyDeathsFinding(games: GameSummary[], names: Names): Finding | null 
       } seconds dead before 10 minutes.`,
       winSplit(parsed, (g) => (g.deaths ?? []).some((d) => d.time < EARLY_S), "a death before 10 minutes"),
     ].filter(Boolean).join(" "),
-    change: tipFor("early_deaths", roleOf(parsed[0]?.position ?? null), {
-      killer: topKiller(deaths, names) ?? "the enemy",
-      minute: "10",
-    }),
+    change: null,
     matchIds: gamesWithEarly.map((g) => g.matchId),
   };
 }
 
-/** Rotations after a power rune, only when they are most of the early deaths. */
-export function runePattern(deaths: DeathFact[]): string | null {
-  const afterRune = deaths.filter((d) =>
-    d.isKillerFromMid === true && d.time >= FIRST_POWER_RUNE_S &&
-    (d.time - FIRST_POWER_RUNE_S) % RUNE_EVERY_S <= AFTER_RUNE_S
+/**
+ * Early deaths to a killer from another lane who took a power rune in the minute before, before
+ * 12:00, only when they are at least 3 and 60% of the early deaths. Needs fight data (version 2).
+ */
+export function rotationPattern(deaths: DeathFact[], names: Names): string | null {
+  const rotations = deaths.filter((d) =>
+    d.time < ROTATION_BEFORE_S && d.isKillerFromOtherLane === true && d.didKillerTakeRune === true
   );
-  if (afterRune.length < 3 || afterRune.length / deaths.length < 0.6) return null;
-  return `${afterRune.length} of your ${deaths.length} early deaths came after a power rune spawn ` +
-    `(6:00, 8:00), with the enemy mid getting the kill.`;
+  if (rotations.length < 3 || rotations.length / deaths.length < 0.6) return null;
+  const killers = [...new Set(rotations.flatMap((d) => (d.killerHeroId === null ? [] : [names.hero(d.killerHeroId)])))];
+  return `${rotations.length} of your ${deaths.length} early deaths came from a hero who left another lane ` +
+    `after taking a power rune (${killers.join(", ")}).`;
 }
 
 /** "In your games with X you won A%; in the others B%", only with enough games and a big gap. */
@@ -300,15 +294,6 @@ function deathLine(d: DeathFact, names: Names): string {
   const killer = d.killerHeroId === null ? "" : ` to ${names.hero(d.killerHeroId)}`;
   const lost = d.buildingsLost.length ? `, ${d.buildingsLost.length} building(s) fell while you were dead` : "";
   return `died at ${clock(d.time)}${killer} (${d.goldLost} gold lost, ${d.timeDead}s dead${lost})`;
-}
-
-function topKiller(deaths: DeathFact[], names: Names): string | null {
-  const counts = new Map<number, number>();
-  for (const d of deaths) {
-    if (d.killerHeroId !== null) counts.set(d.killerHeroId, (counts.get(d.killerHeroId) ?? 0) + 1);
-  }
-  const best = [...counts].sort((a, b) => b[1] - a[1])[0];
-  return best ? names.hero(best[0]) : null;
 }
 
 function topByTone(found: Finding[], limit: number): Finding[] {
