@@ -101,7 +101,7 @@ describe("buildExtras", () => {
     days: [],
     base: [],
     roles: {},
-    extras: { buildGames: 0, builds: {}, newItems: newItems.map((id) => ({ id, games: 0, heroes: [] })), matchups: {} },
+    extras: { buildGames: 0, builds: {}, newItems: newItems.map((id) => ({ id, games: 0, heroes: [] })), matchups: {}, items: {} },
   });
 
   it("reads the item list from before the patch when the last file has no new items", async () => {
@@ -121,6 +121,8 @@ describe("buildExtras", () => {
     expect(asked).toEqual([START]);
     expect(extras.buildGames).toBe(1);
     expect(extras.newItems).toEqual([{ id: 1942, games: 1, heroes: [[8, 1]] }]);
+    // Shop data for the items shown, and only those.
+    expect(Object.keys(extras.items)).toEqual(["1942"]);
   });
 
   it("keeps the new items found earlier in the same patch", async () => {

@@ -20,6 +20,8 @@ export interface MetaExtras {
   builds: Builds;
   newItems: NewItem[];
   matchups: Record<string, { best: Matchup[]; worst: Matchup[] }>;
+  /** The shop data of every item in the builds and new items, for the page's item cards. Neutral items have none. */
+  items: Record<string, ItemInfo>;
 }
 
 /** A hero's games in a position, and how many of them ended with each item: [item id, games], most first. */
@@ -183,10 +185,14 @@ export async function buildExtras(
     const before = await deps.itemsBefore(since);
     ids = before ? newItemIds(items, before) : [];
   }
+  const builds = heroBuilds(games, since, items);
+  const newItems = newItemUse(ids, games, since);
+  const used = new Set([...newItems.map((n) => n.id), ...Object.values(builds).flatMap((byPosition) => Object.values(byPosition).flatMap((b) => b.items.map(([id]) => id)))]);
   return {
     buildGames: games.filter((g) => g.picks.some((p) => p.items)).length,
-    builds: heroBuilds(games, since, items),
-    newItems: newItemUse(ids, games, since),
+    builds,
+    newItems,
     matchups: heroMatchups(snapshot.matchups ?? {}),
+    items: Object.fromEntries([...used].sort((a, b) => a - b).flatMap((id) => (items[id] ? [[String(id), items[id]]] : []))),
   };
 }
