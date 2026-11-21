@@ -92,7 +92,11 @@ describe("pick verdicts", () => {
     expect(verdicts([leader, puck], name, 2)[1]).toMatchObject({
       note: "You have won 63% of 38 games on Puck and have no games on Invoker.",
       text: "4.5 points behind: lower win rate (-8.0).",
-      record: { mine: { heroId: 2, games: 38, wins: 24, tooFew: false }, leader: null, goodToo: false },
+      record: {
+        mine: { heroId: 2, games: 38, wins: 24, tooFew: false },
+        leader: { heroId: 1, games: 0, wins: 0, tooFew: true },
+        goodToo: false,
+      },
     });
     expect(verdicts([leader, puck], name, 2, "Ali")[1]).toMatchObject({
       note: "Ali has won 63% of 38 games on Puck and has no games on Invoker.",

@@ -35,10 +35,10 @@ export interface RecordLine {
   tooFew: boolean;
 }
 
-/** The record that favors a hero over the leader: this hero first, the leader's (null without games) second. */
+/** The record that favors a hero over the leader: this hero first, the leader's second (0 games when it has none). */
 export interface VerdictRecord {
   mine: RecordLine;
-  leader: RecordLine | null;
+  leader: RecordLine;
   /** The hero is within the error of the leader and scores above zero: "A good pick too". */
   goodToo: boolean;
 }
@@ -102,7 +102,7 @@ function whyBehind(leader: Listed, s: Listed, name: (id: number) => string, pos:
  * the leader's by RECORD_LEAD points and its plain win rate agrees, so the words never contradict the math.
  * With no games on the leader: "You have won 63% of 38 games on Puck and have no games on Invoker."
  */
-function recordNote(leader: Listed, s: Listed, owner: Owner): { text: string; mine: RecordLine; leader: RecordLine | null } | null {
+function recordNote(leader: Listed, s: Listed, owner: Owner): { text: string; mine: RecordLine; leader: RecordLine } | null {
   const mine = s.record;
   if (!mine || mine.points - (leader.record?.points ?? 0) < RECORD_LEAD) return null;
   const theirs = leader.record;
@@ -117,7 +117,7 @@ function recordNote(leader: Listed, s: Listed, owner: Owner): { text: string; mi
     return {
       text: `${who} ${owner ? "has" : "have"} won ${percent(mine)} of ${mine.games} games on ${s.name} and ${owner ? "has" : "have"} no games on ${leader.name}.`,
       mine: line(s.heroId, mine),
-      leader: null,
+      leader: line(leader.heroId, { games: 0, wins: 0 }),
     };
   if (mine.wins / mine.games <= theirs.wins / theirs.games) return null;
   return {
