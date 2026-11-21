@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addRows, BASE_DAYS, buildMeta, dayIndexes, daysQuery, gamesOf, runs, SETTLE_S, toHeroRows, WINDOW_DAYS, type MetaFile } from "../src/data/meta";
+import { addRows, BASE_DAYS, roleShares, buildMeta, dayIndexes, daysQuery, gamesOf, runs, SETTLE_S, toHeroRows, WINDOW_DAYS, type MetaFile } from "../src/data/meta";
 
 const DAY = 24 * 60 * 60;
 const START = Date.parse("2026-11-18T21:28:07Z") / 1000;
@@ -59,6 +59,13 @@ describe("dayIndexes", () => {
   });
 });
 
+describe("roleShares", () => {
+  it("turns position counts into whole percent shares", () => {
+    expect(roleShares({ 32: [370, 250, 130, 140, 110], 1: [0, 0, 0, 0, 0], 2: [1, 2] })).toEqual({ 32: [37, 25, 13, 14, 11] });
+    expect(roleShares(undefined)).toEqual({});
+  });
+});
+
 describe("runs", () => {
   it("groups consecutive indexes", () => {
     expect(runs([-7, -6, -5, 0, 2, 3])).toEqual([
@@ -112,6 +119,7 @@ describe("buildMeta", () => {
     // The newest query stops at now.
     expect(queries.at(-1)).toContain(`m.start_time < ${Math.floor(now)}`);
     expect(meta.computedAt).toBe(new Date(now * 1000).toISOString());
+    expect(meta.roles).toEqual({});
   });
 
   it("keeps complete days of the same patch and reads only the rest", async () => {
@@ -128,7 +136,7 @@ describe("buildMeta", () => {
   it("reads every day again for a new patch", async () => {
     const first = await buildMeta(fakeAsk().ask, PATCH, now, null);
     const { ask, queries } = fakeAsk();
-    const other = { ...first, patch: { name: "7.41", startedAt: "2026-10-01T00:00:00.000Z" } } satisfies MetaFile;
+    const other: MetaFile = { ...first, patch: { name: "7.41", startedAt: "2026-10-01T00:00:00.000Z" } };
     await buildMeta(ask, PATCH, now, other);
     expect(queries.some((q) => q.includes(`m.start_time >= ${Math.floor(START - 7 * DAY)}`))).toBe(true);
   });

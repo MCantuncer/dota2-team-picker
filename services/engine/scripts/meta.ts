@@ -79,11 +79,11 @@ function summary(meta: MetaFile, reread: number): string {
 }
 
 async function main() {
-  // The snapshot is written by fetch-data, which checked its shape; only the patch is read here.
-  const snapshot = JSON.parse(readFileSync(values.snapshot!, "utf8")) as Pick<Snapshot, "patch">;
+  // The snapshot is written by fetch-data, which checked its shape; only the patch and positions are read here.
+  const snapshot = JSON.parse(readFileSync(values.snapshot!, "utf8")) as Pick<Snapshot, "patch" | "positions">;
   if (!snapshot.patch) throw new Error(`${values.snapshot} has no patch`);
   const last = await published();
-  const meta = await buildMeta(ask, snapshot.patch, Math.floor(Date.now() / 1000), last);
+  const meta = await buildMeta(ask, snapshot.patch, Math.floor(Date.now() / 1000), last, snapshot.positions);
   const keptKeys = new Set([...(last?.days ?? []), ...(last?.base ?? [])].filter((d) => d.complete).map((d) => d.from));
   const reread = [...meta.base, ...meta.days].filter((d) => !keptKeys.has(d.from)).length;
 

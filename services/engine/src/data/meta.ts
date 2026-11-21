@@ -52,6 +52,18 @@ export interface MetaFile {
   days: MetaDay[];
   /** The patch before's last BASE_DAYS days, oldest first. */
   base: MetaDay[];
+  /** Each hero's share of its games per position 1 to 5, in whole percent, from the snapshot's STRATZ positions. */
+  roles: Record<string, number[]>;
+}
+
+/** Position counts as whole percent shares; heroes with no games are left out. */
+export function roleShares(positions: Record<string, number[]> | undefined): Record<string, number[]> {
+  const out: Record<string, number[]> = {};
+  for (const [hero, games] of Object.entries(positions ?? {})) {
+    const total = games.reduce((a, b) => a + b, 0);
+    if (total > 0 && games.length === 5) out[hero] = games.map((g) => Math.round((g / total) * 100));
+  }
+  return out;
 }
 
 /** Heroes on one side per day (from `from`) and rank group: games and that side's wins. */
@@ -151,7 +163,13 @@ export async function readDays(ask: Ask, patchStart: number, first: number, last
  * The Meta numbers at `now` (Unix seconds). Complete days of `last` (the published file) for the same patch
  * are kept; every other day is read. Throws when a query fails, so a run never publishes a partial day.
  */
-export async function buildMeta(ask: Ask, patch: { name: string; startedAt: string }, now: number, last: MetaFile | null): Promise<MetaFile> {
+export async function buildMeta(
+  ask: Ask,
+  patch: { name: string; startedAt: string },
+  now: number,
+  last: MetaFile | null,
+  positions?: Record<string, number[]>,
+): Promise<MetaFile> {
   const patchStart = Date.parse(patch.startedAt) / 1000;
   if (!Number.isFinite(patchStart)) throw new Error(`Patch ${patch.name} has no start time`);
   const kept = new Map<number, MetaDay>();
@@ -166,7 +184,7 @@ export async function buildMeta(ask: Ask, patch: { name: string; startedAt: stri
     for (const [first, last] of runs(missing)) for (const day of await readDays(ask, patchStart, first, last, now)) byIndex.set(day.index, day);
   }
   const pick = (i: number) => kept.get(i) ?? byIndex.get(i)!; // every index is kept or was just read
-  return { computedAt: new Date(now * 1000).toISOString(), patch, days: days.map(pick), base: base.map(pick) };
+  return { computedAt: new Date(now * 1000).toISOString(), patch, days: days.map(pick), base: base.map(pick), roles: roleShares(positions) };
 }
 
 /** Sorted indexes as [first, last] runs of consecutive numbers. */
