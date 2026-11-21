@@ -91,6 +91,26 @@ describe("heroMatchups", () => {
     expect(out[1]!.best[0]).toEqual([13, 62, 1000]);
     expect(out[1]!.worst.map((m) => m[0])).toEqual([2, 3, 4, 5, 6]);
   });
+
+  it("adjusts for each enemy's strength, so an enemy that beats everyone is not a counter", () => {
+    const vs = (wins: number) => ({ games: 1000, wins });
+    // Hero 1 against enemies 2 to 12: 50% against most, 44% against 2 (which wins 60% overall) and 46% against 3
+    // (which wins 40% overall). Rows for 2 and 3 give their overall rates.
+    const one: Record<string, { games: number; wins: number }> = {};
+    for (let id = 2; id <= 12; id++) one[id] = vs(500);
+    one[2] = vs(440);
+    one[3] = vs(460);
+    const strong: Record<string, { games: number; wins: number }> = {};
+    const weak: Record<string, { games: number; wins: number }> = {};
+    for (let id = 4; id <= 14; id++) {
+      strong[id] = vs(600);
+      weak[id] = vs(400);
+    }
+    const out = heroMatchups({ 1: one, 2: strong, 3: weak });
+    // By raw win rate 2 is the worst; by strength 3 is: hero 1 loses to a hero that loses to everyone else.
+    expect(out[1]!.worst.map((m) => m[0]).slice(0, 2)).toEqual([3, 2]);
+    expect(out[1]!.worst[0]).toEqual([3, 46, 1000]);
+  });
 });
 
 describe("buildExtras", () => {
