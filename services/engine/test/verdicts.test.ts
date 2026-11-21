@@ -38,6 +38,7 @@ describe("pick verdicts", () => {
       kind: "behind",
       text: "3.5 points behind: 3.0 worse against Axe.",
       note: null,
+      record: null,
     });
     const ally = hero(3, "Lina", {}, { synergyBy: [{ heroId: 11, points: 0 }] });
     const friend = hero(1, "Invoker", { synergy: 1.4 }, { synergyBy: [{ heroId: 11, points: 1.4 }] });
@@ -60,12 +61,27 @@ describe("pick verdicts", () => {
     expect(verdicts([invoker, puck], name, 2)[1]).toMatchObject({
       note: "You win more on Puck (63% of 38 games) than on Invoker (49% of 83). A good pick too.",
       text: "1.1 points behind: lower win rate (-4.0).",
+      record: {
+        mine: { heroId: 2, games: 38, wins: 24, tooFew: false },
+        leader: { heroId: 1, games: 83, wins: 41, tooFew: false },
+        goodToo: true,
+      },
     });
     // 9-1 shrinks below 140-60, but 90% reads higher than 70%: no note that contradicts the numbers.
     const lucky = hero(3, "Sniper", { meta: 6 }, { record: record(10, 9) });
     const steady = hero(4, "Pudge", { meta: 2 }, { record: record(200, 140) });
     expect(steady.record!.points - lucky.record!.points).toBeGreaterThan(1);
-    expect(verdicts([lucky, steady], name, 2)[1]).toMatchObject({ text: "4.0 points behind: lower win rate (-4.0).", note: null });
+    expect(verdicts([lucky, steady], name, 2)[1]).toMatchObject({ text: "4.0 points behind: lower win rate (-4.0).", note: null, record: null });
+  });
+
+  it("marks a record of fewer than 10 games as too few, so a card never shows it as a real win rate", () => {
+    const leader = hero(1, "Phantom Lancer", { meta: 2 }, { record: record(2, 0) });
+    const medusa = hero(2, "Medusa", { meta: 1, comfort: 0.5 }, { record: record(64, 29) });
+    expect(verdicts([leader, medusa], name, 1)[1]!.record).toEqual({
+      mine: { heroId: 2, games: 64, wins: 29, tooFew: false },
+      leader: { heroId: 1, games: 2, wins: 0, tooFew: true },
+      goodToo: true,
+    });
   });
 
   it("names the leader's missing record, and a teammate's list in their name", () => {
@@ -76,6 +92,7 @@ describe("pick verdicts", () => {
     expect(verdicts([leader, puck], name, 2)[1]).toMatchObject({
       note: "You have won 63% of 38 games on Puck and have no games on Invoker.",
       text: "4.5 points behind: lower win rate (-8.0).",
+      record: { mine: { heroId: 2, games: 38, wins: 24, tooFew: false }, leader: null, goodToo: false },
     });
     expect(verdicts([leader, puck], name, 2, "Ali")[1]).toMatchObject({
       note: "Ali has won 63% of 38 games on Puck and has no games on Invoker.",
@@ -87,7 +104,9 @@ describe("pick verdicts", () => {
     const [first, second] = verdicts([hero(1, "Invoker", { meta: 2 }), hero(2, "Puck", { flex: 2 })], name, 2);
     expect(first!.text).toBe("Level with Puck, the next best.");
     expect(second!.text).toBe("Level with Invoker.");
-    expect(verdicts([hero(1, "Invoker", {})], name, 2)).toEqual([{ heroId: 1, kind: "only", text: "The only hero on this list for this draft.", note: null }]);
+    expect(verdicts([hero(1, "Invoker", {})], name, 2)).toEqual([
+      { heroId: 1, kind: "only", text: "The only hero on this list for this draft.", note: null, record: null },
+    ]);
     expect(verdicts([], name, 2)).toEqual([]);
   });
 });
