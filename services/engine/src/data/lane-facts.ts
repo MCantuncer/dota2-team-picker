@@ -52,9 +52,31 @@ const labelTag = (label: string) => /\(([^)]+)\)$/.exec(label)?.[1];
 /** Below this a "health" counts hits (wards and traps with pip health), not health points. */
 const MIN_SUMMON_HEALTH = 50;
 
-/** Labels that mean the damage of one hit of the spell. */
-const HIT_DAMAGE_LABELS = new Set(["DAMAGE", "IMPACT DAMAGE", "INITIAL DAMAGE", "EXPLOSION DAMAGE"]);
-const DOT_LABELS = new Set(["DAMAGE PER SECOND", "BURN DAMAGE PER SECOND"]);
+/** Labels that mean the damage of one hit of the spell, read before any other damage label. */
+const HIT_DAMAGE_LABELS = new Set(["DAMAGE", "IMPACT DAMAGE", "INITIAL DAMAGE", "EXPLOSION DAMAGE", "DAMAGE EACH BOUNCE", "DAMAGE/HEAL", "HEAL/DAMAGE"]);
+/** Labels of a spell that damages an enemy and heals an ally; with a plain duration they are per second. */
+const HEAL_OR_DAMAGE = new Set(["DAMAGE/HEAL", "HEAL/DAMAGE"]);
+/**
+ * A spell's own name for its hit: "BEAM DAMAGE", "STRIKE DAMAGE", "QUILL BASE DAMAGE". One word before DAMAGE
+ * (and an optional BASE), unless the word says the number is something else than one hit on a hero.
+ */
+const NAMED_DAMAGE = /^(?:([A-Z]+) )?(?:BASE )?DAMAGE$/;
+const NOT_A_HIT = new Set([
+  "BONUS", "CRITICAL", "ATTACK", "ILLUSION", "OUTGOING", "INCOMING", "CLEAVE", "SPLASH", "WARD", "BUILDING", "HEALTH",
+  "MAX", "MIN", "MAXIMUM", "MINIMUM", "BURN", "INCREASED", "TOTAL", "PROC", "SPELL", "MOVE", "CURRENT", "SELF", "CREEP",
+  "INCREMENTAL", "ADDED", "EXTRA", "ALL", "ROCKET", "CORROSIVE",
+]);
+const isNamedHit = (label: string) => {
+  const match = NAMED_DAMAGE.exec(label);
+  return !!match && !NOT_A_HIT.has(match[1] ?? "");
+};
+/** Pairs of labels whose average is one hit: a spell that rolls its damage between two numbers. */
+const DAMAGE_RANGES: [string, string][] = [
+  ["MINIMUM DAMAGE", "MAXIMUM DAMAGE"],
+  ["MIN DAMAGE", "MAX DAMAGE"],
+  ["DAMAGE MIN", "DAMAGE MAX"],
+];
+const DOT_LABELS = new Set(["DAMAGE PER SECOND", "BURN DAMAGE PER SECOND", "BASE DAMAGE PER SECOND", "DAMAGE/HEAL PER SECOND"]);
 const DAMAGE_TYPES: Record<string, DamageType> = { Magical: "magical", Physical: "physical", Pure: "pure" };
 
 const positive = (values: number[]) => values.some((v) => v > 0);
@@ -65,11 +87,26 @@ function addLevels(a: number[], b: number[]): number[] {
   return Array.from({ length: Math.max(a.length, b.length) }, (_, i) => (a[Math.min(i, a.length - 1)] ?? 0) + (b[Math.min(i, b.length - 1)] ?? 0));
 }
 
+/** The average of a spell that rolls its damage between a minimum and a maximum. */
+function rolledDamage(list: Attrib[]): Attrib | undefined {
+  for (const [low, high] of DAMAGE_RANGES) {
+    const min = first(list, (a) => bareLabel(a.label) === low);
+    const max = first(list, (a) => bareLabel(a.label) === high);
+    if (min && max) return { ...min, values: addLevels(min.values, max.values).map((v) => v / 2) };
+  }
+  return undefined;
+}
+
 function damageOf(raw: Record<string, unknown>, list: Attrib[]): { values: number[]; tag?: string } | undefined {
   const direct = toNumbers(raw.dmg);
-  const hit = positive(direct.values) ? { values: direct.values, label: "DAMAGE" } : first(list, (a) => HIT_DAMAGE_LABELS.has(bareLabel(a.label)));
-  const dot = first(list, (a) => DOT_LABELS.has(bareLabel(a.label)));
+  const named = positive(direct.values)
+    ? { values: direct.values, label: "DAMAGE" }
+    : (first(list, (a) => HIT_DAMAGE_LABELS.has(bareLabel(a.label))) ?? first(list, (a) => isNamedHit(bareLabel(a.label))) ?? rolledDamage(list));
   const duration = first(list, (a) => /DURATION$/.test(bareLabel(a.label)) && !/STUN|SLOW|VISION/.test(a.label));
+  // Shadow Word's "HEAL/DAMAGE" is per second over its duration; Death Coil's "DAMAGE/HEAL" is one hit.
+  const perSecond = !!named && HEAL_OR_DAMAGE.has(bareLabel(named.label)) && !!first(list, (a) => a.label === "DURATION");
+  const hit = perSecond ? undefined : named;
+  const dot = perSecond ? named : first(list, (a) => DOT_LABELS.has(bareLabel(a.label)));
   const dotTotal = dot && duration ? dot.values.map((v, i) => v * Math.min(LANE_DOT_SECONDS, duration.values[Math.min(i, duration.values.length - 1)] ?? 0)) : undefined;
   const values = hit && dotTotal ? addLevels(hit.values, dotTotal) : (hit?.values ?? dotTotal);
   if (!values) return undefined;
@@ -88,7 +125,9 @@ export function toLaneSpell(key: string, raw: Record<string, unknown>, orbs: Map
   // A summoned unit's health: "HEALTH", "WOLF HEALTH", never a bonus, threshold or share of health.
   const health = first(list, (a) => /_(hp|health)$/.test(a.key) && /HEALTH$/.test(bareLabel(a.label)) && !/BONUS|THRESHOLD|REGEN|MIN|MAX|PCT|PERCENT|COST|LOST|DAMAGE/.test(a.label) && a.values.every((v) => v >= MIN_SUMMON_HEALTH));
   // A summon's "DAMAGE" is the unit's attack, not the spell's: leave it out.
-  const damage = health ? undefined : damageOf(raw, list);
+  // A number with no damage type (Objurgation's "ALL DAMAGE", a trap's "EXTRA DAMAGE") is not a hit on a hero.
+  const damageType = typeof raw.dmg_type === "string" ? DAMAGE_TYPES[raw.dmg_type] : undefined;
+  const damage = health || !damageType ? undefined : damageOf(raw, list);
   const auraRadius = one((a) => /aura_radius$/.test(a.key));
   const auraDecay = list.find((a) => a.isPercent && (/DECAY/.test(a.label) || /aura_damage$/.test(a.key)));
   const widths = list.filter((a) => /width(_initial|_end)?$/.test(a.key) && positive(a.values)).flatMap((a) => a.values);
@@ -98,7 +137,7 @@ export function toLaneSpell(key: string, raw: Record<string, unknown>, orbs: Map
   const orbOf = (label: string | undefined) => (label ? orbs.get(label) : undefined);
   const levelFrom = { ...(orbOf(damage?.tag) ? { damage: orbOf(damage?.tag) } : {}), ...(orbOf(health && labelTag(health.label)) ? { summonHealth: orbOf(health && labelTag(health.label)) } : {}) };
   const castPoint = one((a) => a.key === "abilitycastpoint")?.[0];
-  const castRange = one((a) => a.key === "abilitycastrange") ?? one((a) => a.key === "range" && a.label === "RANGE");
+  const castRange = one((a) => a.key === "abilitycastrange") ?? one((a) => a.key === "range");
   // How far a line travels: its own distance label, never a pull or knockback distance; else its cast range.
   const lineLength = one((a) => /(distance|length)$/.test(a.key) && /DISTANCE|LENGTH/.test(a.label) && !/PULL|KNOCK|DRAG|BONUS/.test(a.label))?.[0] ?? castRange?.[0];
   const delay = one((a) => /(^|_)delay(_time)?$/.test(a.key))?.[0];
@@ -109,7 +148,7 @@ export function toLaneSpell(key: string, raw: Record<string, unknown>, orbs: Map
     name: raw.dname,
     ...(passive ? { passive: true as const } : { cast: behavior.has("Point Target") ? ("point" as const) : behavior.has("Unit Target") ? ("unit" as const) : ("none" as const) }),
     ...(damage ? { damage: damage.values } : {}),
-    ...(damage && typeof raw.dmg_type === "string" && DAMAGE_TYPES[raw.dmg_type] ? { damageType: DAMAGE_TYPES[raw.dmg_type] } : {}),
+    ...(damage && damageType ? { damageType } : {}),
     ...(!passive && nums(raw.cd) ? { cooldown: nums(raw.cd) } : {}),
     ...(!passive && nums(raw.mc) ? { mana: nums(raw.mc) } : {}),
     ...(castRange ? { castRange } : {}),

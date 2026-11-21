@@ -127,6 +127,35 @@ describe("toLaneSpell", () => {
     expect(spell?.damage).toEqual([90, 130]);
   });
 
+  it("reads a spell's own name for its hit, a rolled hit's average, and leaves bonus numbers out", () => {
+    const spell = (attrib: { key: string; header: string; value: unknown }[], dmg_type = "Magical") =>
+      toLaneSpell("x", { dname: "X", behavior: "Unit Target", dmg_type, attrib }, new Map());
+    expect(spell([{ key: "beam_damage", header: "BEAM DAMAGE:", value: ["75", "150"] }])?.damage).toEqual([75, 150]);
+    expect(spell([{ key: "quill_base_damage", header: "QUILL BASE DAMAGE:", value: "25" }])?.damage).toEqual([25]);
+    expect(
+      spell([
+        { key: "damage_min", header: "MINIMUM DAMAGE:", value: ["100", "150"] },
+        { key: "damage_max", header: "MAXIMUM DAMAGE:", value: ["150", "210"] },
+      ])?.damage,
+    ).toEqual([125, 180]);
+    expect(spell([{ key: "bonus_damage", header: "BONUS DAMAGE:", value: "40" }])?.damage).toBeUndefined();
+    expect(spell([{ key: "jump_damage", header: "INCREMENTAL DAMAGE:", value: "20" }])?.damage).toBeUndefined();
+    // No damage type: the number is not a hit on a hero.
+    expect(spell([{ key: "damage", header: "EXTRA DAMAGE:", value: "400" }], "None")?.damage).toBeUndefined();
+  });
+
+  it("counts a heal-or-damage number with a plain duration as per second, and without one as a single hit", () => {
+    const spell = (attrib: { key: string; header: string; value: unknown }[]) =>
+      toLaneSpell("x", { dname: "X", behavior: "Unit Target", dmg_type: "Magical", attrib }, new Map());
+    expect(spell([{ key: "damage", header: "DAMAGE/HEAL:", value: ["95", "170"] }])?.damage).toEqual([95, 170]);
+    expect(
+      spell([
+        { key: "damage", header: "HEAL/DAMAGE:", value: ["15", "25"] },
+        { key: "duration", header: "DURATION:", value: "10" },
+      ])?.damage,
+    ).toEqual([60, 100]);
+  });
+
   it("reads a damaging aura as a share of health each second", () => {
     const spell = toLaneSpell(
       "necrolyte_heartstopper_aura",
