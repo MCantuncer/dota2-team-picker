@@ -245,5 +245,8 @@ describe("generated lane facts", () => {
     expect(laneSpell("magnataur_shockwave")).toMatchObject({ width: 200, cooldown: [13, 12, 11, 10] });
     expect(laneSpell("invoker_forge_spirit")?.summonHealth?.[0]).toBe(300);
     expect(laneSpell("necrolyte_heartstopper_aura")?.aura?.radius).toBe(700);
+    // A hook stops at the first creep; a wave of fire does not.
+    expect(laneSpell("pudge_meat_hook")?.stopsAtFirstUnit).toBe(true);
+    expect(laneSpell("lina_dragon_slave")?.stopsAtFirstUnit).toBeUndefined();
   });
 });

@@ -163,9 +163,13 @@ export function toLaneSpell(key: string, raw: Record<string, unknown>, orbs: Map
     ...(health ? { summonHealth: health.values } : {}),
     ...(Object.keys(levelFrom).length ? { levelFrom } : {}),
     hitsUnits,
+    ...(widths.length && STOPS_AT_FIRST_UNIT.test(typeof raw.desc === "string" ? raw.desc : "") ? { stopsAtFirstUnit: true as const } : {}),
   };
   return spell;
 }
+
+/** How a spell's own text says it stops at the first unit it meets (Meat Hook, Sacred Arrow, Hookshot). */
+const STOPS_AT_FIRST_UNIT = /first (enemy )?unit|hook hits a unit/i;
 
 /** Whether a spell has any number a lane rule reads; the rest are left out to keep the file small. */
 function mattersInLane(s: LaneSpell): boolean {

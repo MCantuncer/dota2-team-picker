@@ -73,6 +73,8 @@ export interface LaneSpell {
   levelFrom?: Partial<Record<"damage" | "summonHealth", string>>;
   /** Whether the spell hits creeps and summons as well as heroes. */
   hitsUnits: boolean;
+  /** A line spell that stops at the first unit it meets, so a creep in the way blocks it. */
+  stopsAtFirstUnit?: true;
 }
 
 /** All lane facts: heroes by hero id, spells by key. */
