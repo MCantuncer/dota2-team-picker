@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { isCandidate, mergeMatches, monthPath, toEvalMatch, type EvalMatch, type MatchDetail } from "../src/data/eval-matches";
+import { finalItems, isCandidate, isEvalMatch, mergeMatches, monthPath, toEvalMatch, type EvalMatch, type MatchDetail } from "../src/data/eval-matches";
 import { fetchMatchPositions, matchPositionsQuery, MATCHES_PER_QUERY, toMatchPositions } from "../src/data/stratz";
 import type { PublicMatch } from "../src/data/fetch";
 
@@ -45,7 +45,29 @@ describe("isCandidate", () => {
   });
 });
 
+describe("finalItems", () => {
+  it("keeps each hero's filled main slots and neutral item, and skips odd rows", () => {
+    const items = finalItems([
+      { hero_id: 32, item_0: 63, item_1: 0, item_2: 174, item_3: null, item_4: 147, item_5: 1097, item_neutral: 1605 },
+      { hero_id: 6, item_0: 1, item_neutral: 0 },
+      { hero_id: 0, item_0: 63 },
+    ]);
+    expect(items.get(32)).toEqual({ items: [63, 174, 147, 1097], neutral: 1605 });
+    expect(items.get(6)).toEqual({ items: [1] });
+    expect(items.size).toBe(2);
+    expect(finalItems(null).size).toBe(0);
+  });
+});
+
 describe("toEvalMatch", () => {
+  it("adds each pick's end-of-game items when OpenDota sends them", () => {
+    const m = toEvalMatch(detail({ players: [{ hero_id: 6, item_0: 63, item_1: 174, item_neutral: 1605 }] }), 54, undefined)!;
+    expect(m.picks[0]).toEqual({ heroId: 6, radiant: false, position: null, items: [63, 174], neutral: 1605 });
+    expect(m.picks[1]).not.toHaveProperty("items");
+    expect(isEvalMatch(m)).toBe(true);
+    expect(isEvalMatch({ ...m, picks: [{ ...m.picks[0], items: [0] }] })).toBe(false);
+  });
+
   it("keeps the picks in order with sides, positions and bans", () => {
     const m = toEvalMatch(detail(), 54, new Map([[6, 1], [1, 5]]))!;
     expect(m.id).toBe(9062609080);

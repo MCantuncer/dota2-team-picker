@@ -14,8 +14,12 @@ export interface EvalMatch {
   /** Average OpenDota rank tier of the ranked players (54 = Legend 4), when known. */
   rankTier: number | null;
   radiantWin: boolean;
-  /** All 10 picks in the order they were made. `position` is null when STRATZ could not tell. */
-  picks: { heroId: number; radiant: boolean; position: Position | null }[];
+  /**
+   * All 10 picks in the order they were made. `position` is null when STRATZ could not tell. `items` holds the item
+   * ids in the hero's six main slots when the game ended, and `neutral` its neutral item, for the Meta page's builds;
+   * both are missing in games saved before 2026-11-21 and when OpenDota did not send them.
+   */
+  picks: { heroId: number; radiant: boolean; position: Position | null; items?: number[]; neutral?: number }[];
   /** Banned heroes. In ranked All Pick every ban is known before the first pick. */
   bans: number[];
 }
@@ -29,6 +33,33 @@ export interface MatchDetail {
   lobby_type: number;
   start_time: number;
   picks_bans?: { is_pick: boolean; hero_id: number; team: number; order: number }[] | null;
+  /** Each player's hero and the items they ended the game with (0 for an empty slot). */
+  players?: MatchPlayer[] | null;
+}
+
+export interface MatchPlayer {
+  hero_id: number;
+  item_0?: number | null;
+  item_1?: number | null;
+  item_2?: number | null;
+  item_3?: number | null;
+  item_4?: number | null;
+  item_5?: number | null;
+  item_neutral?: number | null;
+}
+
+const SLOTS = ["item_0", "item_1", "item_2", "item_3", "item_4", "item_5"] as const;
+const isItemId = (x: unknown): x is number => Number.isInteger(x) && (x as number) > 0;
+
+/** Each hero's end-of-game items from the players list: main slots without empty ones, and the neutral item. */
+export function finalItems(players: MatchDetail["players"]): Map<number, { items: number[]; neutral?: number }> {
+  const out = new Map<number, { items: number[]; neutral?: number }>();
+  for (const p of Array.isArray(players) ? players : []) {
+    if (!isItemId(p?.hero_id)) continue;
+    const items = SLOTS.map((slot) => p[slot]).filter(isItemId);
+    out.set(p.hero_id, isItemId(p.item_neutral) ? { items, neutral: p.item_neutral } : { items });
+  }
+  return out;
 }
 
 const RANKED_ALL_PICK = 22;
@@ -58,11 +89,12 @@ export function toEvalMatch(
   if (detail.game_mode !== RANKED_ALL_PICK || detail.lobby_type !== RANKED_LOBBY) return null;
   if (detail.duration < MIN_DURATION_S || typeof detail.radiant_win !== "boolean") return null;
   const rows = Array.isArray(detail.picks_bans) ? detail.picks_bans : [];
+  const ended = finalItems(detail.players);
   const valid = rows.filter((r) => Number.isInteger(r.hero_id) && r.hero_id > 0 && (r.team === 0 || r.team === 1));
   const picks = valid
     .filter((r) => r.is_pick)
     .sort((a, b) => a.order - b.order)
-    .map((r) => ({ heroId: r.hero_id, radiant: r.team === 0, position: positions?.get(r.hero_id) ?? null }));
+    .map((r) => ({ heroId: r.hero_id, radiant: r.team === 0, position: positions?.get(r.hero_id) ?? null, ...ended.get(r.hero_id) }));
   const heroes = new Set(picks.map((p) => p.heroId));
   if (picks.length !== 10 || heroes.size !== 10 || picks.filter((p) => p.radiant).length !== 5) return null;
   const bans = [...new Set(valid.filter((r) => !r.is_pick).map((r) => r.hero_id))].filter((id) => !heroes.has(id));
@@ -80,7 +112,9 @@ export function isEvalMatch(x: unknown): x is EvalMatch {
       q !== null &&
       Number.isInteger(q.heroId) &&
       typeof q.radiant === "boolean" &&
-      (q.position === null || [1, 2, 3, 4, 5].includes(q.position as number))
+      (q.position === null || [1, 2, 3, 4, 5].includes(q.position as number)) &&
+      (q.items === undefined || (Array.isArray(q.items) && q.items.every(isItemId))) &&
+      (q.neutral === undefined || isItemId(q.neutral))
     );
   };
   return (
