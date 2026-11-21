@@ -4,6 +4,7 @@ import { withEffects } from "./item-effects";
 import { enemyList, threatRows, type EnemyNote, type ThreatRow, type TipFacts } from "./enemy-list";
 import { laneAdjusted } from "./lane-items";
 import { laneOdds, pairLane, pairText, type PairLane } from "./lane-odds";
+import { laneTactics, type LaneTactic } from "./lane-tactics";
 import type { MatchupGame } from "./matchup-talents";
 import { skillPlan, type SkillPlan } from "./skill-plan";
 import { gameStory, type Story, type Timing } from "./story";
@@ -68,8 +69,20 @@ export interface LanePlan {
   pairs?: (PairLane & { weight: number })[];
   /** The pair `pairLine` tells: the one that decides the verdict (lane-odds.ts), so the game clock can draw its bar. */
   keyPair?: PairLane;
+  /**
+   * How each of our laners plays against each guessed enemy laner, worked out from game numbers
+   * (lane-tactics.ts), most important first. Left out when no pair has any.
+   */
+  tactics?: PairTactics[];
   verdict: LaneVerdict;
   text: string;
+}
+
+/** Lane tactics for one of our laners against one enemy laner. */
+export interface PairTactics {
+  hero: number;
+  enemy: number;
+  tactics: LaneTactic[];
 }
 
 export interface PlayerPlan {
@@ -280,6 +293,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     knownPositions(input.theirs, input.theirPositions),
   );
   const theirByPos = enemyPositions(input.theirs, theirOdds);
+  const enemyPositionOf = new Map([...theirByPos].map(([position, id]) => [id, position]));
   const lanes = LANES.map((lane): LanePlan => {
     const ours = input.ours.filter((p) => lane.ours.includes(p.position)).map((p) => p.heroId);
     const theirs = lane.theirs.flatMap((p) => (theirByPos.has(p) ? [theirByPos.get(p)!] : [])); // has() checked.
@@ -294,6 +308,15 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       const pair = pairLane(engine.data, o, t, bracket);
       return pair ? [{ ...pair, weight: weightOf(t) }] : [];
     }));
+    const tactics = ours.flatMap((o) => {
+      const position = input.ours.find((p) => p.heroId === o)?.position;
+      return position === undefined
+        ? []
+        : theirs.flatMap((t) => {
+            const found = laneTactics(engine.data, { id: o, position }, { id: t, position: enemyPositionOf.get(t) ?? position }, name);
+            return found.length ? [{ hero: o, enemy: t, tactics: found }] : [];
+          });
+    });
     return {
       name: lane.name,
       ours,
@@ -303,6 +326,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       text,
       ...(odds ? { laneNet: round(odds.net * 100), pairLine, keyPair: odds.key } : {}),
       ...(pairs.length ? { pairs } : {}),
+      ...(tactics.length ? { tactics } : {}),
     };
   });
 
