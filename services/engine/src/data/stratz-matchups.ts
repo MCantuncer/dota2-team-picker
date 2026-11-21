@@ -107,11 +107,14 @@ export async function fetchStratzCounts(heroIds: number[], post: (query: string)
   return toStratzCounts(heroIds, answers);
 }
 
-/** Puts the counts in the snapshot in place of the old ones, and marks where they came from. */
-export function applyStratzCounts(snapshot: Snapshot, counts: StratzCounts, now: Date) {
+/**
+ * Puts the counts in the snapshot in place of the old ones, and marks where they came from. `patchGames`
+ * says the counts hold that many games of a young patch next to STRATZ's (see patch-matchups.ts).
+ */
+export function applyStratzCounts(snapshot: Snapshot, counts: StratzCounts, now: Date, patchGames?: number) {
   snapshot.matchups = counts.matchups;
   snapshot.synergy = counts.synergy;
   snapshot.rankMatchups = counts.rankMatchups;
   snapshot.rankSynergy = counts.rankSynergy;
-  snapshot.matchupsFrom = { source: "stratz", at: now.toISOString() };
+  snapshot.matchupsFrom = { source: "stratz", at: now.toISOString(), ...(patchGames !== undefined ? { patchGames } : {}) };
 }

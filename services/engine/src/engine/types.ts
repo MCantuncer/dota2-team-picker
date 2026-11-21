@@ -64,8 +64,10 @@ export interface Snapshot {
   /**
    * Where the four count fields above come from: STRATZ (every ranked game, replaced on each
    * refresh) or, when missing, our own sample of public matches (added to on each refresh).
+   * `patchGames` is set while a new patch is young: the counts are then that many of this patch's
+   * ranked games plus a quarter of STRATZ's (see data/patch-matchups.ts).
    */
-  matchupsFrom?: { source: "stratz"; at: string };
+  matchupsFrom?: { source: "stratz"; at: string; patchGames?: number };
   /** Hard counters found in the counts (see data-hard-counters.ts), the engine's only hard counters. */
   dataHardCounters?: { hero: number; counter: number; gap: number; names: string }[];
   /** Refreshes in a row each "hero-counter" pair has been past the line, for the hold. */
