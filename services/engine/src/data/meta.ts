@@ -160,6 +160,22 @@ export async function readDays(ask: Ask, patchStart: number, first: number, last
 }
 
 /**
+ * Days `first` to `last`, read together; when that fails, each half on its own, down to single days. A long run
+ * of days the explorer has not read lately can stay over its 15 s on every try (7 days of the patch before,
+ * Nov 2026), while each try leaves part of them read, so the halves get through.
+ */
+export async function readRun(ask: Ask, patchStart: number, first: number, last: number, now: number): Promise<MetaDay[]> {
+  try {
+    return await readDays(ask, patchStart, first, last, now);
+  } catch (err) {
+    if (first === last) throw err;
+    const middle = Math.floor((first + last) / 2);
+    console.warn(`Reading days ${first} to ${last} failed, reading ${first} to ${middle} and ${middle + 1} to ${last} apart`);
+    return [...(await readRun(ask, patchStart, first, middle, now)), ...(await readRun(ask, patchStart, middle + 1, last, now))];
+  }
+}
+
+/**
  * The Meta numbers at `now` (Unix seconds). Complete days of `last` (the published file) for the same patch
  * are kept; every other day is read. Throws when a query fails, so a run never publishes a partial day.
  */
@@ -181,7 +197,7 @@ export async function buildMeta(
   // Each unbroken run of days not kept is read together: the patch before's days and this patch's apart.
   for (const indexes of [base, days]) {
     const missing = indexes.filter((i) => !kept.has(i));
-    for (const [first, last] of runs(missing)) for (const day of await readDays(ask, patchStart, first, last, now)) byIndex.set(day.index, day);
+    for (const [first, last] of runs(missing)) for (const day of await readRun(ask, patchStart, first, last, now)) byIndex.set(day.index, day);
   }
   const pick = (i: number) => kept.get(i) ?? byIndex.get(i)!; // every index is kept or was just read
   return { computedAt: new Date(now * 1000).toISOString(), patch, days: days.map(pick), base: base.map(pick), roles: roleShares(positions) };

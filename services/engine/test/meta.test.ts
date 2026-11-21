@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addRows, BASE_DAYS, roleShares, buildMeta, dayIndexes, daysQuery, gamesOf, runs, SETTLE_S, toHeroRows, WINDOW_DAYS, type MetaFile } from "../src/data/meta";
+import { addRows, BASE_DAYS, roleShares, buildMeta, readRun, dayIndexes, daysQuery, gamesOf, runs, SETTLE_S, toHeroRows, WINDOW_DAYS, type MetaFile } from "../src/data/meta";
 
 const DAY = 24 * 60 * 60;
 const START = Date.parse("2026-11-18T21:28:07Z") / 1000;
@@ -147,5 +147,29 @@ describe("buildMeta", () => {
 
   it("throws on a patch without a start time", async () => {
     await expect(buildMeta(fakeAsk().ask, { name: "7.42", startedAt: "" }, now, null)).rejects.toThrow("no start time");
+  });
+});
+
+describe("readRun", () => {
+  it("reads the halves apart when a run of days fails, down to single days", async () => {
+    const { ask: answer } = fakeAsk();
+    const ranges: number[] = [];
+    // Queries over more than two days fail, as a long cold range does on the explorer.
+    const ask = async (sql: string) => {
+      const [, from, to] = /start_time >= (\d+) and m\.start_time < (\d+)/.exec(sql) ?? [];
+      const days = Math.ceil((Number(to) - Number(from)) / DAY);
+      ranges.push(days);
+      if (days > 2) throw new Error("HTTP 400");
+      return answer(sql);
+    };
+    const days = await readRun(ask, START, -7, -1, START);
+    expect(days.map((d) => d.index)).toEqual([-7, -6, -5, -4, -3, -2, -1]);
+    expect(days.every((d) => d.heroes[1]?.[0])).toBe(true);
+    // 7 days fail, then 4 (-7 to -4) fail, then 2, 2 and 3 (-3 to -1, fails) then 2 and 1.
+    expect(new Set(ranges)).toEqual(new Set([7, 4, 2, 3, 1]));
+  });
+
+  it("throws when a single day fails", async () => {
+    await expect(readRun(async () => Promise.reject(new Error("HTTP 400")), START, -1, -1, START)).rejects.toThrow("HTTP 400");
   });
 });
