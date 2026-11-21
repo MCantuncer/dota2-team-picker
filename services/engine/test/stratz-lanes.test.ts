@@ -3,7 +3,7 @@ import { fetchLaneOutcomes, LANE_HEROES_PER_QUERY, laneQuery, lanesDue, MIN_LANE
 import { fixture } from "./fixture";
 
 const HEROES = [1, 2, 3];
-/** Hero `id`'s lane rows against the others: 1000 games, 400 won (50 of them stomps), 250 drawn, 350 lost. */
+/** Hero `id`'s lane rows against the others: 1000 games, 400 won (50 of them stomps), 250 drawn, 350 lost, 45.25 last hits a lane. */
 const rows = (id: number) =>
   HEROES.filter((o) => o !== id).map((o) => ({
     heroId1: id,
@@ -14,6 +14,7 @@ const rows = (id: number) =>
     drawCount: 250,
     lossCount: 300,
     stompLossCount: 50,
+    csCount: 45_250,
   }));
 const answers = () => Object.fromEntries(HEROES.flatMap((id) => [0, 1, 2, 3, 4].map((g) => [`l${id}_${g}`, rows(id)])));
 
@@ -23,6 +24,7 @@ describe("laneQuery", () => {
     expect(q).toContain("l8_0: laneOutcome(heroId: 8, isWith: false)");
     expect(q).toContain("l8_3: laneOutcome(heroId: 8, isWith: false, bracketBasicIds: [LEGEND_ANCIENT])");
     expect(q).toContain("stompWinCount");
+    expect(q).toContain("csCount");
     expect(q.match(/laneOutcome\(/g)).toHaveLength(10);
   });
 
@@ -34,11 +36,22 @@ describe("laneQuery", () => {
 });
 
 describe("toLaneOutcomes", () => {
-  it("counts stomps in won and lost, for all ranks and each rank group", () => {
+  it("counts stomps in won and lost, and keeps average lane last hits, for all ranks and each rank group", () => {
     const l = toLaneOutcomes(HEROES, answers());
-    expect(l["0"]!["1"]!["2"]).toEqual([1000, 400, 250, 350]);
-    expect(l["3"]!["2"]!["3"]).toEqual([1000, 400, 250, 350]);
+    expect(l["0"]!["1"]!["2"]).toEqual([1000, 400, 250, 350, 45.3]);
+    expect(l["3"]!["2"]!["3"]).toEqual([1000, 400, 250, 350, 45.3]);
     expect(Object.keys(l).sort()).toEqual(["0", "1", "2", "3", "4"]);
+  });
+
+  it("leaves last hits out when STRATZ has none or an impossible number", () => {
+    const a = answers();
+    a["l1_0"] = [
+      { ...rows(1)[0]!, csCount: "many" as unknown as number },
+      { ...rows(1)[1]!, csCount: 1000 * 151 },
+    ];
+    const l = toLaneOutcomes(HEROES, a);
+    expect(l["0"]!["1"]!["2"]).toEqual([1000, 400, 250, 350]);
+    expect(l["0"]!["1"]!["3"]).toEqual([1000, 400, 250, 350]);
   });
 
   it("leaves out pairs with too few games, bad numbers or the hero itself", () => {
@@ -82,7 +95,7 @@ describe("fetchLaneOutcomes", () => {
       return { heroStats: answers() };
     });
     expect(queries).toHaveLength(1);
-    expect(l["0"]!["3"]!["1"]).toEqual([1000, 400, 250, 350]);
+    expect(l["0"]!["3"]!["1"]).toEqual([1000, 400, 250, 350, 45.3]);
     await expect(fetchLaneOutcomes(HEROES, async () => ({}))).rejects.toThrow(/no heroStats/);
   });
 });
@@ -97,5 +110,14 @@ describe("lanesDue", () => {
     expect(lanesDue(snap, now)).toBe(false);
     snap.laneOutcomesAt = "2026-10-29T12:00:00Z";
     expect(lanesDue(snap, now)).toBe(true);
+  });
+
+  it("is due once for counts downloaded before last hits were kept", () => {
+    const snap = fixture();
+    snap.laneOutcomesAt = "2026-11-04T12:00:00Z";
+    snap.laneOutcomes = { "0": { "1": { "2": [1000, 400, 250, 350] } } };
+    expect(lanesDue(snap, now)).toBe(true);
+    snap.laneOutcomes = { "0": { "1": { "2": [1000, 400, 250, 350, 45.3] } } };
+    expect(lanesDue(snap, now)).toBe(false);
   });
 });

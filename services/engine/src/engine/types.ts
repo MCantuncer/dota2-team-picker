@@ -32,10 +32,11 @@ export interface GamesWins {
 }
 
 /**
- * One hero's lane against another: [games, won, drawn, lost], stomps counted in won and lost. A tuple, not
- * an object, because the snapshot holds about 50,000 of them.
+ * One hero's lane against another: [games, won, drawn, lost], stomps counted in won and lost, then the
+ * hero's average last hits in those lanes (left out by downloads before it was added). A tuple, not an
+ * object, because the snapshot holds about 50,000 of them.
  */
-export type LaneCounts = [games: number, won: number, drawn: number, lost: number];
+export type LaneCounts = [games: number, won: number, drawn: number, lost: number, lastHits?: number];
 
 export interface HeroInfo {
   id: number;
