@@ -182,3 +182,38 @@ export function blendCounts(patch: StratzCounts, stratz: StratzCounts, share = S
     rankSynergy: Object.fromEntries(groups.map((g) => [g, blendMap(patch.rankSynergy[g] ?? {}, stratz.rankSynergy[g] ?? {}, share)])),
   };
 }
+
+/** STRATZ's counts and when they were downloaded. */
+export interface DatedCounts {
+  counts: StratzCounts;
+  at: Date;
+}
+
+/** The hero data's counts when they are STRATZ's alone, with no patch games added; else null. */
+function stratzOnly(data: Snapshot): DatedCounts | null {
+  const from = data.matchupsFrom;
+  if (from?.source !== "stratz" || from.patchGames !== undefined) return null;
+  const counts = { matchups: data.matchups, synergy: data.synergy, rankMatchups: data.rankMatchups ?? {}, rankSynergy: data.rankSynergy ?? {} };
+  return { counts, at: new Date(from.at) };
+}
+
+/**
+ * STRATZ's last counts, for the blend when this run's STRATZ download fails (it failed on both runs of
+ * 2026-11-21, so the patch's games never went in): the snapshot's own counts when they are STRATZ's alone,
+ * else the newest daily copy whose are, going back PATCH_FRESH_DAYS + 1 days. Null when there is none.
+ */
+export async function lastStratzCounts(
+  snapshot: Snapshot,
+  now: Date,
+  load: (path: string) => Promise<Snapshot | null>,
+): Promise<DatedCounts | null> {
+  const own = stratzOnly(snapshot);
+  if (own) return own;
+  for (let day = 0; day <= PATCH_FRESH_DAYS + 1; day++) {
+    const date = new Date(now.getTime() - day * DAY_S * 1000).toISOString().slice(0, 10);
+    const copy = await load(`daily/${date}.json`);
+    const found = copy && stratzOnly(copy);
+    if (found) return found;
+  }
+  return null;
+}

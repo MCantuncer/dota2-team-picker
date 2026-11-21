@@ -6,6 +6,7 @@ import {
   fetchPatchCounts,
   GAMES_PER_SLICE,
   gamesIn,
+  lastStratzCounts,
   MAX_SLICES,
   patchIsFresh,
   toPairRows,
@@ -13,6 +14,7 @@ import {
   withQuery,
 } from "../src/data/patch-matchups";
 import type { StratzCounts } from "../src/data/stratz-matchups";
+import type { Snapshot } from "../src/engine/types";
 
 const empty = (): StratzCounts => ({ matchups: {}, synergy: {}, rankMatchups: {}, rankSynergy: {} });
 
@@ -147,5 +149,49 @@ describe("fetchPatchCounts", () => {
   it("throws when a query fails twice, so no partial read is used", async () => {
     const { get } = fakeExplorer(10, (sql) => sql.includes("radiant_team) b"));
     await expect(fetchPatchCounts(get, 0)).rejects.toThrow("HTTP 400");
+  });
+});
+
+describe("lastStratzCounts", () => {
+  const now = new Date("2026-11-21T17:40:00Z");
+  const hero = (games: number, from: Snapshot["matchupsFrom"]): Snapshot =>
+    ({
+      generatedAt: "x",
+      heroes: {},
+      bracketStats: {},
+      laneRoles: {},
+      matchups: { "1": { "2": { games, wins: 1 } } },
+      synergy: {},
+      matchupsFrom: from,
+    }) as Snapshot;
+
+  it("uses the snapshot's own counts when they are STRATZ's alone", async () => {
+    const asked: string[] = [];
+    const found = await lastStratzCounts(hero(10, { source: "stratz", at: "2026-11-20T18:38:34Z" }), now, async (path) => {
+      asked.push(path);
+      return null;
+    });
+    expect(found?.counts.matchups["1"]?.["2"]?.games).toBe(10);
+    expect(found?.at.toISOString()).toBe("2026-11-20T18:38:34.000Z");
+    expect(asked).toEqual([]);
+  });
+
+  it("goes back through the daily copies past ones that already hold patch games", async () => {
+    const copies: Record<string, Snapshot> = {
+      "daily/2026-11-21.json": hero(20, { source: "stratz", at: "2026-11-21T10:00:00Z", patchGames: 900_000 }),
+      "daily/2026-11-19.json": hero(30, { source: "stratz", at: "2026-11-19T10:00:00Z" }),
+    };
+    const found = await lastStratzCounts(
+      hero(40, { source: "stratz", at: "2026-11-21T17:00:00Z", patchGames: 950_000 }),
+      now,
+      async (path) => copies[path] ?? null,
+    );
+    expect(found?.counts.matchups["1"]?.["2"]?.games).toBe(30);
+    expect(found?.at.toISOString()).toBe("2026-11-19T10:00:00.000Z");
+  });
+
+  it("gives null when no copy has STRATZ's counts alone", async () => {
+    const blended = hero(40, { source: "stratz", at: "", patchGames: 1 });
+    expect(await lastStratzCounts(blended, now, async () => blended)).toBeNull();
   });
 });

@@ -22,7 +22,7 @@ import { findHardCounters, HOLD_RUNS, holdHardCounters } from "../engine/data-ha
 import { positionFit } from "../engine/positions";
 import { Engine } from "../engine/score";
 import { getOpenDota as get, requestsLeftToday } from "./opendota";
-import { loadEvalGames, monthPaths } from "./eval-store";
+import { loadEvalGames, loadHeroData, monthPaths } from "./eval-store";
 import { fetchItemStarts } from "./item-starts";
 import { fetchItemTimings, itemTimingsDue } from "./item-timings";
 import { fetchItems, itemsDue } from "./items";
@@ -30,7 +30,7 @@ import { dropRemovedItems } from "./removed-items";
 import { countPickPhases } from "./pick-phase";
 import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
 import { fetchPositions, postStratz } from "./stratz";
-import { blendCounts, fetchPatchCounts, MIN_PATCH_GAMES, patchIsFresh, STRATZ_SHARE } from "./patch-matchups";
+import { blendCounts, fetchPatchCounts, lastStratzCounts, MIN_PATCH_GAMES, patchIsFresh, STRATZ_SHARE, type DatedCounts } from "./patch-matchups";
 import { applyStratzCounts, fetchStratzCounts, type StratzCounts } from "./stratz-matchups";
 import { fetchLaneOutcomes, lanesDue, MIN_LANE_GAMES } from "./stratz-lanes";
 import { fetchThreatPlans, threatPlansDue } from "./threat-plans";
@@ -180,12 +180,13 @@ function pairStats(counts: StratzCounts): string {
 
 /**
  * Puts STRATZ's counts in the snapshot, or while the patch is young, this patch's games plus a share of
- * STRATZ's (see patch-matchups.ts). When the patch games can't be read, keeps last run's blend rather
+ * STRATZ's (see patch-matchups.ts). `matchupsFrom.at` is when STRATZ's part was downloaded, so the stale
+ * warning still fires when STRATZ keeps failing. When the patch games can't be read, keeps last run's blend rather
  * than going back to STRATZ alone, whose counts are mostly the old patch.
  */
-async function applyCounts(snapshot: Snapshot, stratz: StratzCounts, now: Date, patchStart: number) {
+async function applyCounts(snapshot: Snapshot, stratz: StratzCounts, stratzAt: Date, now: Date, patchStart: number) {
   if (!patchIsFresh(patchStart, now)) {
-    applyStratzCounts(snapshot, stratz, now);
+    applyStratzCounts(snapshot, stratz, stratzAt);
     return;
   }
   console.log(`Matchups and synergy from this patch's ranked games (OpenDota explorer)...`);
@@ -193,14 +194,14 @@ async function applyCounts(snapshot: Snapshot, stratz: StratzCounts, now: Date, 
     const patch = await fetchPatchCounts(get, patchStart);
     if (patch.games < MIN_PATCH_GAMES) {
       console.log(`Only ${patch.games} games of this patch, STRATZ alone for now.`);
-      applyStratzCounts(snapshot, stratz, now);
+      applyStratzCounts(snapshot, stratz, stratzAt);
       return;
     }
     const blended = blendCounts(patch.counts, stratz);
-    applyStratzCounts(snapshot, blended, now, patch.games);
+    applyStratzCounts(snapshot, blended, stratzAt, patch.games);
     console.log(`Patch matchups: ${patch.games} games (${pairStats(patch.counts)}); with ${STRATZ_SHARE * 100}% of STRATZ: ${pairStats(blended)}.`);
   } catch (err) {
-    if (snapshot.matchupsFrom?.patchGames === undefined) applyStratzCounts(snapshot, stratz, now);
+    if (snapshot.matchupsFrom?.patchGames === undefined) applyStratzCounts(snapshot, stratz, stratzAt);
     console.warn(`::warning::Patch matchups failed, ${snapshot.matchupsFrom?.patchGames ? "keeping the last ones" : "STRATZ alone"}: ${(err as Error).message}`);
   }
 }
@@ -379,15 +380,25 @@ async function main() {
 
   if (stratzToken) {
     console.log("Matchups and synergy from STRATZ...");
+    let stratz: DatedCounts | null = null;
     try {
       const heroIds = Object.values(snapshot.heroes).map((h) => h.id).sort((a, b) => a - b);
       const counts = await fetchStratzCounts(heroIds, (query) => postStratz(stratzToken, query, "matchups"));
       console.log(`STRATZ matchups: ${pairStats(counts)}.`);
-      await applyCounts(snapshot, counts, now, patchStart);
+      stratz = { counts, at: now };
     } catch (err) {
-      // Keep the last counts, whichever source they came from, and go on.
       console.warn(`::warning::${(err as Error).message}`);
+      // While a patch is young its own games still go in, next to STRATZ's last counts. Otherwise the
+      // last counts stay, whichever source they came from.
+      if (patchIsFresh(patchStart, now)) {
+        stratz = await lastStratzCounts(snapshot, now, loadHeroData).catch((e: unknown) => {
+          console.warn(`::warning::No earlier STRATZ counts for the patch blend: ${(e as Error).message}`);
+          return null;
+        });
+        if (stratz) console.log(`Blending with STRATZ's counts from ${stratz.at.toISOString()}.`);
+      }
     }
+    if (stratz) await applyCounts(snapshot, stratz.counts, stratz.at, now, patchStart);
   }
   if (stratzToken && lanesDue(snapshot, now)) {
     console.log("Lane results from STRATZ...");
