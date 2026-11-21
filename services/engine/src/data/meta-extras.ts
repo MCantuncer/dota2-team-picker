@@ -134,21 +134,32 @@ export const MATCHUPS_SHOWN = 5;
 export const MIN_PAIR_GAMES = 500;
 
 /**
- * Per hero, the enemies it wins most and least against: sorted by how far the win rate against each is from
- * the hero's win rate over all its matchups, so a strong hero's worst matchups are its real weak spots.
+ * Per hero, the enemies it wins most and least against, adjusted for each enemy's strength: the gap between the
+ * win rate against an enemy and the hero's own average, plus how far that enemy's overall win rate is from 50%.
+ * So an enemy that beats everyone does not show as a counter, and a weak enemy a hero still loses to does.
+ * The best side lists enemies the hero beats more than its average, the worst side those it beats less.
  */
 export function heroMatchups(matchups: Record<string, Record<string, GamesWins>>): Record<string, { best: Matchup[]; worst: Matchup[] }> {
-  const out: Record<string, { best: Matchup[]; worst: Matchup[] }> = {};
-  for (const [hero, enemies] of Object.entries(matchups)) {
-    const pairs = Object.entries(enemies).filter(([id, gw]) => id !== hero && gw.games >= MIN_PAIR_GAMES && gw.wins <= gw.games);
+  const pairsOf = (hero: string) => Object.entries(matchups[hero] ?? {}).filter(([id, gw]) => id !== hero && gw.games >= MIN_PAIR_GAMES && gw.wins <= gw.games);
+  // Each hero's win rate over all its listed matchups.
+  const overall = new Map<number, number>();
+  for (const hero of Object.keys(matchups)) {
+    const pairs = pairsOf(hero);
     const games = pairs.reduce((n, [, gw]) => n + gw.games, 0);
-    if (pairs.length < MATCHUPS_SHOWN * 2 || games === 0) continue;
-    const average = pairs.reduce((n, [, gw]) => n + gw.wins, 0) / games;
+    if (games > 0) overall.set(Number(hero), pairs.reduce((n, [, gw]) => n + gw.wins, 0) / games);
+  }
+  const out: Record<string, { best: Matchup[]; worst: Matchup[] }> = {};
+  for (const hero of Object.keys(matchups)) {
+    const pairs = pairsOf(hero);
+    const average = overall.get(Number(hero));
+    if (pairs.length < MATCHUPS_SHOWN * 2 || average === undefined) continue;
     const rows = pairs
-      .map(([id, gw]) => ({ id: Number(id), rate: gw.wins / gw.games, games: gw.games }))
-      .sort((a, b) => b.rate - a.rate || a.id - b.id);
+      .map(([id, gw]) => {
+        const rate = gw.wins / gw.games;
+        return { id: Number(id), rate, games: gw.games, score: rate - average + ((overall.get(Number(id)) ?? 0.5) - 0.5) };
+      })
+      .sort((a, b) => b.score - a.score || a.id - b.id);
     const row = (r: (typeof rows)[number]): Matchup => [r.id, Math.round(r.rate * 1000) / 10, r.games];
-    // Sorting by the win rate itself sorts by the gap to the hero's average too; the average only decides the side.
     out[hero] = {
       best: rows.filter((r) => r.rate > average).slice(0, MATCHUPS_SHOWN).map(row),
       worst: rows.filter((r) => r.rate < average).reverse().slice(0, MATCHUPS_SHOWN).map(row),
