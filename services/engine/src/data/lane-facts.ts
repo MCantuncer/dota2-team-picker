@@ -145,7 +145,7 @@ export function toLaneSpell(key: string, raw: Record<string, unknown>, orbs: Map
   const heal = one((a) => bareLabel(a.label) === "HEAL" || a.key === "heal");
   const spell: LaneSpell = {
     key,
-    name: raw.dname,
+    name: titleCase(raw.dname),
     ...(passive ? { passive: true as const } : { cast: behavior.has("Point Target") ? ("point" as const) : behavior.has("Unit Target") ? ("unit" as const) : ("none" as const) }),
     ...(damage ? { damage: damage.values } : {}),
     ...(damage && damageType ? { damageType } : {}),
@@ -166,6 +166,17 @@ export function toLaneSpell(key: string, raw: Record<string, unknown>, orbs: Map
     ...(widths.length && STOPS_AT_FIRST_UNIT.test(typeof raw.desc === "string" ? raw.desc : "") ? { stopsAtFirstUnit: true as const } : {}),
   };
   return spell;
+}
+
+/** Small words the site keeps lower case inside a title ("Arena of Blood", not the game file's "Arena Of Blood"). */
+const SMALL_WORDS = new Set(["a", "an", "and", "the", "of", "to", "from", "in", "on", "for", "by", "with"]);
+
+/** A spell name in the site's Title Case: small words lower case unless first. */
+export function titleCase(name: string): string {
+  return name
+    .split(" ")
+    .map((word, i) => (i > 0 && SMALL_WORDS.has(word.toLowerCase()) ? word.toLowerCase() : word))
+    .join(" ");
 }
 
 /** How a spell's own text says it stops at the first unit it meets (Meat Hook, Sacred Arrow, Hookshot). */

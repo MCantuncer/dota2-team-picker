@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toLaneFacts, toLaneSpell, toNumbers } from "../src/data/lane-facts";
+import { titleCase, toLaneFacts, toLaneSpell, toNumbers } from "../src/data/lane-facts";
 import { LANE_FACTS } from "../src/engine/data-lane-facts";
 import { armorMultiplier, atLevel, damageTaken, heroStatsAt, laneHero, laneSpell } from "../src/engine/lane-facts";
 
@@ -171,6 +171,14 @@ describe("toLaneSpell", () => {
     );
     expect(spell).toMatchObject({ passive: true, aura: { radius: 700, healthPerSecondPct: [0.8, 1.3] } });
     expect(spell?.cast).toBeUndefined();
+  });
+});
+
+describe("titleCase", () => {
+  it("keeps small words lower case inside a spell name", () => {
+    expect(titleCase("Arena Of Blood")).toBe("Arena of Blood");
+    expect(titleCase("Spear of Mars")).toBe("Spear of Mars");
+    expect(titleCase("The Swarm")).toBe("The Swarm");
   });
 });
 
