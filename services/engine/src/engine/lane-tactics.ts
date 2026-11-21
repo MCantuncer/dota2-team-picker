@@ -7,9 +7,9 @@
  */
 import { atLevel, damageTaken, heroStatsAt, laneHero, laneSpell, type HeroStats, type LaneHero, type LaneSpell } from "./lane-facts";
 import { firstLevelOf, levelFor, spellLevelsAt, type SpellLevels } from "./lane-skills";
-import type { Position, Snapshot } from "./types";
+import type { LaneCounts, Position, Snapshot } from "./types";
 
-export type LaneRule = "killLine" | "yourSpell" | "trade" | "reach" | "auraEdge" | "split" | "lineUp" | "dodge" | "window";
+export type LaneRule = "killLine" | "yourSpell" | "trade" | "reach" | "auraEdge" | "split" | "lineUp" | "dodge" | "window" | "lastHits";
 
 /** A piece of a tactic's sentence; `strong` marks the part to act on. */
 export interface TextPart {
@@ -43,7 +43,9 @@ export type TacticVisual =
   | { kind: "split"; width: number; spell: string; summon: string }
   /** A line spell through the wave: `blocked` when the first creep stops it, so behind the creeps is safe. */
   | { kind: "lineUp"; width: number; spell: string; blocked: boolean }
-  | { kind: "timing"; rows: TimingRow[] };
+  | { kind: "timing"; rows: TimingRow[] }
+  /** Average lane last hits: ours against this enemy, ours against everyone, and the enemy's against us. */
+  | { kind: "lastHits"; target: number; usual: number; enemy?: number };
 
 export interface LaneTactic {
   rule: LaneRule;
@@ -77,6 +79,8 @@ const RANGED_SPELL = 500;
 const INVOKED_SLOTS = 2;
 /** Hits counted after the enemy's stuns end, for the time it takes to react. */
 const REACTION_HITS = 1;
+/** A last hit target needs this many lanes of the pair behind it (the lane download keeps 300 and up). */
+const MIN_LAST_HIT_LANES = 300;
 /** At most this many tactics are returned: three cards and three quieter tips. */
 export const MAX_TACTICS = 6;
 
@@ -415,6 +419,44 @@ function trading(me: Side, enemy: Side): LaneTactic | undefined {
   };
 }
 
+/** Average lane last hits from the lane results: [games, won, drawn, lost, last hits]. */
+const lastHitsOf = (c: LaneCounts | undefined) => (c && c[0] >= MIN_LAST_HIT_LANES ? c[4] : undefined);
+
+/** A hero's average lane last hits against every enemy, weighted by lanes. */
+function usualLastHits(data: Snapshot, heroId: number): number | undefined {
+  let games = 0;
+  let sum = 0;
+  for (const c of Object.values(data.laneOutcomes?.["0"]?.[String(heroId)] ?? {})) {
+    if (c[4] === undefined) continue;
+    games += c[0];
+    sum += c[0] * c[4];
+  }
+  return games > 0 ? sum / games : undefined;
+}
+
+/** How many last hits high-rank players on this hero get in lane against this enemy, against their usual. */
+function lastHits(data: Snapshot, me: Side, enemy: Side): LaneTactic | undefined {
+  const target = lastHitsOf(data.laneOutcomes?.["0"]?.[String(me.id)]?.[String(enemy.id)]);
+  const usual = usualLastHits(data, me.id);
+  if (target === undefined || usual === undefined) return undefined;
+  const theirs = lastHitsOf(data.laneOutcomes?.["0"]?.[String(enemy.id)]?.[String(me.id)]);
+  const gap = r(target) - r(usual);
+  const versus = gap === 0 ? "the same as" : `${Math.abs(gap)} ${gap > 0 ? "more" : "fewer"} than`;
+  return {
+    rule: "lastHits",
+    tag: "Last Hits",
+    title: `Last Hit Target: ${r(target)} by the End of Lane`,
+    parts: [
+      { text: `${me.name} players get ` },
+      { text: `${r(target)} last hits in lane against ${enemy.name}`, strong: true },
+      { text: `, ${versus} their usual ${r(usual)}.${theirs !== undefined ? ` ${enemy.name} gets ${r(theirs)} against you.` : ""}` },
+    ],
+    spells: [],
+    visual: { kind: "lastHits", target: r(target), usual: r(usual), ...(theirs !== undefined ? { enemy: r(theirs) } : {}) },
+    weight: 0,
+  };
+}
+
 /** A side at a level, or undefined when the facts or the skill build are missing. */
 function sideAt(data: Snapshot, id: number, position: Position, level: number, name: (id: number) => string): Side | undefined {
   const hero = laneHero(id);
@@ -445,13 +487,15 @@ export function laneTactics(data: Snapshot, ours: { id: number; position: Positi
   ].filter((t): t is LaneTactic => !!t);
   // One tactic per rule, biggest stake first; two positioning rules about one spell say the same thing.
   const seen = new Set<string>();
-  return found
+  const ranked = found
     .sort((a, b) => b.weight - a.weight)
     .filter((t) => {
       const key = t.rule === "lineUp" || t.rule === "split" ? `pos:${t.spells[0]}` : t.rule;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
-    })
-    .slice(0, MAX_TACTICS);
+    });
+  // The last hit target always has a place, last: it is the lane's scoreboard, not a danger to rank.
+  const target = lastHits(data, me3, enemy3);
+  return target ? [...ranked.slice(0, MAX_TACTICS - 1), target] : ranked.slice(0, MAX_TACTICS);
 }

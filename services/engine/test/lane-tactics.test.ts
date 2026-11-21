@@ -68,7 +68,16 @@ function snapshot(): Snapshot {
       ),
     ]),
   );
-  return { heroAbilities, skillBuilds } as unknown as Snapshot;
+  // Necrophos mid gets 49 last hits against Lina, 52.1 on average over his lanes; Lina gets 55 against him.
+  const laneOutcomes = {
+    "0": {
+      "36": { "25": [2000, 600, 600, 800, 49], "14": [800, 400, 200, 200, 60] },
+      "25": { "36": [2000, 800, 600, 600, 55] },
+      // Too few lanes for a target.
+      "74": { "97": [200, 50, 50, 100, 40] },
+    },
+  };
+  return { heroAbilities, skillBuilds, laneOutcomes } as unknown as Snapshot;
 }
 
 const NAMES: Record<number, string> = { 36: "Necrophos", 25: "Lina", 74: "Invoker", 97: "Magnus", 14: "Pudge", 35: "Sniper" };
@@ -144,10 +153,22 @@ describe("laneTactics", () => {
     expect(invoked.length).toBeLessThanOrEqual(2);
   });
 
+  it("ends with the last hit target against this enemy, the usual and the enemy's own", () => {
+    const list = laneTactics(data, { id: 36, position: 2 }, { id: 25, position: 2 }, name);
+    const target = list[list.length - 1];
+    expect(target?.title).toBe("Last Hit Target: 49 by the End of Lane");
+    expect(text(target!)).toBe("Necrophos players get 49 last hits in lane against Lina, 3 fewer than their usual 52. Lina gets 55 against you.");
+    expect(target?.visual).toEqual({ kind: "lastHits", target: 49, usual: 52, enemy: 55 });
+    expect(list.length).toBeLessThanOrEqual(MAX_TACTICS);
+    // Under 300 lanes: no target.
+    expect(laneTactics(data, { id: 74, position: 2 }, { id: 97, position: 2 }, name).some((t) => t.rule === "lastHits")).toBe(false);
+  });
+
   it("returns one tactic per rule, biggest stake first", () => {
     const list = laneTactics(data, { id: 36, position: 2 }, { id: 25, position: 2 }, name);
     expect(new Set(list.map((t) => t.rule)).size).toBe(list.length);
-    for (let i = 1; i < list.length; i++) expect(list[i - 1]!.weight).toBeGreaterThanOrEqual(list[i]!.weight);
+    const ranked = list.filter((t) => t.rule !== "lastHits");
+    for (let i = 1; i < ranked.length; i++) expect(ranked[i - 1]!.weight).toBeGreaterThanOrEqual(ranked[i]!.weight);
   });
 
   it("is empty when a hero has no lane facts or abilities", () => {
