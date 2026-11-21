@@ -147,7 +147,9 @@ share of this patch's saved ranked games that ended with each item (items under 
 items new in this patch (in the item list now, not in the `daily/` copy from the day before the patch)
 and the heroes that end games with them; and the 5 enemies each hero wins and loses most against, from
 the snapshot's matchups, adjusted for each enemy's strength (the gap to the hero's own average plus
-how far the enemy's overall win rate is from 50%, so an enemy that beats everyone is not a counter), with the shop data of every item shown for the page's item cards. If they fail, the last ones of the same patch are kept.
+how far the enemy's overall win rate is from 50%, so an enemy that beats everyone is not a counter),
+each hero's three biggest changes in the patch (one line per ability, with a buff or nerf mark when the words
+say so) from OpenDota's copy of Valve's patch notes, with the shop data of every item shown for the page's item cards. If they fail, the last ones of the same patch are kept.
 
 ## Fixed drafts
 
