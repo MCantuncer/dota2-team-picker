@@ -9,9 +9,11 @@
  *   that end games with them.
  * - Matchups: the enemies each hero wins and loses most against, from the snapshot's matchups, which are this
  *   patch's games while the patch is young (see patch-matchups.ts).
+ * - Patch notes: each hero's biggest changes in the patch (see patch-notes.ts).
  */
 import type { EvalMatch } from "./eval-matches";
 import type { MetaFile } from "./meta";
+import type { HeroPatchNotes } from "./patch-notes";
 import type { GamesWins, ItemInfo, Snapshot } from "../engine/types";
 
 export interface MetaExtras {
@@ -22,6 +24,8 @@ export interface MetaExtras {
   matchups: Record<string, { best: Matchup[]; worst: Matchup[] }>;
   /** The shop data of every item in the builds and new items, for the page's item cards. Neutral items have none. */
   items: Record<string, ItemInfo>;
+  /** Each hero's biggest changes in the patch; empty when the notes could not be read. */
+  patchNotes: HeroPatchNotes;
 }
 
 /** A hero's games in a position, and how many of them ended with each item: [item id, games], most first. */
@@ -173,6 +177,8 @@ export interface ExtrasDeps {
   games: (since: number, now: number) => Promise<EvalMatch[]>;
   /** The item list from the hero data of the day before `patchStart`, or null when there is no copy of that day. */
   itemsBefore: (patchStart: number) => Promise<Record<string, ItemInfo> | null>;
+  /** Each hero's patch notes for the patch; throws when they cannot be read. */
+  patchNotes: (patch: string) => Promise<HeroPatchNotes>;
 }
 
 /**
@@ -196,6 +202,14 @@ export async function buildExtras(
     const before = await deps.itemsBefore(since);
     ids = before ? newItemIds(items, before) : [];
   }
+  let notes: HeroPatchNotes;
+  try {
+    notes = await deps.patchNotes(snapshot.patch.name);
+  } catch (err) {
+    // The rest of the extras still go out; the notes of the last run of this patch are kept.
+    console.warn(`Patch notes failed, keeping the last ones: ${(err as Error).message}`);
+    notes = samePatch ? (last.extras?.patchNotes ?? {}) : {};
+  }
   const builds = heroBuilds(games, since, items);
   const newItems = newItemUse(ids, games, since);
   const used = new Set([...newItems.map((n) => n.id), ...Object.values(builds).flatMap((byPosition) => Object.values(byPosition).flatMap((b) => b.items.map(([id]) => id)))]);
@@ -205,5 +219,6 @@ export async function buildExtras(
     newItems,
     matchups: heroMatchups(snapshot.matchups ?? {}),
     items: Object.fromEntries([...used].sort((a, b) => a - b).flatMap((id) => (items[id] ? [[String(id), items[id]]] : []))),
+    patchNotes: notes,
   };
 }

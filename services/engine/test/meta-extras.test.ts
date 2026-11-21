@@ -121,7 +121,7 @@ describe("buildExtras", () => {
     days: [],
     base: [],
     roles: {},
-    extras: { buildGames: 0, builds: {}, newItems: newItems.map((id) => ({ id, games: 0, heroes: [] })), matchups: {}, items: {} },
+    extras: { buildGames: 0, builds: {}, newItems: newItems.map((id) => ({ id, games: 0, heroes: [] })), matchups: {}, items: {}, patchNotes: { 74: { lines: [], changes: 2 } } },
   });
 
   it("reads the item list from before the patch when the last file has no new items", async () => {
@@ -129,6 +129,7 @@ describe("buildExtras", () => {
     const extras = await buildExtras(
       {
         games: async () => [game(1, START + 60, [pick(8, 1, [1942])]), game(2, START + 60, [pick(8, 1)])],
+        patchNotes: async () => ({ 8: { lines: [{ ability: "Hero", text: "Base Agility increased from 21 to 22", tone: 1 }], changes: 1 } }),
         itemsBefore: async (start) => {
           asked.push(start);
           return { 1: ITEMS[1]!, 63: ITEMS[63]!, 36: ITEMS[36]!, 16: ITEMS[16]! };
@@ -143,6 +144,7 @@ describe("buildExtras", () => {
     expect(extras.newItems).toEqual([{ id: 1942, games: 1, heroes: [[8, 1]] }]);
     // Shop data for the items shown, and only those.
     expect(Object.keys(extras.items)).toEqual(["1942"]);
+    expect(extras.patchNotes[8]!.changes).toBe(1);
   });
 
   it("keeps the new items found earlier in the same patch", async () => {
@@ -152,16 +154,21 @@ describe("buildExtras", () => {
         itemsBefore: async () => {
           throw new Error("not read");
         },
+        patchNotes: async () => {
+          throw new Error("OpenDota is down");
+        },
       },
       snapshot,
       START + 3600,
       last([1942]),
     );
     expect(extras.newItems.map((n) => n.id)).toEqual([1942]);
+    // Notes that cannot be read keep the last ones of the same patch.
+    expect(Object.keys(extras.patchNotes)).toEqual(["74"]);
   });
 
   it("has no new items when there is no copy from before the patch", async () => {
-    const extras = await buildExtras({ games: async () => [], itemsBefore: async () => null }, snapshot, START + 3600, null);
+    const extras = await buildExtras({ games: async () => [], itemsBefore: async () => null, patchNotes: async () => ({}) }, snapshot, START + 3600, null);
     expect(extras.newItems).toEqual([]);
   });
 });
