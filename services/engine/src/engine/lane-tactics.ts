@@ -41,6 +41,8 @@ export type TacticVisual =
   | { kind: "ruler"; bars: RangeBar[] }
   | { kind: "trade"; hit: number; hits: number; heal: number; casts: number }
   | { kind: "split"; width: number; spell: string; summon: string }
+  /** A line spell through the wave: `blocked` when the first creep stops it, so behind the creeps is safe. */
+  | { kind: "lineUp"; width: number; spell: string; blocked: boolean }
   | { kind: "timing"; rows: TimingRow[] };
 
 export interface LaneTactic {
@@ -329,6 +331,7 @@ function lineUp(me: Side, enemy: Side): LaneTactic | undefined {
         { text: `, never in the open within ${blocked.length}: a creep takes it for you, else ${toYou} to you.` },
       ],
       spells: [blocked.key],
+      visual: { kind: "lineUp", width: blocked.width, spell: blocked.key, blocked: true },
       weight: (toYou * 1.2) / me.stats.health,
     };
   }
@@ -345,6 +348,7 @@ function lineUp(me: Side, enemy: Side): LaneTactic | undefined {
       { text: `: one cast hits both, ${toYou} to you.` },
     ],
     spells: [spell.key],
+    visual: { kind: "lineUp", width: spell.width, spell: spell.key, blocked: false },
     weight: toYou / me.stats.health,
   };
 }

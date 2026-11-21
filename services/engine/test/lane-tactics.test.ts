@@ -134,6 +134,7 @@ describe("laneTactics", () => {
     const line = byRule(list, "lineUp");
     expect(line?.title).toBe("Keep a Creep Between You and Pudge");
     expect(text(line!)).toMatch(/Meat Hook stops at the first unit/);
+    expect(line?.visual).toEqual({ kind: "lineUp", width: 100, spell: "pudge_meat_hook", blocked: true });
   });
 
   it("counts at most two invoked spells in Invoker's kill line", () => {
