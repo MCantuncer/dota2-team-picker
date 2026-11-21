@@ -14,6 +14,7 @@ import { loadEvalGames, loadHeroData, monthPaths } from "../src/data/eval-store"
 import { buildMeta, type MetaFile } from "../src/data/meta";
 import { buildExtras, type MetaExtras } from "../src/data/meta-extras";
 import { getOpenDota } from "../src/data/opendota";
+import { patchNotes, type PatchNotesConstants } from "../src/data/patch-notes";
 import { HERO_DATA_URL } from "../src/data/pull";
 import { BUCKET } from "../src/data/upload";
 import type { Snapshot } from "../src/engine/types";
@@ -95,6 +96,16 @@ async function extras(snapshot: Pick<Snapshot, "patch" | "items" | "matchups">, 
           const day = new Date((patchStart - DAY_S) * 1000).toISOString().slice(0, 10);
           return (await loadHeroData(`daily/${day}.json`))?.items ?? null;
         },
+        patchNotes: async (patch) => {
+          const [notes, heroes, abilities] = await Promise.all([
+            getOpenDota<PatchNotesConstants>("/constants/patchnotes"),
+            getOpenDota<Record<string, { id?: number; name?: string }>>("/constants/heroes"),
+            getOpenDota<Record<string, { dname?: string }>>("/constants/abilities"),
+          ]);
+          const heroNames = Object.fromEntries(Object.values(heroes).flatMap((h) => (h.id && h.name ? [[String(h.id), h.name]] : [])));
+          const abilityNames = Object.fromEntries(Object.entries(abilities).flatMap(([key, a]) => (a.dname ? [[key, a.dname]] : [])));
+          return patchNotes(notes, patch, heroNames, abilityNames);
+        },
       },
       snapshot,
       now,
@@ -104,7 +115,7 @@ async function extras(snapshot: Pick<Snapshot, "patch" | "items" | "matchups">, 
     const names = built.newItems.map((n) => `${snapshot.items?.[n.id]?.name ?? n.id} ${n.games}`).join(", ");
     return [
       built,
-      `Builds: ${built.buildGames.toLocaleString("en-US")} saved games with items, ${heroes} heroes with a build. New items (games): ${names || "none"}. Matchups for ${Object.keys(built.matchups).length} heroes.`,
+      `Builds: ${built.buildGames.toLocaleString("en-US")} saved games with items, ${heroes} heroes with a build. New items (games): ${names || "none"}. Matchups for ${Object.keys(built.matchups).length} heroes. Patch notes for ${Object.keys(built.patchNotes).length} heroes.`,
     ];
   } catch (err) {
     console.warn(`Hero card extras failed, keeping the last ones: ${(err as Error).message}`);
