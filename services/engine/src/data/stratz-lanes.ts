@@ -5,7 +5,9 @@
  * counts are about the lane itself.
  *
  * STRATZ counts a big lane win or loss as a "stomp" on its own, outside winCount and lossCount, so a
- * stomp is added to its side here. A pair with fewer than MIN_LANE_GAMES games is left out.
+ * stomp is added to its side here. `csCount` is the hero's last hits summed over the pair's lanes, kept as
+ * an average per lane for the Last Hit Target lane tactic. A pair with fewer than MIN_LANE_GAMES games is
+ * left out.
  */
 import type { LaneCounts, RankGroup, Snapshot } from "../engine/types";
 
@@ -25,6 +27,8 @@ export const MIN_LANE_GAMES = 300;
  * over every hero, not per hero: a rarely played hero (Chen) has only a few pairs with MIN_LANE_GAMES lanes.
  */
 const MIN_PAIR_SHARE = 0.5;
+/** More last hits than this per lane is not a real lane average (a whole wave every 30 s for 10 minutes is about 120). */
+const MAX_LANE_LAST_HITS = 150;
 
 interface LaneRow {
   heroId1?: unknown;
@@ -35,6 +39,7 @@ interface LaneRow {
   lossCount?: unknown;
   stompWinCount?: unknown;
   stompLossCount?: unknown;
+  csCount?: unknown;
 }
 
 /** laneOutcomes[slice][a][b]: hero a's lane against hero b; slice "0" = all ranks, "1"-"4" = RankGroup. */
@@ -45,7 +50,7 @@ export function laneQuery(heroIds: number[]): string {
   if (heroIds.length === 0 || heroIds.length > LANE_HEROES_PER_QUERY || !heroIds.every(Number.isSafeInteger)) {
     throw new Error(`Expected 1 to ${LANE_HEROES_PER_QUERY} hero ids, got ${heroIds.length}`);
   }
-  const fields = "{ heroId1 heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount }";
+  const fields = "{ heroId1 heroId2 matchCount winCount drawCount lossCount stompWinCount stompLossCount csCount }";
   const aliases = heroIds.flatMap((id) =>
     GROUPS.map((g) => {
       const brackets = g ? `, bracketBasicIds: [${BRACKETS[g]}]` : "";
@@ -66,7 +71,10 @@ function toCounts(r: LaneRow): LaneCounts | undefined {
   const won = win + (count(r.stompWinCount) ?? 0);
   const lost = loss + (count(r.stompLossCount) ?? 0);
   if (won + drawn + lost > games || games < MIN_LANE_GAMES) return undefined;
-  return [games, won, drawn, lost];
+  // Average last hits per lane, to one decimal; left out when STRATZ has no count or an impossible one.
+  const cs = count(r.csCount);
+  const lastHits = cs === undefined ? undefined : Math.round((cs / games) * 10) / 10;
+  return lastHits !== undefined && lastHits <= MAX_LANE_LAST_HITS ? [games, won, drawn, lost, lastHits] : [games, won, drawn, lost];
 }
 
 /**
@@ -99,9 +107,16 @@ export function toLaneOutcomes(heroIds: number[], answers: Record<string, LaneRo
 export const LANES_MAX_AGE_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Whether the lane counts are missing or older than LANES_MAX_AGE_DAYS. */
+/** Whether every-rank lane counts were downloaded before last hits were added to them. */
+function withoutLastHits(outcomes: LaneOutcomes): boolean {
+  const rows = Object.values(outcomes["0"] ?? {}).flatMap((row) => Object.values(row));
+  return rows.length > 0 && rows.every((c) => c[4] === undefined);
+}
+
+/** Whether the lane counts are missing, older than LANES_MAX_AGE_DAYS, or from before last hits were kept. */
 export function lanesDue(snapshot: Snapshot, now: Date): boolean {
   if (!snapshot.laneOutcomesAt || !snapshot.laneOutcomes) return true;
+  if (withoutLastHits(snapshot.laneOutcomes)) return true;
   return now.getTime() - Date.parse(snapshot.laneOutcomesAt) >= LANES_MAX_AGE_DAYS * DAY_MS;
 }
 
