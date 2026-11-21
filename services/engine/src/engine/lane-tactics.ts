@@ -61,8 +61,8 @@ const EARLY_LEVEL = 3;
 const ULT_LEVEL = 6;
 /** A kill line shows once the enemy's burst passes this share of our health. */
 const KILL_LINE_SHARE = 0.4;
-/** Attack ranges closer than this are no reach advantage. */
-const MIN_RANGE_GAP = 100;
+/** Attack ranges closer than this are no reach advantage (melee against melee never is). */
+const MIN_RANGE_GAP = 150;
 /** A window needs this long a cooldown to be worth waiting for. */
 const MIN_WINDOW_SECONDS = 8;
 /** The enemy's nuke must take this share of our health for its cooldown to be a trade window. */
