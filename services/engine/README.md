@@ -143,7 +143,9 @@ games alone. Days that were complete in the published `meta.json` are kept, so e
 the newest day.
 
 It also adds the hero card extras (`src/data/meta-extras.ts`): each hero's build per position, as the
-share of this patch's saved ranked games that ended with each item (items under 400 gold left out); the
+share of this patch's saved ranked games that ended with each item (items under 400 gold left out), and
+once 10 of them have buy minutes, each item's usual buy minute and the early items (under 2,000 gold,
+bought by minute 12 in 15% of games); the
 items new in this patch (in the item list now, not in the `daily/` copy from the day before the patch)
 and the heroes that end games with them; and the 5 enemies each hero wins and loses most against, from
 the snapshot's matchups, adjusted for each enemy's strength (the gap to the hero's own average plus
@@ -367,7 +369,10 @@ random from the OpenDota explorer's ranked All Pick games that started 2 to 8 ho
 a fair sample: the `/publicMatches` feed used before was not (Radiant won 60.5% of the 2,297 games
 saved from it, against 53.0% of 80,514 explorer games over the same days). For each game it keeps
 the order the 10 heroes were picked in, the bans, the average rank, who won, and each player's
-position from STRATZ (OpenDota only knows positions for parsed replays). STRATZ may not have placed
+position from STRATZ (OpenDota only knows positions for parsed replays), each player's end-of-game
+items, and in games OpenDota has parsed (about half of high-rank games) the minute each finished item
+was first bought (items from 400 gold that are no other item's part, from the snapshot's item list).
+STRATZ may not have placed
 a game that just ended, so later runs ask again for games up to 3 days old that still miss
 positions. The backtest scores the engine on these games, so they are kept apart from the counts in
 the snapshot. Each game costs one OpenDota request, and the step stops when fewer than 300 requests

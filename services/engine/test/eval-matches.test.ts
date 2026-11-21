@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { finalItems, isCandidate, isEvalMatch, mergeMatches, monthPath, toEvalMatch, type EvalMatch, type MatchDetail } from "../src/data/eval-matches";
+import { buyItemIds, buyTimes, finalItems, isCandidate, isEvalMatch, mergeMatches, monthPath, toEvalMatch, type EvalMatch, type MatchDetail } from "../src/data/eval-matches";
 import { fetchMatchPositions, matchPositionsQuery, MATCHES_PER_QUERY, toMatchPositions } from "../src/data/stratz";
 import type { PublicMatch } from "../src/data/fetch";
 
@@ -56,6 +56,42 @@ describe("finalItems", () => {
     expect(items.get(6)).toEqual({ items: [1] });
     expect(items.size).toBe(2);
     expect(finalItems(null).size).toBe(0);
+  });
+});
+
+describe("buy minutes", () => {
+  const info = (key: string, cost: number, components: number[] = []) => ({ key, name: key, cost, img: "", components });
+  const ITEMS = {
+    29: info("boots", 500),
+    63: info("power_treads", 1400, [29, 25, 17]),
+    25: info("gloves", 450),
+    17: info("belt_of_strength", 450),
+    1: info("blink", 2250),
+    36: info("magic_wand", 450, [34, 16]),
+    16: info("branches", 50),
+  };
+
+  it("keeps finished items and basic items that are no one's part, from 400 gold", () => {
+    expect([...buyItemIds(ITEMS).keys()].sort()).toEqual(["blink", "magic_wand", "power_treads"]);
+  });
+
+  it("turns first buy seconds into minutes per hero, earliest first, and keeps them on the picks", () => {
+    const players = [{ hero_id: 6, first_purchase_time: { branches: -89, blink: 736, power_treads: 982, magic_wand: 200, boots: 288 } }, { hero_id: 1 }];
+    const keep = buyItemIds(ITEMS);
+    expect(buyTimes(players, keep).get(6)).toEqual([
+      [36, 3],
+      [1, 12],
+      [63, 16],
+    ]);
+    const m = toEvalMatch(detail({ players }), 54, undefined, keep)!;
+    expect(m.picks[0]!.buys).toEqual([
+      [36, 3],
+      [1, 12],
+      [63, 16],
+    ]);
+    expect(m.picks[1]).not.toHaveProperty("buys");
+    expect(isEvalMatch(m)).toBe(true);
+    expect(isEvalMatch({ ...m, picks: [{ ...m.picks[0], buys: [[36, -1]] }] })).toBe(false);
   });
 });
 

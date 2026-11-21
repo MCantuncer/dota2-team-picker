@@ -14,8 +14,9 @@ import type { PublicMatch } from "./fetch";
 import { getOpenDota, requestsLeftToday } from "./opendota";
 import { fetchMatchPositions } from "./stratz";
 import { BUCKET } from "./upload";
-import type { Position } from "../engine/types";
-import { isCandidate, mergeMatches, monthPath, toEvalMatch, type EvalMatch, type MatchDetail } from "./eval-matches";
+import { existsSync, readFileSync } from "node:fs";
+import type { ItemInfo, Position } from "../engine/types";
+import { buyItemIds, isCandidate, mergeMatches, monthPath, toEvalMatch, type EvalMatch, type MatchDetail } from "./eval-matches";
 
 /** Leave this many OpenDota requests for the data refresh and other users of the runner's IP. */
 const DAILY_RESERVE = 300;
@@ -50,6 +51,8 @@ export interface CollectDeps {
   now: number;
   max: number;
   dryRun: boolean;
+  /** The items whose buy minutes are kept (see buyItemIds); without it games are saved without buy minutes. */
+  buyItems?: Map<string, number>;
 }
 
 export interface CollectResult {
@@ -155,7 +158,7 @@ export async function collectMatches(deps: CollectDeps): Promise<CollectResult> 
 
   const added: EvalMatch[] = [];
   for (const { detail, rankTier } of details) {
-    const match = toEvalMatch(detail, rankTier, positions.get(detail.match_id));
+    const match = toEvalMatch(detail, rankTier, positions.get(detail.match_id), deps.buyItems);
     if (!match) continue;
     const path = monthPath(match.startTime);
     months.set(path, mergeMatches(await month(path), [match]));
@@ -217,6 +220,11 @@ async function main() {
   const token = process.env.STRATZ_TOKEN;
   if (!token) console.log("No STRATZ_TOKEN, saving games without positions.");
 
+  // The refresh writes the snapshot before this runs; its item list says which buy minutes to keep.
+  const snapshotPath = "data/snapshot.json";
+  const items = existsSync(snapshotPath) ? ((JSON.parse(readFileSync(snapshotPath, "utf8")) as { items?: Record<string, ItemInfo> }).items ?? null) : null;
+  if (!items) console.log(`No item list in ${snapshotPath}, saving games without buy minutes.`);
+
   const result = await collectMatches({
     store: bucketStore(),
     openDota: getOpenDota,
@@ -225,6 +233,7 @@ async function main() {
     now: Math.floor(Date.now() / 1000),
     max,
     dryRun,
+    ...(items ? { buyItems: buyItemIds(items) } : {}),
   });
   const complete = result.added.filter((m) => m.picks.every((p) => p.position)).length;
   console.log(
