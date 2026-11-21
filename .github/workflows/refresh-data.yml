@@ -92,6 +92,15 @@ jobs:
         timeout-minutes: 15
         working-directory: services/engine
         run: npm run proof -- --out "$RUNNER_TEMP/proof.md" ${{ inputs.dry_run && '--dry-run' || '' }} && cat "$RUNNER_TEMP/proof.md" >> "$GITHUB_STEP_SUMMARY"
+      # The Meta page numbers (meta.json in the bucket): each hero's games and wins per
+      # day of this patch and the last 7 days of the patch before, per rank group, from
+      # the OpenDota explorer. Days already complete in meta.json are kept, so most runs
+      # read only the newest day. A failure keeps the last meta.json.
+      - name: Build the Meta page numbers
+        continue-on-error: true
+        timeout-minutes: 15
+        working-directory: services/engine
+        run: npm run meta -- --out "$RUNNER_TEMP/meta.md" ${{ inputs.dry_run && '--dry-run' || '' }} && cat "$RUNNER_TEMP/meta.md" >> "$GITHUB_STEP_SUMMARY"
       - name: Open a review issue for the new patch
         if: ${{ steps.fetch.outputs.new_patch && !inputs.dry_run }}
         env:

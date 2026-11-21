@@ -23,6 +23,7 @@
     "plan": "tsx scripts/plan.ts",
     "backtest": "tsx scripts/backtest.ts",
     "proof": "tsx scripts/proof.ts",
+    "meta": "tsx scripts/meta.ts",
     "fit-score-weights": "tsx scripts/fit-score-weights.ts",
     "fit-win-chance": "tsx scripts/fit-win-chance.ts",
     "fit-win-range": "tsx scripts/fit-win-range.ts",
