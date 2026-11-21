@@ -35,7 +35,7 @@ function where(from: number, slices: number, slice: number): string {
 }
 
 /** Our rank group (1 to 4, two medals each) from the game's average rank tier; 0 when unknown. */
-const GROUP_SQL = "case when m.avg_rank_tier >= 10 and m.avg_rank_tier < 90 then (floor(m.avg_rank_tier / 10)::int + 1) / 2 else 0 end";
+export const GROUP_SQL = "case when m.avg_rank_tier >= 10 and m.avg_rank_tier < 90 then (floor(m.avg_rank_tier / 10)::int + 1) / 2 else 0 end";
 
 export function countQuery(from: number): string {
   return `select count(*) as games from public_matches m where ${where(from, 1, 0)}`;

@@ -133,6 +133,15 @@ position and pick round, and the six newest picks where a player took the engine
 Action runs it once a day; a `proof.json`
 newer than 20 hours is left as it is.
 
+### Meta page numbers
+
+`npm run meta` writes what the Meta page shows to `meta.json` in the bucket (`src/data/meta.ts`): each
+hero's games and wins per day of the current patch (the newest 14 days) and of the last 7 days of the
+patch before, for every rank and each rank group, from the OpenDota explorer's ranked All Pick games.
+STRATZ's hero counts do not start again at a patch, so the explorer is the only source of this patch's
+games alone. Days that were complete in the published `meta.json` are kept, so each refresh reads only
+the newest day.
+
 ## Fixed drafts
 
 `npm run compare-drafts` prints the top 8 suggestions, with their reasons, for a fixed set of drafts
@@ -306,6 +315,7 @@ bucket in Supabase Storage (created by a migration in `services/accounts`):
 | ------------------------- | -------------------------------------------------------------- |
 | `snapshot.json`           | The latest data. The website reads it, cached for 5 minutes.   |
 | `proof.json`              | The Proof Page numbers (see "Proof Page numbers").             |
+| `meta.json`               | The Meta page numbers (see "Meta page numbers").               |
 | `daily/<YYYY-MM-DD>.json` | A copy per day, to compare days or roll back a bad run.        |
 | `eval/matches-<YYYY-MM>.json` | Ranked games saved for the backtest (see below).          |
 | `eval/public-edges.json`  | Draft edges of fair public games for the win range.            |
