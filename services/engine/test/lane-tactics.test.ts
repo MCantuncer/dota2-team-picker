@@ -118,7 +118,7 @@ describe("laneTactics", () => {
     expect(byRule(list, "yourSpell")?.title).toBe("Death Pulse When Lina Steps In");
     expect(byRule(list, "reach")?.title).toBe("Lina Outranges You by 170");
     // Every tactic names Lina, never "Their" or "Pos" wording.
-    for (const t of list) expect(`${t.title} ${text(t)}`).not.toMatch(/Their|Pos \d|—/);
+    for (const t of list) expect(`${t.title} ${text(t)}`).not.toMatch(/Their|Pos \d|\u2014/);
   });
 
   it("tells Invoker to split from Forge Spirit against Magnus's Shockwave", () => {
