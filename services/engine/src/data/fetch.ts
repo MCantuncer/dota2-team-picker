@@ -26,6 +26,7 @@ import { loadEvalGames, monthPaths } from "./eval-store";
 import { fetchItemStarts } from "./item-starts";
 import { fetchItemTimings, itemTimingsDue } from "./item-timings";
 import { fetchItems, itemsDue } from "./items";
+import { dropRemovedItems } from "./removed-items";
 import { countPickPhases } from "./pick-phase";
 import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
 import { fetchPositions, postStratz } from "./stratz";
@@ -426,6 +427,8 @@ async function main() {
   console.log(`Counted ${counted} new matches.`);
 
   snapshot.lastPublicMatchId = newest;
+  const removed = dropRemovedItems(snapshot);
+  if (removed.length) console.log(`Dropped ${removed.length} items removed by a patch from the builds: ${removed.join(", ")}.`);
   updateDataHardCounters(snapshot);
   snapshot.generatedAt = now.toISOString();
   mkdirSync(dirname(SNAPSHOT_PATH), { recursive: true });
