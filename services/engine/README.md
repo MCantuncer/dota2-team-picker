@@ -142,6 +142,12 @@ STRATZ's hero counts do not start again at a patch, so the explorer is the only 
 games alone. Days that were complete in the published `meta.json` are kept, so each refresh reads only
 the newest day.
 
+It also adds the hero card extras (`src/data/meta-extras.ts`): each hero's build per position, as the
+share of this patch's saved ranked games that ended with each item (items under 400 gold left out); the
+items new in this patch (in the item list now, not in the `daily/` copy from the day before the patch)
+and the heroes that end games with them; and the 5 enemies each hero wins and loses most against, from
+the snapshot's matchups, with the shop data of every item shown for the page's item cards. If they fail, the last ones of the same patch are kept.
+
 ## Fixed drafts
 
 `npm run compare-drafts` prints the top 8 suggestions, with their reasons, for a fixed set of drafts

@@ -2,13 +2,17 @@
  * Builds the Meta page's numbers (meta.json in the hero-data bucket): each hero's games and wins per day of the
  * current patch and the last days of the patch before, per rank group, from the OpenDota explorer (see
  * src/data/meta.ts). Days already complete in the published meta.json are kept, so a run reads only the newest.
+ * Then the hero card extras: builds and new items from the saved ranked games, matchups from the snapshot (see
+ * src/data/meta-extras.ts).
  *
  *   SUPABASE_URL=... SUPABASE_SECRET_KEY=... npm run meta -- [--snapshot data/snapshot.json] [--json meta.json] [--out summary.md] [--dry-run]
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { createClient } from "@supabase/supabase-js";
+import { loadEvalGames, loadHeroData, monthPaths } from "../src/data/eval-store";
 import { buildMeta, type MetaFile } from "../src/data/meta";
+import { buildExtras, type MetaExtras } from "../src/data/meta-extras";
 import { getOpenDota } from "../src/data/opendota";
 import { HERO_DATA_URL } from "../src/data/pull";
 import { BUCKET } from "../src/data/upload";
@@ -70,24 +74,58 @@ async function ask(sql: string): Promise<unknown> {
   }
 }
 
-function summary(meta: MetaFile, reread: number): string {
+function summary(meta: MetaFile, reread: number, extrasNote: string): string {
   const games = (days: MetaFile["days"]) => days.reduce((n, d) => n + (d.games[0] ?? 0), 0).toLocaleString("en-US");
   return [
     `Meta numbers for patch ${meta.patch.name}: ${meta.days.length} days, ${games(meta.days)} games; ${meta.base.length} days of the patch before, ${games(meta.base)} games.`,
     `Days read this run: ${reread} (the rest kept from the last meta.json).`,
+    extrasNote,
   ].join("\n");
 }
 
+const DAY_S = 24 * 60 * 60;
+
+/** Builds, new items and matchups. A failure keeps the published extras of the same patch, so the day numbers still go out. */
+async function extras(snapshot: Pick<Snapshot, "patch" | "items" | "matchups">, now: number, last: MetaFile | null): Promise<[MetaExtras | undefined, string]> {
+  try {
+    const built = await buildExtras(
+      {
+        games: async (since, to) => (await Promise.all(monthPaths(since, to).map(loadEvalGames))).flat(),
+        itemsBefore: async (patchStart) => {
+          const day = new Date((patchStart - DAY_S) * 1000).toISOString().slice(0, 10);
+          return (await loadHeroData(`daily/${day}.json`))?.items ?? null;
+        },
+      },
+      snapshot,
+      now,
+      last,
+    );
+    const heroes = Object.keys(built.builds).length;
+    const names = built.newItems.map((n) => `${snapshot.items?.[n.id]?.name ?? n.id} ${n.games}`).join(", ");
+    return [
+      built,
+      `Builds: ${built.buildGames.toLocaleString("en-US")} saved games with items, ${heroes} heroes with a build. New items (games): ${names || "none"}. Matchups for ${Object.keys(built.matchups).length} heroes.`,
+    ];
+  } catch (err) {
+    console.warn(`Hero card extras failed, keeping the last ones: ${(err as Error).message}`);
+    const kept = last?.patch.name === snapshot.patch?.name ? last?.extras : undefined;
+    return [kept, `Hero card extras failed (${(err as Error).message}); ${kept ? "kept the last ones" : "none published"}.`];
+  }
+}
+
 async function main() {
-  // The snapshot is written by fetch-data, which checked its shape; only the patch and positions are read here.
-  const snapshot = JSON.parse(readFileSync(values.snapshot!, "utf8")) as Pick<Snapshot, "patch" | "positions">;
+  // The snapshot is written by fetch-data, which checked its shape.
+  const snapshot = JSON.parse(readFileSync(values.snapshot!, "utf8")) as Pick<Snapshot, "patch" | "positions" | "items" | "matchups">;
   if (!snapshot.patch) throw new Error(`${values.snapshot} has no patch`);
   const last = await published();
-  const meta = await buildMeta(ask, snapshot.patch, Math.floor(Date.now() / 1000), last, snapshot.positions);
+  const now = Math.floor(Date.now() / 1000);
+  const meta = await buildMeta(ask, snapshot.patch, now, last, snapshot.positions);
+  const [built, extrasNote] = await extras(snapshot, now, last);
+  if (built) meta.extras = built;
   const keptKeys = new Set([...(last?.days ?? []), ...(last?.base ?? [])].filter((d) => d.complete).map((d) => d.from));
   const reread = [...meta.base, ...meta.days].filter((d) => !keptKeys.has(d.from)).length;
 
-  const text = summary(meta, reread);
+  const text = summary(meta, reread, extrasNote);
   console.log(text);
   if (values.out) writeFileSync(values.out, `${text}\n`);
   const body = JSON.stringify(meta);

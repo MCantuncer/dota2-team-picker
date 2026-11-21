@@ -9,6 +9,7 @@
  * A day is 24 hours from the patch's start, not a calendar day. Days that had ended a while before the last
  * meta.json was built are kept from it, so a run only asks for the newest days.
  */
+import type { MetaExtras } from "./meta-extras";
 import { GROUP_SQL } from "./patch-matchups";
 
 /** Days of the patch before that the page compares against. */
@@ -54,6 +55,8 @@ export interface MetaFile {
   base: MetaDay[];
   /** Each hero's share of its games per position 1 to 5, in whole percent, from the snapshot's STRATZ positions. */
   roles: Record<string, number[]>;
+  /** The hero card extras (see meta-extras.ts); missing when they could not be built and no earlier ones were kept. */
+  extras?: MetaExtras;
 }
 
 /** Position counts as whole percent shares; heroes with no games are left out. */
