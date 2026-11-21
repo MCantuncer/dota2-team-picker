@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { EvalMatch } from "../src/data/eval-matches";
 import type { MetaFile } from "../src/data/meta";
-import { buildExtras, heroBuilds, heroMatchups, MIN_BUILD_GAMES, MIN_PAIR_GAMES, newItemIds, newItemUse } from "../src/data/meta-extras";
+import { buildExtras, heroBuilds, heroMatchups, MIN_BUILD_GAMES, MIN_BUY_GAMES, MIN_PAIR_GAMES, newItemIds, newItemUse } from "../src/data/meta-extras";
 import type { ItemInfo, Position } from "../src/engine/types";
 
 const START = Date.parse("2026-11-18T21:28:07Z") / 1000;
@@ -11,12 +11,13 @@ const item = (cost: number, name = "Item"): ItemInfo => ({ key: name.toLowerCase
 const ITEMS: Record<string, ItemInfo> = { 1: item(2050, "Blink Dagger"), 63: item(1400, "Power Treads"), 36: item(450, "Magic Wand"), 16: item(50, "Branches"), 1942: item(925, "Bloodslinger") };
 
 type Pick = EvalMatch["picks"][number];
-const pick = (heroId: number, position: Position | null, items?: number[], neutral?: number): Pick => ({
+const pick = (heroId: number, position: Position | null, items?: number[], neutral?: number, buys?: [number, number][]): Pick => ({
   heroId,
   radiant: true,
   position,
   ...(items ? { items } : {}),
   ...(neutral ? { neutral } : {}),
+  ...(buys ? { buys } : {}),
 });
 const game = (id: number, startTime: number, picks: Pick[]): EvalMatch => ({ id, startTime, rankTier: 50, radiantWin: true, picks, bans: [] });
 
@@ -49,6 +50,36 @@ describe("heroBuilds", () => {
     expect(build[1]!.games).toBe(40);
     // One game of 40 with Blink is 2.5%, under the 5% share.
     expect(build[1]!.items).toEqual([[63, 39]]);
+  });
+});
+
+describe("buy minutes in builds", () => {
+  it("gives each build item its usual minute and lists early items once there are enough parsed games", () => {
+    // 40 games, the first MIN_BUY_GAMES parsed: Bloodslinger at 6 or 8 min, Treads at 9 to 11, Blink at 20.
+    const games = Array.from({ length: MIN_BUILD_GAMES }, (_, i) =>
+      game(i, START + 60, [
+        pick(8, 2, [1942, 63, 1], undefined, i < MIN_BUY_GAMES ? [[1942, i % 2 ? 6 : 8], [63, 9 + (i % 3)], [1, 20]] : undefined),
+      ]),
+    );
+    const build = heroBuilds(games, START, ITEMS)[8]![2]!;
+    expect(build.buyGames).toBe(MIN_BUY_GAMES);
+    expect(build.minutes).toEqual([
+      [1, 20],
+      [63, 10],
+      [1942, 7],
+    ]);
+    // Blink costs more than the early cut and comes later than its minute.
+    expect(build.early).toEqual([
+      [63, MIN_BUY_GAMES],
+      [1942, MIN_BUY_GAMES],
+    ]);
+  });
+
+  it("leaves buy minutes out with too few parsed games", () => {
+    const games = Array.from({ length: MIN_BUILD_GAMES }, (_, i) => game(i, START + 60, [pick(8, 2, [63], undefined, i === 0 ? [[63, 9]] : undefined)]));
+    const build = heroBuilds(games, START, ITEMS)[8]![2]!;
+    expect(build).not.toHaveProperty("minutes");
+    expect(build).not.toHaveProperty("early");
   });
 });
 

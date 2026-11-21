@@ -29,6 +29,12 @@ export interface HeroBuild {
   games: number;
   items: [number, number][];
   neutral: [number, number][];
+  /** Games with buy minutes (parsed games); the buy minute fields are left out when there are too few. */
+  buyGames?: number;
+  /** The usual minute each item in `items` is first bought: [item id, median minute]. */
+  minutes?: [number, number][];
+  /** Items under EARLY_MAX_COST bought by EARLY_MINUTE: [item id, games of buyGames], most first. */
+  early?: [number, number][];
 }
 
 /** Per hero id, per position "1" to "5" and "0" for every position. */
@@ -45,6 +51,21 @@ export const NEUTRAL_ITEMS = 6;
  * where a game stopped, not what the hero builds. Magic Wand (450) and Boots of Speed (500) stay in.
  */
 export const MIN_BUILD_COST = 400;
+/** Games with buy minutes a position needs before its minutes and early items show. */
+export const MIN_BUY_GAMES = 10;
+/** Buys of an item needed for its usual minute. */
+export const MIN_ITEM_BUYS = 3;
+/** Early items: cheaper than this, bought by this minute, in at least EARLY_SHARE of the games, at most EARLY_ITEMS. */
+export const EARLY_MAX_COST = 2000;
+export const EARLY_MINUTE = 12;
+export const EARLY_SHARE = 0.15;
+export const EARLY_ITEMS = 4;
+
+const median = (xs: number[]) => {
+  const s = [...xs].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid]! : Math.round((s[mid - 1]! + s[mid]!) / 2);
+};
 
 const count = (map: Map<number, number>, id: number) => map.set(id, (map.get(id) ?? 0) + 1);
 const top = (map: Map<number, number>, games: number, share: number, max: number): [number, number][] =>
@@ -59,19 +80,27 @@ const top = (map: Map<number, number>, games: number, share: number, max: number
  * cheaper than MIN_BUILD_COST are left out.
  */
 export function heroBuilds(games: EvalMatch[], since: number, items: Record<string, ItemInfo>): Builds {
-  const counts = new Map<string, { games: number; items: Map<number, number>; neutral: Map<number, number> }>();
+  type Count = { games: number; items: Map<number, number>; neutral: Map<number, number>; buyGames: number; minutes: Map<number, number[]>; early: Map<number, number> };
+  const counts = new Map<string, Count>();
   for (const game of games) {
     if (game.startTime < since) continue;
     for (const pick of game.picks) {
       if (!pick.items) continue;
       for (const position of pick.position ? [0, pick.position] : [0]) {
         const key = `${pick.heroId}:${position}`;
-        const c = counts.get(key) ?? { games: 0, items: new Map(), neutral: new Map() };
+        const c: Count = counts.get(key) ?? { games: 0, items: new Map(), neutral: new Map(), buyGames: 0, minutes: new Map(), early: new Map() };
         counts.set(key, c);
         c.games++;
         // An item held twice (two Bracers) counts once: the share is of games.
         for (const id of new Set(pick.items)) if ((items[id]?.cost ?? 0) >= MIN_BUILD_COST) count(c.items, id);
         if (pick.neutral) count(c.neutral, pick.neutral);
+        if (pick.buys) {
+          c.buyGames++;
+          for (const [id, minute] of pick.buys) {
+            c.minutes.set(id, [...(c.minutes.get(id) ?? []), minute]);
+            if (minute <= EARLY_MINUTE && (items[id]?.cost ?? Infinity) < EARLY_MAX_COST) count(c.early, id);
+          }
+        }
       }
     }
   }
@@ -79,11 +108,20 @@ export function heroBuilds(games: EvalMatch[], since: number, items: Record<stri
   for (const [key, c] of counts) {
     if (c.games < MIN_BUILD_GAMES) continue;
     const [hero, position] = key.split(":") as [string, string];
-    (out[hero] ??= {})[position] = {
+    const build: HeroBuild = {
       games: c.games,
       items: top(c.items, c.games, MIN_ITEM_SHARE, BUILD_ITEMS),
       neutral: top(c.neutral, c.games, MIN_ITEM_SHARE, NEUTRAL_ITEMS),
     };
+    if (c.buyGames >= MIN_BUY_GAMES) {
+      build.buyGames = c.buyGames;
+      build.minutes = build.items.flatMap(([id]): [number, number][] => {
+        const m = c.minutes.get(id) ?? [];
+        return m.length >= MIN_ITEM_BUYS ? [[id, median(m)]] : [];
+      });
+      build.early = top(c.early, c.buyGames, EARLY_SHARE, EARLY_ITEMS);
+    }
+    (out[hero] ??= {})[position] = build;
   }
   return out;
 }
@@ -198,7 +236,10 @@ export async function buildExtras(
   }
   const builds = heroBuilds(games, since, items);
   const newItems = newItemUse(ids, games, since);
-  const used = new Set([...newItems.map((n) => n.id), ...Object.values(builds).flatMap((byPosition) => Object.values(byPosition).flatMap((b) => b.items.map(([id]) => id)))]);
+  const used = new Set([
+    ...newItems.map((n) => n.id),
+    ...Object.values(builds).flatMap((byPosition) => Object.values(byPosition).flatMap((b) => [...b.items, ...(b.early ?? [])].map(([id]) => id))),
+  ]);
   return {
     buildGames: games.filter((g) => g.picks.some((p) => p.items)).length,
     builds,
