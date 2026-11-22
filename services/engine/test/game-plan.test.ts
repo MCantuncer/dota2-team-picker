@@ -153,6 +153,24 @@ describe("gamePlan", () => {
     expect(line()).toBeUndefined();
   });
 
+  it("lists what each enemy laner buys by the end of the lane, and nothing later", () => {
+    const d = data();
+    d.items = {
+      16: { key: "branches", name: "Iron Branch", cost: 50, img: "", components: [] },
+      44: { key: "tango", name: "Tango", cost: 90, img: "", components: [] },
+      36: { key: "magic_wand", name: "Magic Wand", cost: 450, img: "", components: [] },
+      145: { key: "radiance", name: "Radiance", cost: 4700, img: "", components: [] },
+    };
+    d.itemBuilds = { 67: { start: { 16: 100, 44: 100 }, early: { 36: 80 }, mid: {}, late: { 145: 90 } } };
+    const mid = gamePlan(new Engine(d), { ours, theirs }).lanes.find((l) => l.name === "Mid")!;
+    const spectre = mid.enemyItems?.find((e) => e.hero === 67);
+    expect(spectre?.items.map((i) => i.name)).toEqual(expect.arrayContaining(["Iron Branch", "Tango"]));
+    expect(spectre?.items.some((i) => i.name === "Radiance")).toBe(false);
+    expect(spectre?.items.every((i) => i.minute <= 10)).toBe(true);
+    // No item data for the other lanes' enemies: no list.
+    expect(gamePlan(new Engine(d), { ours, theirs }).lanes.find((l) => l.name === "Safe lane")?.enemyItems).toBeUndefined();
+  });
+
   it("gives each player only this draft's facts, and no build without item data", () => {
     const plan = gamePlan(new Engine(data()), { ours, theirs });
     expect(plan.players.map((p) => p.position)).toEqual([1, 2, 3, 4, 5]);
