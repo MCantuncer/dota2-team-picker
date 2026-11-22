@@ -10,8 +10,11 @@
   },
   "fmt": {
     "include": ["supabase/functions"],
-    // Saved OpenDota matches, kept byte for byte as downloaded (minus player names).
-    "exclude": ["supabase/functions/_shared/report/fixtures"],
+    // Saved OpenDota and STRATZ answers, kept as downloaded (minus player names), one player per line.
+    "exclude": [
+      "supabase/functions/_shared/report/fixtures",
+      "supabase/functions/_shared/similar/fixtures/stratz-matches.json"
+    ],
     "lineWidth": 120
   }
 }
