@@ -205,4 +205,19 @@ describe("game tips", () => {
     expect(rows[0]?.tip).toBe("Don't focus them: kill the enemy damage dealers first");
     expect(rows[0]).not.toHaveProperty("tipArt");
   });
+  it("tells the team whose spell still kills through an enemy's save, from Valve's notes and demo tests", () => {
+    const TROLL = hero(95, "Troll Warlord", ["Carry", "Pusher", "Disabler", "Durable"]);
+    const DAZZLE = hero(50, "Dazzle", ["Support", "Nuker", "Disabler"]);
+    const base = facts(JUGG, 1);
+    const withAxe = (me: HeroInfo): TipFacts => ({
+      ...facts(me, me === AXE ? 3 : 1),
+      allies: [{ hero: AXE, position: 3 as const }, ...base.allies.filter((a) => a.hero.id !== MARS.id)].filter((a) => a.hero.id !== me.id),
+      enemies: [{ hero: TROLL, position: 1 as const }, { hero: DAZZLE, position: 5 as const }, ...base.enemies.slice(1, 4)],
+    });
+    expect(tipFor(rowsFor(withAxe(JUGG)), 95)).toMatchObject({ tip: "Axe's Culling Blade still kills through Troll Warlord's Battle Trance: keep it for then", tipArt: { spell: "axe_culling_blade" } });
+    expect(tipFor(rowsFor(withAxe(AXE)), 50)?.tip).toBe("Your Culling Blade still kills through Dazzle's Shallow Grave: keep it for then");
+    // Without Axe on the team, the row keeps its usual tip.
+    const noAxe = { ...base, enemies: withAxe(JUGG).enemies };
+    expect(tipFor(rowsFor(noAxe), 95)?.tip ?? "").not.toMatch(/Culling Blade/);
+  });
 });

@@ -38,5 +38,30 @@ export interface AbilityRules {
 /** Rules by Dota's internal ability or item name, like `troll_warlord_battle_trance` or `item_force_staff`. */
 export type AbilityNotes = Record<string, AbilityRules>;
 
-/** The rules Valve's notes give for an ability or item, or undefined when its notes set none. */
-export const abilityRules = (key: string): AbilityRules | undefined => ABILITY_NOTES[key];
+/**
+ * Rules Valve's notes leave out but a demo test showed, each with how it was tested. Kept to what was really
+ * seen in game: a guess from tooltip text gave wrong advice before (Shallow Grave was said to beat Culling Blade).
+ */
+export const TESTED_RULES: AbilityNotes = {
+  dazzle_shallow_grave: {
+    killedBy: "Axe's Culling Blade",
+    notes: ["Tested in Demo Hero mode in 7.42: Culling Blade kills a hero under Shallow Grave once its HP is low enough."],
+  },
+};
+
+/** The rules for an ability or item from Valve's notes and demo tests, or undefined when neither sets any. */
+export function abilityRules(key: string): AbilityRules | undefined {
+  const noted = ABILITY_NOTES[key];
+  const tested = TESTED_RULES[key];
+  if (!noted || !tested) return noted ?? tested;
+  return { ...noted, ...tested, notes: [...noted.notes, ...tested.notes] };
+}
+
+/**
+ * The spell that still kills through this one, split into its hero and spell name ("Axe's Culling Blade" is Axe
+ * and Culling Blade), or undefined when nothing does.
+ */
+export function killedBy(key: string): { hero: string; spell: string } | undefined {
+  const m = abilityRules(key)?.killedBy?.match(/^(.+?)'s (.+)$/);
+  return m?.[1] && m[2] ? { hero: m[1], spell: m[2] } : undefined;
+}
