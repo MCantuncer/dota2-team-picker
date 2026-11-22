@@ -161,7 +161,8 @@ team. Only the owner can rename or delete the team, change roles, or remove a co
    ```
 
    `STRATZ_TOKEN` is for `matchup-builds` (the skill order and talents against the draft's
-   enemies). Without it that function answers 503 and the cards keep the weekly general builds.
+   enemies) and `similar-games` (the Similar Games answer). Without it they answer 503: the cards
+   keep the weekly general builds and Similar Games says it can't look games up.
 
 ## Local development
 
