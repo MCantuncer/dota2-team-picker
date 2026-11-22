@@ -4,7 +4,7 @@ Headline: Leshrac has Blink Dagger at 14: hold fights until 18 min.
 
 - 0 to 10 min: Medusa and Dazzle win the safe lane against Underlord and Chen. Storm Spirit has a hard mid against Leshrac. Dazzle wins 48% and loses 26% of 1,543 lanes against Underlord. Storm Spirit wins 26% and loses 43% of 736 lanes against Leshrac.
 - 10 to 20 min: Medusa's Manta Style at 18 and Storm Spirit's Witch Blade at 18: ready to fight at 18. Enemy Leshrac has Blink Dagger at 14.
-- 20 to 30 min: Roshan from 20 min, once three key items are in.
+- 20 to 30 min: Roshan at 20 min or later, with three key items in.
 
 Danger heroes:
 - Leshrac: Blink Dagger at 14 min. Strong against Tidehunter and Dazzle.

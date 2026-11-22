@@ -4,7 +4,7 @@ Headline: Your safe lane to press: Disruptor wins 62% and loses 15% of 308 lanes
 
 - 0 to 10 min: Terrorblade and Disruptor win the safe lane against Primal Beast and Hoodwink. Disruptor wins 62% and loses 15% of 308 lanes against Primal Beast.
 - 10 to 20 min: Mars's Blink Dagger at 15 and Templar Assassin's Desolator at 17: ready to fight at 17. Enemy Naga Siren has Manta Style at 17.
-- 20 to 30 min: Enemy Pangolier has Blink Dagger at 20. Roshan from 20 min, once three key items are in.
+- 20 to 30 min: Enemy Pangolier has Blink Dagger at 20. Roshan at 20 min or later, with three key items in.
 
 Danger heroes:
 - Naga Siren: Manta Style at 17 min.
