@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { abilityRules } from "../src/engine/ability-notes";
 import { KEY_SPELLS, PIERCES_BKB } from "../src/engine/data-key-spells";
 import type { Snapshot } from "../src/engine/types";
 
@@ -39,5 +40,13 @@ describe("hidden rules from Valve's notes", () => {
   it("names Culling Blade as the kill through Shallow Grave and Battle Trance", () => {
     expect(KEY_SPELLS.Dazzle?.line).toContain("Culling Blade");
     expect(KEY_SPELLS["Troll Warlord"]?.line).toContain("Culling Blade");
+  });
+});
+
+describe("PIERCES_BKB against Valve's notes", () => {
+  it("lists no spell a note says debuff immunity stops or ends", () => {
+    for (const key of Object.keys(PIERCES_BKB)) {
+      expect(["blocked", "removed"], key).not.toContain(abilityRules(key)?.debuffImmunity);
+    }
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseNotes, toAbilityNotes, toRules } from "../src/data/ability-notes";
-import { abilityRules } from "../src/engine/ability-notes";
+import { abilityRules, killedBy, TESTED_RULES } from "../src/engine/ability-notes";
 import { ABILITY_NOTES } from "../src/engine/data-ability-notes";
 
 const TEXT = [
@@ -69,5 +69,14 @@ describe("the generated rules", () => {
         expect(note, key).not.toMatch(/%\w+%/);
       }
     }
+  });
+});
+
+describe("abilityRules with demo tests", () => {
+  it("adds what a demo test showed to Valve's notes, and splits the killer into hero and spell", () => {
+    expect(killedBy("dazzle_shallow_grave")).toEqual({ hero: "Axe", spell: "Culling Blade" });
+    expect(killedBy("troll_warlord_battle_trance")).toEqual({ hero: "Axe", spell: "Culling Blade" });
+    expect(killedBy("lion_voodoo")).toBeUndefined();
+    expect(TESTED_RULES.dazzle_shallow_grave?.notes[0]).toMatch(/Demo Hero/);
   });
 });

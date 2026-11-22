@@ -3,9 +3,11 @@
  * that guess is), the one thing that makes each enemy dangerous, and the items in this player's path
  * that answer it, or a tip when no item does.
  */
+import { killedBy } from "./ability-notes";
 import { DONT_FOCUS } from "./danger";
 import { KEY_SPELLS, type KeySpell } from "./data-key-spells";
 import { listNames, threatsOf, type ItemBuild, type Threat } from "./item-build";
+import { heroSpells } from "./spell-facts";
 import type { HeroInfo, Position } from "./types";
 
 export interface EnemyNote {
@@ -166,6 +168,8 @@ export function gameTip(row: ThreatRow, facts: TipFacts, spells: ReadonlyMap<num
       return s && h ? [`${h.name}'s ${s.name}`] : [];
     });
   const firstSpell = row.enemies.map((e) => spells.get(e.heroId)).find((s) => s !== undefined);
+  const kill = killThrough(heroes, facts, spells);
+  if (kill) return kill;
   switch (kind) {
     case "tank": {
       // Hit the damage instead: the enemy cores who are not tanks, by position, the carry first.
@@ -224,6 +228,25 @@ export function gameTip(row: ThreatRow, facts: TipFacts, spells: ReadonlyMap<num
       return { text: `Wait out ${listNames(named)} before you commit`, art: { spell: firstSpell.key } };
     }
   }
+}
+
+/**
+ * A tip for an enemy whose key spell keeps a hero alive (Battle Trance, Shallow Grave) when this player or a
+ * teammate has the spell that still kills through it, from Valve's notes and demo tests (ability-notes.ts):
+ * "Axe's Culling Blade still kills through Troll Warlord's Battle Trance". Undefined when nobody has it.
+ */
+function killThrough(heroes: HeroInfo[], facts: TipFacts, spells: ReadonlyMap<number, KeySpell>): { text: string; art: TipArt } | undefined {
+  const team = [facts.me, ...facts.allies];
+  for (const enemy of heroes) {
+    const save = spells.get(enemy.id);
+    const killer = save && killedBy(save.key);
+    const owner = killer && team.find((p) => p.hero.name === killer.hero);
+    const key = owner && heroSpells(owner.hero.name).find((s) => s.name === killer.spell)?.key;
+    if (!save || !killer || !owner || !key) continue;
+    const whose = owner === facts.me ? "Your" : `${owner.hero.name}'s`;
+    return { text: `${whose} ${killer.spell} still kills through ${enemy.name}'s ${save.name}: keep it for then`, art: { spell: key } };
+  }
+  return undefined;
 }
 
 /**
