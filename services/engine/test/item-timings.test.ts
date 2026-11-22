@@ -9,6 +9,7 @@ import {
   itemTimingsQuery,
   lateMinute,
   timingRequests,
+  timingsWhole,
   toTimingSlice,
   type PurchaseRow,
 } from "../src/data/item-timings";
@@ -217,7 +218,36 @@ describe("fetchItemTimings", () => {
     await expect(fetchItemTimings(snapshot(), async () => ({}), new Date())).rejects.toThrow("no heroStats");
   });
 
+  it("keeps the last timings when the every-rank slices come back with a game or two", async () => {
+    // 2026-11-21: STRATZ answered 1 or 2 games for 274 of 276 every-rank slices, and the Build Path showed two items.
+    const data = snapshot();
+    const last = { 1: { 1: { all: { games: 5000, items: [[145, 16, 20]] } } } } as Snapshot["itemTimings"];
+    data.itemTimings = last;
+    data.itemTimingsAt = "2026-11-20T18:38:34.037Z";
+    const thin = [row(16, 1, 1), row(20, 1, 0, 147)];
+    await expect(
+      fetchItemTimings(data, async () => ({ heroStats: { s0: thin, s3: ANTI_MAGE } }), new Date("2026-11-21T21:07:00Z")),
+    ).rejects.toThrow("0 of 1 hero positions have 200+ games");
+    expect(data.itemTimings).toBe(last);
+    expect(data.itemTimingsAt).toBe("2026-11-20T18:38:34.037Z");
+  });
+
   it("needs positions and items", async () => {
     await expect(fetchItemTimings({ ...snapshot(), positions: undefined }, async () => ({}), new Date())).rejects.toThrow();
+  });
+});
+
+describe("timingsWhole", () => {
+  const positions = { 1: [900, 0, 0, 0, 0], 2: [0, 900, 0, 0, 0], 3: [0, 0, 900, 0, 0], 4: [0, 0, 0, 900, 0], 5: [0, 0, 0, 0, 900] };
+  const slice = (games: number) => ({ all: { games, items: [] } });
+
+  it("needs most hero positions to have an every-rank slice with enough games", () => {
+    const four = { 1: { 1: slice(5000) }, 2: { 2: slice(5000) }, 3: { 3: slice(200) }, 4: { 4: slice(900) } };
+    expect(timingsWhole({ positions, itemTimings: four })).toBe(true);
+    expect(timingsWhole({ positions, itemTimings: { ...four, 4: { 4: slice(2) } } })).toBe(false);
+    // A rank group's slice does not stand in for the every-rank one.
+    expect(timingsWhole({ positions, itemTimings: { ...four, 4: { 4: { "3": { games: 4376, items: [] } } } } })).toBe(false);
+    expect(timingsWhole({ positions, itemTimings: undefined })).toBe(false);
+    expect(timingsWhole({ positions: {}, itemTimings: four })).toBe(false);
   });
 });

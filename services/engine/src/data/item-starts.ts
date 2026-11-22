@@ -4,8 +4,9 @@
  * barely change with rank, and one slice per hero and position keeps it to about 9 queries a day.
  */
 import { isUpgradedBoots } from "../engine/item-build";
+import { MIN_SLICE_GAMES } from "../engine/item-timing-slice";
 import type { ItemInfo, ItemStart, Position, Snapshot } from "../engine/types";
-import { timingRequests } from "./item-timings";
+import { timingRequests, WHOLE_SHARE } from "./item-timings";
 
 /** Two aliases (start items and boots) per hero and position. */
 export const STARTS_PER_QUERY = 30;
@@ -111,7 +112,26 @@ export function toItemStart(starts: StartRow[], boots: BootRow[], items: Record<
   return { games, start, boots: kept };
 }
 
-/** Downloads the start items and boots of every hero's main positions into the snapshot. */
+/** How many hero positions asked for have a start from MIN_SLICE_GAMES games, out of how many. */
+export function startsCoverage(snapshot: Pick<Snapshot, "positions" | "itemStarts">): { usable: number; asked: number } {
+  const asked = startRequests(snapshot.positions ?? {});
+  const usable = asked.filter((r) => (snapshot.itemStarts?.[r.heroId]?.[r.position]?.games ?? 0) >= MIN_SLICE_GAMES).length;
+  return { usable, asked: asked.length };
+}
+
+/**
+ * Whether the snapshot's start items are whole: WHOLE_SHARE of the hero positions have one. Whole downloads
+ * had all 289 (the smallest from 985 games); on 2026-11-21 STRATZ answered for 4, from 14 to 36 games.
+ */
+export function startsWhole(snapshot: Pick<Snapshot, "positions" | "itemStarts">): boolean {
+  const { usable, asked } = startsCoverage(snapshot);
+  return asked > 0 && usable >= asked * WHOLE_SHARE;
+}
+
+/**
+ * Downloads the start items and boots of every hero's main positions into the snapshot. Throws, leaving the
+ * last ones in place, when STRATZ's answer is not whole.
+ */
 export async function fetchItemStarts(
   snapshot: Snapshot,
   post: (query: string) => Promise<{ heroStats?: Record<string, unknown> | null }>,
@@ -132,6 +152,11 @@ export async function fetchItemStarts(
       );
       if (start) (out[r.heroId] ??= {})[r.position] = start;
     });
+  }
+  const answer = { positions: snapshot.positions, itemStarts: out };
+  if (!startsWhole(answer)) {
+    const { usable, asked } = startsCoverage(answer);
+    throw new Error(`STRATZ start items look broken: ${usable} of ${asked} hero positions have ${MIN_SLICE_GAMES}+ games, keeping the last ones`);
   }
   snapshot.itemStarts = out;
 }

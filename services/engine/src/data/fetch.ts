@@ -23,6 +23,7 @@ import { positionFit } from "../engine/positions";
 import { Engine } from "../engine/score";
 import { getOpenDota as get, requestsLeftToday } from "./opendota";
 import { loadEvalGames, loadHeroData, monthPaths } from "./eval-store";
+import { restoreItemData } from "./item-restore";
 import { fetchItemStarts } from "./item-starts";
 import { fetchItemTimings, itemTimingsDue } from "./item-timings";
 import { fetchItems, itemsDue } from "./items";
@@ -350,6 +351,11 @@ async function main() {
     }
   } else if (stratzToken) {
     console.log(`Item timings are from ${snapshot.itemTimingsAt}, keeping them.`);
+  }
+  if (stratzToken) {
+    // A broken STRATZ answer is refused above, but one already kept (2026-11-21) stays until a whole one comes.
+    const restored = await restoreItemData(snapshot, now, loadHeroData);
+    for (const line of restored) console.log(`Restored ${line}.`);
   }
 
   console.log("Talents from the game files...");
