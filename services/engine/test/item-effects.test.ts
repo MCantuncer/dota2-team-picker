@@ -130,3 +130,14 @@ describe("withEffects", () => {
     expect(withEffects(counter, [LION, ENIGMA], items).core[0]?.effect).toBe("Spell immunity for the big fights. Black Hole still goes through it.");
   });
 });
+
+describe("Force Staff against locks it can't break", () => {
+  const VOID = hero(41, "Faceless Void", ["Carry", "Initiator", "Disabler", "Escape", "Durable"]);
+  const LC = hero(104, "Legion Commander", ["Carry", "Disabler", "Initiator", "Durable", "Nuker"]);
+  const DROW = hero(6, "Drow Ranger", ["Carry", "Disabler", "Pusher"]);
+
+  it("never names Faceless Void or Legion Commander, since it doesn't work in Chronosphere or Duel", () => {
+    expect(itemEffect("force_staff", [VOID, LC, DROW])).toEqual({ line: "Pushes you away from Drow Ranger.", against: [6] });
+    expect(itemEffect("force_staff", [VOID, LC])?.line).toBe("Pushes you out of trouble.");
+  });
+});
