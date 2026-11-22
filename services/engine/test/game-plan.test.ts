@@ -167,6 +167,7 @@ describe("gamePlan", () => {
     expect(spectre?.items.map((i) => i.name)).toEqual(expect.arrayContaining(["Iron Branch", "Tango"]));
     expect(spectre?.items.some((i) => i.name === "Radiance")).toBe(false);
     expect(spectre?.items.every((i) => i.minute <= 10)).toBe(true);
+    expect(spectre?.items.find((i) => i.name === "Tango")?.phase).toBe("start");
     // No item data for the other lanes' enemies: no list.
     expect(gamePlan(new Engine(d), { ours, theirs }).lanes.find((l) => l.name === "Safe lane")?.enemyItems).toBeUndefined();
   });

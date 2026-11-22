@@ -83,7 +83,8 @@ export interface LanePlan {
 /** An enemy laner's items by the end of the lane: the start, the small lane items and any core item bought by then. */
 export interface EnemyLaneItems {
   hero: number;
-  items: Pick<BuildItem, "itemId" | "name" | "img" | "minute" | "count">[];
+  /** In buy order. `phase` tells start and lane items, boots too, whose minutes are rough on their own, from the big core items. */
+  items: Pick<BuildItem, "itemId" | "name" | "img" | "minute" | "count" | "phase">[];
 }
 
 /** The lane ends here: an enemy's items bought by this minute are lane items. */
@@ -332,12 +333,13 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       const position = enemyPositionOf.get(t);
       const build = position === undefined ? null : itemBuild(engine.data, t, position, ourIds, bracket);
       if (!build) return [];
-      const items = [...build.start, ...build.lane, ...build.core.filter((i) => i.minute <= LANE_END_MINUTE)].map(({ itemId, name, img, minute, count }) => ({
+      const items = [...build.start, ...build.lane, ...build.core.filter((i) => i.minute <= LANE_END_MINUTE)].map(({ itemId, name, img, minute, count, phase }) => ({
         itemId,
         name,
         img,
         minute,
         ...(count ? { count } : {}),
+        ...(phase ? { phase } : {}),
       }));
       return items.length ? [{ hero: t, items }] : [];
     });
