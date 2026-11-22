@@ -43,10 +43,11 @@ describe("talents", () => {
   });
 
   it("keeps talents read from the game files over STRATZ's constants", () => {
-    const game = { ...SVEN, talentsFrom: "game" as const, talents: [[{ id: 90, name: "+30 Damage" }, { id: 91, name: "+5 Armor" }]] };
+    const game = { ...SVEN, talentsFrom: "game" as const, innate: ["Vanquisher"], talents: [[{ id: 90, name: "+30 Damage" }, { id: 91, name: "+5 Armor" }]] };
     const merged = mergeHeroAbilities({ 18: game }, { 18: SVEN })[18]!;
     expect(merged.talents).toEqual(game.talents);
     expect(merged.talentsFrom).toBe("game");
+    expect(merged.innate).toEqual(["Vanquisher"]);
     expect(merged.abilities).toEqual(SVEN.abilities);
     // And the fill-in for a missing STRATZ talent leaves them alone.
     const one = { ...game, talents: [[{ id: 90, name: "+30 Damage" }]] };

@@ -54,10 +54,17 @@ const constants = () =>
   toTalentConstants(
     { 1: { id: 1, name: NPC }, 2: { id: 2, name: "npc_dota_hero_new" } },
     {
-      [NPC]: { talents: [...KEYS.map((name, i) => ({ name, level: Math.floor(i / 2) + 1 }))] },
+      [NPC]: {
+        abilities: ["antimage_mana_break", "antimage_persectur", "generic_hidden"],
+        talents: [...KEYS.map((name, i) => ({ name, level: Math.floor(i / 2) + 1 }))],
+      },
       npc_dota_hero_new: { talents: [{ name: "special_bonus_new", level: 1 }] },
     },
-    Object.fromEntries(KEYS.map((k, i) => [k, { dname: i === 0 ? " +25%% Counterspell  Reflected Spell Debuff Duration " : NAMES[i] }])),
+    {
+      ...Object.fromEntries(KEYS.map((k, i) => [k, { dname: i === 0 ? " +25%% Counterspell  Reflected Spell Debuff Duration " : NAMES[i] }])),
+      antimage_mana_break: { dname: "Mana Break" },
+      antimage_persectur: { dname: "Persecutor", is_innate: true },
+    },
     { ...Object.fromEntries(KEYS.map((k, i) => [String(IDS[i]), k])), "3060,1617": "templar_assassin_hidden_gates" },
   );
 
@@ -73,6 +80,9 @@ describe("game talents", () => {
     expect(c.heroes.get(1)).toBe(NPC);
     expect(c.names.get(KEYS[0]!)).toBe(NAMES[0]);
     expect(c.ids.get("templar_assassin_hidden_gates")).toBe(3060);
+    // Only innate abilities, by their names; a hero without one has no entry.
+    expect(c.innate.get(NPC)).toEqual(["Persecutor"]);
+    expect(c.innate.has("npc_dota_hero_new")).toBe(false);
     expect(() => toTalentConstants([], {}, {}, {})).toThrow("not objects");
   });
 
@@ -97,6 +107,7 @@ describe("game talents", () => {
     expect(urls[0]).toBe(`${HERO_FILES_URL}${NPC}.txt`);
     expect(fromFile.fromFiles).toBe(1);
     expect(fromFile.trees[1]?.[3]?.map((t) => t.id)).toEqual([6353, 6012]);
+    expect(fromFile.innate).toEqual({ 1: ["Persecutor"] });
     // The new hero has one talent: left out, with a note.
     expect(fromFile.trees[2]).toBeUndefined();
     expect(fromFile.notes).toContain("npc_dota_hero_new: left as it was, 1 talents");
@@ -113,9 +124,12 @@ describe("game talents", () => {
   it("puts the trees on the snapshot's heroes and counts the changed ones", () => {
     const tree = [[{ id: 1, name: "+1 Armor" }, { id: 2, name: "+2 Armor" }]];
     const snapshot = { heroAbilities: { 18: { ...SVEN }, 19: { ...SVEN } } } as unknown as Snapshot; // Only heroAbilities is read.
-    expect(applyGameTalents(snapshot, { 18: tree, 19: SVEN.talents, 20: tree })).toBe(1);
-    expect(snapshot.heroAbilities?.[18]).toMatchObject({ talents: tree, talentsFrom: "game" });
+    snapshot.heroAbilities![19]!.innate = ["Gone"];
+    expect(applyGameTalents(snapshot, { 18: tree, 19: SVEN.talents, 20: tree }, { 18: ["Warcry Aura"] })).toBe(1);
+    expect(snapshot.heroAbilities?.[18]).toMatchObject({ talents: tree, talentsFrom: "game", innate: ["Warcry Aura"] });
     expect(snapshot.heroAbilities?.[19]?.talentsFrom).toBe("game");
+    // An innate ability the game no longer lists goes.
+    expect(snapshot.heroAbilities?.[19]?.innate).toBeUndefined();
     expect(snapshot.heroAbilities?.[20]).toBeUndefined();
   });
 });

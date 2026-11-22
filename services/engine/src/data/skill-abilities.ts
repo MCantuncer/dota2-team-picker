@@ -140,7 +140,7 @@ export function fillMissingTalent(
 }
 
 /**
- * Fresh constants win, but talents read from the game files are kept, and a talent filled in by fillMissingTalent on
+ * Fresh constants win, but talents (and innate abilities) read from the game files are kept, and a talent filled in by fillMissingTalent on
  * an earlier run is kept while its tier is unchanged.
  */
 export function mergeHeroAbilities(
@@ -152,7 +152,7 @@ export function mergeHeroAbilities(
     const before = old?.[id];
     if (!before) continue;
     if (before.talentsFrom === "game") {
-      out[id] = { ...hero, talents: before.talents, talentsFrom: "game" };
+      out[id] = { ...hero, talents: before.talents, talentsFrom: "game", ...(before.innate ? { innate: before.innate } : {}) };
       continue;
     }
     out[id] = {
