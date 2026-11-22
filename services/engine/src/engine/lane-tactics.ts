@@ -121,10 +121,21 @@ function spellHit(caster: Side, spell: LaneSpell, target: HeroStats): number {
 
 const casts = (spells: LaneSpell[]) => spells.filter((sp) => !sp.passive && sp.damage);
 
+/**
+ * The most health an execute that scales with missing health (Reaper's Scythe) kills from, after resistances: with
+ * k damage per missing point and max health H, a hero at h dies when k(H - h) >= h, so up to kH / (1 + k). That is
+ * also what the execute adds to a kill line, as the rest of the combo has to bring the hero down to it.
+ */
+function executeLine(caster: Side, spell: LaneSpell, target: HeroStats): number {
+  const perPoint = damageTaken(valueOf(caster, spell, spell.missingHealthDamage) ?? 0, spell.damageType ?? "magical", target);
+  return (perPoint * target.health) / (1 + perPoint);
+}
+
 function killLine(me: Side, enemy: Side): LaneTactic | undefined {
   // Every damaging spell once, cheapest first, as long as the enemy has the mana for it.
-  const all = casts(spellsOf(enemy))
-    .map((sp) => ({ sp, cost: valueOf(enemy, sp, sp.mana) ?? 0, hit: spellHit(enemy, sp, me.stats) }))
+  const all = spellsOf(enemy)
+    .filter((sp) => !sp.passive && (sp.damage || sp.missingHealthDamage))
+    .map((sp) => ({ sp, cost: valueOf(enemy, sp, sp.mana) ?? 0, hit: sp.damage ? spellHit(enemy, sp, me.stats) : executeLine(enemy, sp, me.stats) }))
     .filter((u) => u.hit > 0);
   // Orb-levelled spells are invoked, and only INVOKED_SLOTS are ready at once: the strongest of them.
   const invoked = new Set(

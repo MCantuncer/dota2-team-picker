@@ -153,6 +153,18 @@ describe("laneTactics", () => {
     expect(invoked.length).toBeLessThanOrEqual(2);
   });
 
+  it("counts Reaper's Scythe in Necrophos's kill line as the health it executes from", () => {
+    const list = laneTactics(data, { id: 25, position: 2 }, { id: 36, position: 2 }, name);
+    const kill = byRule(list, "killLine");
+    expect(kill?.spells).toContain("necrolyte_reapers_scythe");
+    const scythe = kill?.visual?.kind === "killLine" ? kill.visual.parts.find((p) => p.spell === "necrolyte_reapers_scythe") : undefined;
+    // 0.7 per missing point, after Lina's magic resistance: a hero at h dies when 0.7 x MR x (H - h) >= h.
+    const health = kill?.visual?.kind === "killLine" ? kill.visual.health : 0;
+    const perPoint = scythe ? scythe.amount / (health - scythe.amount) : 0;
+    expect(perPoint).toBeGreaterThan(0.45);
+    expect(perPoint).toBeLessThan(0.7);
+  });
+
   it("ends with the last hit target against this enemy, the usual and the enemy's own", () => {
     const list = laneTactics(data, { id: 36, position: 2 }, { id: 25, position: 2 }, name);
     const target = list[list.length - 1];
