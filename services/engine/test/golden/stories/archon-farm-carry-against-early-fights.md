@@ -1,6 +1,6 @@
 ## Archon farm carry against early fights
 
-Headline: Hard off lane: Centaur Warrunner wins 30% and loses 44% of 964 lanes against Jakiro.
+Headline: Both teams are ready at 16 min.
 
 - 0 to 10 min: Anti-Mage and Warlock win the safe lane against Dark Seer and Snapfire. Centaur Warrunner and Mirana have a hard off lane against Troll Warlord and Jakiro. Warlock wins 51% and loses 24% of 416 lanes against Dark Seer. Centaur Warrunner wins 30% and loses 44% of 964 lanes against Jakiro.
 - 10 to 20 min: Anti-Mage's Battle Fury at 15 and Lina's Maelstrom at 16: ready to fight at 16. Enemy Troll Warlord has Battle Fury at 15.
