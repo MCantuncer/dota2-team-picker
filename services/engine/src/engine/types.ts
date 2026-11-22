@@ -145,7 +145,7 @@ export interface Snapshot {
   itemTimingsAt?: string;
   /** What players start with and which boots they buy, from STRATZ: itemStarts[heroId][position], every rank. */
   itemStarts?: Record<string, Record<string, ItemStart>>;
-  /** Each hero's learnable abilities and talents, from STRATZ, for skill builds. Keyed by hero id. */
+  /** Each hero's learnable abilities (from STRATZ) and talents (from the game files), for skill builds. Keyed by hero id. */
   heroAbilities?: Record<string, HeroAbilities>;
   /**
    * The skill build high-rank players used, from STRATZ guide matches of this patch, for every facet
@@ -221,8 +221,13 @@ export const TALENT_LEVELS: readonly number[] = [10, 15, 20, 25];
 export interface HeroAbilities {
   /** Learnable abilities in hotkey order (Q, W, E, ..., R last). */
   abilities: HeroAbility[];
-  /** Talents per tier (levels 10, 15, 20, 25): [left, right] ability ids and names. */
+  /** Talents per tier (levels 10, 15, 20, 25): [left, right] ability ids and names, on the sides the game shows them. */
   talents: { id: number; name: string }[][];
+  /**
+   * "game" when the talents were read from the game files (data/talents.ts), which STRATZ's constants then leave
+   * alone. Missing on talents from STRATZ's constants, which can lag a patch.
+   */
+  talentsFrom?: "game";
 }
 
 /** One skill build: the ability or talent id taken at each hero level from 1, 0 for a level with no point. */

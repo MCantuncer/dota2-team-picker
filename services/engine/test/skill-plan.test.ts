@@ -156,6 +156,15 @@ describe("skillPlan", () => {
     expect(plan(data(old), 18, 3, ENEMIES, clear()).talents[0]).toMatchObject({ pick: null, result: "no-data" });
   });
 
+  it("shows no pick when a patch changed the other talent of the usual one's pair", () => {
+    // The weekly share compared +2 Mana Regen against a talent the patch replaced with +15 Damage.
+    const sides = [{ id: 10, games: 900, wins: 450 }, { id: 98, games: 100, wins: 50 }];
+    const old = slice({ talents: [{ tier: 0, id: 10, share: 0.9, games: 1000, level: 10, sides }] });
+    const tier = plan(data(old), 18, 3, ENEMIES, clear()).talents[0];
+    expect(tier).toMatchObject({ pick: null, usual: null, result: "no-data" });
+    expect(tier?.reason).toContain("changed in the new patch");
+  });
+
   it("says last patch when the slice is older than the others", () => {
     const d = data(slice({ gameVersionId: 183 }));
     const builds = { ...d.skillBuilds, 1: { 1: slice() } };

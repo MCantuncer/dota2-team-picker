@@ -87,7 +87,7 @@ export function latestSkillVersion(builds: Snapshot["skillBuilds"]): number {
   return latest;
 }
 
-function noData(tier: number, options: TalentTier["options"]): TalentTier {
+function noData(tier: number, options: TalentTier["options"], changed: boolean): TalentTier {
   const level = TALENT_LEVELS[tier] ?? 10 + 5 * tier;
   return {
     tier,
@@ -96,8 +96,19 @@ function noData(tier: number, options: TalentTier["options"]): TalentTier {
     pick: null,
     usual: null,
     result: "no-data",
-    reason: `No talent picks recorded for level ${level} yet, so there is no usual pick.`,
+    reason: changed
+      ? `The level ${level} talents changed in the new patch and no picks of the new pair are recorded yet, so there is no usual pick.`
+      : `No talent picks recorded for level ${level} yet, so there is no usual pick.`,
   };
+}
+
+/**
+ * Whether a weekly tier still fits the hero's tree: its usual talent is in the tier, and the pair its totals compare
+ * is the tier's pair. A patch that swapped one talent of a pair leaves shares that compared against the old one.
+ */
+function fitsTree(g: SkillBuildSlice["talents"][number], pair: { id: number }[] | undefined): boolean {
+  if (!pair?.some((o) => o.id === g.id)) return false;
+  return !g.sides || g.sides.every((s) => pair.some((o) => o.id === s.id));
 }
 
 const tookAny = (c: TierChoice) => c.sides.some((s) => s.wins + s.losses > 0);
@@ -124,8 +135,9 @@ export function skillPlan(
   for (const t of hero.talents.flat()) names[t.id] = t.name;
   const name = (id: number) => names[id] || "an unnamed talent";
 
-  // A weekly talent that isn't in the hero's tree (a patch changed it) can't be shown or compared.
-  const general = (found?.talents ?? []).filter((g) => hero.talents[g.tier]?.some((o) => o.id === g.id));
+  // A weekly tier whose talents aren't the hero's tree now (a patch changed them) can't be shown or compared.
+  const general = (found?.talents ?? []).filter((g) => fitsTree(g, hero.talents[g.tier]));
+  const changed = new Set((found?.talents ?? []).filter((g) => !general.includes(g)).map((g) => g.tier));
   const games = Array.isArray(matchup) ? matchup : null;
   const live: SkillLive =
     matchup === undefined ? "loading" : matchup === null ? "unavailable" : games ? "ready" : "sign-in";
@@ -135,7 +147,7 @@ export function skillPlan(
   const talents = hero.talents.flatMap((options, tier): TalentTier[] => {
     if (options.length !== 2) return [];
     const g = general.find((t) => t.tier === tier);
-    if (!g) return [noData(tier, options)];
+    if (!g) return [noData(tier, options, changed.has(tier))];
     const base = { tier, level: g.level, options, usual: g.id, usualShare: g.share, usualGames: g.games };
     const c = choices.find((x) => x.tier === tier);
     if (c) {
