@@ -57,12 +57,12 @@ const POSITION_NAMES = ["POSITION_1", "POSITION_2", "POSITION_3", "POSITION_4", 
 
 // ---------------------------------------------------------------- what to refresh
 
-/** Slices that are missing, older than a week, from an older patch or saved before item paths, oldest first. */
+/** Slices that are missing, older than a week, from an older patch or saved before item paths or talents apart, oldest first. */
 export function skillRequests(snapshot: Snapshot, versionId: number, now: Date): SkillRequest[] {
   if (!snapshot.positions) return [];
   const age = (r: SkillRequest) => {
     const slice = snapshot.skillBuilds?.[r.heroId]?.[r.position];
-    if (!slice || slice.gameVersionId !== versionId || !slice.itemPaths) return Infinity;
+    if (!slice || slice.gameVersionId !== versionId || !slice.itemPaths || !slice.talentsApart) return Infinity;
     return now.getTime() - Date.parse(slice.at);
   };
   return startRequests(snapshot.positions)

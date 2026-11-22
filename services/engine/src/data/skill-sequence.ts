@@ -2,7 +2,7 @@
  * Turns a STRATZ guide player's skill points, given in order without hero levels, into the ability
  * taken at each hero level, and learns which abilities the hero really has from the games.
  */
-import type { HeroAbilities, Position } from "../engine/types";
+import { TALENT_LEVELS, type HeroAbilities, type Position } from "../engine/types";
 
 /** Builds are compared and shown up to this level; talents are placed from the full games. */
 export const BUILD_LEVELS = 18;
@@ -52,13 +52,6 @@ export function learnedHero(hero: HeroAbilities, players: GuidePlayer[]): HeroAb
   };
 }
 
-/** The hero level of each of `count` skill points, for a hero that gets no point at NO_POINT_LEVELS. */
-function pointLevels(count: number): number[] {
-  const levels: number[] = [];
-  for (let level = 1; levels.length < count; level++) if (!NO_POINT_LEVELS.has(level)) levels.push(level);
-  return levels;
-}
-
 /** How many skill points a hero has by `level`: one per level, or none at NO_POINT_LEVELS. */
 function pointsBy(level: number, everyLevel: boolean): number {
   if (everyLevel) return level;
@@ -84,42 +77,97 @@ export function getsPointEveryLevel(players: Pick<GuidePlayer, "points" | "level
   return every > skip;
 }
 
+/** Hero levels each rank of an ultimate can be learned at: 6, 12 and 18, Meepo's at 3, 10, 17 and 24 (7.41). */
+const ULT_LEVELS = [6, 12, 18];
+const ULT_LEVELS_BY_KEY: Record<string, number[]> = { meepo_divided_we_stand: [3, 10, 17, 24] };
+
+/** A guide player's skill points placed on hero levels: an ability per level, and the level each talent was taken. */
+export interface PlacedPoints {
+  /** The ability taken at each hero level (index 0 is level 1, 0 for a level with nothing taken). */
+  levels: number[];
+  /** Each talent taken by the end of the game, with the level it is placed at. */
+  talents: { id: number; level: number }[];
+}
+
 /**
- * A guide player's skill points as the id taken at each hero level (index 0 is level 1, 0 for a level
- * with no point), or null when they don't make a full build.
+ * A guide player's skill points placed on hero levels, or null when they don't make a full build.
  *
- * STRATZ gives the points in order but not the hero level of each, so the k-th point is placed at the
- * k-th level that gives one. That holds when the player spent their points as they came: their point
- * count must match their final level, or be one short (a point not spent when the game ended); any
- * other count means points were held at the end and the levels can't be placed, so the game is dropped.
- * A point held mid-game and spent later still matches, and shifts the levels in between by one; the
- * typical build and the check against STRATZ's totals keep such a game from being shown, but a single
- * game's levels are not exact. Only the
- * first BUILD_LEVELS levels must be the hero's abilities, talents or attribute bonus; an unknown id
- * there (STRATZ sometimes answers 0) or an ability past its max drops the game too.
+ * STRATZ gives the points in order but not the hero level of each. A talent doesn't use the level's skill point
+ * (7.4x): at level 10 a player takes an ability and the talent, so the talent goes beside the ability before it, at
+ * its tier's level or later, and takes no level of its own. Each ability point goes at the next level that gives one,
+ * or the level its ultimate rank opens at when the player had to hold it (Sven's third God's Strength at 18 once
+ * everything else is maxed). A point held mid-game and spent later shifts the levels in between by one; the typical
+ * build and the check against STRATZ's totals keep such a game from being shown, but a single game's levels are not
+ * exact. Only the first BUILD_LEVELS levels must be the hero's abilities, talents or attribute bonus; an unknown id
+ * there (STRATZ sometimes answers 0), an ability past its max or a point past the game's last level drops the game.
+ *
+ * A hero with a point every level (Invoker) keeps one point per level, talents included, as before.
  */
 export function toSequence(
   player: Pick<GuidePlayer, "points" | "level">,
   hero: HeroAbilities,
   everyLevel = false,
-): number[] | null {
+): PlacedPoints | null {
   const { points } = player;
   if (points.length < MIN_POINTS) return null;
-  const expected = pointsBy(player.level, everyLevel);
-  if (points.length !== expected && points.length !== expected - 1) return null;
-  const levelOf = everyLevel ? points.map((_, i) => i + 1) : pointLevels(points.length);
+  if (everyLevel) return everyLevelSequence(player, hero);
   const maxLevel = new Map(hero.abilities.map((a) => [a.id, a.maxLevel]));
-  const known = new Set([...maxLevel.keys(), ...hero.talents.flat().map((t) => t.id)]);
+  const ultLevels = new Map(
+    hero.abilities.filter((a) => a.ultimate).map((a) => [a.id, ULT_LEVELS_BY_KEY[a.key] ?? ULT_LEVELS]),
+  );
+  const tierOf = new Map(hero.talents.flatMap((pair, tier) => pair.map((t) => [t.id, tier] as const)));
   const levels: number[] = [];
+  const talents: PlacedPoints["talents"] = [];
   const taken = new Map<number, number>();
-  for (const [i, id] of points.entries()) {
-    const level = levelOf[i] ?? 0;
-    if (level <= BUILD_LEVELS && !known.has(id)) return null;
+  let level = 0;
+  for (const id of points) {
+    const tier = tierOf.get(id);
+    if (tier !== undefined) {
+      const at = Math.max(level, TALENT_LEVELS[tier] ?? 0);
+      if (at > player.level) return null;
+      talents.push({ id, level: at });
+      continue;
+    }
     const count = (taken.get(id) ?? 0) + 1;
     const max = maxLevel.get(id) ?? 0;
     if (max > 0 && count > max) return null;
     taken.set(id, count);
+    level = nextPointLevel(Math.max(level + 1, ultLevels.get(id)?.[count - 1] ?? 0));
+    if (level <= BUILD_LEVELS && !maxLevel.has(id)) return null;
+    if (level > player.level) return null;
     levels[level - 1] = id;
   }
-  return Array.from(levels, (id) => id ?? 0);
+  return { levels: Array.from(levels.slice(0, BUILD_LEVELS), (id) => id ?? 0), talents };
+}
+
+/** The first level from `level` on that gives a skill point. */
+function nextPointLevel(level: number): number {
+  let at = level;
+  while (NO_POINT_LEVELS.has(at)) at++;
+  return at;
+}
+
+/**
+ * A hero with a point every level (Invoker): the k-th point at level k, talents included. The point count must match
+ * the final level, or be one short (a point not spent when the game ended).
+ */
+function everyLevelSequence(player: Pick<GuidePlayer, "points" | "level">, hero: HeroAbilities): PlacedPoints | null {
+  const { points } = player;
+  if (points.length !== player.level && points.length !== player.level - 1) return null;
+  const maxLevel = new Map(hero.abilities.map((a) => [a.id, a.maxLevel]));
+  const talentIds = new Set(hero.talents.flat().map((t) => t.id));
+  const levels: number[] = [];
+  const talents: PlacedPoints["talents"] = [];
+  const taken = new Map<number, number>();
+  for (const [i, id] of points.entries()) {
+    const level = i + 1;
+    if (level <= BUILD_LEVELS && !maxLevel.has(id) && !talentIds.has(id)) return null;
+    const count = (taken.get(id) ?? 0) + 1;
+    const max = maxLevel.get(id) ?? 0;
+    if (max > 0 && count > max) return null;
+    taken.set(id, count);
+    if (talentIds.has(id)) talents.push({ id, level });
+    levels[i] = id;
+  }
+  return { levels: Array.from(levels.slice(0, BUILD_LEVELS), (id) => id ?? 0), talents };
 }

@@ -14,7 +14,14 @@ import {
   type SkillBuild,
   type SkillBuildSlice,
 } from "../engine/types";
-import { BUILD_LEVELS, type GuidePlayer, getsPointEveryLevel, learnedHero, toSequence } from "./skill-sequence";
+import {
+  BUILD_LEVELS,
+  type GuidePlayer,
+  getsPointEveryLevel,
+  learnedHero,
+  type PlacedPoints,
+  toSequence,
+} from "./skill-sequence";
 
 /** Fewer usable games than this and the slice has no build ("few-matches"). */
 export const MIN_MATCHES = 20;
@@ -148,31 +155,31 @@ export function typicalBuild(sequences: number[][]): { levels: number[]; count: 
 /** Per talent tier: the talent picked in more of STRATZ's games, its share, and the level guide players usually took it. */
 export function chooseTalents(
   totals: TalentRow[],
-  sequences: number[][],
+  games: PlacedPoints[],
   hero: HeroAbilities,
 ): SkillBuildSlice["talents"] {
-  const games = new Map<number, number>();
+  const picks = new Map<number, number>();
   const wins = new Map<number, number>();
   for (const r of totals) {
-    games.set(r.abilityId, (games.get(r.abilityId) ?? 0) + r.matchCount);
+    picks.set(r.abilityId, (picks.get(r.abilityId) ?? 0) + r.matchCount);
     wins.set(r.abilityId, (wins.get(r.abilityId) ?? 0) + (r.winCount ?? 0));
   }
   const hasWins = totals.length > 0 && totals.every((r) => r.winCount !== undefined);
   return hero.talents.flatMap((pair, tier) => {
     // A tier missing a side (STRATZ's constants left one out) would read "100% pick this": skip it.
     if (pair.length !== 2) return [];
-    const [top] = pair.map((t) => ({ id: t.id, games: games.get(t.id) ?? 0 })).sort((a, b) => b.games - a.games);
-    const all = pair.reduce((n, t) => n + (games.get(t.id) ?? 0), 0);
+    const [top] = pair.map((t) => ({ id: t.id, games: picks.get(t.id) ?? 0 })).sort((a, b) => b.games - a.games);
+    const all = pair.reduce((n, t) => n + (picks.get(t.id) ?? 0), 0);
     if (!top || !all) return [];
     const ids = new Set(pair.map((t) => t.id));
     const atLevel = new Map<number, number>();
-    for (const s of sequences) {
-      const at = s.findIndex((id) => ids.has(id));
-      if (at >= 0) atLevel.set(at + 1, (atLevel.get(at + 1) ?? 0) + 1);
+    for (const g of games) {
+      const at = g.talents.find((t) => ids.has(t.id))?.level;
+      if (at !== undefined) atLevel.set(at, (atLevel.get(at) ?? 0) + 1);
     }
     const [usual] = [...atLevel].sort((a, b) => b[1] - a[1] || a[0] - b[0]);
     const level = usual?.[0] ?? TALENT_LEVELS[tier] ?? 0;
-    const sides = pair.map((t) => ({ id: t.id, games: games.get(t.id) ?? 0, wins: wins.get(t.id) ?? 0 }));
+    const sides = pair.map((t) => ({ id: t.id, games: picks.get(t.id) ?? 0, wins: wins.get(t.id) ?? 0 }));
     return [{ tier, id: top.id, share: share(top.games, all), games: all, level, ...(hasWins ? { sides } : {}) }];
   });
 }
@@ -189,12 +196,14 @@ export function toSkillSlice(
   const usable = players.filter((p) => p.position === position && p.gameVersionId >= versionId);
   const hero = learnedHero(constantsHero, usable);
   const everyLevel = getsPointEveryLevel(usable);
-  const sequences = usable.map((p) => toSequence(p, hero, everyLevel)).filter((s): s is number[] => s !== null);
+  const placed = usable.map((p) => toSequence(p, hero, everyLevel)).filter((s): s is PlacedPoints => s !== null);
+  const sequences = placed.map((p) => p.levels);
   const base = {
     at: now.toISOString(),
     gameVersionId: versionId,
     matches: sequences.length,
-    talents: chooseTalents(totals.talents, sequences, hero),
+    talents: chooseTalents(totals.talents, placed, hero),
+    talentsApart: true as const,
   };
   if (sequences.length < MIN_MATCHES) return { ...base, none: "few-matches" };
 

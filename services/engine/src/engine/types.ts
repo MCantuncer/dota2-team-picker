@@ -227,6 +227,7 @@ export interface HeroAbilities {
 
 /** One skill build: the ability or talent id taken at each hero level from 1, 0 for a level with no point. */
 export interface SkillBuild {
+  /** The ability or attribute bonus taken at each level from 1 (0 for none); talents too in slices without `talentsApart`. */
   levels: number[];
   /** Matches whose order matched this build's group (max order and first points), and its share of all matches. */
   groupMatches: number;
@@ -265,6 +266,12 @@ export interface SkillBuildSlice {
    * `{}` when no key item passes; missing in slices saved before it existed, which makes the slice due again.
    */
   itemPaths?: Record<string, KeyPaths>;
+  /**
+   * True when talents were placed beside the level's ability point (a talent doesn't use the point since 7.4x), so
+   * `build.levels` holds abilities only, except for a hero with a point every level (Invoker), which keeps its talents
+   * there. Slices saved before it put each talent on a level of its own, one level late from 10 on, and are due again.
+   */
+  talentsApart?: true;
 }
 
 /** One step of a late path: the item, its minute, and how many late games bought it next. */
