@@ -42,6 +42,17 @@ describe("talents", () => {
     expect(mergeHeroAbilities({ 18: SVEN }, { 18: changed })[18]!.talents[2]).toEqual([{ id: 50, name: "New" }]);
   });
 
+  it("keeps talents read from the game files over STRATZ's constants", () => {
+    const game = { ...SVEN, talentsFrom: "game" as const, talents: [[{ id: 90, name: "+30 Damage" }, { id: 91, name: "+5 Armor" }]] };
+    const merged = mergeHeroAbilities({ 18: game }, { 18: SVEN })[18]!;
+    expect(merged.talents).toEqual(game.talents);
+    expect(merged.talentsFrom).toBe("game");
+    expect(merged.abilities).toEqual(SVEN.abilities);
+    // And the fill-in for a missing STRATZ talent leaves them alone.
+    const one = { ...game, talents: [[{ id: 90, name: "+30 Damage" }]] };
+    expect(fillMissingTalent(one, [{ abilityId: 15, matchCount: 5 }], new Map())).toBe(one.talents);
+  });
+
   it("tidies talent names", () => {
     expect(talentName("+20  Movement Speed")).toBe("+20 Movement Speed");
     expect(talentName(null)).toBe("");
@@ -131,8 +142,9 @@ describe("constants", () => {
     const hero = toHeroAbilities(constants)[18]!;
     expect(hero.abilities.map((a) => a.name)).toEqual(["Storm Hammer", "Great Cleave", "Warcry", "God's Strength"]);
     expect(hero.abilities[3]).toMatchObject({ ultimate: true, maxLevel: 3 });
-    expect(hero.talents.map((pair) => pair.map((t) => t.id))).toEqual([[10, 11], [12, 13], [15], [16, 17]]);
-    expect(hero.talents[0]![0]!.name).toBe("+2 Mana Regen");
+    // The game shows the first slot of a pair on the right, so each pair reads [left, right] = [second, first].
+    expect(hero.talents.map((pair) => pair.map((t) => t.id))).toEqual([[11, 10], [13, 12], [15], [17, 16]]);
+    expect(hero.talents[0]![1]!.name).toBe("+2 Mana Regen");
   });
 
   it("finds the first game version of a patch, letters included", () => {

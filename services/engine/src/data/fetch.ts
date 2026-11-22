@@ -29,6 +29,7 @@ import { fetchItems, itemsDue } from "./items";
 import { dropRemovedItems } from "./removed-items";
 import { countPickPhases } from "./pick-phase";
 import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
+import { applyGameTalents, fetchGameTalents } from "./talents";
 import { fetchPositions, postStratz } from "./stratz";
 import { blendCounts, fetchPatchCounts, lastStratzCounts, MIN_PATCH_GAMES, patchIsFresh, STRATZ_SHARE, type DatedCounts } from "./patch-matchups";
 import { applyStratzCounts, fetchStratzCounts, type StratzCounts } from "./stratz-matchups";
@@ -349,6 +350,18 @@ async function main() {
     }
   } else if (stratzToken) {
     console.log(`Item timings are from ${snapshot.itemTimingsAt}, keeping them.`);
+  }
+
+  console.log("Talents from the game files...");
+  try {
+    const talents = await fetchGameTalents();
+    const changed = applyGameTalents(snapshot, talents.trees);
+    const heroes = Object.keys(talents.trees).length;
+    console.log(`Talents for ${heroes} heroes, ${changed} changed; sides from ${talents.fromFiles} hero files.`);
+    for (const note of talents.notes) console.warn(`::warning::Talents, ${note}`);
+  } catch (err) {
+    // Keep the last talents and go on; the next run tries again.
+    console.warn(`::warning::Talents from the game files failed, keeping the last ones: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   if (stratzToken) {
