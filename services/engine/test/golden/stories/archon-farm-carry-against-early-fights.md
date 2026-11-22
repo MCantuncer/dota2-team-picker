@@ -4,7 +4,7 @@ Headline: Hard off lane: Centaur Warrunner wins 30% and loses 44% of 964 lanes a
 
 - 0 to 10 min: Anti-Mage and Warlock win the safe lane against Dark Seer and Snapfire. Centaur Warrunner and Mirana have a hard off lane against Troll Warlord and Jakiro. Warlock wins 51% and loses 24% of 416 lanes against Dark Seer. Centaur Warrunner wins 30% and loses 44% of 964 lanes against Jakiro.
 - 10 to 20 min: Anti-Mage's Battle Fury at 15 and Lina's Maelstrom at 16: ready to fight at 16. Enemy Troll Warlord has Battle Fury at 15.
-- 20 to 30 min: Enemy Dark Seer has Blink Dagger at 21. Roshan from 20 min, once three key items are in.
+- 20 to 30 min: Enemy Dark Seer has Blink Dagger at 21. Roshan at 20 min or later, with three key items in.
 
 Danger heroes:
 - Huskar: Blink Dagger at 14 min. Strong against Anti-Mage.

@@ -4,7 +4,7 @@ Headline: Fight from 13 min, before Spectre has Radiance at 19.
 
 - 0 to 10 min: Invoker has a hard mid against Ember Spirit. Invoker wins 29% and loses 43% of 2,093 lanes against Ember Spirit.
 - 10 to 20 min: Invoker's Meteor Hammer at 12 and Magnus's Blink Dagger at 13: ready to fight at 13. Enemy Spectre has Radiance at 19. Open fights with Chronosphere into Sun Strike and Chaos Meteor.
-- 20 to 30 min: Roshan from 20 min, once three key items are in.
+- 20 to 30 min: Roshan at 20 min or later, with three key items in.
 
 Danger heroes:
 - Bristleback: Consecrated Wraps at 16 min. Strong against Faceless Void, Magnus and Earthshaker.

@@ -4,7 +4,7 @@ Headline: Hard mid: Puck wins 19% and loses 52% of 534 lanes against Shadow Fien
 
 - 0 to 10 min: Puck has a hard mid against Shadow Fiend. Puck wins 19% and loses 52% of 534 lanes against Shadow Fiend.
 - 10 to 20 min: Juggernaut's Battle Fury at 14 and Mars's Blink Dagger at 15: ready to fight at 15. Enemy Phantom Assassin has Battle Fury at 15.
-- 20 to 30 min: Roshan from 20 min, once three key items are in.
+- 20 to 30 min: Roshan at 20 min or later, with three key items in.
 
 Danger heroes:
 - Phantom Assassin: Battle Fury at 15 min.

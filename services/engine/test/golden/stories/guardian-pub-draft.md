@@ -4,7 +4,7 @@ Headline: Fight from 16 min, before Drow Ranger has Manta Style at 24.
 
 - 0 to 10 min: Wraith King and Lion have a hard safe lane against Legion Commander and Shadow Shaman. Lion wins 30% and loses 46% of 2,306 lanes against Legion Commander.
 - 10 to 20 min: Sniper's Maelstrom at 16 and Axe's Blink Dagger at 16: ready to fight at 16. Enemy Legion Commander has Blink Dagger at 15.
-- 20 to 30 min: Enemy Drow Ranger has Manta Style at 24. Roshan from 20 min, once three key items are in.
+- 20 to 30 min: Enemy Drow Ranger has Manta Style at 24. Roshan at 20 min or later, with three key items in.
 
 Danger heroes:
 - Drow Ranger: Manta Style at 24 min.
