@@ -5,7 +5,8 @@
  * game, the build most of those games used, and the three closest games.
  *
  * Only games where the hero played the asked position count: the same hero in another role is another game.
- * Every number is a count of these games; nothing here says a choice causes a win.
+ * Every number is a count of these games; nothing here says a choice causes a win. What Won keeps only gaps a
+ * one-sided Fisher exact test finds, corrected for every test tried, so chance gaps in a small sample never show.
  */
 import type { ItemInfo, Position } from "./types";
 
@@ -89,8 +90,21 @@ export interface SimilarSummary {
   usualBuild: UsualBuy[];
   /** The two closest wins and the closest loss (more of one when there are too few of the other). */
   closest: SimilarGame[];
+  /** Tested targets, in game order; empty when none passed. Null while games are pending or under MIN_TARGET_GAMES. */
+  whatWon: WonTarget[] | null;
   pending: boolean;
 }
+
+/** Wins among the games that met a target and the games that didn't. */
+export interface TargetSide {
+  games: number;
+  wins: number;
+}
+
+/** A What Won target: "Starforge by 24" or "Die 2 times or less by 20". */
+export type WonTarget =
+  & { minute: number; met: TargetSide; missed: TargetSide; /** Bonferroni corrected one-sided p. */ p: number }
+  & ({ kind: "item"; item: number } | { kind: "deaths"; most: number });
 
 /** The fewest role games the answer needs; under it the hero gets no Similar Games answer. */
 export const MIN_ROLE_GAMES = 10;
@@ -99,6 +113,14 @@ export const USUAL_SHARE = 0.5;
 /** Items in the usual build, at most. */
 export const USUAL_ITEMS = 6;
 const CLOSEST_GAMES = 3;
+/** What Won needs this many role games. */
+export const MIN_TARGET_GAMES = 20;
+/** Each side of a target (met, missed) needs this many games to be tested. */
+export const MIN_SIDE = 6;
+/** A target shows when its corrected p is under this. */
+export const MAX_P = 0.05;
+/** Deaths are counted up to this minute, in games that lasted past it. */
+export const DEATHS_BY = 20;
 
 /** The enemy lane that faces each of our lanes: their offlane is our safe lane. */
 const FACING: Record<SimilarLane, SimilarLane> = { safe: "off", mid: "mid", off: "safe", jungle: "jungle" };
@@ -120,6 +142,7 @@ export function similarSummary(answer: SimilarHeroAnswer, input: SimilarInput): 
     }),
     usualBuild: usualBuild(games, input.items),
     closest: closestGames(games, input.laneEnemy),
+    whatWon: answer.pending || games.length < MIN_TARGET_GAMES ? null : whatWon(games, input.items),
     pending: answer.pending,
   };
 }
@@ -178,6 +201,90 @@ export function closestGames(games: SimilarGame[], laneEnemy: number | null): Si
   const losses = ranked.filter((g) => !g.won);
   const winsPicked = wins.slice(0, CLOSEST_GAMES - Math.min(1, losses.length));
   return [...winsPicked, ...losses.slice(0, CLOSEST_GAMES - winsPicked.length)];
+}
+
+/**
+ * The targets that split wins from losses in these games beyond chance. Item: for each finished item at least
+ * MIN_SIDE games bought, T = the median minute wins bought it, rounded up; among games that lasted past T, wins with
+ * it by T against wins without it. Deaths: d = the median deaths by DEATHS_BY in wins, rounded down; among games
+ * that lasted past DEATHS_BY, wins with at most d deaths against wins with more. Each is a one-sided Fisher exact
+ * test, Bonferroni corrected over every test tried; at most the best item and the deaths target show, by minute.
+ */
+export function whatWon(games: SimilarGame[], items: Record<string, ItemInfo>): WonTarget[] {
+  const tests: WonTarget[] = [];
+  const bought = games.map((g) => new Map(finishedBuys(g, items)));
+  const buyers = new Map<number, number>();
+  const winBuys = new Map<number, number[]>();
+  games.forEach((g, i) => {
+    bought[i]!.forEach((at, id) => {
+      buyers.set(id, (buyers.get(id) ?? 0) + 1);
+      if (g.won) winBuys.set(id, [...(winBuys.get(id) ?? []), at]);
+    });
+  });
+  for (const [item, seconds] of winBuys) {
+    if ((buyers.get(item) ?? 0) < MIN_SIDE) continue;
+    const minute = Math.ceil(median(seconds) / 60);
+    const split = sides(games, (g, i) => {
+      if (g.duration <= minute * 60) return undefined;
+      const at = bought[i]!.get(item);
+      return at !== undefined && at <= minute * 60;
+    });
+    if (split) tests.push({ kind: "item", item, minute, ...split });
+  }
+  const deathsBy = (g: SimilarGame) => g.deathsAt.filter(([at]) => at <= DEATHS_BY * 60).length;
+  const lasted = games.filter((g) => g.duration > DEATHS_BY * 60);
+  const winDeaths = lasted.filter((g) => g.won).map(deathsBy);
+  if (winDeaths.length > 0) {
+    const most = Math.floor(median(winDeaths));
+    const split = sides(games, (g) => (g.duration > DEATHS_BY * 60 ? deathsBy(g) <= most : undefined));
+    if (split) tests.push({ kind: "deaths", most, minute: DEATHS_BY, ...split });
+  }
+  const passed = tests
+    .map((t) => ({ ...t, p: Math.min(1, t.p * tests.length) }))
+    .filter((t) => t.p < MAX_P)
+    .sort((a, b) => a.p - b.p || b.met.games + b.missed.games - (a.met.games + a.missed.games));
+  const item = passed.find((t) => t.kind === "item");
+  const deaths = passed.find((t) => t.kind === "deaths");
+  return [item, deaths].filter((t) => t !== undefined).sort((a, b) => a.minute - b.minute);
+}
+
+/** Splits games by a target (undefined: the game doesn't count) and tests it; null when a side is too small. */
+function sides(
+  games: SimilarGame[],
+  met: (g: SimilarGame, i: number) => boolean | undefined,
+): { met: TargetSide; missed: TargetSide; p: number } | null {
+  const a = { games: 0, wins: 0 };
+  const b = { games: 0, wins: 0 };
+  games.forEach((g, i) => {
+    const m = met(g, i);
+    if (m === undefined) return;
+    const side = m ? a : b;
+    side.games++;
+    if (g.won) side.wins++;
+  });
+  if (a.games < MIN_SIDE || b.games < MIN_SIDE) return null;
+  return { met: a, missed: b, p: fisherGreater(a.wins, a.games, a.wins + b.wins, a.games + b.games) };
+}
+
+/**
+ * One-sided Fisher exact test: the chance that a group of `n` games drawn from `total` games with `wins` wins has
+ * `hits` or more wins.
+ */
+export function fisherGreater(hits: number, n: number, wins: number, total: number): number {
+  const logChoose = (a: number, b: number) => logFactorial(a) - logFactorial(b) - logFactorial(a - b);
+  const denominator = logChoose(total, n);
+  let p = 0;
+  for (let x = hits; x <= Math.min(n, wins); x++) {
+    if (n - x > total - wins) continue;
+    p += Math.exp(logChoose(wins, x) + logChoose(total - wins, n - x) - denominator);
+  }
+  return Math.min(1, p);
+}
+
+function logFactorial(n: number): number {
+  let sum = 0;
+  for (let i = 2; i <= n; i++) sum += Math.log(i);
+  return sum;
 }
 
 function median(values: number[]): number {

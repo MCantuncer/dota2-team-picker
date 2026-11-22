@@ -2,12 +2,16 @@ import { describe, expect, it } from "vitest";
 import {
   closeness,
   closestGames,
+  DEATHS_BY,
   finishedBuys,
+  fisherGreater,
   MIN_ROLE_GAMES,
+  MIN_TARGET_GAMES,
   similarSummary,
   type SimilarGame,
   type SimilarHeroAnswer,
   usualBuild,
+  whatWon,
 } from "../src/engine/similar-games";
 import type { ItemInfo } from "../src/engine/types";
 
@@ -128,5 +132,69 @@ describe("closestGames", () => {
     const losses = [game({ won: false }), game({ won: false })];
     const one = game();
     expect(closestGames([...losses, one], null)).toEqual([one, ...[...losses].sort((a, b) => b.match - a.match)]);
+  });
+});
+
+describe("fisherGreater", () => {
+  it("matches the exact one-sided test", () => {
+    // 11 of 11 won with the item, 30 of 44 without: C(41,11) / C(55,11).
+    expect(fisherGreater(11, 11, 41, 55)).toBeCloseTo(0.026405, 6);
+    // Lady tasting tea: 3 of 4 right out of 8 cups, 4 right in all.
+    expect(fisherGreater(3, 4, 4, 8)).toBeCloseTo(17 / 70, 10);
+    expect(fisherGreater(0, 5, 5, 10)).toBeCloseTo(1, 10);
+  });
+});
+
+describe("whatWon", () => {
+  const meteorBy = (minute: number) => [[5, minute * 60]] as [number, number][];
+  const diesAt = (n: number) => Array.from({ length: n }, (_, i) => [300 + i * 60, 11] as [number, number | null]);
+
+  it("shows an item and a deaths target that pass the corrected test, in game order", () => {
+    const games = [
+      // 14 wins: Meteor Hammer by 11, 1 death before 20.
+      ...Array.from({ length: 14 }, () => game({ buys: meteorBy(11), deathsAt: diesAt(1) })),
+      // 2 wins without it, 1 death. 14 losses without it and 5 deaths; 2 losses with it late.
+      ...Array.from({ length: 2 }, () => game({ deathsAt: diesAt(1) })),
+      ...Array.from({ length: 14 }, () => game({ won: false, deathsAt: diesAt(5) })),
+      ...Array.from({ length: 2 }, () => game({ won: false, buys: meteorBy(16), deathsAt: diesAt(5) })),
+    ];
+    const targets = whatWon(games, ITEMS);
+    expect(targets.map((t) => [t.kind, t.minute])).toEqual([["item", 11], ["deaths", DEATHS_BY]]);
+    const [meteor, deaths] = targets;
+    expect(meteor).toMatchObject({ item: 5, met: { games: 14, wins: 14 }, missed: { games: 18, wins: 2 } });
+    expect(deaths).toMatchObject({ most: 1, met: { games: 16, wins: 16 }, missed: { games: 16, wins: 0 } });
+    // Two tests tried: each p is doubled.
+    expect(meteor!.p).toBeCloseTo(2 * fisherGreater(14, 14, 16, 32), 12);
+  });
+
+  it("shows nothing for a gap chance explains once every test is counted", () => {
+    // 11 of 11 with the item, 30 of 44 without: p 0.026 alone, 0.053 once the deaths test is counted too.
+    // Deaths split evenly (1 or 3 by minute 20) in wins and losses alike.
+    const deaths = (i: number) => diesAt(i % 2 ? 3 : 1);
+    const games = [
+      ...Array.from({ length: 11 }, (_, i) => game({ buys: meteorBy(20), deathsAt: deaths(i) })),
+      ...Array.from({ length: 30 }, (_, i) => game({ deathsAt: deaths(i + 1) })),
+      ...Array.from({ length: 14 }, (_, i) => game({ won: false, deathsAt: deaths(i) })),
+    ];
+    expect(whatWon(games, ITEMS)).toEqual([]);
+  });
+
+  it("counts only games that lasted past the target minute", () => {
+    // Short losses without the item must not count against it: they ended before minute 11.
+    const games = [
+      ...Array.from({ length: 8 }, () => game({ buys: meteorBy(11) })),
+      ...Array.from({ length: 20 }, () => game({ won: false, duration: 600 })),
+      ...Array.from({ length: 8 }, () => game({ won: false, buys: meteorBy(11) })),
+    ];
+    // Every game that lasted bought it: no side without it, no item test.
+    expect(whatWon(games, ITEMS).filter((t) => t.kind === "item")).toEqual([]);
+  });
+
+  it("is left out of the summary while games are pending or too few", () => {
+    const games = Array.from({ length: MIN_TARGET_GAMES - 1 }, () => game());
+    expect(similarSummary(answer(games), INPUT)?.whatWon).toBeNull();
+    const enough = [...games, game()];
+    expect(similarSummary(answer(enough), INPUT)?.whatWon).toEqual([]);
+    expect(similarSummary(answer(enough, { pending: true }), INPUT)?.whatWon).toBeNull();
   });
 });
