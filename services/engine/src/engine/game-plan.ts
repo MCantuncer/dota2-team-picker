@@ -83,7 +83,7 @@ export interface LanePlan {
 /** An enemy laner's items by the end of the lane: the start, the small lane items and any core item bought by then. */
 export interface EnemyLaneItems {
   hero: number;
-  /** In buy order. `phase` tells start and lane items (whose minutes are rough on their own) from core items. */
+  /** In buy order. `phase` tells start and lane items, boots too, whose minutes are rough on their own, from the big core items. */
   items: Pick<BuildItem, "itemId" | "name" | "img" | "minute" | "count" | "phase">[];
 }
 
