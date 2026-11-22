@@ -18,6 +18,7 @@
     "matchup-probe": "tsx scripts/matchup-probe.ts",
     "lead-report": "tsx scripts/lead-report.ts",
     "spell-facts": "tsx scripts/spell-facts.ts",
+    "ability-notes": "tsx scripts/ability-notes.ts",
     "lane-facts": "tsx scripts/lane-facts.ts",
     "item-facts": "tsx scripts/item-facts.ts",
     "suggest": "tsx scripts/suggest.ts",

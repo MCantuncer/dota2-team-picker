@@ -1,4 +1,6 @@
+import { abilityRules } from "./ability-notes";
 import { beatsBkb } from "./bkb";
+import { KEY_SPELLS } from "./data-key-spells";
 import { buffsFrom, dispellableBuffs } from "./dispel";
 import { dispelsEnemy, itemFact } from "./item-facts";
 import { chooseTimingSlice, finishedItems } from "./item-timing-slice";
@@ -80,11 +82,13 @@ interface CounterItem {
 }
 
 /**
- * Heroes whose lock Force Staff can't push you out of. Valve's note on Force Staff: "Will not work on a unit
- * inside Chronosphere, Duel, or Black Hole." So it is never named as the answer to them.
+ * Whether the hero's key spell holds you where Force Staff can't push you out, from Valve's note on Force Staff:
+ * "Will not work on a unit inside Chronosphere, Duel, or Black Hole." So it is never named as the answer to them.
  */
-const FORCE_STAFF_LOCKS = new Set(["Faceless Void", "Legion Commander", "Enigma"]);
-export const holdsForceStaff = (hero: HeroInfo) => FORCE_STAFF_LOCKS.has(hero.name);
+export function holdsForceStaff(hero: HeroInfo): boolean {
+  const spell = KEY_SPELLS[hero.name]?.name;
+  return !!spell && (abilityRules("item_force_staff")?.failsInside ?? []).includes(spell);
+}
 
 /** Items that answer threats, best answer first within each threat. Matched by OpenDota item key. */
 export const COUNTER_ITEMS: readonly CounterItem[] = [
