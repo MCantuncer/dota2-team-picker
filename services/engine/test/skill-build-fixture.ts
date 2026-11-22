@@ -63,29 +63,34 @@ export const SVEN: HeroAbilities = {
   ],
 };
 
-/** Q E W W W R W Q Q Q T R E E E T R: the common Sven pos 1 build to 18 (no point at 17). */
-export const SVEN_BUILD = [Q, E, W, W, W, R, W, Q, Q, Q, 11, R, E, E, E, 13, 0, R];
+/**
+ * The common Sven pos 1 build's skill points in order: Q E W W W R W Q Q Q, the level 10 talent beside the last Q, then
+ * E R E E, the level 15 talent and R. A talent doesn't use the level's point.
+ */
+export const SVEN_POINTS = [Q, E, W, W, W, R, W, Q, Q, Q, 11, E, R, E, E, 13, R];
+/** Its ability at each level to 18: God's Strength at 6, 12 and 18, and nothing left to take at 15 to 17. */
+export const SVEN_BUILD = [Q, E, W, W, W, R, W, Q, Q, Q, E, R, E, E, 0, 0, 0, R];
 /** The same with Warcry maxed before Storm Hammer. */
-export const WARCRY_SECOND = [Q, E, W, W, W, R, W, E, E, E, 11, R, Q, Q, Q, 13, 0, R];
+export const WARCRY_SECOND_POINTS = [Q, E, W, W, W, R, W, E, E, E, 11, Q, R, Q, Q, 13, R];
+export const WARCRY_SECOND = [Q, E, W, W, W, R, W, E, E, E, Q, R, Q, Q, 0, 0, 0, R];
 
-/** Skill points in order, from a build by level (0 is a level with no point). */
-export const points = (levels: number[]): number[] => levels.filter((id) => id !== 0);
-export const player = (levels: number[], extra: Partial<GuidePlayer> = {}): GuidePlayer => ({
+/** A guide player who ended at level 18 with these skill points. */
+export const player = (points: number[], extra: Partial<GuidePlayer> = {}): GuidePlayer => ({
   gameVersionId: 200,
   position: 1,
-  level: levels.length,
+  level: 18,
   won: true,
-  points: points(levels),
+  points,
   ...extra,
 });
 
-/** STRATZ totals that agree with SVEN_BUILD: Cleave maxed at 7, Hammer at 10, Warcry at 15; first points 1, 3, 2. */
+/** STRATZ totals that agree with SVEN_BUILD: Cleave maxed at 7, Hammer at 10, Warcry at 14; first points 1, 3, 2. */
 export const TOTALS: SliceTotals = {
   maxLevels: [
     { abilityId: W, level: 7, matchCount: 90000 },
     { abilityId: Q, level: 10, matchCount: 59000 },
-    { abilityId: Q, level: 15, matchCount: 38000 },
-    { abilityId: E, level: 15, matchCount: 90000 },
+    { abilityId: Q, level: 14, matchCount: 38000 },
+    { abilityId: E, level: 14, matchCount: 90000 },
     { abilityId: E, level: 10, matchCount: 23000 },
     { abilityId: 999, level: 25, matchCount: 93 },
   ],

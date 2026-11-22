@@ -133,6 +133,26 @@ position and pick round, and the six newest picks where a player took the engine
 Action runs it once a day; a `proof.json`
 newer than 20 hours is left as it is.
 
+### Meta page numbers
+
+`npm run meta` writes what the Meta page shows to `meta.json` in the bucket (`src/data/meta.ts`): each
+hero's games and wins per day of the current patch (the newest 14 days) and of the last 7 days of the
+patch before, for every rank and each rank group, from the OpenDota explorer's ranked All Pick games.
+STRATZ's hero counts do not start again at a patch, so the explorer is the only source of this patch's
+games alone. Days that were complete in the published `meta.json` are kept, so each refresh reads only
+the newest day.
+
+It also adds the hero card extras (`src/data/meta-extras.ts`): each hero's build per position, as the
+share of this patch's saved ranked games that ended with each item (items under 400 gold left out), and
+once 10 of them have buy minutes, each item's usual buy minute and the early items (under 2,000 gold,
+bought by minute 12 in 15% of games); the
+items new in this patch (in the item list now, not in the `daily/` copy from the day before the patch)
+and the heroes that end games with them; and the 5 enemies each hero wins and loses most against, from
+the snapshot's matchups, adjusted for each enemy's strength (the gap to the hero's own average plus
+how far the enemy's overall win rate is from 50%, so an enemy that beats everyone is not a counter),
+each hero's three biggest changes in the patch (one line per ability, with a buff or nerf mark when the words
+say so) from OpenDota's copy of Valve's patch notes, with the shop data of every item shown for the page's item cards. If they fail, the last ones of the same patch are kept.
+
 ## Fixed drafts
 
 `npm run compare-drafts` prints the top 8 suggestions, with their reasons, for a fixed set of drafts
@@ -306,6 +326,7 @@ bucket in Supabase Storage (created by a migration in `services/accounts`):
 | ------------------------- | -------------------------------------------------------------- |
 | `snapshot.json`           | The latest data. The website reads it, cached for 5 minutes.   |
 | `proof.json`              | The Proof Page numbers (see "Proof Page numbers").             |
+| `meta.json`               | The Meta page numbers (see "Meta page numbers").               |
 | `daily/<YYYY-MM-DD>.json` | A copy per day, to compare days or roll back a bad run.        |
 | `eval/matches-<YYYY-MM>.json` | Ranked games saved for the backtest (see below).          |
 | `eval/public-edges.json`  | Draft edges of fair public games for the win range.            |
@@ -348,7 +369,10 @@ random from the OpenDota explorer's ranked All Pick games that started 2 to 8 ho
 a fair sample: the `/publicMatches` feed used before was not (Radiant won 60.5% of the 2,297 games
 saved from it, against 53.0% of 80,514 explorer games over the same days). For each game it keeps
 the order the 10 heroes were picked in, the bans, the average rank, who won, and each player's
-position from STRATZ (OpenDota only knows positions for parsed replays). STRATZ may not have placed
+position from STRATZ (OpenDota only knows positions for parsed replays), each player's end-of-game
+items, and in games OpenDota has parsed (about half of high-rank games) the minute each finished item
+was first bought (items from 400 gold that are no other item's part, from the snapshot's item list).
+STRATZ may not have placed
 a game that just ended, so later runs ask again for games up to 3 days old that still miss
 positions. The backtest scores the engine on these games, so they are kept apart from the counts in
 the snapshot. Each game costs one OpenDota request, and the step stops when fewer than 300 requests

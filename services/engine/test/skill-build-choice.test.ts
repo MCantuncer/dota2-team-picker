@@ -2,15 +2,51 @@ import { describe, expect, it } from "vitest";
 import { agreesWithTotals, buildKey, chooseTalents, toSkillSlice } from "../src/data/skill-build-choice";
 import { getsPointEveryLevel, learnedHero, toSequence } from "../src/data/skill-sequence";
 import type { HeroAbilities } from "../src/engine/types";
-import { E, player, points, Q, R, SVEN, SVEN_BUILD, TOTALS, W, WARCRY_SECOND } from "./skill-build-fixture";
+import {
+  E,
+  player,
+  Q,
+  R,
+  SVEN,
+  SVEN_BUILD,
+  SVEN_POINTS,
+  TOTALS,
+  W,
+  WARCRY_SECOND,
+  WARCRY_SECOND_POINTS,
+} from "./skill-build-fixture";
 
 describe("toSequence", () => {
-  const seq = (levels: number[], level = levels.length) => toSequence({ points: points(levels), level }, SVEN);
+  const seq = (points: number[], level = 18) => toSequence({ points, level }, SVEN);
 
-  it("places points at their levels, with no point at 17", () => {
-    expect(seq(SVEN_BUILD)).toEqual(SVEN_BUILD);
-    // Level 20: points at 18 and 20, none at 17 and 19.
-    expect(seq([...SVEN_BUILD, 0, 12], 20)).toEqual([...SVEN_BUILD, 0, 12]);
+  it("places abilities at their levels, with each talent beside the ability before it", () => {
+    expect(seq(SVEN_POINTS)).toEqual({
+      levels: SVEN_BUILD,
+      talents: [
+        { id: 11, level: 10 },
+        { id: 13, level: 15 },
+      ],
+    });
+    // Level 20: the level 20 talent too.
+    expect(seq([...SVEN_POINTS, 15], 20)?.talents.at(-1)).toEqual({ id: 15, level: 20 });
+  });
+
+  it("places a talent taken after the next ability at that ability's level", () => {
+    const late = [Q, E, W, W, W, R, W, Q, Q, Q, E, 11, R, E, E, 13, R];
+    expect(seq(late)).toEqual({ levels: SVEN_BUILD, talents: [{ id: 11, level: 11 }, { id: 13, level: 15 }] });
+  });
+
+  it("holds an ultimate point until the level it opens at", () => {
+    // Nothing else taken at 11: the second God's Strength waits for 12.
+    const early = [Q, E, W, W, W, R, W, Q, Q, Q, 11, R, E, E, E, 13, R];
+    expect(seq(early)?.levels.slice(9, 13)).toEqual([Q, 0, R, E]);
+    // Meepo's Divided We Stand opens at 3 and 10.
+    const meepo: HeroAbilities = {
+      ...SVEN,
+      abilities: SVEN.abilities.map((a) => (a.id === R ? { ...a, key: "meepo_divided_we_stand", maxLevel: 4 } : a)),
+    };
+    const meepoPoints = [W, Q, R, E, E, E, E, W, W, R, 11, W, Q, Q, Q, 13, R];
+    expect(toSequence({ points: meepoPoints, level: 18 }, meepo)?.levels.slice(0, 10)).toEqual([W, Q, R, E, E, E, E, W, W, R]);
   });
 
   it("gives a point every level to a hero that gets one (Invoker)", () => {
@@ -26,13 +62,13 @@ describe("toSequence", () => {
       talents: [],
     };
     const orbs = [E, Q, E, W, E, Q, E, W, E, Q, E, W, E, Q, W, Q, W, Q];
-    expect(toSequence({ points: orbs, level: 18 }, invoker, true)).toEqual(orbs);
+    expect(toSequence({ points: orbs, level: 18 }, invoker, true)).toEqual({ levels: orbs, talents: [] });
     // Under the skip rule 18 points need level 20.
     expect(toSequence({ points: orbs, level: 18 }, invoker)).toBeNull();
   });
 
   it("tells a hero with a point every level from the games past level 17", () => {
-    const sven = { points: points(SVEN_BUILD), level: 18 };
+    const sven = { points: SVEN_POINTS, level: 18 };
     const invoker = { points: [...Array(18)].map(() => Q), level: 18 };
     expect(getsPointEveryLevel([sven, sven, invoker])).toBe(false);
     expect(getsPointEveryLevel([invoker, invoker, sven])).toBe(true);
@@ -40,30 +76,22 @@ describe("toSequence", () => {
     expect(getsPointEveryLevel([{ points: [Q], level: 16 }])).toBe(false);
   });
 
-  it("allows one point not spent when the game ended, but drops held points", () => {
-    expect(toSequence({ points: points(SVEN_BUILD).slice(0, 16), level: 18 }, SVEN)).toEqual(SVEN_BUILD.slice(0, 16));
-    expect(toSequence({ points: points(SVEN_BUILD).slice(0, 16), level: 20 }, SVEN)).toBeNull();
+  it("keeps points not spent when the game ended, but drops a point past the last level", () => {
+    expect(seq(SVEN_POINTS.slice(0, 16), 20)?.levels).toEqual(SVEN_BUILD.slice(0, 14));
+    expect(seq(SVEN_POINTS, 17)).toBeNull();
   });
 
-  it("rejects a game that ended before level 16", () => {
-    expect(seq(SVEN_BUILD.slice(0, 15))).toBeNull();
+  it("rejects a game with fewer than 16 points", () => {
+    expect(seq(SVEN_POINTS.slice(0, 15))).toBeNull();
   });
 
   it("rejects an unknown id in the shown levels but not after them", () => {
-    expect(
-      toSequence(
-        {
-          points: [...points(SVEN_BUILD).slice(0, 10), 0, ...points(SVEN_BUILD).slice(11)],
-          level: 18,
-        },
-        SVEN,
-      ),
-    ).toBeNull();
-    expect(toSequence({ points: [...points(SVEN_BUILD), 0], level: 20 }, SVEN)).toEqual([...SVEN_BUILD, 0, 0]);
+    expect(seq([...SVEN_POINTS.slice(0, 11), 0, ...SVEN_POINTS.slice(12)])).toBeNull();
+    expect(seq([...SVEN_POINTS, 0], 20)?.levels).toEqual(SVEN_BUILD);
   });
 
   it("rejects an ability past its max", () => {
-    expect(seq([Q, Q, Q, Q, Q, ...SVEN_BUILD.slice(5)])).toBeNull();
+    expect(seq([Q, Q, Q, Q, Q, ...SVEN_POINTS.slice(5)])).toBeNull();
   });
 });
 
@@ -83,7 +111,7 @@ describe("learnedHero", () => {
         },
       ],
     };
-    const three = [player(SVEN_BUILD), player(SVEN_BUILD), player(SVEN_BUILD)];
+    const three = [player(SVEN_POINTS), player(SVEN_POINTS), player(SVEN_POINTS)];
     const learned = learnedHero(hero, three);
     expect(learned.abilities.map((a) => a.id)).toEqual([Q, W, E, R]);
     expect(learned.abilities.find((a) => a.id === R)?.maxLevel).toBe(3);
@@ -108,7 +136,7 @@ describe("buildKey and agreesWithTotals", () => {
 
   it("treats abilities maxed after level 18 in the totals as not maxed, like the games", () => {
     // A support build: only Hammer maxed by 18; Cleave and Warcry maxed at 20 and 19 in the totals.
-    const support = [Q, W, E, Q, Q, R, Q, W, E, W, 11, R, W, E, E, 13, 0, R];
+    const support = [Q, W, E, Q, Q, R, Q, W, E, W, 0, R, W, E, E, 0, 0, R];
     const totals = {
       ...TOTALS,
       maxLevels: [
@@ -138,8 +166,8 @@ describe("buildKey and agreesWithTotals", () => {
 describe("toSkillSlice", () => {
   const now = new Date("2026-11-02T00:00:00Z");
 
-  it("gives the common Sven pos 1 build: Q E W W W R W Q Q Q T R E E E T R", () => {
-    const players = [...Array(20)].map(() => player(SVEN_BUILD)).concat([...Array(5)].map(() => player(WARCRY_SECOND)));
+  it("gives the common Sven pos 1 build: Q E W W W R W Q Q Q E R E E, R at 18", () => {
+    const players = [...Array(20)].map(() => player(SVEN_POINTS)).concat([...Array(5)].map(() => player(WARCRY_SECOND_POINTS)));
     const slice = toSkillSlice(players, 1, TOTALS, SVEN, 200, now);
     expect(slice.build).toEqual({
       levels: SVEN_BUILD,
@@ -155,11 +183,11 @@ describe("toSkillSlice", () => {
 
   it("shows a second build when it is common in the matches and in STRATZ's totals", () => {
     const players = [...Array(14)]
-      .map(() => player(SVEN_BUILD))
-      .concat([...Array(10)].map(() => player(WARCRY_SECOND)));
+      .map(() => player(SVEN_POINTS))
+      .concat([...Array(10)].map(() => player(WARCRY_SECOND_POINTS)));
     const slice = toSkillSlice(players, 1, TOTALS, SVEN, 200, now);
     expect(slice.build?.levels).toEqual(SVEN_BUILD);
-    // Warcry maxed at 15 in 90k of 113k games.
+    // Warcry maxed at 14 in 90k of 113k games.
     expect(slice.alternative).toMatchObject({
       levels: WARCRY_SECOND,
       groupMatches: 10,
@@ -168,14 +196,14 @@ describe("toSkillSlice", () => {
 
   it("keeps only the hero's position and this patch", () => {
     const players = [...Array(20)]
-      .map(() => player(SVEN_BUILD))
-      .concat([player(SVEN_BUILD, { position: 2 }), player(SVEN_BUILD, { gameVersionId: 199 })]);
+      .map(() => player(SVEN_POINTS))
+      .concat([player(SVEN_POINTS, { position: 2 }), player(SVEN_POINTS, { gameVersionId: 199 })]);
     expect(toSkillSlice(players, 1, TOTALS, SVEN, 200, now).matches).toBe(20);
   });
 
   it("has no build with too few matches", () => {
     const slice = toSkillSlice(
-      [...Array(19)].map(() => player(SVEN_BUILD)),
+      [...Array(19)].map(() => player(SVEN_POINTS)),
       1,
       TOTALS,
       SVEN,
@@ -187,15 +215,15 @@ describe("toSkillSlice", () => {
   });
 
   it("has no build when the biggest group disagrees with STRATZ's totals", () => {
-    const players = [...Array(20)].map(() => player(WARCRY_SECOND));
+    const players = [...Array(20)].map(() => player(WARCRY_SECOND_POINTS));
     expect(toSkillSlice(players, 1, TOTALS, SVEN, 200, now).none).toBe("no-agreement");
   });
 
   it("counts the exact build apart from its group", () => {
     // Same group (max order and first points), different ultimate level.
-    const late = [...SVEN_BUILD];
+    const late = [...SVEN_POINTS];
     [late[5], late[6]] = [W, R];
-    const players = [...Array(12)].map(() => player(SVEN_BUILD)).concat([...Array(9)].map(() => player(late)));
+    const players = [...Array(12)].map(() => player(SVEN_POINTS)).concat([...Array(9)].map(() => player(late)));
     expect(toSkillSlice(players, 1, TOTALS, SVEN, 200, now).build).toMatchObject({
       groupMatches: 21,
       exactMatches: 12,
@@ -204,11 +232,17 @@ describe("toSkillSlice", () => {
 });
 
 describe("talents", () => {
+  const placed = (points: number[]) => {
+    const p = toSequence({ points, level: 18 }, SVEN);
+    if (!p) throw new Error("fixture build should place");
+    return p;
+  };
+  const sven = placed(SVEN_POINTS);
   it("picks the talent with more games and the level players took it", () => {
-    const talents = chooseTalents(TOTALS.talents, [SVEN_BUILD, SVEN_BUILD, WARCRY_SECOND], SVEN);
+    const talents = chooseTalents(TOTALS.talents, [sven, sven, placed(WARCRY_SECOND_POINTS)], SVEN);
     expect(talents).toEqual([
-      { tier: 0, id: 11, share: 0.83, games: 94000, level: 11 },
-      { tier: 1, id: 13, share: 0.74, games: 116000, level: 16 },
+      { tier: 0, id: 11, share: 0.83, games: 94000, level: 10 },
+      { tier: 1, id: 13, share: 0.74, games: 116000, level: 15 },
     ]);
   });
 
@@ -217,21 +251,21 @@ describe("talents", () => {
       { abilityId: 10, matchCount: 16000, winCount: 8800 },
       { abilityId: 11, matchCount: 78000, winCount: 39000 },
     ];
-    expect(chooseTalents(totals, [SVEN_BUILD], SVEN)[0]?.sides).toEqual([
+    expect(chooseTalents(totals, [sven], SVEN)[0]?.sides).toEqual([
       { id: 10, games: 16000, wins: 8800 },
       { id: 11, games: 78000, wins: 39000 },
     ]);
     // A row without wins leaves the tier without sides rather than claim 0 wins.
-    expect(chooseTalents([...totals, { abilityId: 12, matchCount: 5 }], [SVEN_BUILD], SVEN)[0]?.sides).toBeUndefined();
+    expect(chooseTalents([...totals, { abilityId: 12, matchCount: 5 }], [sven], SVEN)[0]?.sides).toBeUndefined();
   });
 
   it("skips a tier with one talent rather than claim everyone picks it", () => {
     const hero = { ...SVEN, talents: SVEN.talents.map((pair, tier) => (tier === 0 ? pair.slice(1) : pair)) };
-    expect(chooseTalents(TOTALS.talents, [SVEN_BUILD], hero).map((t) => t.tier)).toEqual([1]);
+    expect(chooseTalents(TOTALS.talents, [sven], hero).map((t) => t.tier)).toEqual([1]);
   });
 
   it("places a tier at its usual level when no game reached it", () => {
-    const talents = chooseTalents([{ abilityId: 16, matchCount: 10 }], [SVEN_BUILD], SVEN);
+    const talents = chooseTalents([{ abilityId: 16, matchCount: 10 }], [sven], SVEN);
     expect(talents).toEqual([{ tier: 3, id: 16, share: 1, games: 10, level: 25 }]);
   });
 });

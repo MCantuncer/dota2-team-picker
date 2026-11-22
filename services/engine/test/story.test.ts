@@ -30,7 +30,7 @@ describe("gameStory", () => {
     expect(story.chapters[1]!.text).toBe(
       "Puck's Witch Blade at 12 and Magnus's Blink Dagger at 14: ready to fight at 14. Enemy Phantom Assassin has Battle Fury at 17. Open fights with Reverse Polarity into Sven's God's Strength cleave.",
     );
-    expect(story.chapters[2]!.text).toBe("Sven's Black King Bar at 24. Roshan from 20 min, once three key items are in.");
+    expect(story.chapters[2]!.text).toBe("Sven's Black King Bar at 24. Roshan at 20 min or later, with three key items in.");
     // Our second item at 14 beats their carry's at 17.
     expect(story.headline).toBe("Fight from 14 min, before Phantom Assassin has Battle Fury at 17.");
   });
@@ -133,7 +133,7 @@ describe("gameStory", () => {
     const late = gameStory(facts({ spikes })).chapters.find((c) => c.phase === "20 to 30 min");
     expect(late?.ours.map((s) => s.minute)).toEqual([24, 26]);
     // Item 0 at 15 is told in its own chapter; Item 2 at 26 comes after the ready minute.
-    expect(late?.text).toBe("Hero 1's Item 1 at 24: ready to fight at 24. Roshan from 26 min, once three key items are in.");
+    expect(late?.text).toBe("Hero 1's Item 1 at 24: ready to fight at 24. Roshan at 26 min or later, with three key items in.");
   });
 
   it("leaves items under 10 minutes off the lane chapter", () => {
@@ -190,7 +190,7 @@ describe("gameStory", () => {
     // No Roshan inside their strongest time.
     const spikes = [12, 14, 21].map((minute) => ({ hero: "Lion", item: "Blink Dagger", minute }));
     expect(gameStory(facts({ theirTiming: "early", spikes })).chapters[2]!.text).toBe(
-      "Lion's Blink Dagger at 21. Roshan from 25 min, once three key items are in.",
+      "Lion's Blink Dagger at 21. Roshan at 25 min or later, with three key items in.",
     );
     expect(late.chapters[3]!.text).toBe("You are stronger now: take Roshan, then end with the Aegis.");
   });

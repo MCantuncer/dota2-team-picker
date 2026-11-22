@@ -161,7 +161,8 @@ export function threatLanes(engine: Engine, hero: number, position: Position, al
     const pair = outcomes[slice]?.[hero]?.[ally.heroId];
     if (!pair || pair[0] <= 0) continue;
     const usual: LaneCounts = [0, 0, 0, 0];
-    for (const c of Object.values(outcomes[slice]?.[hero] ?? {})) c.forEach((n, i) => (usual[i] = usual[i]! + n));
+    // Games, won, drawn and lost add up; the last hits average after them does not.
+    for (const c of Object.values(outcomes[slice]?.[hero] ?? {})) for (let i = 0; i < 4; i++) usual[i] = usual[i]! + (c[i] ?? 0);
     lanes.push({ ally: ally.heroId, with: pair, usual });
   }
   return lanes;

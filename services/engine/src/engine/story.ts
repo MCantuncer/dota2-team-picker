@@ -238,7 +238,7 @@ function action(chapter: number, f: StoryFacts, inWindow: (m: number) => boolean
     case 2:
       if (earlyIsOurs) return same("Take Roshan and end with the Aegis before 30 minutes.");
       // Not inside their strongest time (see the early headline).
-      if (roshan !== undefined && roshan < 30) return { ...same(`Roshan from ${roshanMinute(f, roshan)} min, once three key items are in.`), focus: "roshan" };
+      if (roshan !== undefined && roshan < 30) return { ...same(`Roshan at ${roshanMinute(f, roshan)} min or later, with three key items in.`), focus: "roshan" };
       if (lateIsOurs) return same("Your items are in: take back the map.");
       return same("");
     default:

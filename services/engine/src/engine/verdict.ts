@@ -11,6 +11,8 @@ import type { HeroPoints, Position, ScoreBreakdown, Suggestion } from "./types";
 export const VERDICT_Z = 1.645;
 /** Record points one hero must lead the leader by before its card says the player wins more on it. */
 export const RECORD_LEAD = 1;
+/** Fewer games than this on a hero and its record is shown as too few to trust, never as a real win rate. */
+export const MIN_RECORD_GAMES = 10;
 
 export type VerdictKind = "clear" | "best" | "only" | "behind";
 
@@ -21,6 +23,24 @@ export interface Verdict {
   text: string;
   /** The player's own record when it favors this hero over the leader, on a line of its own; null otherwise. */
   note: string | null;
+  /** The same record as numbers, so a card can draw it: null whenever `note` is. */
+  record: VerdictRecord | null;
+}
+
+/** The player's games and wins on one hero, and whether they are too few to trust. */
+export interface RecordLine {
+  heroId: number;
+  games: number;
+  wins: number;
+  tooFew: boolean;
+}
+
+/** The record that favors a hero over the leader: this hero first, the leader's second (0 games when it has none). */
+export interface VerdictRecord {
+  mine: RecordLine;
+  leader: RecordLine;
+  /** The hero is within the error of the leader and scores above zero: "A good pick too". */
+  goodToo: boolean;
 }
 
 type Listed = Pick<Suggestion, "heroId" | "name" | "score" | "error" | "breakdown" | "counterBy" | "synergyBy" | "record">;
@@ -82,14 +102,29 @@ function whyBehind(leader: Listed, s: Listed, name: (id: number) => string, pos:
  * the leader's by RECORD_LEAD points and its plain win rate agrees, so the words never contradict the math.
  * With no games on the leader: "You have won 63% of 38 games on Puck and have no games on Invoker."
  */
-function recordNote(leader: Listed, s: Listed, owner: Owner): string | null {
+function recordNote(leader: Listed, s: Listed, owner: Owner): { text: string; mine: RecordLine; leader: RecordLine } | null {
   const mine = s.record;
   if (!mine || mine.points - (leader.record?.points ?? 0) < RECORD_LEAD) return null;
   const theirs = leader.record;
   const who = owner ?? "You";
-  if (!theirs) return `${who} ${owner ? "has" : "have"} won ${percent(mine)} of ${mine.games} games on ${s.name} and ${owner ? "has" : "have"} no games on ${leader.name}.`;
+  const line = (heroId: number, r: { games: number; wins: number }): RecordLine => ({
+    heroId,
+    games: r.games,
+    wins: r.wins,
+    tooFew: r.games < MIN_RECORD_GAMES,
+  });
+  if (!theirs)
+    return {
+      text: `${who} ${owner ? "has" : "have"} won ${percent(mine)} of ${mine.games} games on ${s.name} and ${owner ? "has" : "have"} no games on ${leader.name}.`,
+      mine: line(s.heroId, mine),
+      leader: line(leader.heroId, { games: 0, wins: 0 }),
+    };
   if (mine.wins / mine.games <= theirs.wins / theirs.games) return null;
-  return `${who} ${owner ? "wins" : "win"} more on ${s.name} (${percent(mine)} of ${mine.games} games) than on ${leader.name} (${percent(theirs)} of ${theirs.games}).`;
+  return {
+    text: `${who} ${owner ? "wins" : "win"} more on ${s.name} (${percent(mine)} of ${mine.games} games) than on ${leader.name} (${percent(theirs)} of ${theirs.games}).`,
+    mine: line(s.heroId, mine),
+    leader: line(leader.heroId, theirs),
+  };
 }
 
 /** Scores this close read as level: below the 0.1 a card shows. */
@@ -103,7 +138,7 @@ const LEVEL = 0.05;
 export function verdicts(list: Listed[], name: (id: number) => string, pos: Position, owner?: string): Verdict[] {
   const [leader, ...rest] = list;
   if (!leader) return [];
-  if (!rest.length) return [{ heroId: leader.heroId, kind: "only", text: "The only hero on this list for this draft.", note: null }];
+  if (!rest.length) return [{ heroId: leader.heroId, kind: "only", text: "The only hero on this list for this draft.", note: null, record: null }];
   const next = rest[0]!;
   const gap = leader.score - next.score;
   const clear = rest.every((s) => leader.score - s.score > marginOf(leader, s));
@@ -113,18 +148,25 @@ export function verdicts(list: Listed[], name: (id: number) => string, pos: Posi
         kind: "clear",
         text: `${one(gap)} points ahead of ${next.name}, more than the ${one(marginOf(leader, next))} the data could be off by.`,
         note: null,
+        record: null,
       }
     : gap < LEVEL
-      ? { heroId: leader.heroId, kind: "best", text: `Level with ${next.name}, the next best.`, note: null }
-      : { heroId: leader.heroId, kind: "best", text: `${one(gap)} points ahead of ${next.name}, the next best.`, note: null };
+      ? { heroId: leader.heroId, kind: "best", text: `Level with ${next.name}, the next best.`, note: null, record: null }
+      : { heroId: leader.heroId, kind: "best", text: `${one(gap)} points ahead of ${next.name}, the next best.`, note: null, record: null };
   return [
     first,
     ...rest.map((s): Verdict => {
       const behind = leader.score - s.score;
       const record = recordNote(leader, s, owner);
-      const goodToo = record && behind <= marginOf(leader, s) && s.score > 0 ? " A good pick too." : "";
+      const goodToo = !!record && behind <= marginOf(leader, s) && s.score > 0;
       const text = behind < LEVEL ? `Level with ${leader.name}.` : `${one(behind)} points behind: ${whyBehind(leader, s, name, pos, owner)}.`;
-      return { heroId: s.heroId, kind: "behind", text, note: record && `${record}${goodToo}` };
+      return {
+        heroId: s.heroId,
+        kind: "behind",
+        text,
+        note: record && `${record.text}${goodToo ? " A good pick too." : ""}`,
+        record: record && { mine: record.mine, leader: record.leader, goodToo },
+      };
     }),
   ];
 }

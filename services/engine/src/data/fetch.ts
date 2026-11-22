@@ -22,14 +22,17 @@ import { findHardCounters, HOLD_RUNS, holdHardCounters } from "../engine/data-ha
 import { positionFit } from "../engine/positions";
 import { Engine } from "../engine/score";
 import { getOpenDota as get, requestsLeftToday } from "./opendota";
-import { loadEvalGames, monthPaths } from "./eval-store";
+import { loadEvalGames, loadHeroData, monthPaths } from "./eval-store";
 import { fetchItemStarts } from "./item-starts";
 import { fetchItemTimings, itemTimingsDue } from "./item-timings";
 import { fetchItems, itemsDue } from "./items";
+import { dropRemovedItems } from "./removed-items";
 import { countPickPhases } from "./pick-phase";
 import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
+import { applyGameTalents, fetchGameTalents } from "./talents";
 import { fetchPositions, postStratz } from "./stratz";
-import { applyStratzCounts, fetchStratzCounts } from "./stratz-matchups";
+import { blendCounts, fetchPatchCounts, lastStratzCounts, MIN_PATCH_GAMES, patchIsFresh, STRATZ_SHARE, type DatedCounts } from "./patch-matchups";
+import { applyStratzCounts, fetchStratzCounts, type StratzCounts } from "./stratz-matchups";
 import { fetchLaneOutcomes, lanesDue, MIN_LANE_GAMES } from "./stratz-lanes";
 import { fetchThreatPlans, threatPlansDue } from "./threat-plans";
 import { rankGroup, type GamesWins, type HeroInfo, type RankBracket, type Snapshot } from "../engine/types";
@@ -167,6 +170,41 @@ export function countMatch(snapshot: Snapshot, m: PublicMatch): boolean {
     });
   }
   return true;
+}
+
+/** "16002 pairs, median 3559 games per pair" for the all-ranks matchups. */
+function pairStats(counts: StratzCounts): string {
+  const games = Object.values(counts.matchups).flatMap((row) => Object.values(row).map((gw) => gw.games));
+  games.sort((a, b) => a - b);
+  return `${games.length} pairs, median ${games[Math.floor(games.length / 2)] ?? 0} games per pair`;
+}
+
+/**
+ * Puts STRATZ's counts in the snapshot, or while the patch is young, this patch's games plus a share of
+ * STRATZ's (see patch-matchups.ts). `matchupsFrom.at` is when STRATZ's part was downloaded, so the stale
+ * warning still fires when STRATZ keeps failing. When the patch games can't be read, keeps last run's blend rather
+ * than going back to STRATZ alone, whose counts are mostly the old patch.
+ */
+async function applyCounts(snapshot: Snapshot, stratz: StratzCounts, stratzAt: Date, now: Date, patchStart: number) {
+  if (!patchIsFresh(patchStart, now)) {
+    applyStratzCounts(snapshot, stratz, stratzAt);
+    return;
+  }
+  console.log(`Matchups and synergy from this patch's ranked games (OpenDota explorer)...`);
+  try {
+    const patch = await fetchPatchCounts(get, patchStart);
+    if (patch.games < MIN_PATCH_GAMES) {
+      console.log(`Only ${patch.games} games of this patch, STRATZ alone for now.`);
+      applyStratzCounts(snapshot, stratz, stratzAt);
+      return;
+    }
+    const blended = blendCounts(patch.counts, stratz);
+    applyStratzCounts(snapshot, blended, stratzAt, patch.games);
+    console.log(`Patch matchups: ${patch.games} games (${pairStats(patch.counts)}); with ${STRATZ_SHARE * 100}% of STRATZ: ${pairStats(blended)}.`);
+  } catch (err) {
+    if (snapshot.matchupsFrom?.patchGames === undefined) applyStratzCounts(snapshot, stratz, stratzAt);
+    console.warn(`::warning::Patch matchups failed, ${snapshot.matchupsFrom?.patchGames ? "keeping the last ones" : "STRATZ alone"}: ${(err as Error).message}`);
+  }
 }
 
 /** Finds this run's hard counters in the counts and keeps those that held (see data-hard-counters.ts). */
@@ -314,6 +352,18 @@ async function main() {
     console.log(`Item timings are from ${snapshot.itemTimingsAt}, keeping them.`);
   }
 
+  console.log("Talents from the game files...");
+  try {
+    const talents = await fetchGameTalents();
+    const changed = applyGameTalents(snapshot, talents.trees, talents.innate);
+    const heroes = Object.keys(talents.trees).length;
+    console.log(`Talents for ${heroes} heroes, ${changed} changed; sides from ${talents.fromFiles} hero files.`);
+    for (const note of talents.notes) console.warn(`::warning::Talents, ${note}`);
+  } catch (err) {
+    // Keep the last talents and go on; the next run tries again.
+    console.warn(`::warning::Talents from the game files failed, keeping the last ones: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
   if (stratzToken) {
     console.log("Skill builds from STRATZ guide matches...");
     try {
@@ -343,18 +393,25 @@ async function main() {
 
   if (stratzToken) {
     console.log("Matchups and synergy from STRATZ...");
+    let stratz: DatedCounts | null = null;
     try {
       const heroIds = Object.values(snapshot.heroes).map((h) => h.id).sort((a, b) => a - b);
       const counts = await fetchStratzCounts(heroIds, (query) => postStratz(stratzToken, query, "matchups"));
-      applyStratzCounts(snapshot, counts, now);
-      const pairs = Object.values(counts.matchups).reduce((n, row) => n + Object.keys(row).length, 0);
-      const games = Object.values(counts.matchups).flatMap((row) => Object.values(row).map((gw) => gw.games));
-      games.sort((a, b) => a - b);
-      console.log(`STRATZ matchups: ${pairs} pairs, median ${games[Math.floor(games.length / 2)] ?? 0} games per pair.`);
+      console.log(`STRATZ matchups: ${pairStats(counts)}.`);
+      stratz = { counts, at: now };
     } catch (err) {
-      // Keep the last counts, whichever source they came from, and go on.
       console.warn(`::warning::${(err as Error).message}`);
+      // While a patch is young its own games still go in, next to STRATZ's last counts. Otherwise the
+      // last counts stay, whichever source they came from.
+      if (patchIsFresh(patchStart, now)) {
+        stratz = await lastStratzCounts(snapshot, now, loadHeroData).catch((e: unknown) => {
+          console.warn(`::warning::No earlier STRATZ counts for the patch blend: ${(e as Error).message}`);
+          return null;
+        });
+        if (stratz) console.log(`Blending with STRATZ's counts from ${stratz.at.toISOString()}.`);
+      }
     }
+    if (stratz) await applyCounts(snapshot, stratz.counts, stratz.at, now, patchStart);
   }
   if (stratzToken && lanesDue(snapshot, now)) {
     console.log("Lane results from STRATZ...");
@@ -426,6 +483,8 @@ async function main() {
   console.log(`Counted ${counted} new matches.`);
 
   snapshot.lastPublicMatchId = newest;
+  const removed = dropRemovedItems(snapshot);
+  if (removed.length) console.log(`Dropped ${removed.length} items removed by a patch from the builds: ${removed.join(", ")}.`);
   updateDataHardCounters(snapshot);
   snapshot.generatedAt = now.toISOString();
   mkdirSync(dirname(SNAPSHOT_PATH), { recursive: true });

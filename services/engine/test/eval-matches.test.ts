@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { isCandidate, mergeMatches, monthPath, toEvalMatch, type EvalMatch, type MatchDetail } from "../src/data/eval-matches";
+import { buyItemIds, buyTimes, finalItems, isCandidate, isEvalMatch, mergeMatches, monthPath, toEvalMatch, type EvalMatch, type MatchDetail } from "../src/data/eval-matches";
 import { fetchMatchPositions, matchPositionsQuery, MATCHES_PER_QUERY, toMatchPositions } from "../src/data/stratz";
 import type { PublicMatch } from "../src/data/fetch";
 
@@ -45,7 +45,65 @@ describe("isCandidate", () => {
   });
 });
 
+describe("finalItems", () => {
+  it("keeps each hero's filled main slots and neutral item, and skips odd rows", () => {
+    const items = finalItems([
+      { hero_id: 32, item_0: 63, item_1: 0, item_2: 174, item_3: null, item_4: 147, item_5: 1097, item_neutral: 1605 },
+      { hero_id: 6, item_0: 1, item_neutral: 0 },
+      { hero_id: 0, item_0: 63 },
+    ]);
+    expect(items.get(32)).toEqual({ items: [63, 174, 147, 1097], neutral: 1605 });
+    expect(items.get(6)).toEqual({ items: [1] });
+    expect(items.size).toBe(2);
+    expect(finalItems(null).size).toBe(0);
+  });
+});
+
+describe("buy minutes", () => {
+  const info = (key: string, cost: number, components: number[] = []) => ({ key, name: key, cost, img: "", components });
+  const ITEMS = {
+    29: info("boots", 500),
+    63: info("power_treads", 1400, [29, 25, 17]),
+    25: info("gloves", 450),
+    17: info("belt_of_strength", 450),
+    1: info("blink", 2250),
+    36: info("magic_wand", 450, [34, 16]),
+    16: info("branches", 50),
+  };
+
+  it("keeps finished items and basic items that are no one's part, from 400 gold", () => {
+    expect([...buyItemIds(ITEMS).keys()].sort()).toEqual(["blink", "magic_wand", "power_treads"]);
+  });
+
+  it("turns first buy seconds into minutes per hero, earliest first, and keeps them on the picks", () => {
+    const players = [{ hero_id: 6, first_purchase_time: { branches: -89, blink: 736, power_treads: 982, magic_wand: 200, boots: 288 } }, { hero_id: 1 }];
+    const keep = buyItemIds(ITEMS);
+    expect(buyTimes(players, keep).get(6)).toEqual([
+      [36, 3],
+      [1, 12],
+      [63, 16],
+    ]);
+    const m = toEvalMatch(detail({ players }), 54, undefined, keep)!;
+    expect(m.picks[0]!.buys).toEqual([
+      [36, 3],
+      [1, 12],
+      [63, 16],
+    ]);
+    expect(m.picks[1]).not.toHaveProperty("buys");
+    expect(isEvalMatch(m)).toBe(true);
+    expect(isEvalMatch({ ...m, picks: [{ ...m.picks[0], buys: [[36, -1]] }] })).toBe(false);
+  });
+});
+
 describe("toEvalMatch", () => {
+  it("adds each pick's end-of-game items when OpenDota sends them", () => {
+    const m = toEvalMatch(detail({ players: [{ hero_id: 6, item_0: 63, item_1: 174, item_neutral: 1605 }] }), 54, undefined)!;
+    expect(m.picks[0]).toEqual({ heroId: 6, radiant: false, position: null, items: [63, 174], neutral: 1605 });
+    expect(m.picks[1]).not.toHaveProperty("items");
+    expect(isEvalMatch(m)).toBe(true);
+    expect(isEvalMatch({ ...m, picks: [{ ...m.picks[0], items: [0] }] })).toBe(false);
+  });
+
   it("keeps the picks in order with sides, positions and bans", () => {
     const m = toEvalMatch(detail(), 54, new Map([[6, 1], [1, 5]]))!;
     expect(m.id).toBe(9062609080);

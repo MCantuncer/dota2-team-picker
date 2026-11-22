@@ -32,10 +32,11 @@ export interface GamesWins {
 }
 
 /**
- * One hero's lane against another: [games, won, drawn, lost], stomps counted in won and lost. A tuple, not
- * an object, because the snapshot holds about 50,000 of them.
+ * One hero's lane against another: [games, won, drawn, lost], stomps counted in won and lost, then the
+ * hero's average last hits in those lanes (left out by downloads before it was added). A tuple, not an
+ * object, because the snapshot holds about 50,000 of them.
  */
-export type LaneCounts = [games: number, won: number, drawn: number, lost: number];
+export type LaneCounts = [games: number, won: number, drawn: number, lost: number, lastHits?: number];
 
 export interface HeroInfo {
   id: number;
@@ -64,8 +65,10 @@ export interface Snapshot {
   /**
    * Where the four count fields above come from: STRATZ (every ranked game, replaced on each
    * refresh) or, when missing, our own sample of public matches (added to on each refresh).
+   * `patchGames` is set while a new patch is young: the counts are then that many of this patch's
+   * ranked games plus a quarter of STRATZ's (see data/patch-matchups.ts).
    */
-  matchupsFrom?: { source: "stratz"; at: string };
+  matchupsFrom?: { source: "stratz"; at: string; patchGames?: number };
   /** Hard counters found in the counts (see data-hard-counters.ts), the engine's only hard counters. */
   dataHardCounters?: { hero: number; counter: number; gap: number; names: string }[];
   /** Refreshes in a row each "hero-counter" pair has been past the line, for the hold. */
@@ -142,7 +145,7 @@ export interface Snapshot {
   itemTimingsAt?: string;
   /** What players start with and which boots they buy, from STRATZ: itemStarts[heroId][position], every rank. */
   itemStarts?: Record<string, Record<string, ItemStart>>;
-  /** Each hero's learnable abilities and talents, from STRATZ, for skill builds. Keyed by hero id. */
+  /** Each hero's learnable abilities (from STRATZ) and talents (from the game files), for skill builds. Keyed by hero id. */
   heroAbilities?: Record<string, HeroAbilities>;
   /**
    * The skill build high-rank players used, from STRATZ guide matches of this patch, for every facet
@@ -218,12 +221,23 @@ export const TALENT_LEVELS: readonly number[] = [10, 15, 20, 25];
 export interface HeroAbilities {
   /** Learnable abilities in hotkey order (Q, W, E, ..., R last). */
   abilities: HeroAbility[];
-  /** Talents per tier (levels 10, 15, 20, 25): [left, right] ability ids and names. */
+  /** Talents per tier (levels 10, 15, 20, 25): [left, right] ability ids and names, on the sides the game shows them. */
   talents: { id: number; name: string }[][];
+  /**
+   * "game" when the talents were read from the game files (data/talents.ts), which STRATZ's constants then leave
+   * alone. Missing on talents from STRATZ's constants, which can lag a patch.
+   */
+  talentsFrom?: "game";
+  /**
+   * The hero's innate abilities by name (Anti-Mage: ["Persecutor"]), from the game files. Talents can name one, and
+   * the talent tree marks those with the game's innate icon. Missing until the talents step has run.
+   */
+  innate?: string[];
 }
 
 /** One skill build: the ability or talent id taken at each hero level from 1, 0 for a level with no point. */
 export interface SkillBuild {
+  /** The ability or attribute bonus taken at each level from 1 (0 for none); talents too in slices without `talentsApart`. */
   levels: number[];
   /** Matches whose order matched this build's group (max order and first points), and its share of all matches. */
   groupMatches: number;
@@ -262,6 +276,12 @@ export interface SkillBuildSlice {
    * `{}` when no key item passes; missing in slices saved before it existed, which makes the slice due again.
    */
   itemPaths?: Record<string, KeyPaths>;
+  /**
+   * True when talents were placed beside the level's ability point (a talent doesn't use the point since 7.4x), so
+   * `build.levels` holds abilities only, except for a hero with a point every level (Invoker), which keeps its talents
+   * there. Slices saved before it put each talent on a level of its own, one level late from 10 on, and are due again.
+   */
+  talentsApart?: true;
 }
 
 /** One step of a late path: the item, its minute, and how many late games bought it next. */

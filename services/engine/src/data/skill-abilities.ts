@@ -46,7 +46,8 @@ export interface ConstantsAnswer {
 
 /**
  * Each hero's abilities that may take skill points, in slot order, and talents by tier. Slots 0 and 1
- * are the level 10 talent pair, 2 and 3 level 15, and so on.
+ * are the level 10 talent pair, 2 and 3 level 15, and so on; the game shows the first of a pair on the
+ * right, so each pair is turned to [left, right]. The game files' talents (data/talents.ts) win over these.
  *
  * STRATZ's ability facts are patchy (Sven's God's Strength has no max level and is not marked as an
  * ultimate), so this only drops what surely takes no points: hidden slots, innate, Aghanim's and Shard
@@ -97,7 +98,7 @@ export function toHeroAbilities(constants: ConstantsAnswer): Record<string, Hero
       if (tier < 0 || tier >= TALENT_LEVELS.length) continue;
       talents[tier]?.push({ id: t.abilityId, name: talentName(abilities.get(t.abilityId)?.language?.displayName) });
     }
-    out[hero.id] = { abilities: learnable, talents };
+    out[hero.id] = { abilities: learnable, talents: talents.map((pair) => pair.reverse()) };
   }
   return out;
 }
@@ -128,6 +129,7 @@ export function fillMissingTalent(
   totals: TalentRow[],
   names: Map<number, string>,
 ): HeroAbilities["talents"] {
+  if (hero.talentsFrom === "game") return hero.talents;
   const known = new Set(hero.talents.flat().map((t) => t.id));
   const missing = [...new Set(totals.map((r) => r.abilityId))].filter((id) => !known.has(id) && id > 0);
   const open = hero.talents.map((pair, tier) => ({ pair, tier })).filter(({ pair }) => pair.length === 1);
@@ -137,7 +139,10 @@ export function fillMissingTalent(
   );
 }
 
-/** Fresh constants win, but a talent filled in by fillMissingTalent on an earlier run is kept while its tier is unchanged. */
+/**
+ * Fresh constants win, but talents (and innate abilities) read from the game files are kept, and a talent filled in by fillMissingTalent on
+ * an earlier run is kept while its tier is unchanged.
+ */
 export function mergeHeroAbilities(
   old: Snapshot["heroAbilities"],
   fresh: Record<string, HeroAbilities>,
@@ -146,6 +151,10 @@ export function mergeHeroAbilities(
   for (const [id, hero] of Object.entries(fresh)) {
     const before = old?.[id];
     if (!before) continue;
+    if (before.talentsFrom === "game") {
+      out[id] = { ...hero, talents: before.talents, talentsFrom: "game", ...(before.innate ? { innate: before.innate } : {}) };
+      continue;
+    }
     out[id] = {
       ...hero,
       talents: hero.talents.map((pair, tier) => {
