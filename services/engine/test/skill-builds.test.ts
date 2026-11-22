@@ -13,7 +13,7 @@ import {
   validTalentRows,
 } from "../src/data/skill-builds";
 import type { ItemInfo, Snapshot } from "../src/engine/types";
-import { points, Q, SVEN, SVEN_BUILD, TOTALS, W } from "./skill-build-fixture";
+import { Q, SVEN, SVEN_BUILD, SVEN_POINTS, TOTALS, W } from "./skill-build-fixture";
 
 describe("queries and answers", () => {
   it("picks the most picked heroes to ask for guides against", () => {
@@ -172,6 +172,7 @@ describe("refresh", () => {
           matches: 30,
           talents: [],
           itemPaths: {},
+          talentsApart: true,
         },
       },
       70: {
@@ -181,6 +182,7 @@ describe("refresh", () => {
           matches: 30,
           talents: [],
           itemPaths: {},
+          talentsApart: true,
         },
         3: {
           at: "2026-11-01T00:00:00Z",
@@ -188,6 +190,7 @@ describe("refresh", () => {
           matches: 30,
           talents: [],
           itemPaths: {},
+          talentsApart: true,
         },
       },
     };
@@ -197,6 +200,14 @@ describe("refresh", () => {
     ]);
     // A fresh slice saved before item paths is due, with the missing ones.
     delete snap.skillBuilds[18]![1]!.itemPaths; // Set above.
+    expect(skillRequests(snap, 181, now)).toEqual([
+      { heroId: 18, position: 1 },
+      { heroId: 70, position: 3 },
+      { heroId: 70, position: 1 },
+    ]);
+    // So is one saved with each talent on a level of its own.
+    snap.skillBuilds[18]![1]!.itemPaths = {}; // Set above.
+    delete snap.skillBuilds[18]![1]!.talentsApart; // Set above.
     expect(skillRequests(snap, 181, now)).toEqual([
       { heroId: 18, position: 1 },
       { heroId: 70, position: 3 },
@@ -276,7 +287,7 @@ describe("refresh", () => {
         heroId: 18,
         position: "POSITION_1",
         level: 18,
-        abilities: points(SVEN_BUILD).map((abilityId, time) => ({
+        abilities: SVEN_POINTS.map((abilityId, time) => ({
           abilityId,
           time,
         })),
