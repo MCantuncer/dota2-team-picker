@@ -1,0 +1,75 @@
+name: Commit authors
+
+# Every commit that reaches main must be authored and committed by the repo owner (or a bot
+# such as Dependabot). A commit from an AI tool's default identity, or a Co-authored-by trailer
+# for one, makes GitHub list that tool as a repo contributor. GitHub's squash merge also adds a
+# Co-authored-by line for every author of a PR commit, so one bad commit anywhere in a PR is
+# enough. This fails the PR before it can merge, and fails loudly on main if anything slips by.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check:
+    name: No AI tool in commits
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: List the commits
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            gh api "repos/$GH_REPO/pulls/$PR/commits" --paginate \
+              --jq '.[] | {sha, author: .commit.author, committer: .commit.committer, login: (.author.login // ""), message: .commit.message}' > commits.jsonl
+          else
+            jq -c '.commits[] | {sha: .id, author, committer, login: (.author.username // ""), message}' "$GITHUB_EVENT_PATH" > commits.jsonl
+          fi
+          echo "Checking $(wc -l < commits.jsonl) commit(s)."
+
+      - name: Reject AI tool authors and trailers
+        run: |
+          python3 - <<'PY'
+          import json, re
+
+          bad_email = re.compile(r"@anthropic\.com$", re.I)
+          bad_name = re.compile(r"^claude$", re.I)
+          bad_line = re.compile(
+              r"^\s*(co-authored-by:.*(claude|anthropic)|claude-session:|generated (with|by) \[?claude code)",
+              re.I,
+          )
+          problems = []
+          for raw in open("commits.jsonl", encoding="utf-8"):
+              c = json.loads(raw)
+              sha = c["sha"][:7]
+              for role in ("author", "committer"):
+                  who = c.get(role) or {}
+                  name, email = who.get("name") or "", who.get("email") or ""
+                  if bad_name.search(name) or bad_email.search(email):
+                      problems.append(f"{sha}: {role} is {name} <{email}>")
+              if bad_name.search(c.get("login") or ""):
+                  problems.append(f"{sha}: GitHub author account is {c['login']}")
+              for line in (c.get("message") or "").splitlines():
+                  if bad_line.search(line):
+                      problems.append(f"{sha}: message line '{line.strip()}'")
+          if problems:
+              print("::error::These commits would credit an AI tool as a contributor:")
+              for p in problems:
+                  print(f"::error::{p}")
+              print(
+                  "Fix: set the git identity to the repo owner, then rewrite the PR branch with "
+                  "`git rebase origin/main --exec 'git commit --amend --no-edit --reset-author'` "
+                  "and remove any Co-authored-by or Claude-Session lines."
+              )
+              raise SystemExit(1)
+          print("All commits are clean.")
+          PY
