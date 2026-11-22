@@ -53,7 +53,11 @@ const labelTag = (label: string) => /\(([^)]+)\)$/.exec(label)?.[1];
 const MIN_SUMMON_HEALTH = 50;
 
 /** Labels that mean the damage of one hit of the spell, read before any other damage label. */
-const HIT_DAMAGE_LABELS = new Set(["DAMAGE", "IMPACT DAMAGE", "INITIAL DAMAGE", "EXPLOSION DAMAGE", "DAMAGE EACH BOUNCE", "DAMAGE/HEAL", "HEAL/DAMAGE"]);
+/**
+ * Labels of one hit on a hero. "VOID MARK DAMAGE" is Astral Step's hit; "DAMAGE PER GLOB" is one of Mortimer Kisses'
+ * globs, the least a hero takes from it.
+ */
+const HIT_DAMAGE_LABELS = new Set(["DAMAGE", "IMPACT DAMAGE", "INITIAL DAMAGE", "EXPLOSION DAMAGE", "DAMAGE EACH BOUNCE", "DAMAGE/HEAL", "HEAL/DAMAGE", "VOID MARK DAMAGE", "DAMAGE PER GLOB"]);
 /** Labels of a spell that damages an enemy and heals an ally; with a plain duration they are per second. */
 const HEAL_OR_DAMAGE = new Set(["DAMAGE/HEAL", "HEAL/DAMAGE"]);
 /**
@@ -143,12 +147,15 @@ export function toLaneSpell(key: string, raw: Record<string, unknown>, orbs: Map
   const delay = one((a) => /(^|_)delay(_time)?$/.test(a.key))?.[0];
   const stun = one((a) => /stun_duration$/.test(a.key));
   const heal = one((a) => bareLabel(a.label) === "HEAL" || a.key === "heal");
+  // Damage for each point of health the target is missing, like Reaper's Scythe: an execute with no fixed number.
+  const missingHealth = damageType ? one((a) => /DAMAGE PER MISSING (HP|HEALTH)$/.test(bareLabel(a.label)) && !a.isPercent) : undefined;
   const spell: LaneSpell = {
     key,
     name: titleCase(raw.dname),
     ...(passive ? { passive: true as const } : { cast: behavior.has("Point Target") ? ("point" as const) : behavior.has("Unit Target") ? ("unit" as const) : ("none" as const) }),
     ...(damage ? { damage: damage.values } : {}),
-    ...(damage && damageType ? { damageType } : {}),
+    ...(missingHealth ? { missingHealthDamage: missingHealth } : {}),
+    ...((damage || missingHealth) && damageType ? { damageType } : {}),
     ...(!passive && nums(raw.cd) ? { cooldown: nums(raw.cd) } : {}),
     ...(!passive && nums(raw.mc) ? { mana: nums(raw.mc) } : {}),
     ...(castRange ? { castRange } : {}),

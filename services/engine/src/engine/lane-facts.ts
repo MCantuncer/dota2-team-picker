@@ -46,6 +46,8 @@ export interface LaneSpell {
   /** Damage of one cast on one hero, before resistances; damage over time counts up to LANE_DOT_SECONDS. */
   damage?: number[];
   damageType?: DamageType;
+  /** Damage for each point of health the target is missing (Reaper's Scythe), before resistances. */
+  missingHealthDamage?: number[];
   cooldown?: number[];
   mana?: number[];
   castRange?: number[];

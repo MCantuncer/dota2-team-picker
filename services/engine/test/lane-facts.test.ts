@@ -142,6 +142,27 @@ describe("toLaneSpell", () => {
     expect(spell([{ key: "jump_damage", header: "INCREMENTAL DAMAGE:", value: "20" }])?.damage).toBeUndefined();
     // No damage type: the number is not a hit on a hero.
     expect(spell([{ key: "damage", header: "EXTRA DAMAGE:", value: "400" }], "None")?.damage).toBeUndefined();
+    // Astral Step's hit, and one of Mortimer Kisses' globs.
+    expect(spell([{ key: "pop_damage", header: "VOID MARK DAMAGE:", value: ["130", "230", "330"] }])?.damage).toEqual([130, 230, 330]);
+    expect(spell([{ key: "damage_per_impact", header: "DAMAGE PER GLOB:", value: ["180", "250", "320"] }])?.damage).toEqual([180, 250, 320]);
+  });
+
+  it("reads damage for each missing point of health as an execute, not a hit", () => {
+    const scythe = toLaneSpell(
+      "necrolyte_reapers_scythe",
+      {
+        dname: "Reaper's Scythe",
+        behavior: "Unit Target",
+        dmg_type: "Magical",
+        attrib: [
+          { key: "damage_per_health", header: "DAMAGE PER MISSING HP:", value: ["0.7", "0.8", "0.9"] },
+          { key: "stun_duration", header: "STUN DURATION:", value: "1.5" },
+        ],
+      },
+      new Map(),
+    );
+    expect(scythe).toMatchObject({ missingHealthDamage: [0.7, 0.8, 0.9], damageType: "magical", stun: [1.5] });
+    expect(scythe?.damage).toBeUndefined();
   });
 
   it("counts a heal-or-damage number with a plain duration as per second, and without one as a single hit", () => {
