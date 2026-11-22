@@ -739,6 +739,62 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"similar_claims": {
+                  Row: {
+                    "claim_key": string,"claimed_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "claim_key": string,"claimed_at"?: string
+                  }
+                  Update: {
+                    "claim_key"?: string,"claimed_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"similar_lookups": {
+                  Row: {
+                    "looked_up_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "looked_up_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "looked_up_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"similar_matches": {
+                  Row: {
+                    "fetched_at": string,"game": NonNullable<Json>,"match_id": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "fetched_at"?: string,"game": NonNullable<Json>,"match_id": number
+                  }
+                  Update: {
+                    "fetched_at"?: string,"game"?: NonNullable<Json>,"match_id"?: number
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"similar_searches": {
+                  Row: {
+                    "answer": NonNullable<Json>,"fetched_at": string,"search_key": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "answer": NonNullable<Json>,"fetched_at"?: string,"search_key": string
+                  }
+                  Update: {
+                    "answer"?: NonNullable<Json>,"fetched_at"?: string,"search_key"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"solo_draft_actions": {
                   Row: {
                     "created_at": string,"device": string,"draft_id": string,"hero_id": number,"id": number,"kind": string,"position": number | null
@@ -1078,6 +1134,9 @@ isOneToOne: false
 "claim_matchup_fetches":
 { Args: { "version": number,"wanted": Json }; Returns: Json
                            },
+"claim_similar_fetches":
+{ Args: { "wanted": (string)[] }; Returns: (string)[]
+                           },
 "claim_solo_check_ins":
 { Args: { "max_rows"?: number }; Returns: {
               "account_id": number,"allies": (number)[],"id": string,"my_hero": number,"started_at": string
@@ -1139,6 +1198,9 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: number
                            },
 "forget_old_matchups":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"forget_old_similar_games":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "friend_overview":
@@ -1476,6 +1538,9 @@ isOneToOne: false
                            },
 "take_opendota_calls":
 { Args: { "caller_cap"?: number,"caller_name"?: string,"daily_cap"?: number,"wanted": number }; Returns: boolean
+                           },
+"take_similar_lookup":
+{ Args: { "hourly_cap"?: number,"who": string }; Returns: boolean
                            },
 "take_stratz_calls":
 { Args: { "hourly_cap"?: number,"wanted": number }; Returns: boolean
