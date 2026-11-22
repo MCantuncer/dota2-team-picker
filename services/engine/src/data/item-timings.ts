@@ -8,7 +8,7 @@
  * 25 batched queries, so they are refreshed once a day like the item builds.
  */
 import { isConsumable, isCoreItem, isUpgradedBoots, KEY_ITEM_MIN_COST } from "../engine/item-build";
-import { finishedItems } from "../engine/item-timing-slice";
+import { finishedItems, MIN_SLICE_GAMES } from "../engine/item-timing-slice";
 import { isShareItem, SHARE_MIN } from "../engine/item-trends";
 import type { ItemInfo, ItemTimingSlice, ItemTimingSliceKey, Position, RankGroup, Snapshot } from "../engine/types";
 
@@ -38,6 +38,14 @@ const WIN_DROP = 0.05;
 const MIN_MINUTE_SHARE = 0.01;
 /** Look for the win drop up to this many minutes past the 75th percentile. */
 const LATE_SEARCH_AFTER_P75 = 5;
+
+/**
+ * A download is whole when at least this share of the hero positions asked for got an every-rank slice with
+ * MIN_SLICE_GAMES games. Every whole download so far had all of them (Nov 15 to 20: 273 of 273 to 282 of 282).
+ * On 2026-11-21 STRATZ answered with 1 or 2 games for 274 of 276 (the Build Path showed two items), and
+ * replacing the last whole timings with that answer took every build down with it.
+ */
+export const WHOLE_SHARE = 0.8;
 
 /** A minute joins an item's pace when it has this share of the item's purchases; rarer minutes are noise. */
 export const PACE_MIN_SHARE = 0.01;
@@ -203,7 +211,23 @@ export function itemPace(rows: PurchaseRow[], slice: ItemTimingSlice, items: Rec
   return minutes.length ? { itemId: key[0], minutes } : undefined;
 }
 
-/** Downloads item timings for every hero's main positions into the snapshot. */
+/** How many hero positions asked for have an every-rank slice with MIN_SLICE_GAMES games, out of how many. */
+export function timingsCoverage(snapshot: Pick<Snapshot, "positions" | "itemTimings">): { usable: number; asked: number } {
+  const asked = timingRequests(snapshot.positions ?? {}).filter((r) => r.slice === "all");
+  const usable = asked.filter((r) => (snapshot.itemTimings?.[r.heroId]?.[r.position]?.all?.games ?? 0) >= MIN_SLICE_GAMES).length;
+  return { usable, asked: asked.length };
+}
+
+/** Whether the snapshot's item timings are whole (see WHOLE_SHARE). */
+export function timingsWhole(snapshot: Pick<Snapshot, "positions" | "itemTimings">): boolean {
+  const { usable, asked } = timingsCoverage(snapshot);
+  return asked > 0 && usable >= asked * WHOLE_SHARE;
+}
+
+/**
+ * Downloads item timings for every hero's main positions into the snapshot. Throws, leaving the last
+ * timings in place, when STRATZ's answer is not whole (see WHOLE_SHARE).
+ */
 export async function fetchItemTimings(
   snapshot: Snapshot,
   post: (query: string) => Promise<{ heroStats?: Record<string, unknown> | null }>,
@@ -224,6 +248,11 @@ export async function fetchItemTimings(
       const pace = PACE_POSITIONS.includes(r.position) ? itemPace(rows, slice, items) : undefined;
       ((timings[r.heroId] ??= {})[r.position] ??= {})[r.slice] = pace ? { ...slice, pace } : slice;
     });
+  }
+  const answer = { positions: snapshot.positions, itemTimings: timings };
+  if (!timingsWhole(answer)) {
+    const { usable, asked } = timingsCoverage(answer);
+    throw new Error(`STRATZ item timings look broken: ${usable} of ${asked} hero positions have ${MIN_SLICE_GAMES}+ games, keeping the last ones`);
   }
   snapshot.itemTimings = timings;
   snapshot.itemTimingsAt = now.toISOString();

@@ -5,6 +5,7 @@ import {
   fetchItemStarts,
   itemStartsQuery,
   startRequests,
+  startsWhole,
   toItemStart,
   type BootRow,
   type StartRow,
@@ -106,5 +107,24 @@ describe("fetchItemStarts", () => {
 
   it("fails when STRATZ answers without heroStats", async () => {
     await expect(fetchItemStarts(snapshot(), async () => ({}))).rejects.toThrow("no heroStats");
+  });
+
+  it("keeps the last starts when STRATZ answers for too few games", async () => {
+    const data = snapshot();
+    const last = { 8: { 1: { games: 30000, start: [[44, 1]], boots: [] } } } as Snapshot["itemStarts"];
+    data.itemStarts = last;
+    const few = JUGGERNAUT.starts.map((r) => ({ ...r, matchCount: Math.min(r.matchCount, 20) }));
+    await expect(fetchItemStarts(data, async () => ({ heroStats: { a0: few, b0: JUGGERNAUT.boots } }))).rejects.toThrow("0 of 1 hero positions");
+    expect(data.itemStarts).toBe(last);
+  });
+});
+
+describe("startsWhole", () => {
+  it("needs a start from enough games for most hero positions", () => {
+    const start = (games: number) => ({ games, start: [], boots: [] });
+    const positions = { 1: [900, 0, 0, 0, 0], 2: [0, 900, 0, 0, 0] };
+    expect(startsWhole({ positions, itemStarts: { 1: { 1: start(985) }, 2: { 2: start(32000) } } })).toBe(true);
+    expect(startsWhole({ positions, itemStarts: { 1: { 1: start(985) }, 2: { 2: start(36) } } })).toBe(false);
+    expect(startsWhole({ positions, itemStarts: { 1: { 1: start(985) } } })).toBe(false);
   });
 });
