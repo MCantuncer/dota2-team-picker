@@ -144,6 +144,8 @@ describe("skillPlan", () => {
     const p = plan({ ...data(), heroAbilities: { 18: three } }, 18, 3, ENEMIES, clear());
     expect(p.talents).toHaveLength(3);
     expect(p.talents[2]).toMatchObject({ level: 20, pick: null, result: "no-data" });
+    // No picks yet, but not a pair the patch changed: not marked New.
+    expect(p.talents[2]?.newPair).toBeUndefined();
   });
 
   it("leaves out a tier whose pair is incomplete", () => {
@@ -153,7 +155,8 @@ describe("skillPlan", () => {
 
   it("shows no pick when a patch changed the weekly talent", () => {
     const old = slice({ talents: [{ tier: 0, id: 99, share: 0.6, games: 100, level: 10 }] });
-    expect(plan(data(old), 18, 3, ENEMIES, clear()).talents[0]).toMatchObject({ pick: null, result: "no-data" });
+    const tier = plan(data(old), 18, 3, ENEMIES, clear()).talents[0];
+    expect(tier).toMatchObject({ pick: null, result: "no-data", newPair: true });
   });
 
   it("shows no pick when a patch changed the other talent of the usual one's pair", () => {
@@ -163,6 +166,7 @@ describe("skillPlan", () => {
     const tier = plan(data(old), 18, 3, ENEMIES, clear()).talents[0];
     expect(tier).toMatchObject({ pick: null, usual: null, result: "no-data" });
     expect(tier?.reason).toContain("changed in the new patch");
+    expect(tier?.newPair).toBe(true);
   });
 
   it("says last patch when the slice is older than the others", () => {

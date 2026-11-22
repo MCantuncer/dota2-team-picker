@@ -45,6 +45,8 @@ export interface TalentTier {
   reason: string;
   /** "1.8x the odds · 42 games", small under the reason, when the matchup games lean to the other talent. */
   odds?: string;
+  /** On a "no-data" tier whose pair the new patch changed: the tree marks it New. */
+  newPair?: true;
 }
 
 export interface SkillPlan {
@@ -99,6 +101,7 @@ function noData(tier: number, options: TalentTier["options"], changed: boolean):
     reason: changed
       ? `The level ${level} talents changed in the new patch and no picks of the new pair are recorded yet, so there is no usual pick.`
       : `No talent picks recorded for level ${level} yet, so there is no usual pick.`,
+    ...(changed ? { newPair: true as const } : {}),
   };
 }
 
