@@ -134,17 +134,18 @@ function headline(f: StoryFacts): string {
   }
   if (f.theirTiming === "early") return "Survive the enemy's early pushes: we are stronger after 25 minutes.";
   // No style claim: race our first two items against their carry's (or their first core's when they have
-  // no carry), else the clearest measured lane.
+  // no carry), else our ready minute. The lanes come last: the First 10 Minutes section tells them, and the
+  // Game Story is about the game after the lane (Can, 2026-11-22).
   const ready = nthMinute(f.spikes, READY_SPIKES);
   const theirs = carrySpike(f) ?? byMinute(f.theirSpikes ?? [])[0];
   if (ready !== undefined && theirs) {
     if (ready + EVEN_MINUTES <= theirs.minute) return `Fight from ${ready} min, before ${theirs.hero} has ${theirs.item} ${atMinute(theirs)}.`;
     if (theirs.minute + EVEN_MINUTES <= ready) return `${theirs.hero} has ${theirs.item} ${atMinute(theirs)}: hold fights until ${ready} min.`;
+    return `Both teams are ready at ${ready} min.`;
   }
+  if (ready !== undefined) return `Ready to fight at ${ready} min, once two key items are in.`;
   const lane = [f.hardLane, f.wonLane].find((l) => l?.fact);
   if (lane) return lane === f.hardLane ? `Hard ${lane.name}: ${lane.fact}` : `Your ${lane.name} to press: ${lane.fact}`;
-  if (ready !== undefined && theirs) return `Both teams are ready at ${ready} min.`;
-  if (ready !== undefined) return `Ready to fight at ${ready} min, once two key items are in.`;
   const unmeasured = f.hardLane ?? f.wonLane;
   if (unmeasured) return unmeasured === f.hardLane ? `Hard ${unmeasured.name}${against(unmeasured)}.` : `Your ${unmeasured.name} to press${against(unmeasured)}.`;
   return "Every lane is even.";

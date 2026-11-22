@@ -65,7 +65,7 @@ describe("gameStory", () => {
     expect(story.chapters[0]!.focus).toBe("lanes");
   });
 
-  it("leads with the measured lane when no item race is clear, the hard lane first", () => {
+  it("leads with the measured lane only when no item minute is known, the hard lane first", () => {
     const hard = { name: "off lane", ours: ["Sven"], theirs: ["Anti-Mage"], fact: "Sven wins 30% and loses 45% of 5,000 lanes against Anti-Mage." };
     const won = { name: "safe lane", ours: ["Medusa"], theirs: ["Lich"], fact: "Medusa wins 46% and loses 32% of 4,100 lanes against Lich." };
     const story = gameStory(facts({ hardLane: hard, wonLane: won }));
@@ -86,6 +86,13 @@ describe("gameStory", () => {
       }),
     );
     expect(race.headline).toBe("Fight from 14 min, before Anti-Mage has Battle Fury at 18.");
+    // So does our ready minute: the Game Story is about the game after the lane.
+    const ready = gameStory(facts({ hardLane: hard, spikes: [{ hero: "Magnus", item: "Blink Dagger", minute: 13 }, { hero: "Sven", item: "Black King Bar", minute: 14 }] }));
+    expect(ready.headline).toBe("Ready to fight at 14 min, once two key items are in.");
+    const even = gameStory(
+      facts({ hardLane: hard, spikes: [{ hero: "Magnus", item: "Blink Dagger", minute: 13 }, { hero: "Sven", item: "Black King Bar", minute: 14 }], theirSpikes: [{ hero: "Anti-Mage", item: "Battle Fury", minute: 15 }], enemyCarry: "Anti-Mage" }),
+    );
+    expect(even.headline).toBe("Both teams are ready at 14 min.");
   });
 
   it("puts each item in the chapter of its own minute and never names their spike twice", () => {
