@@ -36,6 +36,8 @@ export interface TalentConstants {
   names: Map<string, string>;
   /** Talent game name to its ability id. */
   ids: Map<string, number>;
+  /** Hero game name to its innate abilities' names, like ["Persecutor"]: talents name them, and the tree marks them. */
+  innate: Map<string, string[]>;
 }
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -45,7 +47,7 @@ export function toTalentConstants(heroes: unknown, heroAbilities: unknown, abili
   if (!isRecord(heroes) || !isRecord(heroAbilities) || !isRecord(abilities) || !isRecord(abilityIds)) {
     throw new Error("OpenDota constants are not objects");
   }
-  const out: TalentConstants = { heroes: new Map(), talents: new Map(), names: new Map(), ids: new Map() };
+  const out: TalentConstants = { heroes: new Map(), talents: new Map(), names: new Map(), ids: new Map(), innate: new Map() };
   for (const h of Object.values(heroes)) {
     if (isRecord(h) && typeof h.id === "number" && typeof h.name === "string") out.heroes.set(h.id, h.name);
   }
@@ -53,6 +55,12 @@ export function toTalentConstants(heroes: unknown, heroAbilities: unknown, abili
     const list = isRecord(entry) && Array.isArray(entry.talents) ? entry.talents : [];
     const names = list.flatMap((t: unknown) => (isRecord(t) && typeof t.name === "string" ? [t.name] : []));
     out.talents.set(npc, names.filter((n) => n.startsWith("special_bonus_") && n !== ATTRIBUTE_BONUS));
+    const keys = isRecord(entry) && Array.isArray(entry.abilities) ? entry.abilities : [];
+    const innate = keys.flatMap((key: unknown) => {
+      const a = typeof key === "string" ? abilities[key] : undefined;
+      return isRecord(a) && a.is_innate === true && typeof a.dname === "string" && a.dname.trim() ? [a.dname.trim()] : [];
+    });
+    if (innate.length) out.innate.set(npc, innate);
   }
   for (const [key, a] of Object.entries(abilities)) {
     if (isRecord(a) && typeof a.dname === "string") out.names.set(key, talentName(a.dname.replace(/%%/g, "%")));
@@ -118,6 +126,8 @@ export function toTree(order: string[], c: TalentConstants): { tree: TalentTree 
 /** Every hero's tree by hero id, plus a line per hero that fell back or was left out. */
 export interface GameTalents {
   trees: Record<string, TalentTree>;
+  /** Innate ability names by hero id, for the heroes that have one. */
+  innate: Record<string, string[]>;
   /** Heroes whose sides came from their game file (the rest use OpenDota's order). */
   fromFiles: number;
   notes: string[];
@@ -127,7 +137,7 @@ type GetText = (url: string) => Promise<string>;
 
 /** Builds the trees. A hero's file that can't be read, or lists other talents than OpenDota, falls back to OpenDota's order. */
 export async function buildGameTalents(c: TalentConstants, getText: GetText): Promise<GameTalents> {
-  const out: GameTalents = { trees: {}, fromFiles: 0, notes: [] };
+  const out: GameTalents = { trees: {}, innate: {}, fromFiles: 0, notes: [] };
   const heroes = [...c.heroes].filter(([, npc]) => c.talents.has(npc));
   for (let i = 0; i < heroes.length; i += FILE_BATCH) {
     const batch = heroes.slice(i, i + FILE_BATCH);
@@ -139,6 +149,8 @@ export async function buildGameTalents(c: TalentConstants, getText: GetText): Pr
       const same = slots.length === listed.length && slots.every((s) => listed.includes(s));
       if (same) out.fromFiles++;
       else out.notes.push(`${npc}: ${file instanceof Error ? `file failed (${file.message})` : "file differs from OpenDota"}, OpenDota's order`);
+      const innate = c.innate.get(npc);
+      if (innate) out.innate[id] = innate;
       const built = toTree(same ? slots : listed, c);
       if ("tree" in built) out.trees[id] = built.tree;
       else out.notes.push(`${npc}: left as it was, ${built.problem}`);
@@ -168,10 +180,11 @@ export async function fetchGameTalents(): Promise<GameTalents> {
 }
 
 /**
- * Puts the trees on the snapshot's heroes, marked as from the game so STRATZ's constants leave them alone. Heroes
- * without abilities yet are skipped (the skill builds add them). Returns how many heroes' talents changed.
+ * Puts the trees on the snapshot's heroes, marked as from the game so STRATZ's constants leave them alone, with each
+ * hero's innate ability names. Heroes without abilities yet are skipped (the skill builds add them). Returns how
+ * many heroes' talents changed.
  */
-export function applyGameTalents(snapshot: Snapshot, trees: Record<string, TalentTree>): number {
+export function applyGameTalents(snapshot: Snapshot, trees: Record<string, TalentTree>, innate: Record<string, string[]> = {}): number {
   let changed = 0;
   for (const [id, tree] of Object.entries(trees)) {
     const hero = snapshot.heroAbilities?.[id];
@@ -179,6 +192,8 @@ export function applyGameTalents(snapshot: Snapshot, trees: Record<string, Talen
     if (JSON.stringify(hero.talents) !== JSON.stringify(tree)) changed++;
     hero.talents = tree;
     hero.talentsFrom = "game";
+    if (innate[id]) hero.innate = innate[id];
+    else delete hero.innate;
   }
   return changed;
 }

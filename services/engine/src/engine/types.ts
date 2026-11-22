@@ -228,6 +228,11 @@ export interface HeroAbilities {
    * alone. Missing on talents from STRATZ's constants, which can lag a patch.
    */
   talentsFrom?: "game";
+  /**
+   * The hero's innate abilities by name (Anti-Mage: ["Persecutor"]), from the game files. Talents can name one, and
+   * the talent tree marks those with the game's innate icon. Missing until the talents step has run.
+   */
+  innate?: string[];
 }
 
 /** One skill build: the ability or talent id taken at each hero level from 1, 0 for a level with no point. */

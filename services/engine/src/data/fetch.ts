@@ -355,7 +355,7 @@ async function main() {
   console.log("Talents from the game files...");
   try {
     const talents = await fetchGameTalents();
-    const changed = applyGameTalents(snapshot, talents.trees);
+    const changed = applyGameTalents(snapshot, talents.trees, talents.innate);
     const heroes = Object.keys(talents.trees).length;
     console.log(`Talents for ${heroes} heroes, ${changed} changed; sides from ${talents.fromFiles} hero files.`);
     for (const note of talents.notes) console.warn(`::warning::Talents, ${note}`);
