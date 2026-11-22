@@ -29,3 +29,15 @@ describe("KEY_SPELLS", () => {
     }
   });
 });
+
+describe("hidden rules from Valve's notes", () => {
+  it("lets Black King Bar answer Global Silence, which debuff immunity removes", () => {
+    expect(PIERCES_BKB.silencer_global_silence).toBeUndefined();
+    expect(KEY_SPELLS.Silencer?.kind).toBe("magic");
+  });
+
+  it("names Culling Blade as the kill through Shallow Grave and Battle Trance", () => {
+    expect(KEY_SPELLS.Dazzle?.line).toContain("Culling Blade");
+    expect(KEY_SPELLS["Troll Warlord"]?.line).toContain("Culling Blade");
+  });
+});

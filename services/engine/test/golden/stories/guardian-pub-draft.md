@@ -84,15 +84,15 @@ Boots: Arcane Boots 12
 First: Hand of Midas 18/21
 Next: Blink Dagger 25/31 {Start fights from 1,200 range.}, Aether Lens 26/29
 Late: Aghanim's Scepter 31/34, Scythe of Vyse 38/43
-If needed: Glimmer Cape 25/26 [Against Pudge, Legion Commander and Shadow Shaman] instead of Aether Lens, Force Staff 32 [Against Drow Ranger and Legion Commander] instead of Aghanim's Scepter
+If needed: Glimmer Cape 25/26 [Against Pudge, Legion Commander and Shadow Shaman] instead of Aether Lens, Force Staff 32 [Against Drow Ranger] instead of Aghanim's Scepter
 Job: Your timing is Blink Dagger at 25 min. Drow Ranger has Manta Style at 24 min.
 Vs Drow Ranger (lane): Locks you down. buy Force Staff.
 Vs Crystal Maiden (lane, guessed): Magic burst. Stay spread so one combo can't catch two.
 Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
-Vs Legion Commander: Magic burst. buy Force Staff.
+Vs Legion Commander: Magic burst. Stay spread so one combo can't catch two.
 Vs Shadow Shaman: Magic burst. buy Glimmer Cape.
-Watch Drow Ranger, Legion Commander: buy Force Staff.
-Watch Crystal Maiden: Stay spread when Crystal Maiden is missing from the map.
+Watch Drow Ranger: buy Force Staff.
+Watch Crystal Maiden, Legion Commander: Legion Commander gets Blink Dagger at 15 min: from then, stay spread when Legion Commander is missing.
 Watch Pudge: Hit Drow Ranger and Legion Commander first: Pudge soaks your damage.
 Watch Shadow Shaman: buy Glimmer Cape.
 
@@ -103,14 +103,14 @@ Lane: Magic Wand 5
 Boots: Tranquil Boots 7
 First: Blink Dagger 18/20 {Start fights from 1,200 range.}
 Next: Glimmer Cape 26/29 [Against Pudge, Legion Commander and Shadow Shaman: don't skip it] {Invisibility and a magic damage barrier.}, Aether Lens 29/35
-Late: Force Staff 30/35 [Against Drow Ranger and Legion Commander: don't skip it] {Pushes you out of trouble.}, Aghanim's Scepter 36/44
+Late: Force Staff 30/35 [Against Drow Ranger: don't skip it] {Pushes you out of trouble.}, Aghanim's Scepter 36/44
 Job: Your timing is Blink Dagger at 18 min. Legion Commander has Blink Dagger at 15 min.
-Vs Legion Commander (lane): Magic burst. buy Force Staff.
+Vs Legion Commander (lane): Magic burst. Stay spread so one combo can't catch two.
 Vs Shadow Shaman (lane, guessed): Magic burst. buy Glimmer Cape.
 Vs Drow Ranger: Locks you down. buy Force Staff.
 Vs Pudge: Starts fights and soaks your damage. Don't focus them: kill the enemy damage dealers first.
 Vs Crystal Maiden: Magic burst. Stay spread so one combo can't catch two.
-Watch Legion Commander, Drow Ranger: buy Force Staff.
+Watch Legion Commander, Crystal Maiden: Legion Commander gets Blink Dagger at 15 min: from then, stay spread when Legion Commander is missing.
 Watch Shadow Shaman: buy Glimmer Cape.
+Watch Drow Ranger: buy Force Staff.
 Watch Pudge: Hit Drow Ranger and Legion Commander first: Pudge soaks your damage.
-Watch Crystal Maiden: Stay spread when Crystal Maiden is missing from the map.

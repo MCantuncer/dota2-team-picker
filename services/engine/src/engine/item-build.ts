@@ -79,6 +79,13 @@ interface CounterItem {
   reason?: (named: HeroInfo[]) => string;
 }
 
+/**
+ * Heroes whose lock Force Staff can't push you out of. Valve's note on Force Staff: "Will not work on a unit
+ * inside Chronosphere, Duel, or Black Hole." So it is never named as the answer to them.
+ */
+const FORCE_STAFF_LOCKS = new Set(["Faceless Void", "Legion Commander", "Enigma"]);
+export const holdsForceStaff = (hero: HeroInfo) => FORCE_STAFF_LOCKS.has(hero.name);
+
 /** Items that answer threats, best answer first within each threat. Matched by OpenDota item key. */
 export const COUNTER_ITEMS: readonly CounterItem[] = [
   { key: "black_king_bar", answers: ["disable"], minEnemies: 3, buyer: "core", skips: beatsBkb },
@@ -94,7 +101,7 @@ export const COUNTER_ITEMS: readonly CounterItem[] = [
   { key: "pipe", answers: ["magicBurst"], minEnemies: 3, buyer: "any" },
   { key: "ghost", answers: ["physicalCarry"], minEnemies: 2, buyer: "support" },
   { key: "glimmer_cape", answers: ["magicBurst"], minEnemies: 2, buyer: "support" },
-  { key: "force_staff", answers: ["physicalCarry"], minEnemies: 1, buyer: "support" },
+  { key: "force_staff", answers: ["physicalCarry"], minEnemies: 1, buyer: "support", skips: holdsForceStaff },
   { key: "heavens_halberd", answers: ["physicalCarry"], minEnemies: 1, buyer: "core" },
 ];
 

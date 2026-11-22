@@ -39,7 +39,7 @@ const OTHER = new Set([
   "doom_bringer_doom", "beastmaster_primal_roar", "axe_berserkers_call",
   "ancient_apparition_ice_blast", "batrider_flaming_lasso", "bloodseeker_rupture", "bounty_hunter_track",
   "huskar_life_break", "phoenix_supernova", "primal_beast_pulverize", "pudge_meat_hook", "queenofpain_sonic_wave",
-  "razor_static_link", "silencer_global_silence", "vengefulspirit_nether_swap", "viper_viper_strike",
+  "razor_static_link", "vengefulspirit_nether_swap", "viper_viper_strike",
   "winter_wyvern_winters_curse",
   "abaddon_borrowed_time", "arc_warden_tempest_double", "bristleback_bristleback", "broodmother_spawn_spiderlings",
   "chen_hand_of_god", "dazzle_shallow_grave", "furion_teleportation", "mirana_invis", "nyx_assassin_vendetta",
@@ -53,6 +53,7 @@ const OTHER = new Set([
  * them: "lock" when the spell holds you in place (Black Hole, Duel), "damage" when it only hurts (Exorcism,
  * Rupture). Kept by hand and checked against the game facts: OpenDota's flag also says yes for saves cast
  * on spell-immune allies (Shallow Grave) and passives (Fury Swipes), which are not what this list means.
+ * Global Silence is left out: Valve's note says gaining debuff immunity removes it, so Black King Bar answers it.
  */
 export const PIERCES_BKB: Readonly<Record<string, "lock" | "damage">> = {
   enigma_black_hole: "lock",
@@ -69,7 +70,6 @@ export const PIERCES_BKB: Readonly<Record<string, "lock" | "damage">> = {
   vengefulspirit_nether_swap: "lock",
   winter_wyvern_winters_curse: "lock",
   phoenix_supernova: "lock",
-  silencer_global_silence: "lock",
   viper_viper_strike: "lock",
   juggernaut_omni_slash: "damage",
   death_prophet_exorcism: "damage",
@@ -91,7 +91,7 @@ const spell = (key: string, name: string, line: string): KeySpell => ({
 export const KEY_SPELLS: Record<string, KeySpell> = {
   Abaddon: spell("abaddon_borrowed_time", "Borrowed Time", "Your damage heals him for a few seconds"),
   Alchemist: spell("alchemist_chemical_rage", "Chemical Rage", "Fast attacks and regen once it is on"),
-  "Ancient Apparition": spell("ancient_apparition_ice_blast", "Ice Blast", "No healing, and kills you below a tenth of your health"),
+  "Ancient Apparition": spell("ancient_apparition_ice_blast", "Ice Blast", "No healing, and kills you below 12 to 14% health"),
   "Anti-Mage": spell("antimage_mana_void", "Mana Void", "Big damage on heroes low on mana"),
   "Arc Warden": spell("arc_warden_tempest_double", "Tempest Double", "A second copy with all his items"),
   Axe: spell("axe_berserkers_call", "Berserker's Call", "Forces you to hit him while his team arrives"),
@@ -112,7 +112,7 @@ export const KEY_SPELLS: Record<string, KeySpell> = {
   "Dark Seer": spell("dark_seer_wall_of_replica", "Wall of Replica", "Copies of your team fight against you"),
   "Dark Willow": spell("dark_willow_terrorize", "Terrorize", "Makes your whole team run away"),
   Dawnbreaker: spell("dawnbreaker_solar_guardian", "Solar Guardian", "Lands on any fight on the map"),
-  Dazzle: spell("dazzle_shallow_grave", "Shallow Grave", "Keeps an enemy hero from dying for a few seconds"),
+  Dazzle: spell("dazzle_shallow_grave", "Shallow Grave", "Saves a hero from dying, but Culling Blade still kills"),
   "Death Prophet": spell("death_prophet_exorcism", "Exorcism", "Spirits tear down heroes and towers"),
   Disruptor: spell("disruptor_static_storm", "Static Storm", "Silences, and mutes items with his scepter"),
   Doom: spell("doom_bringer_doom", "Doom", "No spells and no items, even through Black King Bar"),
@@ -199,7 +199,7 @@ export const KEY_SPELLS: Record<string, KeySpell> = {
   Tinker: spell("tinker_rearm", "Rearm", "Uses every spell and item twice"),
   Tiny: spell("tiny_toss", "Toss", "Throws you into his team"),
   "Treant Protector": spell("treant_overgrowth", "Overgrowth", "Roots your whole team"),
-  "Troll Warlord": spell("troll_warlord_battle_trance", "Battle Trance", "Fast attacks and he can't die"),
+  "Troll Warlord": spell("troll_warlord_battle_trance", "Battle Trance", "Fast attacks and can't die, except to Culling Blade"),
   Tusk: spell("tusk_walrus_punch", "Walrus PUNCH!", "A big critical hit that lifts you"),
   Underlord: spell("abyssal_underlord_dark_portal", "Fiend's Gate", "Brings his team across the map"),
   Undying: spell("undying_tombstone", "Tombstone", "Zombies that slow everyone"),

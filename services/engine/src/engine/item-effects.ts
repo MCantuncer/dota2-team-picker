@@ -10,7 +10,7 @@
  */
 import { beatsBkb, piercingSpell } from "./bkb";
 import { buffsFrom } from "./dispel";
-import { listNames, threatsOf, type ItemBuild, type Threat } from "./item-build";
+import { holdsForceStaff, listNames, threatsOf, type ItemBuild, type Threat } from "./item-build";
 import { dispelsEnemy } from "./item-facts";
 import type { HeroInfo, ItemInfo } from "./types";
 
@@ -19,7 +19,7 @@ const MAX_NAMES = 3;
 
 interface Effect {
   /** The threat the item answers, and the line naming the heroes that bring it. */
-  answers?: { threat: Threat; line: (names: string) => string };
+  answers?: { threat: Threat; line: (names: string) => string; skips?: (hero: HeroInfo) => boolean };
   /** The line when no enemy brings that threat, or for an item that answers none. */
   plain: string;
 }
@@ -49,7 +49,7 @@ const EFFECTS: Record<string, Effect> = {
   pipe: { answers: { threat: "magicBurst", line: (n) => `Blocks magic burst from ${n} for your team.` }, plain: "Blocks magic damage for your team." },
   ghost: { answers: { threat: "physicalCarry", line: (n) => `Turns off right clicks from ${n} on you.` }, plain: "Turns off right clicks on you." },
   glimmer_cape: { answers: { threat: "magicBurst", line: (n) => `Hides you and blocks magic damage from ${n}.` }, plain: "Invisibility and a magic damage barrier." },
-  force_staff: { answers: { threat: "physicalCarry", line: (n) => `Pushes you away from ${n}.` }, plain: "Pushes you out of trouble." },
+  force_staff: { answers: { threat: "physicalCarry", line: (n) => `Pushes you away from ${n}.`, skips: holdsForceStaff }, plain: "Pushes you out of trouble." },
   heavens_halberd: { answers: { threat: "physicalCarry", line: (n) => `Disarms ${n}.` }, plain: "Disarms one right-click hero." },
   blink: { plain: "Start fights from 1,200 range." },
   desolator: { plain: "-6 armor on your target." },
@@ -70,7 +70,7 @@ export function itemEffect(key: string, enemies: HeroInfo[], name = true): { lin
   if (!effect) return null;
   const bkb = key === "black_king_bar";
   const answers = effect.answers;
-  const named = (h: HeroInfo) => !bkb || !beatsBkb(h);
+  const named = (h: HeroInfo) => (!bkb || !beatsBkb(h)) && !answers?.skips?.(h);
   const hit = answers && name ? enemies.filter((h) => threatsOf(h).has(answers.threat) && named(h)).slice(0, MAX_NAMES) : [];
   let line = answers && hit.length ? answers.line(listNames(hit.map((h) => h.name))) : effect.plain;
   if (bkb) {
