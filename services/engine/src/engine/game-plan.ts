@@ -74,9 +74,20 @@ export interface LanePlan {
    * (lane-tactics.ts), most important first. Left out when no pair has any.
    */
   tactics?: PairTactics[];
+  /** What each enemy laner buys by the end of the lane, from their usual build at their guessed position. */
+  enemyItems?: EnemyLaneItems[];
   verdict: LaneVerdict;
   text: string;
 }
+
+/** An enemy laner's items by the end of the lane: the start, the small lane items and any core item bought by then. */
+export interface EnemyLaneItems {
+  hero: number;
+  items: Pick<BuildItem, "itemId" | "name" | "img" | "minute" | "count">[];
+}
+
+/** The lane ends here: an enemy's items bought by this minute are lane items. */
+export const LANE_END_MINUTE = 10;
 
 /** Lane tactics for one of our laners against one enemy laner. */
 export interface PairTactics {
@@ -317,6 +328,19 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
             return found.length ? [{ hero: o, enemy: t, tactics: found }] : [];
           });
     });
+    const enemyItems = theirs.flatMap((t): EnemyLaneItems[] => {
+      const position = enemyPositionOf.get(t);
+      const build = position === undefined ? null : itemBuild(engine.data, t, position, ourIds, bracket);
+      if (!build) return [];
+      const items = [...build.start, ...build.lane, ...build.core.filter((i) => i.minute <= LANE_END_MINUTE)].map(({ itemId, name, img, minute, count }) => ({
+        itemId,
+        name,
+        img,
+        minute,
+        ...(count ? { count } : {}),
+      }));
+      return items.length ? [{ hero: t, items }] : [];
+    });
     return {
       name: lane.name,
       ours,
@@ -327,6 +351,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       ...(odds ? { laneNet: round(odds.net * 100), pairLine, keyPair: odds.key } : {}),
       ...(pairs.length ? { pairs } : {}),
       ...(tactics.length ? { tactics } : {}),
+      ...(enemyItems.length ? { enemyItems } : {}),
     };
   });
 
