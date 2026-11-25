@@ -135,6 +135,8 @@ export interface Snapshot {
   itemBuilds?: Record<string, ItemPhases>;
   /** When items and item builds were last downloaded; they are refreshed daily. */
   itemsAt?: string;
+  /** The neutral tiers, artifacts and enchantments of the patch, from the game file; refreshed daily. */
+  neutrals?: NeutralPool;
   /**
    * When players buy their core items, from STRATZ: itemTimings[heroId][position][slice], where the
    * slice is a RankGroup ("1" to "4") or "all" for every rank. Only each hero's two most played
@@ -336,6 +338,56 @@ export interface ItemAbility {
   text?: string;
   /** The tooltip's number lines, like Duration `9s` or Dispel Type `Basic Dispel`. */
   facts?: { label: string; value: string }[];
+}
+
+/**
+ * A neutral item: an artifact crafted at a tier, or an enchantment put on it. Neutral items have no gold cost and
+ * never come from the shop, so they are kept apart from `items`.
+ */
+export interface NeutralItem {
+  /** OpenDota's internal name, like `vile_phial` or `enhancement_brawny`. */
+  key: string;
+  name: string;
+  /** Image path on the Steam CDN. */
+  img: string;
+  kind: "artifact" | "enchantment";
+  /** The artifact's tier (1 to 4). Enchantments come at every tier, with a level for each. */
+  tier?: number;
+  /** The artifact this one is a used-up form of, by item id: Disgraced Regalia is Divine Regalia after a death. */
+  brokenOf?: number;
+  /** What an artifact adds, as the game lists it, without zero amounts. */
+  stats?: ItemStat[];
+  /** An enchantment's bonuses at each of its levels: levels[0] is level 1. Bonuses that cost (- Armor) keep their sign. */
+  levels?: ItemStat[][];
+  abilities?: ItemAbility[];
+  /** Seconds before an artifact's spell or effect comes back. */
+  cooldown?: number;
+}
+
+/** The hero attributes enchantments are offered by, as the game file names them. */
+export const ENCHANT_GROUPS = ["global", "strength", "agility", "intelligence", "universal"] as const;
+export type EnchantGroup = (typeof ENCHANT_GROUPS)[number];
+
+/** One neutral tier as the game file sets it. */
+export interface NeutralTier {
+  tier: number;
+  /** The earliest minute it can be crafted; madstones decide when it really is. */
+  minute: number;
+  /** Madstones a craft costs. */
+  craftCost: number;
+  /** Artifacts offered at a craft. */
+  options: number;
+  /** The tier's artifacts by item id, in the file's pools (one artifact of a pool is offered at a time). */
+  pools: number[][];
+  /** Enchantments offered per hero attribute ("global" for every hero): [item id, level]. */
+  enchants: Record<EnchantGroup, [itemId: number, level: number][]>;
+}
+
+/** The neutral items of the patch, from the game's own file, with the tooltips of every artifact and enchantment. */
+export interface NeutralPool {
+  at: string;
+  tiers: NeutralTier[];
+  items: Record<string, NeutralItem>;
 }
 
 /** Times each item (by item id) was bought in each phase of the game: before the horn, then up to 10, 25 and after. */

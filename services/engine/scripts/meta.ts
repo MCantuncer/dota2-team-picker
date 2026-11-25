@@ -87,7 +87,7 @@ function summary(meta: MetaFile, reread: number, extrasNote: string): string {
 const DAY_S = 24 * 60 * 60;
 
 /** Builds, new items and matchups. A failure keeps the published extras of the same patch, so the day numbers still go out. */
-async function extras(snapshot: Pick<Snapshot, "patch" | "items" | "matchups">, now: number, last: MetaFile | null): Promise<[MetaExtras | undefined, string]> {
+async function extras(snapshot: Pick<Snapshot, "patch" | "items" | "matchups" | "neutrals">, now: number, last: MetaFile | null): Promise<[MetaExtras | undefined, string]> {
   try {
     const built = await buildExtras(
       {
@@ -126,7 +126,7 @@ async function extras(snapshot: Pick<Snapshot, "patch" | "items" | "matchups">, 
 
 async function main() {
   // The snapshot is written by fetch-data, which checked its shape.
-  const snapshot = JSON.parse(readFileSync(values.snapshot!, "utf8")) as Pick<Snapshot, "patch" | "positions" | "items" | "matchups">;
+  const snapshot = JSON.parse(readFileSync(values.snapshot!, "utf8")) as Pick<Snapshot, "patch" | "positions" | "items" | "matchups" | "neutrals">;
   if (!snapshot.patch) throw new Error(`${values.snapshot} has no patch`);
   const last = await published();
   const now = Math.floor(Date.now() / 1000);

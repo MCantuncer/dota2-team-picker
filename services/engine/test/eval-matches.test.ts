@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buyItemIds, buyTimes, finalItems, isCandidate, isEvalMatch, mergeMatches, monthPath, toEvalMatch, type EvalMatch, type MatchDetail } from "../src/data/eval-matches";
+import { buyItemIds, buyTimes, finalItems, neutralCrafts, isCandidate, isEvalMatch, mergeMatches, monthPath, toEvalMatch, type EvalMatch, type MatchDetail } from "../src/data/eval-matches";
 import { fetchMatchPositions, matchPositionsQuery, MATCHES_PER_QUERY, toMatchPositions } from "../src/data/stratz";
 import type { PublicMatch } from "../src/data/fetch";
 
@@ -56,6 +56,53 @@ describe("finalItems", () => {
     expect(items.get(6)).toEqual({ items: [1] });
     expect(items.size).toBe(2);
     expect(finalItems(null).size).toBe(0);
+  });
+});
+
+describe("neutral items", () => {
+  const IDS = new Map([
+    ["chipped_vest", 1573],
+    ["vile_phial", 1882],
+    ["enhancement_mystical", 1583],
+  ]);
+
+  it("keeps the enchantment only with a neutral item", () => {
+    const items = finalItems([
+      { hero_id: 1, item_neutral: 1882, item_neutral2: 1583 },
+      { hero_id: 2, item_neutral: 0, item_neutral2: 1583 },
+    ]);
+    expect(items.get(1)).toEqual({ items: [], neutral: 1882, enchant: 1583 });
+    expect(items.get(2)).toEqual({ items: [] });
+  });
+
+  it("turns a parsed game's craft history into [artifact, enchantment, minute] and skips unknown artifacts", () => {
+    const players = [
+      {
+        hero_id: 6,
+        neutral_item_history: [
+          { time: 625, item_neutral: "chipped_vest", item_neutral_enhancement: "enhancement_mystical" },
+          { time: 1900, item_neutral: "vile_phial", item_neutral_enhancement: "enhancement_new" },
+          { time: 2000, item_neutral: "brand_new_artifact" },
+          { item_neutral: "vile_phial" },
+        ],
+      },
+      { hero_id: 1, neutral_item_history: [] },
+    ];
+    expect(neutralCrafts(players, IDS).get(6)).toEqual([
+      [1573, 1583, 10],
+      [1882, 0, 32],
+    ]);
+    expect(neutralCrafts(players, IDS).has(1)).toBe(false);
+    const m = toEvalMatch(detail({ players }), 54, undefined, undefined, IDS)!;
+    expect(m.picks[0]!.crafts).toEqual([
+      [1573, 1583, 10],
+      [1882, 0, 32],
+    ]);
+    expect(isEvalMatch(m)).toBe(true);
+    expect(isEvalMatch({ ...m, picks: [{ ...m.picks[0], crafts: [[1573, 0]] }] })).toBe(false);
+    expect(isEvalMatch({ ...m, picks: [{ ...m.picks[0], enchant: -1 }] })).toBe(false);
+    // Without the names, games are saved as before.
+    expect(toEvalMatch(detail({ players }), 54, undefined)!.picks[0]).not.toHaveProperty("crafts");
   });
 });
 

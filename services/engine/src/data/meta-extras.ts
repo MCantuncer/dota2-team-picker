@@ -14,7 +14,7 @@
 import type { EvalMatch } from "./eval-matches";
 import type { MetaFile } from "./meta";
 import type { HeroPatchNotes } from "./patch-notes";
-import type { GamesWins, ItemInfo, Snapshot } from "../engine/types";
+import type { GamesWins, ItemInfo, NeutralItem, Snapshot } from "../engine/types";
 
 export interface MetaExtras {
   /** Saved ranked games of this patch with end-of-game items: the games the builds and new items come from. */
@@ -24,6 +24,8 @@ export interface MetaExtras {
   matchups: Record<string, { best: Matchup[]; worst: Matchup[] }>;
   /** The shop data of every item in the builds and new items, for the page's item cards. Neutral items have none. */
   items: Record<string, ItemInfo>;
+  /** The tooltip of every neutral item in the builds (tier, spell, bonuses), for the page's item cards. */
+  neutralItems: Record<string, NeutralItem>;
   /** Each hero's biggest changes in the patch; empty when the notes could not be read. */
   patchNotes: HeroPatchNotes;
 }
@@ -81,9 +83,9 @@ const top = (map: Map<number, number>, games: number, share: number, max: number
 /**
  * Each hero's builds from the saved games that started at or after `since` (Unix seconds). Picks without items
  * (games saved before items were kept) are skipped. Items missing from `items` (recipes, removed items) and
- * cheaper than MIN_BUILD_COST are left out.
+ * cheaper than MIN_BUILD_COST are left out. A used-up neutral item (Disgraced Regalia) counts as the one it was.
  */
-export function heroBuilds(games: EvalMatch[], since: number, items: Record<string, ItemInfo>): Builds {
+export function heroBuilds(games: EvalMatch[], since: number, items: Record<string, ItemInfo>, neutrals: Record<string, NeutralItem> = {}): Builds {
   type Count = { games: number; items: Map<number, number>; neutral: Map<number, number>; buyGames: number; minutes: Map<number, number[]>; early: Map<number, number> };
   const counts = new Map<string, Count>();
   for (const game of games) {
@@ -97,7 +99,7 @@ export function heroBuilds(games: EvalMatch[], since: number, items: Record<stri
         c.games++;
         // An item held twice (two Bracers) counts once: the share is of games.
         for (const id of new Set(pick.items)) if ((items[id]?.cost ?? 0) >= MIN_BUILD_COST) count(c.items, id);
-        if (pick.neutral) count(c.neutral, pick.neutral);
+        if (pick.neutral) count(c.neutral, neutrals[pick.neutral]?.brokenOf ?? pick.neutral);
         if (pick.buys) {
           c.buyGames++;
           for (const [id, minute] of pick.buys) {
@@ -225,7 +227,7 @@ export interface ExtrasDeps {
  */
 export async function buildExtras(
   deps: ExtrasDeps,
-  snapshot: Pick<Snapshot, "patch" | "items" | "matchups">,
+  snapshot: Pick<Snapshot, "patch" | "items" | "matchups" | "neutrals">,
   now: number,
   last: MetaFile | null,
 ): Promise<MetaExtras> {
@@ -248,7 +250,8 @@ export async function buildExtras(
     console.warn(`Patch notes failed, keeping the last ones: ${(err as Error).message}`);
     notes = samePatch ? (last.extras?.patchNotes ?? {}) : {};
   }
-  const builds = heroBuilds(games, since, items);
+  const neutrals = snapshot.neutrals?.items ?? {};
+  const builds = heroBuilds(games, since, items, neutrals);
   const newItems = newItemUse(ids, games, since);
   const used = new Set([
     ...newItems.map((n) => n.id),
@@ -260,6 +263,11 @@ export async function buildExtras(
     newItems,
     matchups: heroMatchups(snapshot.matchups ?? {}),
     items: Object.fromEntries([...used].sort((a, b) => a - b).flatMap((id) => (items[id] ? [[String(id), items[id]]] : []))),
+    neutralItems: Object.fromEntries(
+      [...new Set(Object.values(builds).flatMap((byPosition) => Object.values(byPosition).flatMap((b) => b.neutral.map(([id]) => id))))]
+        .sort((a, b) => a - b)
+        .flatMap((id) => (neutrals[id] ? [[String(id), neutrals[id]]] : [])),
+    ),
     patchNotes: notes,
   };
 }

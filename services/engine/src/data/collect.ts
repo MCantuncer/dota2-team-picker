@@ -15,7 +15,7 @@ import { getOpenDota, requestsLeftToday } from "./opendota";
 import { fetchMatchPositions } from "./stratz";
 import { BUCKET } from "./upload";
 import { existsSync, readFileSync } from "node:fs";
-import type { ItemInfo, Position } from "../engine/types";
+import type { Position, Snapshot } from "../engine/types";
 import { buyItemIds, isCandidate, mergeMatches, monthPath, toEvalMatch, type EvalMatch, type MatchDetail } from "./eval-matches";
 
 /** Leave this many OpenDota requests for the data refresh and other users of the runner's IP. */
@@ -53,6 +53,8 @@ export interface CollectDeps {
   dryRun: boolean;
   /** The items whose buy minutes are kept (see buyItemIds); without it games are saved without buy minutes. */
   buyItems?: Map<string, number>;
+  /** Neutral items' internal names to ids (the snapshot's neutral pool); without it games are saved without neutral crafts. */
+  neutralIds?: Map<string, number>;
 }
 
 export interface CollectResult {
@@ -158,7 +160,7 @@ export async function collectMatches(deps: CollectDeps): Promise<CollectResult> 
 
   const added: EvalMatch[] = [];
   for (const { detail, rankTier } of details) {
-    const match = toEvalMatch(detail, rankTier, positions.get(detail.match_id), deps.buyItems);
+    const match = toEvalMatch(detail, rankTier, positions.get(detail.match_id), deps.buyItems, deps.neutralIds);
     if (!match) continue;
     const path = monthPath(match.startTime);
     months.set(path, mergeMatches(await month(path), [match]));
@@ -222,8 +224,11 @@ async function main() {
 
   // The refresh writes the snapshot before this runs; its item list says which buy minutes to keep.
   const snapshotPath = "data/snapshot.json";
-  const items = existsSync(snapshotPath) ? ((JSON.parse(readFileSync(snapshotPath, "utf8")) as { items?: Record<string, ItemInfo> }).items ?? null) : null;
+  const snapshot = existsSync(snapshotPath) ? (JSON.parse(readFileSync(snapshotPath, "utf8")) as Pick<Snapshot, "items" | "neutrals">) : null;
+  const items = snapshot?.items ?? null;
   if (!items) console.log(`No item list in ${snapshotPath}, saving games without buy minutes.`);
+  const neutrals = snapshot?.neutrals?.items;
+  if (!neutrals) console.log(`No neutral pool in ${snapshotPath}, saving games without neutral crafts.`);
 
   const result = await collectMatches({
     store: bucketStore(),
@@ -234,6 +239,7 @@ async function main() {
     max,
     dryRun,
     ...(items ? { buyItems: buyItemIds(items) } : {}),
+    ...(neutrals ? { neutralIds: new Map(Object.entries(neutrals).map(([id, n]) => [n.key, Number(id)])) } : {}),
   });
   const complete = result.added.filter((m) => m.picks.every((p) => p.position)).length;
   console.log(
