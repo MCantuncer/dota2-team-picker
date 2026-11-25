@@ -6,6 +6,7 @@ import { laneAdjusted } from "./lane-items";
 import { laneOdds, pairLane, pairText, type PairLane } from "./lane-odds";
 import { laneTactics, type LaneTactic } from "./lane-tactics";
 import type { MatchupGame } from "./matchup-talents";
+import { neutralPlan, type NeutralPlanTier } from "./neutral-plan";
 import { skillPlan, type SkillPlan } from "./skill-plan";
 import { gameStory, type Story, type Timing } from "./story";
 import { comboMap, styleSets, STYLES, type Style } from "./gameplan";
@@ -120,6 +121,8 @@ export interface PlayerPlan {
    * minute the "No X by N min?" fallback names. Left out when the build has no such item.
    */
   keyItem?: { itemId: number; name: string; lateMinute?: number };
+  /** The neutral items this hero can craft at each tier, most chosen first (see neutral-plan.ts). */
+  neutrals?: NeutralPlanTier[];
 }
 
 /**
@@ -471,6 +474,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
     const games = answered ? (matchups[p.heroId] === undefined ? [] : matchups[p.heroId]) : matchups;
     const skills = skillPlan(engine.data, p.heroId, p.position, input.theirs.map(name), games);
     const journey = itemJourney(engine, build, p.heroId, p.position);
+    const neutrals = neutralPlan(engine.data, p.heroId, p.position);
     const mine = keyItem(engine, build, p.heroId, p.position);
     const enemies = enemyList(
       build,
@@ -504,6 +508,7 @@ export function gamePlan(engine: Engine, input: GamePlanInput): GamePlan {
       threatRows: threatRows(enemies, tipFacts),
       ...(skills ? { skills } : {}),
       ...(journey ? { journey } : {}),
+      ...(neutrals ? { neutrals } : {}),
     };
   });
 
