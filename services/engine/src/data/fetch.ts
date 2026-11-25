@@ -27,6 +27,7 @@ import { restoreItemData } from "./item-restore";
 import { fetchItemStarts } from "./item-starts";
 import { fetchItemTimings, itemTimingsDue } from "./item-timings";
 import { fetchItems, itemsDue } from "./items";
+import { countNeutralChoices } from "./neutral-choices";
 import { fetchNeutralPool, neutralsDue } from "./neutral-items";
 import { dropRemovedItems } from "./removed-items";
 import { countPickPhases } from "./pick-phase";
@@ -400,13 +401,17 @@ async function main() {
     }
   }
 
-  console.log("Pick phases from the saved ranked games...");
+  console.log("Pick phases and neutral choices from the saved ranked games...");
   try {
     const nowS = Math.floor(now.getTime() / 1000);
     const games = (await Promise.all(monthPaths(patchStart, nowS).map(loadEvalGames))).flat();
     const thisPatch = games.filter((g) => g.startTime >= patchStart);
     snapshot.pickPhase = countPickPhases(thisPatch);
     console.log(`Pick phases from ${thisPatch.length} games.`);
+    if (snapshot.neutrals) {
+      snapshot.neutralChoices = countNeutralChoices(thisPatch, patchStart, snapshot.neutrals);
+      console.log(`Neutral choices from ${snapshot.neutralChoices.games} games.`);
+    }
   } catch (err) {
     // Pick phases are an extra; keep the last ones and go on.
     console.warn(`::warning::${(err as Error).message}`);

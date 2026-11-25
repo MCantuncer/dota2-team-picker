@@ -138,6 +138,15 @@ export interface Snapshot {
   /** The neutral tiers, artifacts and enchantments of the patch, from the game file; refreshed daily. */
   neutrals?: NeutralPool;
   /**
+   * The neutral items players chose this patch, from the saved ranked games: per hero and position ("0" for every
+   * position), and per position over every hero, for heroes with few games yet. Rebuilt every refresh.
+   */
+  neutralChoices?: {
+    games: number;
+    heroes: Record<string, Record<string, NeutralChoices>>;
+    positions: Record<string, NeutralChoices>;
+  };
+  /**
    * When players buy their core items, from STRATZ: itemTimings[heroId][position][slice], where the
    * slice is a RankGroup ("1" to "4") or "all" for every rank. Only each hero's two most played
    * positions, and only slices STRATZ had data for.
@@ -389,6 +398,21 @@ export interface NeutralPool {
   tiers: NeutralTier[];
   items: Record<string, NeutralItem>;
 }
+
+/** What players chose at one neutral tier, from the saved ranked games of the patch. */
+export interface NeutralTierChoice {
+  /** Choices counted: each craft of the tier in a parsed game, else the neutral item a game ended with. */
+  picks: number;
+  /** Artifacts by times chosen, most first: [item id, picks]. */
+  artifacts: [itemId: number, picks: number][];
+  /** Enchantments by times chosen, most first: [item id, picks]. Fewer than `picks`: older games kept none. */
+  enchants: [itemId: number, picks: number][];
+  /** The usual (median) minute of the tier's first craft, from parsed games, and the crafts it is from. */
+  minute?: [minute: number, crafts: number];
+}
+
+/** Neutral choices per tier ("1" to "4"). */
+export type NeutralChoices = Record<string, NeutralTierChoice>;
 
 /** Times each item (by item id) was bought in each phase of the game: before the horn, then up to 10, 25 and after. */
 export interface ItemPhases {
