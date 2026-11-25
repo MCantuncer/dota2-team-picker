@@ -27,6 +27,7 @@ import { restoreItemData } from "./item-restore";
 import { fetchItemStarts } from "./item-starts";
 import { fetchItemTimings, itemTimingsDue } from "./item-timings";
 import { fetchItems, itemsDue } from "./items";
+import { fetchNeutralPool, neutralsDue } from "./neutral-items";
 import { dropRemovedItems } from "./removed-items";
 import { countPickPhases } from "./pick-phase";
 import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
@@ -329,6 +330,20 @@ async function main() {
     }
   } else {
     console.log(`Item builds are from ${snapshot.itemsAt}, keeping them.`);
+  }
+
+  if (neutralsDue(snapshot, now)) {
+    console.log("Neutral items from the game file...");
+    try {
+      const { pool, missing } = await fetchNeutralPool(get, now);
+      snapshot.neutrals = pool;
+      const artifacts = Object.values(pool.items).filter((i) => i.kind === "artifact" && !i.brokenOf).length;
+      console.log(`Neutral items: ${pool.tiers.length} tiers, ${artifacts} artifacts.`);
+      if (missing.length) console.warn(`::warning::Neutral items not in OpenDota's list yet: ${missing.join(", ")}`);
+    } catch (err) {
+      // Neutral items are an extra; keep the last pool and go on.
+      console.warn(`::warning::Neutral items failed, keeping the last ones: ${(err as Error).message}`);
+    }
   }
 
   if (stratzToken && itemTimingsDue(snapshot, now)) {

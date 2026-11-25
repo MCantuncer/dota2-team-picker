@@ -152,7 +152,7 @@ describe("buildExtras", () => {
     days: [],
     base: [],
     roles: {},
-    extras: { buildGames: 0, builds: {}, newItems: newItems.map((id) => ({ id, games: 0, heroes: [] })), matchups: {}, items: {}, patchNotes: { 74: { lines: [], changes: 2 } } },
+    extras: { buildGames: 0, builds: {}, newItems: newItems.map((id) => ({ id, games: 0, heroes: [] })), matchups: {}, items: {}, neutralItems: {}, patchNotes: { 74: { lines: [], changes: 2 } } },
   });
 
   it("reads the item list from before the patch when the last file has no new items", async () => {
@@ -196,6 +196,15 @@ describe("buildExtras", () => {
     expect(extras.newItems.map((n) => n.id)).toEqual([1942]);
     // Notes that cannot be read keep the last ones of the same patch.
     expect(Object.keys(extras.patchNotes)).toEqual(["74"]);
+  });
+
+  it("counts a used-up neutral item as the one it was and adds the tooltips of the neutral items shown", async () => {
+    const regalia = { key: "divine_regalia", name: "Divine Regalia", img: "/r.png", kind: "artifact" as const, tier: 4 };
+    const neutrals = { at: "", tiers: [], items: { 1644: regalia, 1645: { ...regalia, key: "divine_regalia_broken", name: "Disgraced Regalia", brokenOf: 1644 } } };
+    const games = Array.from({ length: MIN_BUILD_GAMES }, (_, i) => game(i, START + 60, [pick(8, 1, [63], i % 2 ? 1644 : 1645)]));
+    const extras = await buildExtras({ games: async () => games, itemsBefore: async () => null, patchNotes: async () => ({}) }, { ...snapshot, neutrals }, START + 3600, null);
+    expect(extras.builds[8]![1]!.neutral).toEqual([[1644, 40]]);
+    expect(extras.neutralItems).toEqual({ 1644: regalia });
   });
 
   it("has no new items when there is no copy from before the patch", async () => {
