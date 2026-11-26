@@ -1,5 +1,5 @@
 /** A Sven-like hero and its common builds, for the skill build tests. */
-import type { SliceTotals } from "../src/data/skill-build-choice";
+import type { SlicePatch, SliceTotals } from "../src/data/skill-build-choice";
 import type { GuidePlayer } from "../src/data/skill-sequence";
 import type { HeroAbilities } from "../src/engine/types";
 
@@ -74,9 +74,12 @@ export const SVEN_BUILD = [Q, E, W, W, W, R, W, Q, Q, Q, E, R, E, E, 0, 0, 0, R]
 export const WARCRY_SECOND_POINTS = [Q, E, W, W, W, R, W, E, E, E, 11, Q, R, Q, Q, 13, R];
 export const WARCRY_SECOND = [Q, E, W, W, W, R, W, E, E, E, Q, R, Q, Q, 0, 0, 0, R];
 
-/** A guide player who ended at level 18 with these skill points. */
+/** The patch the slices are built for: saved under version 200, started at Unix second 1000. */
+export const PATCH: SlicePatch = { versionId: 200, start: 1000 };
+
+/** A guide player who ended at level 18 with these skill points, in a game of PATCH. */
 export const player = (points: number[], extra: Partial<GuidePlayer> = {}): GuidePlayer => ({
-  gameVersionId: 200,
+  start: 2000,
   position: 1,
   level: 18,
   won: true,

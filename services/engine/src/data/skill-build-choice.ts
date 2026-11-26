@@ -184,23 +184,36 @@ export function chooseTalents(
   });
 }
 
+/** The patch a slice is built for: the version it is saved under (sliceVersion) and when the patch started. */
+export interface SlicePatch {
+  versionId: number;
+  /** Unix seconds. */
+  start: number;
+}
+
+/**
+ * Whether a guide game was played on this patch, by when it started. Not by STRATZ's game version: STRATZ can go
+ * days without listing a new patch, and its letter patches carry their own versions.
+ */
+export const fromPatch = (player: Pick<GuidePlayer, "start">, patch: SlicePatch) => player.start >= patch.start;
+
 /** Turns one hero and position's guide players and totals into its build, alternative and talents. */
 export function toSkillSlice(
   players: GuidePlayer[],
   position: Position,
   totals: SliceTotals,
   constantsHero: HeroAbilities,
-  versionId: number,
+  patch: SlicePatch,
   now: Date,
 ): SkillBuildSlice {
-  const usable = players.filter((p) => p.position === position && p.gameVersionId >= versionId);
+  const usable = players.filter((p) => p.position === position && fromPatch(p, patch));
   const hero = learnedHero(constantsHero, usable);
   const everyLevel = getsPointEveryLevel(usable);
   const placed = usable.map((p) => toSequence(p, hero, everyLevel)).filter((s): s is PlacedPoints => s !== null);
   const sequences = placed.map((p) => p.levels);
   const base = {
     at: now.toISOString(),
-    gameVersionId: versionId,
+    gameVersionId: patch.versionId,
     matches: sequences.length,
     talents: chooseTalents(totals.talents, placed, hero),
     talentsApart: true as const,

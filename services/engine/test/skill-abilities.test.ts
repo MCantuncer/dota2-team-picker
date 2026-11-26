@@ -3,6 +3,7 @@ import {
   fillMissingTalent,
   mergeHeroAbilities,
   patchGameVersion,
+  sliceVersion,
   talentName,
   toHeroAbilities,
 } from "../src/data/skill-abilities";
@@ -151,5 +152,12 @@ describe("constants", () => {
   it("finds the first game version of a patch, letters included", () => {
     expect(patchGameVersion(constants.gameVersions, "7.39")).toBe(181);
     expect(patchGameVersion(constants.gameVersions, "7.40")).toBeNull();
+  });
+
+  it("saves slices of a patch STRATZ doesn't list yet one above its newest version", () => {
+    expect(sliceVersion(constants.gameVersions, "7.39")).toEqual({ id: 181, listed: true });
+    const newest = Math.max(...constants.gameVersions.map((v) => v.id));
+    expect(sliceVersion(constants.gameVersions, "7.40")).toEqual({ id: newest + 1, listed: false });
+    expect(sliceVersion([], "7.40")).toBeNull();
   });
 });
