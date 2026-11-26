@@ -35,7 +35,17 @@ import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
 import { applyGameTalents, fetchGameTalents } from "./talents";
 import { getJson, getText, watchRelease } from "./patch-watch";
 import { fetchPositions, postStratz } from "./stratz";
-import { blendCounts, fetchPatchCounts, lastStratzCounts, MIN_PATCH_GAMES, patchIsFresh, STRATZ_SHARE, type DatedCounts } from "./patch-matchups";
+import {
+  blendCounts,
+  fetchPatchCounts,
+  lastStratzCounts,
+  MIN_PATCH_GAMES,
+  patchIsFresh,
+  RECENT_DAYS,
+  RECENT_WEIGHT,
+  STRATZ_SHARE,
+  type DatedCounts,
+} from "./patch-matchups";
 import { applyStratzCounts, fetchStratzCounts, type StratzCounts } from "./stratz-matchups";
 import { fetchLaneOutcomes, lanesDue, MIN_LANE_GAMES } from "./stratz-lanes";
 import { fetchThreatPlans, threatPlansDue } from "./threat-plans";
@@ -229,7 +239,8 @@ async function applyCounts(snapshot: Snapshot, stratz: StratzCounts, stratzAt: D
     }
     const blended = blendCounts(patch.counts, stratz);
     applyStratzCounts(snapshot, blended, stratzAt, patch.games);
-    console.log(`Patch matchups: ${patch.games} games (${pairStats(patch.counts)}); with ${STRATZ_SHARE * 100}% of STRATZ: ${pairStats(blended)}.`);
+    const recent = patch.recentGames ? `, the last ${RECENT_DAYS} days' ${patch.recentGames} games counting ${RECENT_WEIGHT} times` : "";
+    console.log(`Patch matchups: ${patch.games} games${recent} (${pairStats(patch.counts)}); with ${STRATZ_SHARE * 100}% of STRATZ: ${pairStats(blended)}.`);
   } catch (err) {
     if (snapshot.matchupsFrom?.patchGames === undefined) applyStratzCounts(snapshot, stratz, stratzAt);
     console.warn(`::warning::Patch matchups failed, ${snapshot.matchupsFrom?.patchGames ? "keeping the last ones" : "STRATZ alone"}: ${(err as Error).message}`);
