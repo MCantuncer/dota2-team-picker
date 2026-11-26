@@ -34,6 +34,7 @@ import { countPickPhases } from "./pick-phase";
 import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
 import { applyGameTalents, fetchGameTalents } from "./talents";
 import { buildFactUpdates, describeUpdates } from "./fact-updates";
+import { getJson, getText, watchRelease } from "./patch-watch";
 import { fetchPositions, postStratz } from "./stratz";
 import { blendCounts, fetchPatchCounts, lastStratzCounts, MIN_PATCH_GAMES, patchIsFresh, STRATZ_SHARE, type DatedCounts } from "./patch-matchups";
 import { applyStratzCounts, fetchStratzCounts, type StratzCounts } from "./stratz-matchups";
@@ -137,8 +138,33 @@ export function decayCounts(snapshot: Snapshot, now: Date) {
 export function applyPatch(snapshot: Snapshot, latest: PatchRow): boolean {
   const changed = snapshot.patch !== undefined && snapshot.patch.name !== latest.name;
   if (changed) scaleCounts(snapshot, PATCH_CARRYOVER);
-  snapshot.patch = { name: latest.name, startedAt: new Date(latest.date).toISOString() };
+  const release = snapshot.patch?.release;
+  // The release is kept for the watch to compare against; it drops one from an older patch itself.
+  snapshot.patch = { name: latest.name, startedAt: new Date(latest.date).toISOString(), ...(release && { release }) };
   return changed;
+}
+
+/**
+ * Records the game's newest release, letter patches included (see patch-watch.ts). Never throws: the last release stays
+ * when nothing can be read.
+ */
+async function applyRelease(snapshot: Snapshot, now: Date) {
+  const patch = snapshot.patch!;
+  try {
+    const before = patch.release;
+    const { release, notes } = await watchRelease(patch, before, getJson, getText, now);
+    for (const note of notes) console.warn(`::warning::${note}`);
+    patch.release = release;
+    const day = Math.floor((now.getTime() - Date.parse(release.startedAt)) / DAY_MS) + 1;
+    if (before && before.name !== release.name) {
+      console.log(`New release ${release.name} (was ${before.name}), out since ${release.startedAt}, from ${release.from === "valve" ? "Valve's patch list" : "the game files"}.`);
+      if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `new_release=${release.name}\n`);
+    } else {
+      console.log(`Release ${release.name}, day ${day} (from ${release.from === "valve" ? "Valve's patch list" : "the game files"}).`);
+    }
+  } catch (err) {
+    console.warn(`::warning::Release watch failed, keeping ${patch.release?.name ?? "the patch alone"}: ${(err as Error).message}`);
+  }
 }
 
 export function laneRolesDue(snapshot: Snapshot, now: Date): boolean {
@@ -196,7 +222,7 @@ async function applyCounts(snapshot: Snapshot, stratz: StratzCounts, stratzAt: D
   }
   console.log(`Matchups and synergy from this patch's ranked games (OpenDota explorer)...`);
   try {
-    const patch = await fetchPatchCounts(get, patchStart);
+    const patch = await fetchPatchCounts(get, patchStart, now);
     if (patch.games < MIN_PATCH_GAMES) {
       console.log(`Only ${patch.games} games of this patch, STRATZ alone for now.`);
       applyStratzCounts(snapshot, stratz, stratzAt);
@@ -289,6 +315,7 @@ async function main() {
     console.log(`Patch ${latest.name}.`);
   }
   const patchStart = Date.parse(snapshot.patch!.startedAt) / 1000;
+  await applyRelease(snapshot, now);
 
   if (laneRolesDue(snapshot, now)) {
     console.log(`Lane roles for ${stats.length} heroes...`);

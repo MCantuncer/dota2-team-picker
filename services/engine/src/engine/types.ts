@@ -169,8 +169,15 @@ export interface Snapshot {
    * engine/fact-updates.ts). Whoever runs the engine on this snapshot passes them to applyFactUpdates first.
    */
   factUpdates?: FactUpdates;
-  /** The patch the counts are for, from OpenDota's patch list. */
-  patch?: { name: string; startedAt: string };
+  /**
+   * The patch the counts are for, from OpenDota's patch list, which has only the big patches (7.42). `release` is the
+   * game's newest release, letter patches included (7.42a), from Valve's patch list or the game files.
+   */
+  patch?: {
+    name: string;
+    startedAt: string;
+    release?: { name: string; startedAt: string; from: "valve" | "game-files" };
+  };
   /** Highest public match id already counted, so daily runs only add new matches. */
   lastPublicMatchId?: number;
   /**

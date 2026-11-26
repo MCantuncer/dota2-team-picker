@@ -4,6 +4,7 @@ import {
   addWith,
   blendCounts,
   fetchPatchCounts,
+  GAMES_PER_DAY_GUESS,
   GAMES_PER_SLICE,
   gamesIn,
   lastStratzCounts,
@@ -111,6 +112,8 @@ describe("queries", () => {
 });
 
 describe("fetchPatchCounts", () => {
+  /** Ten days after the test patch started at Unix second 0. */
+  const NOW = new Date(10 * 24 * 60 * 60 * 1000);
   const vsRow = { g: 1, a: 1, b: 2, games: 25, wins: 10 };
   const withRow = { g: 1, a: 1, b: 3, games: 5, wins: 2 };
   const fakeExplorer = (games: number, fail: (sql: string, call: number) => boolean = () => false) => {
@@ -127,11 +130,11 @@ describe("fetchPatchCounts", () => {
 
   it("reads as many slices as the games need, up to MAX_SLICES", async () => {
     const small = fakeExplorer(GAMES_PER_SLICE - 1);
-    await fetchPatchCounts(small.get, 0);
+    await fetchPatchCounts(small.get, 0, NOW);
     expect(small.asked).toHaveLength(1 + 3);
 
     const big = fakeExplorer(GAMES_PER_SLICE * 10);
-    const { counts } = await fetchPatchCounts(big.get, 0);
+    const { counts } = await fetchPatchCounts(big.get, 0, NOW);
     expect(big.asked).toHaveLength(1 + 3 * MAX_SLICES);
     expect(big.asked.filter((q) => q.includes("% 10 = "))).toHaveLength(3 * MAX_SLICES);
     expect(counts.matchups[1]?.[2]).toEqual({ games: 25 * MAX_SLICES, wins: 10 * MAX_SLICES });
@@ -141,14 +144,24 @@ describe("fetchPatchCounts", () => {
 
   it("tries a failed query once more", async () => {
     const { get, asked } = fakeExplorer(10, (_, call) => call === 2);
-    const { games } = await fetchPatchCounts(get, 0);
+    const { games } = await fetchPatchCounts(get, 0, NOW);
     expect(asked).toHaveLength(5);
     expect(games).toBe(1);
   });
 
+  it("takes a generous guess of the games when the count fails twice, so slices stay small", async () => {
+    const { get, asked } = fakeExplorer(10, (sql) => sql.startsWith("select count(*)"));
+    const { games } = await fetchPatchCounts(get, 0, NOW);
+    // 10 days at GAMES_PER_DAY_GUESS: 24 slices, of which MAX_SLICES are read.
+    const slices = Math.ceil((10 * GAMES_PER_DAY_GUESS) / GAMES_PER_SLICE);
+    expect(asked.filter((q) => q.includes(`% ${slices} = `))).toHaveLength(3 * MAX_SLICES);
+    expect(asked).toHaveLength(2 + 3 * MAX_SLICES);
+    expect(games).toBe(MAX_SLICES);
+  });
+
   it("throws when a query fails twice, so no partial read is used", async () => {
     const { get } = fakeExplorer(10, (sql) => sql.includes("radiant_team) b"));
-    await expect(fetchPatchCounts(get, 0)).rejects.toThrow("HTTP 400");
+    await expect(fetchPatchCounts(get, 0, NOW)).rejects.toThrow("HTTP 400");
   });
 });
 
