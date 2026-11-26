@@ -379,7 +379,8 @@ async function main() {
     const talents = await fetchGameTalents();
     const changed = applyGameTalents(snapshot, talents.trees, talents.innate);
     const heroes = Object.keys(talents.trees).length;
-    console.log(`Talents for ${heroes} heroes, ${changed} changed; sides from ${talents.fromFiles} hero files.`);
+    const names = talents.renamed === null ? "OpenDota's names" : `game names (${talents.renamed} newer than OpenDota's)`;
+    console.log(`Talents for ${heroes} heroes, ${changed} changed; ${names}; talents and sides from ${talents.fromFiles} hero files.`);
     for (const note of talents.notes) console.warn(`::warning::Talents, ${note}`);
   } catch (err) {
     // Keep the last talents and go on; the next run tries again.

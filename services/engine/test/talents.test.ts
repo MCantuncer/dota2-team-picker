@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { applyGameTalents, buildGameTalents, HERO_FILES_URL, talentSlots, toTalentConstants, toTree } from "../src/data/talents";
+import { applyGameTalents, buildGameTalents, HERO_FILES_URL, talentSlots, toTalentConstants, toTree, withGameTexts } from "../src/data/talents";
+import { GAME_FILES_URL } from "../src/data/talent-texts";
 import type { Snapshot } from "../src/engine/types";
 import { SVEN } from "./skill-build-fixture";
 
@@ -117,8 +118,56 @@ describe("game talents", () => {
     swapped.talents.set(NPC, [...KEYS.slice(0, 6), KEYS[7]!, KEYS[6]!]);
     const down = await buildGameTalents(swapped, () => Promise.reject(new Error("HTTP 503")));
     expect(down.fromFiles).toBe(0);
-    expect(down.notes[0]).toBe(`${NPC}: file failed (HTTP 503), OpenDota's order`);
+    expect(down.renamed).toBeNull();
+    expect(down.notes).toContain(`${NPC}: file failed (HTTP 503), OpenDota's order`);
+    expect(down.notes).toContain("game talent names failed (HTTP 503), OpenDota's names");
     expect(down.trees[1]?.[3]?.map((t) => t.id)).toEqual([6012, 6353]);
+  });
+
+  // Anti-Mage after a letter patch: Ability10 is a talent OpenDota doesn't list yet, and Blink's talent got stronger.
+  const NEW_TALENT = "special_bonus_hp_regen_4_5";
+  const PATCHED = FILE.replace(`"${KEYS[0]}" // a comment`, `"${NEW_TALENT}"`);
+  const TOOLTIPS = `"lang" { "Tokens" {
+${KEYS.map((k, i) => `"DOTA_Tooltip_ability_${k}" "${NAMES[i]}"`).join("\n")}
+"DOTA_Tooltip_Ability_${KEYS[4]}" "+{s:bonus_AbilityCastRange} Blink Cast Range"
+"DOTA_Tooltip_ability_${NEW_TALENT}" "+{s:value} Health Regen"
+"DOTA_Tooltip_ability_special_bonus_new" "+1 New"
+} }`;
+  const ABILITIES = `"DOTAAbilities" {
+"antimage_blink" { "AbilityCastRange" { "value" "750" "${KEYS[4]}" "+150" } }
+"${NEW_TALENT}" { "AbilityValues" { "value" { "value" "4.5" } } }
+}`;
+  const IDS_FILE = `"DOTAAbilityIDs" { "UnitAbilities" { "Locked" { "${NEW_TALENT}" "1956" "${KEYS[4]}" "6606" } } }`;
+  const gameFiles = (url: string) =>
+    Promise.resolve(
+      url.endsWith("abilities_english.txt") ? TOOLTIPS : url.endsWith("npc_abilities.txt") ? ABILITIES : url.endsWith("ids.txt") ? IDS_FILE : PATCHED,
+    );
+
+  it("names talents from the game files, takes a talent OpenDota doesn't list yet and notes it", async () => {
+    const urls: string[] = [];
+    const built = await buildGameTalents(constants(), (url) => (urls.push(url), gameFiles(url)));
+    expect(urls).toContain(`${GAME_FILES_URL}resource/localization/abilities_english.txt`);
+    expect(built.fromFiles).toBe(1);
+    expect(built.renamed).toBe(1);
+    // Level 10: [Ability11, Ability10], the new talent on the right with the game's id.
+    expect(built.trees[1]?.[0]).toEqual([
+      { id: IDS[1], name: NAMES[1] },
+      { id: 1956, name: "+4.5 Health Regen" },
+    ]);
+    // Level 20's right side is Ability14, Blink's cast range: the game's +150, not OpenDota's +125.
+    expect(built.trees[1]?.[2]?.[1]).toEqual({ id: IDS[4], name: "+150 Blink Cast Range" });
+    expect(built.notes).toContain(`${NPC}: talents OpenDota doesn't list yet, from the game file: ${NEW_TALENT}`);
+  });
+
+  it("keeps OpenDota's names when the game files name too few of its talents", () => {
+    const c = constants();
+    const few = withGameTexts(c, { names: new Map([[KEYS[0]!, "x"]]), ids: new Map() });
+    expect(few).toEqual({ problem: "names for only 1 of 9 talents" });
+    const all = withGameTexts(c, { names: new Map([...KEYS, "special_bonus_new"].map((k) => [k, k === KEYS[1] ? "+12% Mana Break" : (c.names.get(k) ?? "")])), ids: new Map([[KEYS[2]!, 1]]) });
+    if ("problem" in all) throw new Error(all.problem);
+    expect(all.renamed).toBe(1);
+    // OpenDota's id wins over the game list's when both have one.
+    expect(all.constants.ids.get(KEYS[2]!)).toBe(IDS[2]);
   });
 
   it("puts the trees on the snapshot's heroes and counts the changed ones", () => {
