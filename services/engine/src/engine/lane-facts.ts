@@ -5,6 +5,7 @@
  * diff, and read here with the patch's attribute rules to give a hero's stats at a level.
  */
 import { LANE_FACTS } from "./data-lane-facts";
+import { factUpdates, updatedEntry } from "./fact-updates";
 
 /** A hero's base numbers before levels and items, from the game files. */
 export interface LaneHero {
@@ -164,10 +165,10 @@ export function atLevel(values: readonly number[] | undefined, level: number): n
 
 /** The lane facts of a hero by id, or undefined for a hero the facts don't have. */
 export function laneHero(heroId: number): LaneHero | undefined {
-  return LANE_FACTS.heroes[String(heroId)];
+  return updatedEntry(LANE_FACTS.heroes, factUpdates()?.laneHeroes, String(heroId));
 }
 
 /** The lane facts of a spell by key. */
 export function laneSpell(key: string): LaneSpell | undefined {
-  return LANE_FACTS.spells[key];
+  return updatedEntry(LANE_FACTS.spells, factUpdates()?.laneSpells, key);
 }
