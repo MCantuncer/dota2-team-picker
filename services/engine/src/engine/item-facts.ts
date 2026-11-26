@@ -5,6 +5,7 @@
  * `npm run item-facts`).
  */
 import { ITEM_FACTS } from "./data-item-facts";
+import { factUpdates, updatedEntry } from "./fact-updates";
 
 /** Who an item's dispel can reach. */
 export type Reach = "enemy" | "self" | "ally";
@@ -26,7 +27,7 @@ export interface ItemFact {
 
 /** The facts for one item by OpenDota key, or an empty fact for an item with none. */
 export function itemFact(key: string): ItemFact {
-  return ITEM_FACTS[key] ?? {};
+  return updatedEntry(ITEM_FACTS, factUpdates()?.itemFacts, key) ?? {};
 }
 
 /** Whether the item dispels an enemy you aim it at, leaving them hittable. */

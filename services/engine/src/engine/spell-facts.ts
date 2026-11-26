@@ -7,6 +7,8 @@
  */
 import { SPELL_FACTS } from "./data-spell-facts";
 import { SPELL_LANDING } from "./data-spell-landing";
+import { KEY_SPELLS, type KeySpell } from "./data-key-spells";
+import { factUpdates, factVersion, updatedEntries, updatedEntry } from "./fact-updates";
 
 /** How a spell's effect can be removed: by any dispel, only by a strong dispel, or not at all. */
 export type RemovedBy = "basic" | "strong" | "none";
@@ -65,32 +67,57 @@ interface Override {
  */
 export const OVERRIDES: Record<string, Override> = {};
 
-const byKey = new Map<string, SpellFact>();
-for (const spells of Object.values(SPELL_FACTS)) {
-  for (const spell of spells) {
-    const fix = OVERRIDES[spell.key];
-    byKey.set(spell.key, fix ? { ...spell, ...(fix.removedBy ? { removedBy: fix.removedBy } : {}), ...(fix.piercesBkb !== undefined ? { piercesBkb: fix.piercesBkb } : {}) } : spell);
+let byKeyVersion = -1;
+let byKeyMap = new Map<string, SpellFact>();
+
+/** Every spell's facts by key, overrides applied; built again when the fact updates change. */
+function byKey(): Map<string, SpellFact> {
+  if (byKeyVersion === factVersion()) return byKeyMap;
+  byKeyMap = new Map();
+  for (const [, spells] of updatedEntries(SPELL_FACTS, factUpdates()?.spellFacts)) {
+    for (const spell of spells) {
+      const fix = OVERRIDES[spell.key];
+      byKeyMap.set(spell.key, fix ? { ...spell, ...(fix.removedBy ? { removedBy: fix.removedBy } : {}), ...(fix.piercesBkb !== undefined ? { piercesBkb: fix.piercesBkb } : {}) } : spell);
+    }
   }
+  byKeyVersion = factVersion();
+  return byKeyMap;
+}
+
+/** A hero's spells as the facts list them, updates applied. */
+function listedSpells(heroName: string): readonly SpellFact[] {
+  return updatedEntry(SPELL_FACTS, factUpdates()?.spellFacts, heroName) ?? [];
 }
 
 /** The facts for one spell, with overrides applied, or undefined for a key the facts don't have. */
 export function spellFact(key: string): SpellFact | undefined {
-  return byKey.get(key);
+  return byKey().get(key);
 }
 
 /** A hero's spells with overrides applied, by display name; empty for an unknown hero. */
 export function heroSpells(heroName: string): SpellFact[] {
-  return (SPELL_FACTS[heroName] ?? []).flatMap((s) => byKey.get(s.key) ?? []);
+  return listedSpells(heroName).flatMap((s) => byKey().get(s.key) ?? []);
+}
+
+/**
+ * The hero's hand-picked worst spell (data-key-spells.ts), or undefined when the hero's spells no longer include
+ * it: a patch that reworks or removes the spell hides the line rather than showing a wrong one.
+ */
+export function keySpell(heroName: string): KeySpell | undefined {
+  const spell = KEY_SPELLS[heroName];
+  if (!spell) return undefined;
+  const listed = listedSpells(heroName);
+  return listed.length === 0 || listed.some((s) => s.key === spell.key) ? spell : undefined;
 }
 
 /** Whether OpenDota says the spell works on spell-immune heroes (see SpellFact.piercesBkb). False when the facts don't say. */
 export function piercesBkb(key: string): boolean {
-  return byKey.get(key)?.piercesBkb === true;
+  return byKey().get(key)?.piercesBkb === true;
 }
 
 /** Whether any dispel, Nullifier's included, removes the spell's effect. False when the facts don't say. */
 export function isRemovedByBasicDispel(key: string): boolean {
-  return byKey.get(key)?.removedBy === "basic";
+  return byKey().get(key)?.removedBy === "basic";
 }
 
 /**
@@ -100,7 +127,7 @@ export function isRemovedByBasicDispel(key: string): boolean {
 export function landsOn(key: string): Target | undefined {
   const reviewed = SPELL_LANDING[key];
   if (reviewed) return reviewed.lands;
-  return byKey.get(key)?.target === "enemies" ? "enemies" : undefined;
+  return byKey().get(key)?.target === "enemies" ? "enemies" : undefined;
 }
 
 /** What the effect the spell puts on its own team does; empty for a spell that only lands on enemies. */

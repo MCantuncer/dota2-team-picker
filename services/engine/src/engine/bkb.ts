@@ -3,7 +3,8 @@
  * the counter item rule, its effect line and Their Threats, so none of them pairs it with Black Hole.
  */
 import { abilityRules } from "./ability-notes";
-import { KEY_SPELLS, PIERCES_BKB } from "./data-key-spells";
+import { PIERCES_BKB } from "./data-key-spells";
+import { keySpell } from "./spell-facts";
 import type { HeroInfo } from "./types";
 
 /**
@@ -26,7 +27,7 @@ function pierces(key: string): "lock" | "damage" | undefined {
 
 /** What goes through Black King Bar for this hero, named for the line, else undefined. */
 export function piercingSpell(hero: HeroInfo): string | undefined {
-  const spell = KEY_SPELLS[hero.name];
+  const spell = keySpell(hero.name);
   return spell && pierces(spell.key) ? spell.name : OTHER_PIERCING_DISABLES[hero.name];
 }
 
@@ -35,6 +36,6 @@ export function piercingSpell(hero: HeroInfo): string | undefined {
  * may. Death Prophet's Exorcism goes through but only hurts, and Black King Bar still stops her Silence.
  */
 export function beatsBkb(hero: HeroInfo): boolean {
-  const spell = KEY_SPELLS[hero.name];
+  const spell = keySpell(hero.name);
   return (spell !== undefined && pierces(spell.key) === "lock") || hero.name in OTHER_PIERCING_DISABLES || UNSURE_VS_BKB.has(hero.name);
 }

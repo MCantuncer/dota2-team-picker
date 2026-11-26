@@ -9,6 +9,7 @@
  * reviewed after each patch. A rule is only set when a note says it; no note means the engine doesn't know.
  */
 import { ABILITY_NOTES } from "./data-ability-notes";
+import { factUpdates, updatedEntry } from "./fact-updates";
 
 /** How a spell meets debuff immunity (Black King Bar): it goes through, it is stopped, or gaining immunity ends it. */
 export type DebuffImmunity = "pierces" | "blocked" | "removed";
@@ -51,7 +52,7 @@ export const TESTED_RULES: AbilityNotes = {
 
 /** The rules for an ability or item from Valve's notes and demo tests, or undefined when neither sets any. */
 export function abilityRules(key: string): AbilityRules | undefined {
-  const noted = ABILITY_NOTES[key];
+  const noted = updatedEntry(ABILITY_NOTES, factUpdates()?.abilityNotes, key);
   const tested = TESTED_RULES[key];
   if (!noted || !tested) return noted ?? tested;
   return { ...noted, ...tested, notes: [...noted.notes, ...tested.notes] };
