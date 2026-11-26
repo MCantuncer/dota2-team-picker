@@ -4,6 +4,7 @@ import { getsPointEveryLevel, learnedHero, toSequence } from "../src/data/skill-
 import type { HeroAbilities } from "../src/engine/types";
 import {
   E,
+  PATCH,
   player,
   Q,
   R,
@@ -168,7 +169,7 @@ describe("toSkillSlice", () => {
 
   it("gives the common Sven pos 1 build: Q E W W W R W Q Q Q E R E E, R at 18", () => {
     const players = [...Array(20)].map(() => player(SVEN_POINTS)).concat([...Array(5)].map(() => player(WARCRY_SECOND_POINTS)));
-    const slice = toSkillSlice(players, 1, TOTALS, SVEN, 200, now);
+    const slice = toSkillSlice(players, 1, TOTALS, SVEN, PATCH, now);
     expect(slice.build).toEqual({
       levels: SVEN_BUILD,
       groupMatches: 20,
@@ -185,7 +186,7 @@ describe("toSkillSlice", () => {
     const players = [...Array(14)]
       .map(() => player(SVEN_POINTS))
       .concat([...Array(10)].map(() => player(WARCRY_SECOND_POINTS)));
-    const slice = toSkillSlice(players, 1, TOTALS, SVEN, 200, now);
+    const slice = toSkillSlice(players, 1, TOTALS, SVEN, PATCH, now);
     expect(slice.build?.levels).toEqual(SVEN_BUILD);
     // Warcry maxed at 14 in 90k of 113k games.
     expect(slice.alternative).toMatchObject({
@@ -194,11 +195,11 @@ describe("toSkillSlice", () => {
     });
   });
 
-  it("keeps only the hero's position and this patch", () => {
+  it("keeps only the hero's position and games since the patch started", () => {
     const players = [...Array(20)]
       .map(() => player(SVEN_POINTS))
-      .concat([player(SVEN_POINTS, { position: 2 }), player(SVEN_POINTS, { gameVersionId: 199 })]);
-    expect(toSkillSlice(players, 1, TOTALS, SVEN, 200, now).matches).toBe(20);
+      .concat([player(SVEN_POINTS, { position: 2 }), player(SVEN_POINTS, { start: 999 })]);
+    expect(toSkillSlice(players, 1, TOTALS, SVEN, PATCH, now).matches).toBe(20);
   });
 
   it("has no build with too few matches", () => {
@@ -207,7 +208,7 @@ describe("toSkillSlice", () => {
       1,
       TOTALS,
       SVEN,
-      200,
+      PATCH,
       now,
     );
     expect(slice.none).toBe("few-matches");
@@ -216,7 +217,7 @@ describe("toSkillSlice", () => {
 
   it("has no build when the biggest group disagrees with STRATZ's totals", () => {
     const players = [...Array(20)].map(() => player(WARCRY_SECOND_POINTS));
-    expect(toSkillSlice(players, 1, TOTALS, SVEN, 200, now).none).toBe("no-agreement");
+    expect(toSkillSlice(players, 1, TOTALS, SVEN, PATCH, now).none).toBe("no-agreement");
   });
 
   it("counts the exact build apart from its group", () => {
@@ -224,7 +225,7 @@ describe("toSkillSlice", () => {
     const late = [...SVEN_POINTS];
     [late[5], late[6]] = [W, R];
     const players = [...Array(12)].map(() => player(SVEN_POINTS)).concat([...Array(9)].map(() => player(late)));
-    expect(toSkillSlice(players, 1, TOTALS, SVEN, 200, now).build).toMatchObject({
+    expect(toSkillSlice(players, 1, TOTALS, SVEN, PATCH, now).build).toMatchObject({
       groupMatches: 21,
       exactMatches: 12,
     });

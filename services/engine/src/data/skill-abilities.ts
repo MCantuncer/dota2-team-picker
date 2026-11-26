@@ -121,6 +121,21 @@ export function patchGameVersion(versions: { id: number; name: string }[], patch
 }
 
 /**
+ * The version this patch's skill build slices are saved under: STRATZ's own for the patch, or while STRATZ doesn't
+ * list the patch yet (7.42 went over a week unlisted), one above every version it lists. Either way it is above any
+ * older patch's, which is all the refresh check and the "last patch" label compare. Null when STRATZ lists nothing.
+ */
+export function sliceVersion(
+  versions: { id: number; name: string }[],
+  patchName: string,
+): { id: number; listed: boolean } | null {
+  const id = patchGameVersion(versions, patchName);
+  if (id !== null) return { id, listed: true };
+  const ids = versions.map((v) => v.id).filter((v) => Number.isSafeInteger(v));
+  return ids.length ? { id: Math.max(...ids) + 1, listed: false } : null;
+}
+
+/**
  * A talent STRATZ's totals show for this hero but its constants left out (Sven's constants list 7 of 8)
  * goes to the one tier that has a single talent. Returns the fixed talents.
  */

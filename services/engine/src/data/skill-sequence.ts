@@ -13,7 +13,8 @@ export const NO_POINT_LEVELS = new Set([17, 19, 21, 22, 23, 24]);
 
 /** One guide player on the hero. */
 export interface GuidePlayer {
-  gameVersionId: number;
+  /** When the game started, in Unix seconds: games from before the patch started don't count. */
+  start: number;
   position: Position | null;
   /** The hero level the player ended the game at. */
   level: number;

@@ -36,7 +36,7 @@ describe("queries and answers", () => {
     expect(q).toContain("n0: abilityMinLevel(");
     expect(q).toContain("t0: talent(");
     expect(matchesQuery([{ matchId: 5, steamAccountId: 77 }])).toContain(
-      "m0: match(id: 5) { gameVersionId durationSeconds players(steamAccountId: 77) { heroId position level",
+      "m0: match(id: 5) { startDateTime durationSeconds players(steamAccountId: 77) { heroId position level",
     );
     expect(matchesQuery([{ matchId: 5, steamAccountId: 77 }])).toContain(
       "abilities { abilityId time } stats { itemPurchases { time itemId } } } }",
@@ -80,11 +80,11 @@ describe("queries and answers", () => {
         { abilityId: Q, time: 0 },
       ],
     ) => ({
-      gameVersionId: 200,
+      startDateTime: 1790900000,
       players: [{ heroId, position: "POSITION_2", level: 2, isVictory: false, abilities }],
     });
     expect(toGuidePlayer(answer(18), 18)).toEqual({
-      gameVersionId: 200,
+      start: 1790900000,
       position: 2,
       level: 2,
       won: false,
@@ -94,12 +94,14 @@ describe("queries and answers", () => {
     expect(toGuidePlayer(answer(18, [{ abilityId: Q }]), 18)).toBeNull();
     // The guide player was on another hero that game.
     expect(toGuidePlayer(answer(19), 18)).toBeNull();
-    expect(toGuidePlayer({ gameVersionId: 200, players: [] }, 18)).toBeNull();
+    expect(toGuidePlayer({ startDateTime: 1790900000, players: [] }, 18)).toBeNull();
+    // Without its start the game can't be placed in a patch.
+    expect(toGuidePlayer({ ...answer(18), startDateTime: undefined }, 18)).toBeNull();
     expect(toGuidePlayer(null, 18)).toBeNull();
     expect(
       toGuidePlayer(
         {
-          gameVersionId: 200,
+          startDateTime: 1790900000,
           players: [
             {
               heroId: 18,
@@ -217,13 +219,13 @@ describe("refresh", () => {
 
   /** STRATZ answers: Sven's constants, 25 guides for Sven pos 1, and each match from `match` by its id. */
   const stratz =
-    (queries: string[], match: (id: number) => unknown) =>
+    (queries: string[], match: (id: number) => unknown, gameVersions = [{ id: 181, name: "7.39" }]) =>
     async (query: string): Promise<Record<string, unknown>> => {
       queries.push(query);
       if (query.includes("constants")) {
         return {
           constants: {
-            gameVersions: [{ id: 181, name: "7.39" }],
+            gameVersions,
             heroes: [
               {
                 id: 18,
@@ -279,8 +281,9 @@ describe("refresh", () => {
       const ids = [...query.matchAll(/ m\d+: match\(id: (\d+)\)/g)].map((m) => Number(m[1]));
       return Object.fromEntries(ids.map((id, i) => [`m${i}`, match(id)]));
     };
+  /** A game a day after the test patch started (2026-10-01). */
   const svenGame = (extra: Record<string, unknown> = {}, player: Record<string, unknown> = {}) => ({
-    gameVersionId: 181,
+    startDateTime: 1790900000,
     ...extra,
     players: [
       {
@@ -400,10 +403,29 @@ describe("refresh", () => {
       matchQueries: 0,
       largestMatchAnswer: 0,
       paths: [],
+      versionListed: true,
     });
   });
 
-  it("fails without a game version for the patch", async () => {
+  it("builds an unlisted patch from games since it started, saved above every listed version", async () => {
+    const snap = snapshot();
+    // STRATZ lists only older patches; games 1 to 4 are from before the patch started (2026-10-01).
+    const versions = [
+      { id: 180, name: "7.38" },
+      { id: 181, name: "7.38c" },
+    ];
+    const counts = await fetchSkillBuilds(
+      snap,
+      stratz([], (id) => svenGame(id <= 4 ? { startDateTime: 1790700000 } : {}), versions),
+      now,
+    );
+    expect(counts).toMatchObject({ done: 1, versionListed: false });
+    const slice = snap.skillBuilds?.[18]?.[1];
+    expect(slice).toMatchObject({ gameVersionId: 182, matches: 21 });
+    expect(slice?.build?.levels).toEqual(SVEN_BUILD);
+  });
+
+  it("fails when STRATZ lists no game versions", async () => {
     const snap = snapshot();
     const post = async () => ({
       constants: {
@@ -412,6 +434,6 @@ describe("refresh", () => {
         abilities: [{ id: 1 }],
       },
     });
-    await expect(fetchSkillBuilds(snap, post, now)).rejects.toThrow("no game version");
+    await expect(fetchSkillBuilds(snap, post, now)).rejects.toThrow("no game versions");
   });
 });

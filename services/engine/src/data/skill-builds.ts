@@ -14,14 +14,14 @@ import { bigItemCheck } from "../engine/item-odds";
 import { itemPaths, type PathGame } from "../engine/item-paths";
 import { chooseTimingSlice } from "../engine/item-timing-slice";
 import type { KeyPaths, Position, Snapshot } from "../engine/types";
-import { toSkillSlice, type LevelRow, type SliceTotals, type TalentRow } from "./skill-build-choice";
+import { fromPatch, toSkillSlice, type LevelRow, type SliceTotals, type SlicePatch, type TalentRow } from "./skill-build-choice";
 import type { GuidePlayer } from "./skill-sequence";
 import { startRequests } from "./item-starts";
 import {
   CONSTANTS_QUERY,
   fillMissingTalent,
   mergeHeroAbilities,
-  patchGameVersion,
+  sliceVersion,
   talentName,
   toHeroAbilities,
   type ConstantsAnswer,
@@ -122,7 +122,7 @@ export interface GuideRef {
   steamAccountId: number;
 }
 
-/** One alias per match: m0, m1, ... with the game version, its length and the guide player with their purchases. */
+/** One alias per match: m0, m1, ... with when the game started, its length and the guide player with their purchases. */
 export function matchesQuery(matches: GuideRef[]): string {
   if (matches.length === 0 || matches.length > MATCHES_PER_QUERY) {
     throw new Error(`Expected 1 to ${MATCHES_PER_QUERY} matches, got ${matches.length}`);
@@ -130,7 +130,7 @@ export function matchesQuery(matches: GuideRef[]): string {
   const lines = matches.map((m, i) => {
     checkId(m.matchId);
     checkId(m.steamAccountId);
-    return `  m${i}: match(id: ${m.matchId}) { gameVersionId durationSeconds players(steamAccountId: ${m.steamAccountId}) { heroId position level isVictory abilities { abilityId time } stats { itemPurchases { time itemId } } } }`;
+    return `  m${i}: match(id: ${m.matchId}) { startDateTime durationSeconds players(steamAccountId: ${m.steamAccountId}) { heroId position level isVictory abilities { abilityId time } stats { itemPurchases { time itemId } } } }`;
   });
   return `{\n${lines.join("\n")}\n}`;
 }
@@ -175,8 +175,8 @@ export function guideRefs(answer: unknown): GuideRef[] {
 /** The guide player from one match answer, or null when the shape is wrong or they played another hero. */
 export function toGuidePlayer(answer: unknown, heroId: number): GuidePlayer | null {
   // Checked field by field below.
-  const match = answer as { gameVersionId?: unknown; players?: unknown } | null;
-  if (!match || !isNumber(match.gameVersionId) || !Array.isArray(match.players) || match.players.length !== 1)
+  const match = answer as { startDateTime?: unknown; players?: unknown } | null;
+  if (!match || !isNumber(match.startDateTime) || !Array.isArray(match.players) || match.players.length !== 1)
     return null;
   // Checked field by field below.
   const p = match.players[0] as {
@@ -194,7 +194,7 @@ export function toGuidePlayer(answer: unknown, heroId: number): GuidePlayer | nu
   if (points.length !== p.abilities.length) return null;
   const position = POSITION_NAMES.indexOf(p.position as string) + 1;
   return {
-    gameVersionId: match.gameVersionId,
+    start: match.startDateTime,
     // indexOf + 1 is 1 to 5 here.
     position: position > 0 ? (position as Position) : null,
     level: p.level,
@@ -237,8 +237,11 @@ export async function fetchSkillBuilds(snapshot: Snapshot, post: Post, now: Date
   // Checked below; every field in ConstantsAnswer is optional.
   const constants = (await post(CONSTANTS_QUERY)).constants as ConstantsAnswer | undefined;
   if (!constants?.heroes?.length || !constants.abilities?.length) throw new Error("STRATZ constants came back empty");
-  const versionId = patchGameVersion(constants.gameVersions ?? [], snapshot.patch.name);
-  if (versionId === null) throw new Error(`STRATZ has no game version for patch ${snapshot.patch.name}`);
+  const version = sliceVersion(constants.gameVersions ?? [], snapshot.patch.name);
+  if (version === null) throw new Error("STRATZ listed no game versions");
+  const versionId = version.id;
+  const patch: SlicePatch = { versionId, start: Date.parse(snapshot.patch.startedAt) / 1000 };
+  if (!Number.isFinite(patch.start)) throw new Error(`Bad patch start ${snapshot.patch.startedAt}`);
   const heroes = toHeroAbilities(constants);
   const names = new Map((constants.abilities ?? []).map((a) => [a.id, talentName(a.language?.displayName)]));
   snapshot.heroAbilities = mergeHeroAbilities(snapshot.heroAbilities, heroes);
@@ -296,10 +299,10 @@ export async function fetchSkillBuilds(snapshot: Snapshot, post: Post, now: Date
       if (!hero) return;
       hero.talents = fillMissingTalent(hero, totals.talents, names);
       const games = players.get(j) ?? [];
-      const slice = toSkillSlice(games.map((g) => g.player), r.position, totals, hero, versionId, now);
+      const slice = toSkillSlice(games.map((g) => g.player), r.position, totals, hero, patch, now);
       // The same games the build uses (this position and patch), wins only: the paths say "high-rank wins".
       const wins = games.flatMap(({ player, path }) =>
-        path && player.won === true && player.position === r.position && player.gameVersionId >= versionId ? [path] : [],
+        path && player.won === true && player.position === r.position && fromPatch(player, patch) ? [path] : [],
       );
       // Without item data or timings at all (their refresh failed), the paths stay unset so the next run
       // tries again; with them, the slice always gets its paths, `{}` when none passes, so it isn't fetched again.
@@ -312,7 +315,7 @@ export async function fetchSkillBuilds(snapshot: Snapshot, post: Post, now: Date
       done++;
     });
   }
-  return { done, due: due.length, queries, matchQueries, largestMatchAnswer, paths };
+  return { done, due: due.length, queries, matchQueries, largestMatchAnswer, paths, versionListed: version.listed };
 }
 
 /** One slice's late paths for the log: each candidate key with its groups, for the coverage check. */

@@ -391,6 +391,7 @@ async function main() {
     console.log("Skill builds from STRATZ guide matches...");
     try {
       const counts = await fetchSkillBuilds(snapshot, (query) => postStratz(stratzToken, query, "skill builds"), now);
+      if (!counts.versionListed) console.log(`STRATZ doesn't list patch ${snapshot.patch?.name} yet; games since it started count.`);
       const kb = (gzipSync(JSON.stringify(snapshot.skillBuilds ?? {})).length / 1024).toFixed(1);
       console.log(
         `Skill builds: ${counts.done} of ${counts.due} due slices refreshed in ${counts.queries} queries (${counts.matchQueries} for matches), ${kb} KB gzipped.`,
