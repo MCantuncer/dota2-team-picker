@@ -195,7 +195,7 @@ async function applyCounts(snapshot: Snapshot, stratz: StratzCounts, stratzAt: D
   }
   console.log(`Matchups and synergy from this patch's ranked games (OpenDota explorer)...`);
   try {
-    const patch = await fetchPatchCounts(get, patchStart);
+    const patch = await fetchPatchCounts(get, patchStart, now);
     if (patch.games < MIN_PATCH_GAMES) {
       console.log(`Only ${patch.games} games of this patch, STRATZ alone for now.`);
       applyStratzCounts(snapshot, stratz, stratzAt);
