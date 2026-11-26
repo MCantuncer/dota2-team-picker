@@ -145,7 +145,8 @@ function plain(value: string): string | null {
 
 /**
  * A talent's name with its values filled in, like "+20 Curse of Avernus DPS". Each {s:name} takes the talent's value of
- * that name; a lone {s:value} with no own value takes the one value it changes elsewhere. Null when any can't be filled.
+ * that name; a lone {s:value} with no own value takes the one value it changes elsewhere. Null when any can't be filled
+ * or the name has markup.
  */
 export function talentText(template: string, values: Map<string, string> | undefined): string | null {
   let failed = false;
@@ -157,9 +158,9 @@ export function talentText(template: string, values: Map<string, string> | undef
     return v ?? "";
   });
   if (failed) return null;
-  // Markup like <b>Strength</b> goes, and so does any angle bracket left over: a name is plain text.
-  const name = text.replace(/%%/g, "%").replace(/<[^>]*>/g, "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
-  return name && !name.includes("{") ? name : null;
+  const name = text.replace(/%%/g, "%").replace(/\s+/g, " ").trim();
+  // A name is plain text: one with markup (no talent name has any) is left to OpenDota's.
+  return name && !/[{}<>]/.test(name) ? name : null;
 }
 
 /** Talent names and ids from the game files, for the trees. */

@@ -42,7 +42,7 @@ const TOOLTIPS = `"lang"
     "DOTA_Tooltip_ability_special_bonus_unique_abaddon_5_Description"  "Not a name"
     "DOTA_Tooltip_Ability_special_bonus_unique_pudge_4"  "+{s:bonus_rot_slow}%% Rot Slow"
     "DOTA_Tooltip_ability_special_bonus_hp_regen_4_5"  "+{s:value} Health Regen"
-    "DOTA_Tooltip_ability_special_bonus_strength_10"  "+{s:value} <b>Strength</b>"
+    "DOTA_Tooltip_ability_special_bonus_strength_10"  "+{s:value} Strength"
     "DOTA_Tooltip_ability_special_bonus_unique_chen_zealot"  "Zealot gains +{s:bonus_bonus}% Health"
     "DOTA_Tooltip_ability_special_bonus_unique_missing"  "+{s:value} Nothing"
     "DOTA_Tooltip_ability_abaddon_frostmourne"  "Curse of Avernus"
@@ -86,7 +86,7 @@ describe("talent texts from the game files", () => {
     // A value per level is not one number.
     expect(talentText("+{s:bonus_x} Damage", v([["bonus_x", "10 20"]]))).toBeNull();
     expect(talentText("Poison Touch Undispellable", undefined)).toBe("Poison Touch Undispellable");
-    expect(talentText("<<b>script>Gains Aura", undefined)).toBe("scriptGains Aura");
+    expect(talentText("<b>Gains</b> Aura", undefined)).toBeNull();
   });
 
   it("names every talent it can and reads the game's ids", () => {
