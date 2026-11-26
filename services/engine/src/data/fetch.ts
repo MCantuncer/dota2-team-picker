@@ -35,6 +35,7 @@ import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
 import { applyGameTalents, fetchGameTalents } from "./talents";
 import { buildFactUpdates, describeUpdates } from "./fact-updates";
 import { getJson, getText, watchRelease } from "./patch-watch";
+import { record } from "./source-health";
 import { fetchPositions, postStratz } from "./stratz";
 import {
   blendCounts,
@@ -155,6 +156,11 @@ export function applyPatch(snapshot: Snapshot, latest: PatchRow): boolean {
   return changed;
 }
 
+/** Records one source's result in the snapshot's source health (see source-health.ts). */
+function track(snapshot: Snapshot, name: string, state: "ok" | "fail" | "lag", now: Date, note?: string) {
+  record((snapshot.sourceHealth ??= {}), name, state, now, note);
+}
+
 /**
  * Records the game's newest release, letter patches included (see patch-watch.ts). Never throws: the last release stays
  * when nothing can be read.
@@ -165,6 +171,7 @@ async function applyRelease(snapshot: Snapshot, now: Date) {
     const before = patch.release;
     const { release, notes } = await watchRelease(patch, before, getJson, getText, now);
     for (const note of notes) console.warn(`::warning::${note}`);
+    track(snapshot, "Valve's patch list", notes.length ? "fail" : "ok", now, notes.join(" "));
     patch.release = release;
     const day = Math.floor((now.getTime() - Date.parse(release.startedAt)) / DAY_MS) + 1;
     if (before && before.name !== release.name) {
@@ -175,6 +182,7 @@ async function applyRelease(snapshot: Snapshot, now: Date) {
     }
   } catch (err) {
     console.warn(`::warning::Release watch failed, keeping ${patch.release?.name ?? "the patch alone"}: ${(err as Error).message}`);
+    track(snapshot, "Valve's patch list", "fail", now, (err as Error).message);
   }
 }
 
@@ -235,6 +243,7 @@ async function applyCounts(snapshot: Snapshot, stratz: StratzCounts, stratzAt: D
   console.log(`Matchups and synergy from this patch's ranked games (OpenDota explorer)...`);
   try {
     const patch = await fetchPatchCounts(get, patchStart, now, letterStart);
+    track(snapshot, "OpenDota explorer, patch matchups", "ok", now);
     if (patch.games < MIN_PATCH_GAMES) {
       console.log(`Only ${patch.games} games of this patch, STRATZ alone for now.`);
       applyStratzCounts(snapshot, stratz, stratzAt);
@@ -248,6 +257,7 @@ async function applyCounts(snapshot: Snapshot, stratz: StratzCounts, stratzAt: D
   } catch (err) {
     if (snapshot.matchupsFrom?.patchGames === undefined) applyStratzCounts(snapshot, stratz, stratzAt);
     console.warn(`::warning::Patch matchups failed, ${snapshot.matchupsFrom?.patchGames ? "keeping the last ones" : "STRATZ alone"}: ${(err as Error).message}`);
+    track(snapshot, "OpenDota explorer, patch matchups", "fail", now, (err as Error).message);
   }
 }
 
@@ -359,9 +369,11 @@ async function main() {
       snapshot.positions = await fetchPositions(stratzToken);
       snapshot.positionsAt = now.toISOString();
       logPositions(snapshot);
+      track(snapshot, "STRATZ positions", "ok", now);
     } catch (err) {
       // Positions are an extra; keep the last ones (or lane roles) and go on.
       console.warn(`::warning::${(err as Error).message}`);
+      track(snapshot, "STRATZ positions", "fail", now, (err as Error).message);
     }
   } else {
     console.log("No STRATZ_TOKEN, positions come from lane roles.");
@@ -372,9 +384,11 @@ async function main() {
     try {
       await fetchItems(snapshot, get, now);
       console.log(`Item builds for ${Object.keys(snapshot.itemBuilds ?? {}).length} heroes.`);
+      track(snapshot, "OpenDota item builds", "ok", now);
     } catch (err) {
       // Item builds are an extra; keep the last ones and go on.
       console.warn(`::warning::${(err as Error).message}`);
+      track(snapshot, "OpenDota item builds", "fail", now, (err as Error).message);
     }
   } else {
     console.log(`Item builds are from ${snapshot.itemsAt}, keeping them.`);
@@ -388,9 +402,11 @@ async function main() {
       const artifacts = Object.values(pool.items).filter((i) => i.kind === "artifact" && !i.brokenOf).length;
       console.log(`Neutral items: ${pool.tiers.length} tiers, ${artifacts} artifacts.`);
       if (missing.length) console.warn(`::warning::Neutral items not in OpenDota's list yet: ${missing.join(", ")}`);
+      track(snapshot, "Game files, neutral items", "ok", now);
     } catch (err) {
       // Neutral items are an extra; keep the last pool and go on.
       console.warn(`::warning::Neutral items failed, keeping the last ones: ${(err as Error).message}`);
+      track(snapshot, "Game files, neutral items", "fail", now, (err as Error).message);
     }
   }
 
@@ -400,17 +416,21 @@ async function main() {
       await fetchItemTimings(snapshot, (query) => postStratz(stratzToken, query, "item timings"), now);
       const kb = (gzipSync(JSON.stringify(snapshot.itemTimings)).length / 1024).toFixed(1);
       console.log(`Item timings for ${Object.keys(snapshot.itemTimings ?? {}).length} heroes, ${kb} KB gzipped.`);
+      track(snapshot, "STRATZ item timings", "ok", now);
     } catch (err) {
       // Item timings are an extra; keep the last ones and go on.
       console.warn(`::warning::${(err as Error).message}`);
+      track(snapshot, "STRATZ item timings", "fail", now, (err as Error).message);
     }
     console.log("Start items and boots from STRATZ...");
     try {
       await fetchItemStarts(snapshot, (query) => postStratz(stratzToken, query, "start items"));
       console.log(`Start items for ${Object.keys(snapshot.itemStarts ?? {}).length} heroes.`);
+      track(snapshot, "STRATZ start items", "ok", now);
     } catch (err) {
       // Start items are an extra too; keep the last ones.
       console.warn(`::warning::${(err as Error).message}`);
+      track(snapshot, "STRATZ start items", "fail", now, (err as Error).message);
     }
   } else if (stratzToken) {
     console.log(`Item timings are from ${snapshot.itemTimingsAt}, keeping them.`);
@@ -425,6 +445,7 @@ async function main() {
   {
     const { updates, notes } = await buildFactUpdates(snapshot.factUpdates, now);
     for (const note of notes) console.warn(`::warning::Game facts, ${note}`);
+    track(snapshot, "Game facts", notes.length ? "fail" : "ok", now, notes.join(" "));
     snapshot.factUpdates = updates;
     console.log(`Game facts that differ from the committed files: ${describeUpdates(updates)}.`);
   }
@@ -437,9 +458,13 @@ async function main() {
     const names = talents.renamed === null ? "OpenDota's names" : `game names (${talents.renamed} newer than OpenDota's)`;
     console.log(`Talents for ${heroes} heroes, ${changed} changed; ${names}; talents and sides from ${talents.fromFiles} hero files.`);
     for (const note of talents.notes) console.warn(`::warning::Talents, ${note}`);
+    track(snapshot, "Game files, talents", "ok", now);
+    if (talents.renamed) track(snapshot, "OpenDota constants", "lag", now, `${talents.renamed} talent names newer in the game files`);
+    else if (talents.renamed === 0) track(snapshot, "OpenDota constants", "ok", now);
   } catch (err) {
     // Keep the last talents and go on; the next run tries again.
     console.warn(`::warning::Talents from the game files failed, keeping the last ones: ${err instanceof Error ? err.message : String(err)}`);
+    track(snapshot, "Game files, talents", "fail", now, err instanceof Error ? err.message : String(err));
   }
 
   if (stratzToken) {
@@ -447,6 +472,8 @@ async function main() {
     try {
       const counts = await fetchSkillBuilds(snapshot, (query) => postStratz(stratzToken, query, "skill builds"), now);
       if (!counts.versionListed) console.log(`STRATZ doesn't list patch ${snapshot.patch?.name} yet; games since it started count.`);
+      track(snapshot, "STRATZ skill builds", "ok", now);
+      track(snapshot, "STRATZ patch list", counts.versionListed ? "ok" : "lag", now, counts.versionListed ? undefined : `doesn't list ${snapshot.patch?.name} yet`);
       const kb = (gzipSync(JSON.stringify(snapshot.skillBuilds ?? {})).length / 1024).toFixed(1);
       console.log(
         `Skill builds: ${counts.done} of ${counts.due} due slices refreshed in ${counts.queries} queries (${counts.matchQueries} for matches), ${kb} KB gzipped.`,
@@ -455,6 +482,7 @@ async function main() {
     } catch (err) {
       // Skill builds are an extra; keep the slices done so far and go on. The next run resumes.
       console.warn(`::warning::${err instanceof Error ? err.message : String(err)}`);
+      track(snapshot, "STRATZ skill builds", "fail", now, err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -482,8 +510,10 @@ async function main() {
       const counts = await fetchStratzCounts(heroIds, (query) => postStratz(stratzToken, query, "matchups"));
       console.log(`STRATZ matchups: ${pairStats(counts)}.`);
       stratz = { counts, at: now };
+      track(snapshot, "STRATZ matchups", "ok", now);
     } catch (err) {
       console.warn(`::warning::${(err as Error).message}`);
+      track(snapshot, "STRATZ matchups", "fail", now, (err as Error).message);
       // While a patch is young its own games still go in, next to STRATZ's last counts. Otherwise the
       // last counts stay, whichever source they came from.
       if (countsFresh(patchStart, letterPatchStart(snapshot.patch), now)) {
@@ -504,9 +534,11 @@ async function main() {
       snapshot.laneOutcomesAt = now.toISOString();
       const pairs = Object.values(snapshot.laneOutcomes["0"] ?? {}).reduce((n, row) => n + Object.keys(row).length, 0);
       console.log(`STRATZ lanes: ${pairs} pairs with ${MIN_LANE_GAMES}+ games.`);
+      track(snapshot, "STRATZ lanes", "ok", now);
     } catch (err) {
       // Lane results are an extra; keep the last ones and go on.
       console.warn(`::warning::${(err as Error).message}`);
+      track(snapshot, "STRATZ lanes", "fail", now, (err as Error).message);
     }
   }
   if (threatPlansDue(snapshot, now)) {
@@ -516,9 +548,11 @@ async function main() {
       const plans = snapshot.threatPlans?.plans ?? [];
       const names = plans.map((p) => `${snapshot.heroes[p.hero]?.name ?? p.hero} ${p.drop}`).join(", ");
       console.log(`Threat plans from ${snapshot.threatPlans?.games ?? 0} games: ${names || "none"}.`);
+      track(snapshot, "OpenDota explorer, threat plans", "ok", now);
     } catch (err) {
       // Threat plans are an extra; keep the last ones and go on.
       console.warn(`::warning::${(err as Error).message}`);
+      track(snapshot, "OpenDota explorer, threat plans", "fail", now, (err as Error).message);
     }
   } else {
     console.log(`Threat plans are from ${snapshot.threatPlans?.at}, keeping them.`);
@@ -570,9 +604,11 @@ async function main() {
     const before = new Set(snapshot.removedItems ?? []);
     snapshot.removedItems = await fetchRemovedItems(getText);
     const added = snapshot.removedItems.filter((id) => !before.has(id));
+    track(snapshot, "Game files, removed items", "ok", now);
     console.log(`Removed items from the game files: ${snapshot.removedItems.length}${added.length && before.size ? `, newly removed ${added.join(", ")}` : ""}.`);
   } catch (err) {
     console.warn(`::warning::Removed items from the game files failed, keeping the last ${snapshot.removedItems?.length ?? 0}: ${(err as Error).message}`);
+    track(snapshot, "Game files, removed items", "fail", now, (err as Error).message);
   }
   const removed = dropRemovedItems(snapshot);
   if (removed.length) console.log(`Dropped ${removed.length} removed items from the builds: ${removed.join(", ")}.`);

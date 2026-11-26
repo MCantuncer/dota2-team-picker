@@ -51,6 +51,17 @@ export interface HeroInfo {
  * Everything the engine needs, produced by `npm run fetch-data`.
  * Hero ids are stored as string keys because the snapshot is JSON.
  */
+/** One data source's result on the last refresh: "fail" kept the last data, "lag" works but is behind the patch. */
+export interface SourceState {
+  state: "ok" | "fail" | "lag";
+  /** The last refresh that tried it. */
+  at: string;
+  /** When it started failing or lagging, for an unbroken spell of runs. */
+  since?: string;
+  /** The last error, or what it is behind on. */
+  note?: string;
+}
+
 export interface Snapshot {
   generatedAt: string;
   heroes: Record<string, HeroInfo>;
@@ -169,6 +180,11 @@ export interface Snapshot {
    * engine/fact-updates.ts). Whoever runs the engine on this snapshot passes them to applyFactUpdates first.
    */
   factUpdates?: FactUpdates;
+  /**
+   * How each data source did on the last refreshes, by source (see data/source-health.ts): what is failing or still
+   * catching up with the patch.
+   */
+  sourceHealth?: Record<string, SourceState>;
   /**
    * Ids of the items Valve removed from the game ("IsObsolete" in the game's item file), dropped from every item source
    * each refresh. Kept from the last good read when the file can't be downloaded.
