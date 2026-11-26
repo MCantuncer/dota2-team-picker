@@ -3,8 +3,10 @@
  * on the next refresh. STRATZ's constants lag a patch (in 7.42 they still had 7.41's talents days after), so they no
  * longer decide the tree.
  *
- * - Which talents and their names with values: OpenDota's constants, built from the game files on every patch.
- * - Ability ids, to match STRATZ's talent picks: OpenDota's ability ids (the game's own ids, the ones STRATZ uses).
+ * - Which talents and their names with values: the game's files (talent-texts.ts), so letter patches show the same day;
+ *   OpenDota's constants (built from the same files, but only when OpenDota updates them) for any name they can't fill.
+ * - Ability ids, to match STRATZ's talent picks: OpenDota's ability ids (the game's own ids, the ones STRATZ uses),
+ *   and the game's id list for a talent new to the patch that OpenDota doesn't list yet.
  * - Which side each talent sits on: the hero's file in the game (a mirror on GitHub). The hero lists its talents as
  *   Ability10 to Ability17; each level's pair is the next two, and the game shows the first of the two on the RIGHT
  *   (Anti-Mage at 25: Ability16 "-1s Blink Cooldown" right, Ability17 "-50s Mana Void Cooldown" left). OpenDota keeps
@@ -14,9 +16,20 @@
 import { TALENT_LEVELS, type HeroAbilities, type Snapshot } from "../engine/types";
 import { getOpenDota } from "./opendota";
 import { talentName } from "./skill-abilities";
+import {
+  ABILITIES_FILE,
+  ABILITY_IDS_FILE,
+  GAME_FILES_URL,
+  gameTalentTexts,
+  parseKV,
+  TOOLTIPS_FILE,
+  type GameTalentTexts,
+} from "./talent-texts";
 
 /** The game files' hero scripts, one file per hero (Valve's files, mirrored by Dotabuff on every game update). */
-export const HERO_FILES_URL = "https://raw.githubusercontent.com/dotabuff/d2vpkr/master/dota/scripts/npc/heroes/";
+export const HERO_FILES_URL = `${GAME_FILES_URL}scripts/npc/heroes/`;
+/** The game's names are used only when they fill at least this share of the talents OpenDota lists: else a file came back cut. */
+const MIN_GAME_NAME_SHARE = 0.9;
 const TALENTS = TALENT_LEVELS.length * 2;
 const ATTRIBUTE_BONUS = "special_bonus_attributes";
 /** Hero files read at once. */
@@ -123,38 +136,90 @@ export function toTree(order: string[], c: TalentConstants): { tree: TalentTree 
   return { tree };
 }
 
+/**
+ * The constants with the game's talent names in place of OpenDota's, and the game's ids for talents OpenDota has no
+ * id for. `renamed` counts the talents OpenDota names differently from the game (a patch OpenDota hasn't caught up
+ * with). Null, with the reason, when the game fills too few of OpenDota's talents to be trusted.
+ */
+export function withGameTexts(
+  c: TalentConstants,
+  texts: GameTalentTexts,
+): { constants: TalentConstants; renamed: number } | { problem: string } {
+  const listed = [...new Set([...c.talents.values()].flat())];
+  const filled = listed.filter((key) => texts.names.has(key)).length;
+  if (filled < listed.length * MIN_GAME_NAME_SHARE) return { problem: `names for only ${filled} of ${listed.length} talents` };
+  const renamed = listed.filter((key) => c.names.has(key) && texts.names.has(key) && texts.names.get(key) !== c.names.get(key)).length;
+  const ids = new Map(texts.ids);
+  for (const [key, id] of c.ids) ids.set(key, id);
+  return { constants: { ...c, names: new Map([...c.names, ...texts.names]), ids }, renamed };
+}
+
 /** Every hero's tree by hero id, plus a line per hero that fell back or was left out. */
 export interface GameTalents {
   trees: Record<string, TalentTree>;
   /** Innate ability names by hero id, for the heroes that have one. */
   innate: Record<string, string[]>;
-  /** Heroes whose sides came from their game file (the rest use OpenDota's order). */
+  /** Heroes whose talents and sides came from their game file (the rest use OpenDota's list and order). */
   fromFiles: number;
+  /** Talents whose name with values the game files changed from OpenDota's; null when OpenDota's names were kept. */
+  renamed: number | null;
   notes: string[];
 }
 
 type GetText = (url: string) => Promise<string>;
 
-/** Builds the trees. A hero's file that can't be read, or lists other talents than OpenDota, falls back to OpenDota's order. */
+/** A download, or the error it failed with: one failed file costs only what it carries. */
+const tryText = (getText: GetText, url: string) => getText(url).catch((err: unknown) => (err instanceof Error ? err : new Error(String(err))));
+
+/**
+ * Builds the trees. Names come from the game files when they can be read (else OpenDota's). Each hero's talents and
+ * sides come from its own file; a file that can't be read, or whose talents can't all be named, falls back to
+ * OpenDota's list and order.
+ */
 export async function buildGameTalents(c: TalentConstants, getText: GetText): Promise<GameTalents> {
-  const out: GameTalents = { trees: {}, innate: {}, fromFiles: 0, notes: [] };
+  const out: GameTalents = { trees: {}, innate: {}, fromFiles: 0, renamed: null, notes: [] };
   const heroes = [...c.heroes].filter(([, npc]) => c.talents.has(npc));
+  const files = new Map<string, string | Error>();
   for (let i = 0; i < heroes.length; i += FILE_BATCH) {
     const batch = heroes.slice(i, i + FILE_BATCH);
-    const files = await Promise.all(batch.map(([, npc]) => getText(`${HERO_FILES_URL}${npc}.txt`).catch((err: unknown) => err as Error)));
-    batch.forEach(([id, npc], j) => {
-      const listed = c.talents.get(npc) ?? [];
-      const file = files[j];
-      const slots = typeof file === "string" ? talentSlots(file, npc) : [];
-      const same = slots.length === listed.length && slots.every((s) => listed.includes(s));
-      if (same) out.fromFiles++;
-      else out.notes.push(`${npc}: ${file instanceof Error ? `file failed (${file.message})` : "file differs from OpenDota"}, OpenDota's order`);
-      const innate = c.innate.get(npc);
-      if (innate) out.innate[id] = innate;
-      const built = toTree(same ? slots : listed, c);
-      if ("tree" in built) out.trees[id] = built.tree;
-      else out.notes.push(`${npc}: left as it was, ${built.problem}`);
-    });
+    const texts = await Promise.all(batch.map(([, npc]) => tryText(getText, `${HERO_FILES_URL}${npc}.txt`)));
+    batch.forEach(([, npc], j) => files.set(npc, texts[j]!)); // One answer per hero of the batch.
+  }
+
+  let names = c;
+  const shared = await Promise.all([TOOLTIPS_FILE, ABILITIES_FILE, ABILITY_IDS_FILE].map((f) => tryText(getText, `${GAME_FILES_URL}${f}`)));
+  const failed = shared.find((f) => f instanceof Error);
+  if (failed instanceof Error) out.notes.push(`game talent names failed (${failed.message}), OpenDota's names`);
+  else {
+    const [tooltips, abilities, ids] = shared as string[]; // None is an Error, checked above.
+    const heroFiles = [...files.values()].flatMap((f) => (typeof f === "string" ? [parseKV(f)] : []));
+    const texts = gameTalentTexts(parseKV(tooltips!), [parseKV(abilities!), ...heroFiles], parseKV(ids!));
+    const merged = withGameTexts(c, texts);
+    if ("problem" in merged) out.notes.push(`game talent names: ${merged.problem}, OpenDota's names`);
+    else {
+      names = merged.constants;
+      out.renamed = merged.renamed;
+    }
+  }
+
+  for (const [id, npc] of heroes) {
+    const listed = c.talents.get(npc) ?? [];
+    const file = files.get(npc);
+    const slots = typeof file === "string" ? talentSlots(file, npc) : [];
+    const fromFile = toTree(slots, names);
+    const innate = c.innate.get(npc);
+    if (innate) out.innate[id] = innate;
+    if ("tree" in fromFile) {
+      out.fromFiles++;
+      out.trees[id] = fromFile.tree;
+      const newer = slots.filter((s) => !listed.includes(s));
+      if (newer.length) out.notes.push(`${npc}: talents OpenDota doesn't list yet, from the game file: ${newer.join(", ")}`);
+      continue;
+    }
+    out.notes.push(`${npc}: ${file instanceof Error ? `file failed (${file.message})` : `file unusable (${fromFile.problem})`}, OpenDota's order`);
+    const built = toTree(listed, names);
+    if ("tree" in built) out.trees[id] = built.tree;
+    else out.notes.push(`${npc}: left as it was, ${built.problem}`);
   }
   return out;
 }
