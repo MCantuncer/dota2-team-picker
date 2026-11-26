@@ -110,6 +110,13 @@ describe("applyPatch", () => {
     expect(data.patch).toEqual({ name: "7.42", startedAt: patch742.date });
   });
 
+  it("keeps the newest release for the watch to compare against", () => {
+    const release = { name: "7.41a", startedAt: "2026-04-01T00:00:00.000Z", from: "valve" as const };
+    const data = { ...empty(), patch: { name: "7.41", startedAt: patch741.date, release } };
+    applyPatch(data, patch741);
+    expect(data.patch.release).toEqual(release);
+  });
+
   it("only records the patch the first time", () => {
     const data = empty();
     data.synergy = { "1-2": { games: 100, wins: 60 } };

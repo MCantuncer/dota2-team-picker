@@ -163,8 +163,15 @@ export interface Snapshot {
    * together: skillBuilds[heroId][position]. Refreshed weekly, a few heroes per run.
    */
   skillBuilds?: Record<string, Partial<Record<string, SkillBuildSlice>>>;
-  /** The patch the counts are for, from OpenDota's patch list. */
-  patch?: { name: string; startedAt: string };
+  /**
+   * The patch the counts are for, from OpenDota's patch list, which has only the big patches (7.42). `release` is the
+   * game's newest release, letter patches included (7.42a), from Valve's patch list or the game files.
+   */
+  patch?: {
+    name: string;
+    startedAt: string;
+    release?: { name: string; startedAt: string; from: "valve" | "game-files" };
+  };
   /** Highest public match id already counted, so daily runs only add new matches. */
   lastPublicMatchId?: number;
   /**
