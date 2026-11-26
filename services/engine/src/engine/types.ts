@@ -168,8 +168,15 @@ export interface Snapshot {
    * each refresh. Kept from the last good read when the file can't be downloaded.
    */
   removedItems?: number[];
-  /** The patch the counts are for, from OpenDota's patch list. */
-  patch?: { name: string; startedAt: string };
+  /**
+   * The patch the counts are for, from OpenDota's patch list, which has only the big patches (7.42). `release` is the
+   * game's newest release, letter patches included (7.42a), from Valve's patch list or the game files.
+   */
+  patch?: {
+    name: string;
+    startedAt: string;
+    release?: { name: string; startedAt: string; from: "valve" | "game-files" };
+  };
   /** Highest public match id already counted, so daily runs only add new matches. */
   lastPublicMatchId?: number;
   /**

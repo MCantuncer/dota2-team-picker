@@ -24,6 +24,11 @@ export const MIN_PATCH_GAMES = 50_000;
 export const GAMES_PER_SLICE = 250_000;
 /** Slices read per run, so a run reads at most about a million games in 13 queries. */
 export const MAX_SLICES = 4;
+/**
+ * Games a day of a patch is taken to have when the explorer can't count them: above the busiest day of 7.42 (556,157 on
+ * 2026-11-21), so the slices come out no bigger than they should and the queries don't time out.
+ */
+export const GAMES_PER_DAY_GUESS = 600_000;
 /** Every 5 v 5 game gives this many hero vs hero rows, Radiant hero against Dire hero. */
 const VS_ROWS_PER_GAME = 25;
 const DAY_S = 24 * 60 * 60;
@@ -122,27 +127,51 @@ export function patchIsFresh(patchStart: number, now: Date): boolean {
   return now.getTime() / 1000 - patchStart < PATCH_FRESH_DAYS * DAY_S;
 }
 
+type Get = <T>(path: string) => Promise<T>;
+
 /**
- * This patch's counts, read in up to MAX_SLICES slices of about GAMES_PER_SLICE games. Each query is
- * tried twice (the explorer answers HTTP 400 when it times out on a cold cache). Throws when a query
+ * One explorer query's rows, tried twice: the explorer answers HTTP 400 when it times out on a cold cache. Throws
+ * when it fails both times.
+ */
+async function explorerRows(get: Get, sql: string): Promise<unknown> {
+  const path = `/explorer?sql=${encodeURIComponent(sql)}`;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const answer = await get<{ rows?: unknown; err?: unknown }>(path);
+      if (answer.err) throw new Error(`Explorer query failed: ${String(answer.err)}`);
+      return answer.rows;
+    } catch (err) {
+      if (attempt >= 2) throw err;
+      console.warn(`${(err as Error).message}, trying once more`);
+    }
+  }
+}
+
+/**
+ * Games since `from` (Unix seconds), for the number of slices. When the count fails (it reads every game of the patch
+ * and timed out on 2026-11-25), GAMES_PER_DAY_GUESS a day instead: more slices than needed only means each read slice
+ * is a smaller share of the games, never a query that times out.
+ */
+export async function patchGames(get: Get, from: number, now: Date): Promise<number> {
+  try {
+    const rows = await explorerRows(get, countQuery(from));
+    const games = Array.isArray(rows) ? whole((rows[0] as { games?: unknown } | undefined)?.games) : undefined;
+    if (games === undefined) throw new Error("Explorer count has no games");
+    return games;
+  } catch (err) {
+    const days = Math.max(1, Math.ceil((now.getTime() / 1000 - from) / DAY_S));
+    console.warn(`::warning::Counting the patch's games failed (${(err as Error).message}), taking ${GAMES_PER_DAY_GUESS} a day for ${days} days`);
+    return days * GAMES_PER_DAY_GUESS;
+  }
+}
+
+/**
+ * This patch's counts, read in up to MAX_SLICES slices of about GAMES_PER_SLICE games. Throws when a slice's query
  * fails both times, so a run never mixes a partial read in.
  */
-export async function fetchPatchCounts(get: <T>(path: string) => Promise<T>, patchStart: number): Promise<{ counts: StratzCounts; games: number }> {
-  const ask = async (sql: string): Promise<unknown> => {
-    const path = `/explorer?sql=${encodeURIComponent(sql)}`;
-    for (let attempt = 1; ; attempt++) {
-      try {
-        const answer = await get<{ rows?: unknown; err?: unknown }>(path);
-        if (answer.err) throw new Error(`Explorer query failed: ${String(answer.err)}`);
-        return answer.rows;
-      } catch (err) {
-        if (attempt >= 2) throw err;
-        console.warn(`${(err as Error).message}, trying once more`);
-      }
-    }
-  };
-  const [total] = (await ask(countQuery(patchStart))) as { games?: unknown }[];
-  const all = whole(total?.games) ?? 0;
+export async function fetchPatchCounts(get: Get, patchStart: number, now: Date): Promise<{ counts: StratzCounts; games: number }> {
+  const ask = (sql: string) => explorerRows(get, sql);
+  const all = await patchGames(get, patchStart, now);
   const slices = Math.max(1, Math.ceil(all / GAMES_PER_SLICE));
   const counts = empty();
   for (let slice = 0; slice < Math.min(slices, MAX_SLICES); slice++) {
