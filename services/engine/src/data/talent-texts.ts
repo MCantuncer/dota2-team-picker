@@ -157,7 +157,8 @@ export function talentText(template: string, values: Map<string, string> | undef
     return v ?? "";
   });
   if (failed) return null;
-  const name = text.replace(/%%/g, "%").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+  // Markup like <b>Strength</b> goes, and so does any angle bracket left over: a name is plain text.
+  const name = text.replace(/%%/g, "%").replace(/<[^>]*>/g, "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
   return name && !name.includes("{") ? name : null;
 }
 

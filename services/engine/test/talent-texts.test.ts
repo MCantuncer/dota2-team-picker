@@ -86,6 +86,7 @@ describe("talent texts from the game files", () => {
     // A value per level is not one number.
     expect(talentText("+{s:bonus_x} Damage", v([["bonus_x", "10 20"]]))).toBeNull();
     expect(talentText("Poison Touch Undispellable", undefined)).toBe("Poison Touch Undispellable");
+    expect(talentText("<<b>script>Gains Aura", undefined)).toBe("scriptGains Aura");
   });
 
   it("names every talent it can and reads the game's ids", () => {
