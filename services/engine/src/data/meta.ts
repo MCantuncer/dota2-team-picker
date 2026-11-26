@@ -11,6 +11,7 @@
  */
 import type { MetaExtras } from "./meta-extras";
 import { GROUP_SQL } from "./patch-matchups";
+import type { Snapshot } from "../engine/types";
 
 /** Days of the patch before that the page compares against. */
 export const BASE_DAYS = 7;
@@ -48,7 +49,8 @@ export interface MetaDay {
 
 export interface MetaFile {
   computedAt: string;
-  patch: { name: string; startedAt: string };
+  /** The patch, with its newest release (a letter patch) when the refresh found one (Snapshot.patch). */
+  patch: NonNullable<Snapshot["patch"]>;
   /** This patch's days in the window, oldest first. */
   days: MetaDay[];
   /** The patch before's last BASE_DAYS days, oldest first. */
@@ -184,7 +186,7 @@ export async function readRun(ask: Ask, patchStart: number, first: number, last:
  */
 export async function buildMeta(
   ask: Ask,
-  patch: { name: string; startedAt: string },
+  patch: NonNullable<Snapshot["patch"]>,
   now: number,
   last: MetaFile | null,
   positions?: Record<string, number[]>,

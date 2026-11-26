@@ -7,6 +7,10 @@
  * of STRATZ's (blendCounts), so picks follow the new patch while its sample is still small. After that
  * STRATZ's window holds only the new patch and its counts are used alone again.
  *
+ * Games since the newest letter patch (7.42a), or of the last RECENT_DAYS when there is none, count RECENT_WEIGHT
+ * times as much as the patch's older games (see fetchPatchCounts). A letter patch also starts the patch's own games
+ * leading again for PATCH_FRESH_DAYS, since STRATZ's window mixes it with the release before.
+ *
  * The explorer stops a query after about 15 seconds, so each query reads one slice of the games
  * (`match_id % slices = slice`) and aggregates it on the server: about 250,000 games and 80,000 rows
  * in under 10 seconds (measured 2026-11-21).
@@ -24,6 +28,14 @@ export const MIN_PATCH_GAMES = 50_000;
 export const GAMES_PER_SLICE = 250_000;
 /** Slices read per run, so a run reads at most about a million games in 13 queries. */
 export const MAX_SLICES = 4;
+/**
+ * Games of the last RECENT_DAYS count RECENT_WEIGHT times, so pick scores follow a letter patch within a day or two
+ * without starting over: the day after 7.42a Riki won 53.8%, against 57.2% in the days before. Read in up to
+ * MAX_RECENT_SLICES more slices (7 more queries).
+ */
+export const RECENT_DAYS = 2;
+export const RECENT_WEIGHT = 3;
+export const MAX_RECENT_SLICES = 2;
 /**
  * Games a day of a patch is taken to have when the explorer can't count them: above the busiest day of 7.42 (556,157 on
  * 2026-11-21), so the slices come out no bigger than they should and the queries don't time out.
@@ -127,6 +139,26 @@ export function patchIsFresh(patchStart: number, now: Date): boolean {
   return now.getTime() / 1000 - patchStart < PATCH_FRESH_DAYS * DAY_S;
 }
 
+/**
+ * When the newest letter patch of the snapshot's patch came out (Unix seconds), or undefined when there is none: the
+ * release is the big patch itself, or came out before it (a release saved from an older patch).
+ */
+export function letterPatchStart(patch: Snapshot["patch"]): number | undefined {
+  if (!patch?.release || patch.release.name === patch.name) return undefined;
+  const start = Date.parse(patch.release.startedAt) / 1000;
+  return Number.isFinite(start) && start > Date.parse(patch.startedAt) / 1000 ? start : undefined;
+}
+
+/**
+ * Where the games that count RECENT_WEIGHT times start: the newest letter patch while it is fresh (its games are the
+ * game as it is now), else the last RECENT_DAYS, so the counts still lean on how the patch plays lately.
+ */
+export function recentStart(letterStart: number | undefined, now: Date): { from: number; since: "letter" | "days" } {
+  const nowS = now.getTime() / 1000;
+  if (letterStart !== undefined && nowS - letterStart < PATCH_FRESH_DAYS * DAY_S) return { from: letterStart, since: "letter" };
+  return { from: nowS - RECENT_DAYS * DAY_S, since: "days" };
+}
+
 type Get = <T>(path: string) => Promise<T>;
 
 /**
@@ -166,19 +198,47 @@ export async function patchGames(get: Get, from: number, now: Date): Promise<num
 }
 
 /**
- * This patch's counts, read in up to MAX_SLICES slices of about GAMES_PER_SLICE games. Throws when a slice's query
- * fails both times, so a run never mixes a partial read in.
+ * This patch's counts, read in up to MAX_SLICES slices of about GAMES_PER_SLICE games, plus the recent games (see
+ * recentStart) again so they count RECENT_WEIGHT times. `games` is the games read of the whole patch, `recentGames` of
+ * the recent ones (0 when the patch is young or that read failed, which leaves every game counting once) and `since`
+ * where they start. Throws when a slice of the whole patch fails twice, so a run never mixes a partial read in.
  */
-export async function fetchPatchCounts(get: Get, patchStart: number, now: Date): Promise<{ counts: StratzCounts; games: number }> {
-  const ask = (sql: string) => explorerRows(get, sql);
-  const all = await patchGames(get, patchStart, now);
-  const slices = Math.max(1, Math.ceil(all / GAMES_PER_SLICE));
-  const counts = empty();
-  for (let slice = 0; slice < Math.min(slices, MAX_SLICES); slice++) {
-    addVs(counts, toPairRows(await ask(vsQuery(patchStart, slices, slice))));
-    for (const side of ["radiant", "dire"] as const) addWith(counts, toPairRows(await ask(withQuery(patchStart, slices, slice, side))));
+export async function fetchPatchCounts(
+  get: Get,
+  patchStart: number,
+  now: Date,
+  letterStart?: number,
+): Promise<{ counts: StratzCounts; games: number; recentGames: number; since: "letter" | "days" }> {
+  const patch = await readSlices(get, patchStart, now, MAX_SLICES);
+  const games = gamesIn(patch.counts);
+  const { from: recentFrom, since } = recentStart(letterStart, now);
+  // A patch younger than a day before the recent games start is all recent already.
+  if (recentFrom - patchStart < DAY_S) return { counts: patch.counts, games, recentGames: 0, since };
+  try {
+    const recent = await readSlices(get, recentFrom, now, MAX_RECENT_SLICES);
+    // A recent game is in the patch's slices at its share, so this extra makes it count RECENT_WEIGHT times in all.
+    const extra = ((RECENT_WEIGHT - 1) * patch.share) / recent.share;
+    return { counts: blendCounts(patch.counts, recent.counts, extra), games, recentGames: gamesIn(recent.counts), since };
+  } catch (err) {
+    console.warn(`::warning::Recent patch matchups failed, every game of the patch counts the same: ${(err as Error).message}`);
+    return { counts: patch.counts, games, recentGames: 0, since };
   }
-  return { counts, games: gamesIn(counts) };
+}
+
+/**
+ * The counts of games since `from`, read in up to `maxSlices` slices of about GAMES_PER_SLICE games, and the share of
+ * those games the read slices hold.
+ */
+async function readSlices(get: Get, from: number, now: Date, maxSlices: number): Promise<{ counts: StratzCounts; share: number }> {
+  const ask = (sql: string) => explorerRows(get, sql);
+  const slices = Math.max(1, Math.ceil((await patchGames(get, from, now)) / GAMES_PER_SLICE));
+  const read = Math.min(slices, maxSlices);
+  const counts = empty();
+  for (let slice = 0; slice < read; slice++) {
+    addVs(counts, toPairRows(await ask(vsQuery(from, slices, slice))));
+    for (const side of ["radiant", "dire"] as const) addWith(counts, toPairRows(await ask(withQuery(from, slices, slice, side))));
+  }
+  return { counts, share: read / slices };
 }
 
 /** a + share x b for every pair of either, rounded to a tenth of a game. */

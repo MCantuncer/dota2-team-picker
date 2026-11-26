@@ -4,7 +4,11 @@ import {
   addWith,
   blendCounts,
   fetchPatchCounts,
+  letterPatchStart,
+  recentStart,
   GAMES_PER_DAY_GUESS,
+  MAX_RECENT_SLICES,
+  RECENT_WEIGHT,
   GAMES_PER_SLICE,
   gamesIn,
   lastStratzCounts,
@@ -104,6 +108,15 @@ describe("queries", () => {
     expect(withQuery(1795037287, 1, 0, "dire")).toContain("unnest(m.dire_team) a, unnest(m.dire_team) b");
   });
 
+  it("finds the newest letter patch of the snapshot's patch", () => {
+    const patch = { name: "7.42", startedAt: "2026-11-18T21:28:07Z" };
+    const release = { name: "7.42a", startedAt: "2026-11-24T23:40:00Z", from: "valve" as const };
+    expect(letterPatchStart({ ...patch, release })).toBe(Date.parse(release.startedAt) / 1000);
+    expect(letterPatchStart({ ...patch, release: { ...release, name: "7.42" } })).toBeUndefined();
+    expect(letterPatchStart({ ...patch, release: { ...release, startedAt: "2026-11-01T00:00:00Z" } })).toBeUndefined();
+    expect(letterPatchStart(patch)).toBeUndefined();
+  });
+
   it("calls a patch fresh for its first 14 days", () => {
     const start = Date.parse("2026-11-18T21:28:07Z") / 1000;
     expect(patchIsFresh(start, new Date("2026-11-21T10:00:00Z"))).toBe(true);
@@ -112,8 +125,11 @@ describe("queries", () => {
 });
 
 describe("fetchPatchCounts", () => {
-  /** Ten days after the test patch started at Unix second 0. */
-  const NOW = new Date(10 * 24 * 60 * 60 * 1000);
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  /** Two days after the test patch started at Unix second 0: all of it is recent, read once. */
+  const NOW = new Date(2 * DAY_MS);
+  /** Ten days after: the last two days are read again. */
+  const LATER = new Date(10 * DAY_MS);
   const vsRow = { g: 1, a: 1, b: 2, games: 25, wins: 10 };
   const withRow = { g: 1, a: 1, b: 3, games: 5, wins: 2 };
   const fakeExplorer = (games: number, fail: (sql: string, call: number) => boolean = () => false) => {
@@ -152,11 +168,49 @@ describe("fetchPatchCounts", () => {
   it("takes a generous guess of the games when the count fails twice, so slices stay small", async () => {
     const { get, asked } = fakeExplorer(10, (sql) => sql.startsWith("select count(*)"));
     const { games } = await fetchPatchCounts(get, 0, NOW);
-    // 10 days at GAMES_PER_DAY_GUESS: 24 slices, of which MAX_SLICES are read.
-    const slices = Math.ceil((10 * GAMES_PER_DAY_GUESS) / GAMES_PER_SLICE);
+    // 2 days at GAMES_PER_DAY_GUESS: 5 slices, of which MAX_SLICES are read.
+    const slices = Math.ceil((2 * GAMES_PER_DAY_GUESS) / GAMES_PER_SLICE);
     expect(asked.filter((q) => q.includes(`% ${slices} = `))).toHaveLength(3 * MAX_SLICES);
     expect(asked).toHaveLength(2 + 3 * MAX_SLICES);
     expect(games).toBe(MAX_SLICES);
+  });
+
+  it("reads the last RECENT_DAYS again so their games count RECENT_WEIGHT times", async () => {
+    // 2.5M games in the patch (10 slices, 4 read: share 0.4); 1M recent (4 slices, 2 read: share 0.5).
+    const asked: string[] = [];
+    const get = async <T>(path: string): Promise<T> => {
+      const sql = decodeURIComponent(path.replace("/explorer?sql=", ""));
+      asked.push(sql);
+      const recent = !sql.includes("m.start_time >= 0 ");
+      if (sql.startsWith("select count(*)")) return { rows: [{ games: recent ? 1_000_000 : 2_500_000 }] } as T;
+      const vs = sql.includes("unnest(m.dire_team) b");
+      return { rows: [vs ? { ...vsRow, games: recent ? 50 : 100, wins: recent ? 10 : 50 } : withRow] } as T;
+    };
+    const { counts, games, recentGames } = await fetchPatchCounts(get, 0, LATER);
+    expect(asked).toHaveLength(1 + 3 * MAX_SLICES + 1 + 3 * MAX_RECENT_SLICES);
+    expect(asked.filter((q) => q.includes(`m.start_time >= ${8 * 24 * 60 * 60} `))).toHaveLength(1 + 3 * MAX_RECENT_SLICES);
+    // Extra share (3 - 1) x 0.4 / 0.5 = 1.6: 4 x 100 + 1.6 x 2 x 50 games, 4 x 50 + 1.6 x 2 x 10 wins.
+    expect(RECENT_WEIGHT).toBe(3);
+    expect(counts.matchups[1]?.[2]).toEqual({ games: 560, wins: 232 });
+    expect(games).toBe(16);
+    expect(recentGames).toBe(4);
+  });
+
+  it("counts the games since a fresh letter patch extra, instead of the last days", async () => {
+    const { get, asked } = fakeExplorer(10);
+    const letter = 5 * 24 * 60 * 60;
+    const { since } = await fetchPatchCounts(get, 0, LATER, letter);
+    expect(since).toBe("letter");
+    expect(asked.filter((q) => q.includes(`m.start_time >= ${letter} `))).toHaveLength(1 + 3);
+    // A letter patch older than PATCH_FRESH_DAYS goes back to the last days.
+    expect(recentStart(letter, new Date(letter * 1000 + 20 * DAY_MS)).since).toBe("days");
+  });
+
+  it("counts every game once when the recent read fails", async () => {
+    const { get } = fakeExplorer(10, (sql) => !sql.includes("m.start_time >= 0 "));
+    const { counts, recentGames } = await fetchPatchCounts(get, 0, LATER);
+    expect(recentGames).toBe(0);
+    expect(counts.matchups[1]?.[2]).toEqual({ games: 25, wins: 10 });
   });
 
   it("throws when a query fails twice, so no partial read is used", async () => {
