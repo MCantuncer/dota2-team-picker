@@ -163,6 +163,11 @@ export interface Snapshot {
    * together: skillBuilds[heroId][position]. Refreshed weekly, a few heroes per run.
    */
   skillBuilds?: Record<string, Partial<Record<string, SkillBuildSlice>>>;
+  /**
+   * Ids of the items Valve removed from the game ("IsObsolete" in the game's item file), dropped from every item source
+   * each refresh. Kept from the last good read when the file can't be downloaded.
+   */
+  removedItems?: number[];
   /** The patch the counts are for, from OpenDota's patch list. */
   patch?: { name: string; startedAt: string };
   /** Highest public match id already counted, so daily runs only add new matches. */

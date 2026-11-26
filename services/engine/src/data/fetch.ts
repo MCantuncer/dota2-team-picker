@@ -29,10 +29,10 @@ import { fetchItemTimings, itemTimingsDue } from "./item-timings";
 import { fetchItems, itemsDue } from "./items";
 import { countNeutralChoices } from "./neutral-choices";
 import { fetchNeutralPool, neutralsDue } from "./neutral-items";
-import { dropRemovedItems } from "./removed-items";
+import { dropRemovedItems, fetchRemovedItems } from "./removed-items";
 import { countPickPhases } from "./pick-phase";
 import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
-import { applyGameTalents, fetchGameTalents } from "./talents";
+import { applyGameTalents, fetchGameTalents, getText } from "./talents";
 import { fetchPositions, postStratz } from "./stratz";
 import { blendCounts, fetchPatchCounts, lastStratzCounts, MIN_PATCH_GAMES, patchIsFresh, STRATZ_SHARE, type DatedCounts } from "./patch-matchups";
 import { applyStratzCounts, fetchStratzCounts, type StratzCounts } from "./stratz-matchups";
@@ -511,8 +511,16 @@ async function main() {
   console.log(`Counted ${counted} new matches.`);
 
   snapshot.lastPublicMatchId = newest;
+  try {
+    const before = new Set(snapshot.removedItems ?? []);
+    snapshot.removedItems = await fetchRemovedItems(getText);
+    const added = snapshot.removedItems.filter((id) => !before.has(id));
+    console.log(`Removed items from the game files: ${snapshot.removedItems.length}${added.length && before.size ? `, newly removed ${added.join(", ")}` : ""}.`);
+  } catch (err) {
+    console.warn(`::warning::Removed items from the game files failed, keeping the last ${snapshot.removedItems?.length ?? 0}: ${(err as Error).message}`);
+  }
   const removed = dropRemovedItems(snapshot);
-  if (removed.length) console.log(`Dropped ${removed.length} items removed by a patch from the builds: ${removed.join(", ")}.`);
+  if (removed.length) console.log(`Dropped ${removed.length} removed items from the builds: ${removed.join(", ")}.`);
   updateDataHardCounters(snapshot);
   snapshot.generatedAt = now.toISOString();
   mkdirSync(dirname(SNAPSHOT_PATH), { recursive: true });

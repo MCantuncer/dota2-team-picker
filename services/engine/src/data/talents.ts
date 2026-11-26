@@ -224,7 +224,7 @@ export async function buildGameTalents(c: TalentConstants, getText: GetText): Pr
   return out;
 }
 
-async function getText(url: string): Promise<string> {
+export async function getText(url: string): Promise<string> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.text();

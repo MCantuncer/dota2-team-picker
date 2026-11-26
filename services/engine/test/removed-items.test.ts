@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { dropRemovedItems, patchAtLeast, removedItemIds } from "../src/data/removed-items";
+import { dropRemovedItems, fetchRemovedItems, obsoleteItemIds, removedItemIds } from "../src/data/removed-items";
+import { parseKV } from "../src/data/talent-texts";
 import type { ItemInfo, Snapshot } from "../src/engine/types";
 
 const item = (key: string): ItemInfo => ({ key, name: key, cost: 1000, img: "", components: [] });
@@ -7,7 +8,7 @@ const HOTO = 635;
 const BKB = 116;
 const JAVELIN = 7;
 
-function snapshot(patch: string): Snapshot {
+function snapshot(removedItems?: number[]): Snapshot {
   return {
     generatedAt: "",
     heroes: {},
@@ -15,7 +16,7 @@ function snapshot(patch: string): Snapshot {
     matchups: {},
     synergy: {},
     laneRoles: {},
-    patch: { name: patch, startedAt: "2026-11-18T21:28:07.019Z" },
+    removedItems,
     items: { [HOTO]: item("helm_of_the_overlord"), [BKB]: item("black_king_bar"), [JAVELIN]: item("javelin") },
     itemBuilds: { "38": { start: {}, early: { [JAVELIN]: 20 }, mid: { [HOTO]: 77, [BKB]: 50 }, late: {} } },
     itemTimings: {
@@ -50,26 +51,43 @@ function snapshot(patch: string): Snapshot {
   } as unknown as Snapshot; // Only the item parts matter here.
 }
 
-describe("patchAtLeast", () => {
-  it("compares patch numbers, not text", () => {
-    expect(patchAtLeast("7.42", "7.42")).toBe(true);
-    expect(patchAtLeast("7.43", "7.42")).toBe(true);
-    expect(patchAtLeast("7.41", "7.42")).toBe(false);
-    expect(patchAtLeast("7.100", "7.99")).toBe(true);
-    expect(patchAtLeast("8.0", "7.42")).toBe(true);
+// The game's item file after 7.42: removed items keep their block, marked obsolete.
+const ITEMS = `"DOTAAbilities"
+{
+  "Version" "1"
+  "item_javelin" { "ItemCost" "900" "IsObsolete" "1" }
+  "item_recipe_helm_of_the_overlord" { "IsObsolete" "1" }
+  "item_helm_of_the_overlord" { "ItemPurchasable" "0" "IsObsolete" "1" }
+  "item_recipe_medallion_of_courage" { "IsObsolete" "1" }
+  "item_black_king_bar" { "ItemCost" "4050" }
+  "item_not_in_ids" { "IsObsolete" "1" }
+}`;
+const IDS = `"DOTAAbilityIDs" { "ItemAbilities" { "Locked" {
+  "item_javelin" "7" "item_recipe_helm_of_the_overlord" "634" "item_helm_of_the_overlord" "635"
+  "item_recipe_medallion_of_courage" "186" "item_black_king_bar" "116"
+} } }`;
+
+describe("removed items from the game files", () => {
+  it("takes the obsolete items by id, not their recipes", () => {
+    expect(obsoleteItemIds(parseKV(ITEMS), parseKV(IDS))).toEqual([JAVELIN, HOTO]);
+  });
+
+  it("refuses a list that looks cut short", async () => {
+    const getText = async (url: string) => (url.endsWith("items.txt") ? ITEMS : IDS);
+    await expect(fetchRemovedItems(getText)).rejects.toThrow("only 2 removed items");
   });
 });
 
 describe("dropRemovedItems", () => {
-  it("keeps every item before the patch that removed it", () => {
-    const s = snapshot("7.41");
+  it("keeps every item before any are known to be removed", () => {
+    const s = snapshot();
     expect(removedItemIds(s).size).toBe(0);
     expect(dropRemovedItems(s)).toEqual([]);
     expect(s.items?.[HOTO]).toBeDefined();
   });
 
-  it("drops removed items from every item source on 7.42 and later", () => {
-    const s = snapshot("7.42");
+  it("drops removed items from every item source", () => {
+    const s = snapshot([JAVELIN, HOTO]);
     expect(dropRemovedItems(s)).toEqual([JAVELIN, HOTO]);
 
     expect(Object.keys(s.items ?? {})).toEqual([String(BKB)]);
@@ -86,14 +104,14 @@ describe("dropRemovedItems", () => {
   });
 
   it("is safe to run twice", () => {
-    const s = snapshot("7.43");
+    const s = snapshot([JAVELIN, HOTO]);
     dropRemovedItems(s);
     expect(dropRemovedItems(s)).toEqual([]);
   });
 
   it("drops timings of a removed item whose list entry is already gone", () => {
     // The item list is refreshed on its own day; STRATZ timings can still hold the item after it.
-    const s = snapshot("7.42");
+    const s = snapshot([JAVELIN, HOTO]);
     delete s.items?.[HOTO];
     expect(dropRemovedItems(s)).toContain(HOTO);
     expect(s.itemTimings?.["38"]?.["3"]?.all?.items).toEqual([[BKB, 24, 28]]);

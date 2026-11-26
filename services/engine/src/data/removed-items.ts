@@ -1,43 +1,54 @@
 /**
- * Items Valve took out of the game, by the patch that removed them. OpenDota's item list keeps removed
- * items, and STRATZ and OpenDota count purchases over rolling windows that reach back past a new patch,
- * so for a while after a patch the builds still hold items nobody can buy (7.42: Helm of the Overlord in
- * offlane Beastmaster's core, Khanda in mid Rubick's, Javelin in 20 heroes' early items). Each refresh
- * drops them from every item source of the snapshot. A fact from the patch notes, not a judgment of
- * which items are good, so the list only grows when a patch removes items.
+ * Items Valve took out of the game. OpenDota's item list keeps removed items, and STRATZ and OpenDota count purchases
+ * over rolling windows that reach back past a new patch, so for a while after a patch the builds still hold items
+ * nobody can buy (7.42: Helm of the Overlord in offlane Beastmaster's core, Khanda in mid Rubick's, Javelin in 20
+ * heroes' early items). Each refresh drops them from every item source of the snapshot.
+ *
+ * Which items are gone comes from the game's own item file, where Valve marks each one "IsObsolete" "1" and keeps
+ * the block, so a patch's removals (letter patches too) are picked up on the next refresh with no list to keep.
  */
 import type { Snapshot } from "../engine/types";
+import { abilityIds, ABILITY_IDS_FILE, GAME_FILES_URL, parseKV, type KV } from "./talent-texts";
+
+export const ITEMS_FILE = "scripts/npc/items.txt";
 
 /**
- * By patch, item id to OpenDota key. By id, not by key: the item list is downloaded once a day and the
- * other sources on their own days, so a run can hold a removed item's timings after its list entry is gone.
+ * Fewer removed items than this means the file was cut short or changed shape: 7.42a's file marks 22 items, and the
+ * number only grows.
  */
-export const REMOVED_ITEMS: Readonly<Record<string, Readonly<Record<number, string>>>> = {
-  "7.42": { 7: "javelin", 1808: "angels_demise", 635: "helm_of_the_overlord" },
-};
+export const MIN_REMOVED_ITEMS = 10;
 
-/** "7.42" as [7, 42], so 7.100 sorts after 7.99. Letters ("7.41c") are ignored. */
-function patchParts(name: string): number[] {
-  return name.split(".").map((part) => Number.parseInt(part, 10) || 0);
+/**
+ * Ids of the items the item file marks obsolete, recipes left out (a recipe can go while its item stays, like
+ * Medallion of Courage's). By id from the game's id file, not by name, since the timings are kept by id.
+ */
+export function obsoleteItemIds(items: KV, ids: KV): number[] {
+  const byName = abilityIds(ids);
+  const out = new Set<number>();
+  const walk = (node: KV) => {
+    for (const [name, block] of Object.entries(node)) {
+      if (typeof block !== "object") continue;
+      if (name.startsWith("item_") && !name.startsWith("item_recipe_")) {
+        const id = byName.get(name);
+        if (block.IsObsolete === "1" && id !== undefined) out.add(id);
+      } else walk(block);
+    }
+  };
+  walk(items);
+  return [...out].sort((a, b) => a - b);
 }
 
-/** Whether patch `a` is `b` or later. */
-export function patchAtLeast(a: string, b: string): boolean {
-  const [pa, pb] = [patchParts(a), patchParts(b)];
-  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-    const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
-    if (diff !== 0) return diff > 0;
-  }
-  return true;
+/** Downloads the item and id files and returns the removed items' ids. Throws when the list looks cut short. */
+export async function fetchRemovedItems(getText: (url: string) => Promise<string>): Promise<number[]> {
+  const [items, ids] = await Promise.all([ITEMS_FILE, ABILITY_IDS_FILE].map((f) => getText(`${GAME_FILES_URL}${f}`)));
+  const removed = obsoleteItemIds(parseKV(items!), parseKV(ids!));
+  if (removed.length < MIN_REMOVED_ITEMS) throw new Error(`only ${removed.length} removed items found`);
+  return removed;
 }
 
-/** Ids of the items removed in the snapshot's patch or earlier. */
-export function removedItemIds(snapshot: Pick<Snapshot, "patch">): Set<number> {
-  const patch = snapshot.patch?.name;
-  if (!patch) return new Set();
-  return new Set(
-    Object.entries(REMOVED_ITEMS).flatMap(([removedIn, byId]) => (patchAtLeast(patch, removedIn) ? Object.keys(byId).map(Number) : [])),
-  );
+/** Ids of the items removed from the game, as the last read of the item file found them. */
+export function removedItemIds(snapshot: Pick<Snapshot, "removedItems">): Set<number> {
+  return new Set(snapshot.removedItems ?? []);
 }
 
 /**
