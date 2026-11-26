@@ -1,9 +1,9 @@
 import { abilityRules } from "./ability-notes";
 import { beatsBkb } from "./bkb";
-import { KEY_SPELLS } from "./data-key-spells";
 import { buffsFrom, dispellableBuffs } from "./dispel";
 import { dispelsEnemy, itemFact } from "./item-facts";
 import { chooseTimingSlice, finishedItems } from "./item-timing-slice";
+import { keySpell } from "./spell-facts";
 import type { HeroInfo, ItemInfo, ItemPhases, ItemTimingSlice, Position, RankBracket, Snapshot } from "./types";
 
 /**
@@ -86,7 +86,7 @@ interface CounterItem {
  * "Will not work on a unit inside Chronosphere, Duel, or Black Hole." So it is never named as the answer to them.
  */
 export function holdsForceStaff(hero: HeroInfo): boolean {
-  const spell = KEY_SPELLS[hero.name]?.name;
+  const spell = keySpell(hero.name)?.name;
   return !!spell && (abilityRules("item_force_staff")?.failsInside ?? []).includes(spell);
 }
 

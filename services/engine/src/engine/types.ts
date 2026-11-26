@@ -1,5 +1,6 @@
 import type { StairStep, ThreatPlan } from "./threat";
 import type { PickWhy } from "./why";
+import type { FactUpdates } from "./fact-updates";
 
 /** Dota 2 positions: 1 carry, 2 mid, 3 offlane, 4 soft support, 5 hard support. */
 export type Position = 1 | 2 | 3 | 4 | 5;
@@ -163,6 +164,11 @@ export interface Snapshot {
    * together: skillBuilds[heroId][position]. Refreshed weekly, a few heroes per run.
    */
   skillBuilds?: Record<string, Partial<Record<string, SkillBuildSlice>>>;
+  /**
+   * The game facts as generated on this refresh, where they differ from the engine's committed files (see
+   * engine/fact-updates.ts). Whoever runs the engine on this snapshot passes them to applyFactUpdates first.
+   */
+  factUpdates?: FactUpdates;
   /**
    * Ids of the items Valve removed from the game ("IsObsolete" in the game's item file), dropped from every item source
    * each refresh. Kept from the last good read when the file can't be downloaded.

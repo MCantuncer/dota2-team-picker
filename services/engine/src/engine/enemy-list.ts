@@ -5,9 +5,9 @@
  */
 import { killedBy } from "./ability-notes";
 import { DONT_FOCUS } from "./danger";
-import { KEY_SPELLS, type KeySpell } from "./data-key-spells";
+import type { KeySpell } from "./data-key-spells";
 import { listNames, threatsOf, type ItemBuild, type Threat } from "./item-build";
-import { heroSpells } from "./spell-facts";
+import { heroSpells, keySpell } from "./spell-facts";
 import type { HeroInfo, Position } from "./types";
 
 export interface EnemyNote {
@@ -82,7 +82,7 @@ export function enemyList(build: ItemBuild | null, enemies: EnemyFacts[]): Enemy
   return [...enemies]
     .sort((a, b) => Number(b.inLane) - Number(a.inLane))
     .map(({ hero, inLane, laneSure }) => {
-      const spell = KEY_SPELLS[hero.name];
+      const spell = keySpell(hero.name);
       // An answer must stop the hero's worst spell, or the row would pair Marksmanship with Black King Bar.
       const answers = [...new Set(path.filter((i) => i.against?.includes(hero.id) && fits(spell?.kind, i.img)).map((i) => i.itemId))].slice(0, MAX_ANSWERS);
       const threats = threatsOf(hero);

@@ -33,6 +33,7 @@ import { dropRemovedItems, fetchRemovedItems } from "./removed-items";
 import { countPickPhases } from "./pick-phase";
 import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
 import { applyGameTalents, fetchGameTalents } from "./talents";
+import { buildFactUpdates, describeUpdates } from "./fact-updates";
 import { getJson, getText, watchRelease } from "./patch-watch";
 import { fetchPositions, postStratz } from "./stratz";
 import { blendCounts, fetchPatchCounts, lastStratzCounts, MIN_PATCH_GAMES, patchIsFresh, STRATZ_SHARE, type DatedCounts } from "./patch-matchups";
@@ -399,6 +400,14 @@ async function main() {
     // A broken STRATZ answer is refused above, but one already kept (2026-11-21) stays until a whole one comes.
     const restored = await restoreItemData(snapshot, now, loadHeroData);
     for (const line of restored) console.log(`Restored ${line}.`);
+  }
+
+  console.log("Game facts from this patch's constants and game files...");
+  {
+    const { updates, notes } = await buildFactUpdates(snapshot.factUpdates, now);
+    for (const note of notes) console.warn(`::warning::Game facts, ${note}`);
+    snapshot.factUpdates = updates;
+    console.log(`Game facts that differ from the committed files: ${describeUpdates(updates)}.`);
   }
 
   console.log("Talents from the game files...");
