@@ -4,6 +4,8 @@ import {
   addWith,
   blendCounts,
   fetchPatchCounts,
+  letterPatchStart,
+  recentStart,
   GAMES_PER_DAY_GUESS,
   MAX_RECENT_SLICES,
   RECENT_WEIGHT,
@@ -106,6 +108,15 @@ describe("queries", () => {
     expect(withQuery(1795037287, 1, 0, "dire")).toContain("unnest(m.dire_team) a, unnest(m.dire_team) b");
   });
 
+  it("finds the newest letter patch of the snapshot's patch", () => {
+    const patch = { name: "7.42", startedAt: "2026-11-18T21:28:07Z" };
+    const release = { name: "7.42a", startedAt: "2026-11-24T23:40:00Z", from: "valve" as const };
+    expect(letterPatchStart({ ...patch, release })).toBe(Date.parse(release.startedAt) / 1000);
+    expect(letterPatchStart({ ...patch, release: { ...release, name: "7.42" } })).toBeUndefined();
+    expect(letterPatchStart({ ...patch, release: { ...release, startedAt: "2026-11-01T00:00:00Z" } })).toBeUndefined();
+    expect(letterPatchStart(patch)).toBeUndefined();
+  });
+
   it("calls a patch fresh for its first 14 days", () => {
     const start = Date.parse("2026-11-18T21:28:07Z") / 1000;
     expect(patchIsFresh(start, new Date("2026-11-21T10:00:00Z"))).toBe(true);
@@ -183,6 +194,16 @@ describe("fetchPatchCounts", () => {
     expect(counts.matchups[1]?.[2]).toEqual({ games: 560, wins: 232 });
     expect(games).toBe(16);
     expect(recentGames).toBe(4);
+  });
+
+  it("counts the games since a fresh letter patch extra, instead of the last days", async () => {
+    const { get, asked } = fakeExplorer(10);
+    const letter = 5 * 24 * 60 * 60;
+    const { since } = await fetchPatchCounts(get, 0, LATER, letter);
+    expect(since).toBe("letter");
+    expect(asked.filter((q) => q.includes(`m.start_time >= ${letter} `))).toHaveLength(1 + 3);
+    // A letter patch older than PATCH_FRESH_DAYS goes back to the last days.
+    expect(recentStart(letter, new Date(letter * 1000 + 20 * DAY_MS)).since).toBe("days");
   });
 
   it("counts every game once when the recent read fails", async () => {
