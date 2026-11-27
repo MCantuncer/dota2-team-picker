@@ -22,7 +22,7 @@ export interface MetaExtras {
   builds: Builds;
   newItems: NewItem[];
   matchups: Record<string, { best: Matchup[]; worst: Matchup[] }>;
-  /** The shop data of every item in the builds and new items, for the page's item cards. Neutral items have none. */
+  /** The shop data of every item in the builds and new items and of the parts they are built from, for the page's item cards. Neutral items have none. */
   items: Record<string, ItemInfo>;
   /** The tooltip of every neutral item in the builds (tier, spell, bonuses), for the page's item cards. */
   neutralItems: Record<string, NeutralItem>;
@@ -212,6 +212,21 @@ export function heroMatchups(matchups: Record<string, Record<string, GamesWins>>
   return out;
 }
 
+/**
+ * The shop data of the items shown and of every part they are built from, down to the basic items, so an item's card
+ * on the Meta page shows what it is built from and each part opens its own card (Glimmer Cape: Shadow Amulet, Shawl).
+ */
+export function withParts(shown: Iterable<number>, items: Record<string, ItemInfo>): Record<string, ItemInfo> {
+  const keep = new Set<number>();
+  const add = (id: number) => {
+    if (keep.has(id) || !items[id]) return;
+    keep.add(id);
+    items[id].components.forEach(add);
+  };
+  for (const id of shown) add(id);
+  return Object.fromEntries([...keep].sort((a, b) => a - b).map((id) => [String(id), items[id]!]));
+}
+
 export interface ExtrasDeps {
   /** The saved ranked games that started from `since` to `now` (Unix seconds). */
   games: (since: number, now: number) => Promise<EvalMatch[]>;
@@ -262,7 +277,7 @@ export async function buildExtras(
     builds,
     newItems,
     matchups: heroMatchups(snapshot.matchups ?? {}),
-    items: Object.fromEntries([...used].sort((a, b) => a - b).flatMap((id) => (items[id] ? [[String(id), items[id]]] : []))),
+    items: withParts(used, items),
     neutralItems: Object.fromEntries(
       [...new Set(Object.values(builds).flatMap((byPosition) => Object.values(byPosition).flatMap((b) => b.neutral.map(([id]) => id))))]
         .sort((a, b) => a - b)
