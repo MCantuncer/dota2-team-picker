@@ -30,6 +30,7 @@ import { fetchItems, itemsDue } from "./items";
 import { countNeutralChoices } from "./neutral-choices";
 import { fetchNeutralPool, neutralsDue } from "./neutral-items";
 import { dropRemovedItems, fetchRemovedItems } from "./removed-items";
+import { applyGameItems, fetchGameItems } from "./game-items";
 import { countPickPhases } from "./pick-phase";
 import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
 import { applyGameTalents, fetchGameTalents } from "./talents";
@@ -609,6 +610,20 @@ async function main() {
   } catch (err) {
     console.warn(`::warning::Removed items from the game files failed, keeping the last ${snapshot.removedItems?.length ?? 0}: ${(err as Error).message}`);
     track(snapshot, "Game Files, Removed Items", "fail", now, (err as Error).message);
+  }
+  if (snapshot.items) {
+    try {
+      const { changed, added } = applyGameItems(snapshot.items, await fetchGameItems(getText));
+      const numbers = changed.filter((c) => c.fields.some((f) => f !== "abilities"));
+      track(snapshot, "Game Files, Items", "ok", now);
+      console.log(`Items from the game files: ${changed.length} differ from OpenDota's, ${added.length} new${added.length ? ` (${added.join(", ")})` : ""}.`);
+      for (const c of changed) console.log(`  ${c.name}: ${c.fields.join(", ")}`);
+      if (numbers.length || added.length) track(snapshot, "OpenDota Constants", "lag", now, `${numbers.length + added.length} items are newer in the game files`);
+    } catch (err) {
+      // OpenDota's items stay as they are; the next run tries again.
+      console.warn(`::warning::Items from the game files failed, keeping OpenDota's: ${(err as Error).message}`);
+      track(snapshot, "Game Files, Items", "fail", now, (err as Error).message);
+    }
   }
   const removed = dropRemovedItems(snapshot);
   if (removed.length) console.log(`Dropped ${removed.length} removed items from the builds: ${removed.join(", ")}.`);
