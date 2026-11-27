@@ -3,7 +3,7 @@
  * current patch and the last days of the patch before, per rank group, from the OpenDota explorer (see
  * src/data/meta.ts). Days already complete in the published meta.json are kept, so a run reads only the newest.
  * Then the hero card extras: builds and new items from the saved ranked games, matchups from the snapshot (see
- * src/data/meta-extras.ts).
+ * src/data/meta-extras.ts). Last, bans per day from the saved games (see src/data/meta-bans.ts).
  *
  *   SUPABASE_URL=... SUPABASE_SECRET_KEY=... npm run meta -- [--snapshot data/snapshot.json] [--json meta.json] [--out summary.md] [--dry-run]
  */
@@ -11,7 +11,8 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { createClient } from "@supabase/supabase-js";
 import { loadEvalGames, loadHeroData, monthPaths } from "../src/data/eval-store";
-import { buildMeta, type MetaFile } from "../src/data/meta";
+import { BASE_DAYS, buildMeta, type MetaFile } from "../src/data/meta";
+import { buildBans, type MetaBans } from "../src/data/meta-bans";
 import { buildExtras, type MetaExtras } from "../src/data/meta-extras";
 import { getOpenDota } from "../src/data/opendota";
 import { patchNotes, type PatchNotesConstants } from "../src/data/patch-notes";
@@ -124,6 +125,20 @@ async function extras(snapshot: Pick<Snapshot, "patch" | "items" | "matchups" | 
   }
 }
 
+/** Bans per day from the saved ranked games. A failure leaves them out, so the day numbers still go out. */
+async function bans(patch: NonNullable<Snapshot["patch"]>, now: number): Promise<[MetaBans | undefined, string]> {
+  try {
+    const from = Date.parse(patch.startedAt) / 1000 - BASE_DAYS * DAY_S;
+    const games = (await Promise.all(monthPaths(from, now).map(loadEvalGames))).flat();
+    const built = buildBans(games, patch.startedAt, now);
+    const count = (days: MetaBans["days"]) => days.reduce((n, d) => n + (d.games[0] ?? 0), 0).toLocaleString("en-US");
+    return [built, `Bans: ${count(built.days)} saved games this patch, ${count(built.base)} in the days before.`];
+  } catch (err) {
+    console.warn(`Ban counts failed, leaving them out: ${(err as Error).message}`);
+    return [undefined, `Ban counts failed (${(err as Error).message}); none published.`];
+  }
+}
+
 async function main() {
   // The snapshot is written by fetch-data, which checked its shape.
   const snapshot = JSON.parse(readFileSync(values.snapshot!, "utf8")) as Pick<Snapshot, "patch" | "positions" | "items" | "matchups" | "neutrals">;
@@ -133,10 +148,12 @@ async function main() {
   const meta = await buildMeta(ask, snapshot.patch, now, last, snapshot.positions);
   const [built, extrasNote] = await extras(snapshot, now, last);
   if (built) meta.extras = built;
+  const [banCounts, bansNote] = await bans(snapshot.patch, now);
+  if (banCounts) meta.bans = banCounts;
   const keptKeys = new Set([...(last?.days ?? []), ...(last?.base ?? [])].filter((d) => d.complete).map((d) => d.from));
   const reread = [...meta.base, ...meta.days].filter((d) => !keptKeys.has(d.from)).length;
 
-  const text = summary(meta, reread, extrasNote);
+  const text = summary(meta, reread, `${extrasNote}\n${bansNote}`);
   console.log(text);
   if (values.out) writeFileSync(values.out, `${text}\n`);
   const body = JSON.stringify(meta);
