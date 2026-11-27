@@ -2,7 +2,10 @@
  * Finds the game's newest release, letter patches included. OpenDota's patch list only has the big patches (7.42, not
  * 7.42a), so the counts reset on those alone; this tells the rest of the refresh when the newest release came out.
  *
- * - First choice: Valve's own patch list, the one dota2.com/patches reads, with each release's time.
+ * - First choice: Valve's own patch list, the one dota2.com/patches reads, with each release's day. Valve stamps a
+ *   release with midnight Pacific of its day (7.42a: 08:00 UTC on Nov 24, while it came out at 23:40 UTC), so a
+ *   release stamped that way starts at the end of its day: the counts then miss a few hours of its games rather than
+ *   mix in a day of the release before.
  * - When Valve's list can't be read: the game files' patch notes, which hold every release's notes
  *   ("DOTA_Patch_7_42a_..."). They have no times, so a release first seen this way starts when it was first seen;
  *   the refresh runs twice a day, so that is at most about 12 hours late.
@@ -40,6 +43,17 @@ export function compareVersions(a: string, b: string): number {
   return va[0] - vb[0] || va[1] - vb[1] || va[2] - vb[2];
 }
 
+const PACIFIC = new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", hourCycle: "h23", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const DAY_MS = 86_400_000;
+
+/**
+ * When a release of Valve's list can be counted from: its time, or the end of its day when the time is only the
+ * day (midnight Pacific).
+ */
+export function valveStart(ms: number): number {
+  return PACIFIC.format(new Date(ms)) === "00:00:00" ? ms + DAY_MS : ms;
+}
+
 /** The releases in Valve's patch list. Throws when it isn't the list. */
 export function valveReleases(body: unknown): Release[] {
   const rows = (body as { patches?: unknown })?.patches;
@@ -49,7 +63,7 @@ export function valveReleases(body: unknown): Release[] {
     const name = typeof row?.patch_name === "string" ? row.patch_name : row?.patch_number;
     const time = Number(row?.patch_timestamp);
     if (typeof name !== "string" || !versionOf(name) || !Number.isFinite(time) || time <= 0) continue;
-    out.push({ name, startedAt: new Date(time * 1000).toISOString() });
+    out.push({ name, startedAt: new Date(valveStart(time * 1000)).toISOString() });
   }
   if (!out.length) throw new Error("Valve's patch list has no release with a time");
   return out;
