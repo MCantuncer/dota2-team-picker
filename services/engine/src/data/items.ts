@@ -85,7 +85,7 @@ export function toSpellText(description: unknown): Pick<ItemAbility, "text" | "f
   const text: string[] = [];
   const facts: { label: string; value: string }[] = [];
   for (const raw of description.split("\n")) {
-    const line = raw.trim();
+    const line = raw.replace(/\s+/g, " ").trim();
     if (!line) continue;
     const fact = FACT_LINE.exec(line);
     if (fact) facts.push({ label: titleWords(fact[1]!.trim()), value: fact[2]!.trim() }); // The pattern has two groups.
