@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { EvalMatch } from "../src/data/eval-matches";
 import type { MetaFile } from "../src/data/meta";
-import { buildExtras, heroBuilds, heroMatchups, MIN_BUILD_GAMES, MIN_BUY_GAMES, MIN_PAIR_GAMES, newItemIds, newItemUse } from "../src/data/meta-extras";
+import { buildExtras, heroBuilds, heroMatchups, MIN_BUILD_GAMES, MIN_BUY_GAMES, MIN_PAIR_GAMES, newItemIds, newItemUse, withParts } from "../src/data/meta-extras";
 import type { ItemInfo, Position } from "../src/engine/types";
 
 const START = Date.parse("2026-11-18T21:28:07Z") / 1000;
@@ -210,5 +210,26 @@ describe("buildExtras", () => {
   it("has no new items when there is no copy from before the patch", async () => {
     const extras = await buildExtras({ games: async () => [], itemsBefore: async () => null, patchNotes: async () => ({}) }, snapshot, START + 3600, null);
     expect(extras.newItems).toEqual([]);
+  });
+});
+
+describe("withParts", () => {
+  it("adds every part of the items shown, down to the basic items, once each", () => {
+    const parts: Record<string, ItemInfo> = {
+      254: { ...item(2150, "Glimmer Cape"), components: [215, 1848] },
+      215: { ...item(900, "Shadow Amulet") },
+      1848: { ...item(450, "Shawl") },
+      116: { ...item(4050, "Black King Bar"), components: [51, 2] },
+      51: { ...item(1600, "Mithril Hammer"), components: [3, 4] },
+      2: item(1000, "Ogre Axe"),
+      3: item(800, "Javelin"),
+      4: item(800, "Blades of Attack"),
+      9: item(500, "Unused"),
+    };
+    expect(Object.keys(withParts([116, 254, 215], parts))).toEqual(["2", "3", "4", "51", "116", "215", "254", "1848"]);
+  });
+
+  it("skips ids the item list does not have", () => {
+    expect(withParts([77, 1], ITEMS)).toEqual({ 1: ITEMS[1] });
   });
 });
