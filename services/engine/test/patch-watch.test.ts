@@ -45,6 +45,15 @@ describe("reading the release lists", () => {
   it("reads Valve's list with each release's time", () => {
     expect(valveReleases(VALVE).at(-1)).toEqual({ name: "7.42a", startedAt: "2026-11-24T23:40:00.000Z" });
     expect(() => valveReleases({ error: "x" })).toThrow("no patches");
+  });
+
+  it("starts a release Valve stamps with only its day (midnight Pacific) at the end of that day", () => {
+    // 7.42a as Valve lists it: 08:00 UTC on Nov 24, while it came out at 23:40 UTC.
+    const day = { patches: [{ patch_name: "7.42a", patch_timestamp: t("2026-11-24T08:00:00Z") }] };
+    expect(valveReleases(day)[0]!.startedAt).toBe("2026-11-25T08:00:00.000Z");
+    // Summer time: midnight Pacific is 07:00 UTC.
+    const summer = { patches: [{ patch_name: "7.39b", patch_timestamp: t("2026-06-10T07:00:00Z") }] };
+    expect(valveReleases(summer)[0]!.startedAt).toBe("2026-06-11T07:00:00.000Z");
     expect(() => valveReleases({ patches: [{ patch_name: "7.42" }] })).toThrow("no release with a time");
   });
 
