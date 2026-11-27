@@ -9,6 +9,7 @@
  * A day is 24 hours from the patch's start, not a calendar day. Days that had ended a while before the last
  * meta.json was built are kept from it, so a run only asks for the newest days.
  */
+import type { MetaBans } from "./meta-bans";
 import type { MetaExtras } from "./meta-extras";
 import { GROUP_SQL } from "./patch-matchups";
 import type { Snapshot } from "../engine/types";
@@ -59,6 +60,8 @@ export interface MetaFile {
   roles: Record<string, number[]>;
   /** The hero card extras (see meta-extras.ts); missing when they could not be built and no earlier ones were kept. */
   extras?: MetaExtras;
+  /** Bans per day from the saved ranked games (see meta-bans.ts); missing when they could not be counted. */
+  bans?: MetaBans;
 }
 
 /** Position counts as whole percent shares; heroes with no games are left out. */
