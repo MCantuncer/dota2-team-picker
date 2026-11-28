@@ -159,6 +159,13 @@ export interface Snapshot {
     positions: Record<string, NeutralChoices>;
   };
   /**
+   * Pairs of big items players of a hero and position rarely hold in the same game (two routes, not one build):
+   * itemsApart[heroId][position] = [[more held, less held, percent of the games with either that held both], ...],
+   * from the saved ranked games of this patch (data/items-apart.ts). The build keeps the more bought one of a pair.
+   * Rebuilt every refresh.
+   */
+  itemsApart?: Record<string, Record<string, [number, number, number][]>>;
+  /**
    * When players buy their core items, from STRATZ: itemTimings[heroId][position][slice], where the
    * slice is a RankGroup ("1" to "4") or "all" for every rank. Only each hero's two most played
    * positions, and only slices STRATZ had data for.
