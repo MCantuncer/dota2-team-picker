@@ -5,7 +5,8 @@
  *
  * About 310 hero and position slices take about 52 list queries and 930 match queries a week, plus one
  * constants query per run, so the refresh is spread over runs: each run does at most `maxQueries` and
- * the oldest slices go first. Each slice is saved as it finishes, so a cut keeps the work done.
+ * the oldest slices go first (more queries while a new patch turns them over, see queryBudget). Each slice is saved
+ * as it finishes, so a cut keeps the work done.
  *
  * The same match answers carry the guide player's item purchases and the game's length, for what high-rank
  * winners bought when a key item was late (item-paths.ts). No extra queries.
@@ -46,6 +47,13 @@ export const MATCHES_PER_QUERY = 20;
 const PATHS_BRACKET = 8;
 /** Queries per refresh run, so one run stays well under the STRATZ hourly limit. */
 export const DEFAULT_MAX_QUERIES = 100;
+/**
+ * Queries per run while a new patch turns the slices over (more than TURNOVER_SHARE of them from an older version
+ * or missing). At 100 a run, 30 slices of about 300 turned over per run, so 9 days into 7.42 (2026-11-27), 211 of
+ * 301 hero positions still showed a 7.41 skill order. 220 a run turns about 65 over, all of them in 4 or 5 runs.
+ */
+export const TURNOVER_MAX_QUERIES = 220;
+export const TURNOVER_SHARE = 0.25;
 
 /** One hero and position to refresh. */
 export interface SkillRequest {
@@ -57,7 +65,11 @@ const POSITION_NAMES = ["POSITION_1", "POSITION_2", "POSITION_3", "POSITION_4", 
 
 // ---------------------------------------------------------------- what to refresh
 
-/** Slices that are missing, older than a week, from an older patch or saved before item paths or talents apart, oldest first. */
+/**
+ * Slices that are missing, older than a week, from an older patch or saved before item paths or talents apart, oldest
+ * first. Among equally old ones (every slice after a new patch) the most played hero positions go first, so the skill
+ * orders most players see turn over in the first runs.
+ */
 export function skillRequests(snapshot: Snapshot, versionId: number, now: Date): SkillRequest[] {
   if (!snapshot.positions) return [];
   const age = (r: SkillRequest) => {
@@ -65,11 +77,23 @@ export function skillRequests(snapshot: Snapshot, versionId: number, now: Date):
     if (!slice || slice.gameVersionId !== versionId || !slice.itemPaths || !slice.talentsApart) return Infinity;
     return now.getTime() - Date.parse(slice.at);
   };
+  const games = (r: SkillRequest) => snapshot.positions?.[r.heroId]?.[r.position - 1] ?? 0;
   return startRequests(snapshot.positions)
-    .map((r) => ({ r, age: age(r) }))
+    .map((r) => ({ r, age: age(r), games: games(r) }))
     .filter(({ age }) => age >= SKILL_BUILDS_MAX_AGE_DAYS * DAY_MS)
-    .sort((a, b) => b.age - a.age)
+    .sort((a, b) => (a.age === b.age ? b.games - a.games : b.age - a.age))
     .map(({ r }) => r);
+}
+
+/**
+ * The run's query budget: TURNOVER_MAX_QUERIES while more than TURNOVER_SHARE of the hero positions have no slice
+ * of this version yet (a new patch), else DEFAULT_MAX_QUERIES.
+ */
+export function queryBudget(snapshot: Snapshot, versionId: number): number {
+  if (!snapshot.positions) return DEFAULT_MAX_QUERIES;
+  const all = startRequests(snapshot.positions);
+  const behind = all.filter((r) => snapshot.skillBuilds?.[r.heroId]?.[r.position]?.gameVersionId !== versionId).length;
+  return all.length && behind / all.length > TURNOVER_SHARE ? TURNOVER_MAX_QUERIES : DEFAULT_MAX_QUERIES;
 }
 
 // ---------------------------------------------------------------- queries
@@ -228,10 +252,10 @@ export function toPathGame(answer: unknown): PathGame | null {
 type Post = (query: string) => Promise<Record<string, unknown>>;
 
 /**
- * Refreshes the oldest skill build slices, at most `maxQueries` STRATZ queries, writing each slice as
- * it finishes so a cut keeps the work done. Returns the counts and a line per slice's late paths for the log.
+ * Refreshes the oldest skill build slices, at most `maxQueries` STRATZ queries (queryBudget when not given),
+ * writing each slice as it finishes so a cut keeps the work done. Returns the counts and a line per slice's late paths for the log.
  */
-export async function fetchSkillBuilds(snapshot: Snapshot, post: Post, now: Date, maxQueries = DEFAULT_MAX_QUERIES) {
+export async function fetchSkillBuilds(snapshot: Snapshot, post: Post, now: Date, maxQueries?: number) {
   if (!snapshot.patch) throw new Error("Skill builds need the patch first");
   let queries = 1;
   // Checked below; every field in ConstantsAnswer is optional.
@@ -246,6 +270,7 @@ export async function fetchSkillBuilds(snapshot: Snapshot, post: Post, now: Date
   const names = new Map((constants.abilities ?? []).map((a) => [a.id, talentName(a.language?.displayName)]));
   snapshot.heroAbilities = mergeHeroAbilities(snapshot.heroAbilities, heroes);
 
+  const budget = maxQueries ?? queryBudget(snapshot, versionId);
   const due = skillRequests(snapshot, versionId, now).filter((r) => heroes[r.heroId]);
   const opponents = mostPicked(snapshot);
   let done = 0;
@@ -258,7 +283,7 @@ export async function fetchSkillBuilds(snapshot: Snapshot, post: Post, now: Date
     const batch = due.slice(i, i + SLICES_PER_LIST_QUERY);
     // Each slice needs about GUIDES_PER_SLICE / MATCHES_PER_QUERY match queries after its list query.
     const needed = 1 + Math.ceil((batch.length * GUIDES_PER_SLICE) / MATCHES_PER_QUERY);
-    if (queries + needed > maxQueries) break;
+    if (queries + needed > budget) break;
     // Each alias is checked by its reader (guideRefs, validLevelRows, validTalentRows).
     const lists = (await post(listQuery(batch, opponents))).heroStats as Record<string, unknown> | undefined;
     queries++;

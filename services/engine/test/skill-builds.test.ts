@@ -7,12 +7,15 @@ import {
   matchesQuery,
   pathsCoverage,
   pathsLine,
+  queryBudget,
   skillRequests,
+  DEFAULT_MAX_QUERIES,
+  TURNOVER_MAX_QUERIES,
   toGuidePlayer,
   toPathGame,
   validTalentRows,
 } from "../src/data/skill-builds";
-import type { ItemInfo, Snapshot } from "../src/engine/types";
+import type { ItemInfo, SkillBuildSlice, Snapshot } from "../src/engine/types";
 import { Q, SVEN, SVEN_BUILD, SVEN_POINTS, TOTALS, W } from "./skill-build-fixture";
 
 describe("queries and answers", () => {
@@ -215,6 +218,28 @@ describe("refresh", () => {
       { heroId: 70, position: 3 },
       { heroId: 70, position: 1 },
     ]);
+  });
+
+  it("takes the most played hero positions first among slices equally due, like every slice after a new patch", () => {
+    const snap = snapshot();
+    snap.positions = { 18: [300, 0, 0, 0, 0], 70: [800, 0, 200, 0, 0], 63: [1200, 0, 0, 0, 0] };
+    expect(skillRequests(snap, 181, now)).toEqual([
+      { heroId: 63, position: 1 },
+      { heroId: 70, position: 1 },
+      { heroId: 18, position: 1 },
+      { heroId: 70, position: 3 },
+    ]);
+  });
+
+  it("spends more queries while most slices are from an older version", () => {
+    const snap = snapshot();
+    const slice = (gameVersionId: number): SkillBuildSlice => ({ at: "2026-11-01T00:00:00Z", gameVersionId, matches: 30, talents: [], itemPaths: {}, talentsApart: true });
+    // Three hero positions (18/1, 70/1, 70/3): two of three behind.
+    snap.skillBuilds = { 18: { 1: slice(181) }, 70: { 1: slice(180), 3: slice(180) } };
+    expect(queryBudget(snap, 181)).toBe(TURNOVER_MAX_QUERIES);
+    // None behind.
+    snap.skillBuilds = { 18: { 1: slice(181) }, 70: { 1: slice(181), 3: slice(181) } };
+    expect(queryBudget(snap, 181)).toBe(DEFAULT_MAX_QUERIES);
   });
 
   /** STRATZ answers: Sven's constants, 25 guides for Sven pos 1, and each match from `match` by its id. */
