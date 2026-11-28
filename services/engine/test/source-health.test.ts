@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { brokenSources, issueBody, record, type SourceHealth } from "../src/data/source-health";
+import { brokenSources, issueBody, record, staleData, type SourceHealth } from "../src/data/source-health";
 
 const at = (iso: string) => new Date(iso);
 
@@ -32,5 +32,20 @@ describe("source health", () => {
     expect(broken.map(([n]) => n)).toEqual(["a"]);
     expect(issueBody(broken, now)).toContain("**a**: failing for 3 days, since 2026-11-24T00:00:00Z. Last error: HTTP 500");
     expect(brokenSources(undefined, now)).toEqual([]);
+  });
+});
+
+describe("staleData", () => {
+  const now = new Date("2026-11-28T12:00:00Z");
+  it("is null while the published data is younger than a day", () => {
+    expect(staleData("2026-11-27T13:00:00Z", now)).toBeNull();
+  });
+  it("names the hours since the data was built once it is a day old or unreadable", () => {
+    expect(staleData("2026-11-27T10:00:00Z", now)).toContain("last built 26 hours ago (2026-11-27T10:00:00Z)");
+    expect(staleData(undefined, now)).toContain("at an unknown time");
+  });
+  it("leads the issue body", () => {
+    const body = issueBody([], now, staleData("2026-11-26T00:00:00Z", now));
+    expect(body.split("\n")[2]).toMatch(/^- \*\*Hero data refresh\*\*: .* 60 hours ago/);
   });
 });

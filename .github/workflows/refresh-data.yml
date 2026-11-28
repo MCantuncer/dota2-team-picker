@@ -52,10 +52,13 @@ jobs:
       - id: fetch
         run: npm run fetch-data -w services/engine -- --pages 250
       # One issue for data sources that have kept failing for 2 days (each run keeps
-      # the last good data, so the site still works). It updates itself and closes
-      # when every source works again; a source that fails once never shows up.
-      # Sources still catching up with a patch go in the log and on Data Status only.
+      # the last good data, so the site still works), or when the published data is
+      # over 24 hours old because runs keep failing before they upload. It runs even
+      # when the step above failed, updates itself and closes when every source works
+      # again; a source that fails once never shows up. Sources still catching up with
+      # a patch go in the log and on Data Status only.
       - name: Open or close the data source issue
+        if: ${{ !cancelled() }}
         continue-on-error: true
         working-directory: services/engine
         env:
