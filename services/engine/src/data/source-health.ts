@@ -13,7 +13,24 @@ import type { SourceState } from "../engine/types";
 
 /** Days a source has to keep failing before the refresh opens an issue. */
 export const BROKEN_DAYS = 2;
+/**
+ * Hours since the published data was built after which the refresh itself counts as broken. GitHub starts the
+ * 4-a-day schedule late and skips some runs (about 2 runs a day, up to 17 hours apart, in late November 2026), so a
+ * day without a successful upload means runs failed, not that GitHub was slow.
+ */
+export const STALE_HOURS = 24;
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * The issue line for published data older than STALE_HOURS (a run that fails as a whole uploads nothing and records no
+ * source), or null when it is fresh. An unreadable time counts as stale.
+ */
+export function staleData(generatedAt: string | undefined, now: Date, hours = STALE_HOURS): string | null {
+  const age = (now.getTime() - Date.parse(generatedAt ?? "")) / 3_600_000;
+  if (Number.isFinite(age) && age < hours) return null;
+  const since = Number.isFinite(age) ? `${Math.floor(age)} hours ago (${generatedAt})` : "at an unknown time";
+  return `- **Hero data refresh**: the published hero data was last built ${since}. The refresh runs keep failing before they upload; see the "Refresh hero data" workflow runs.`;
+}
 
 export type SourceHealth = Record<string, SourceState>;
 
@@ -37,11 +54,12 @@ export function brokenSources(health: SourceHealth | undefined, now: Date, days 
 }
 
 /** The issue body for the broken sources: what fails, since when, the last error, and that the last data is kept. */
-export function issueBody(broken: [string, SourceState][], now: Date): string {
+export function issueBody(broken: [string, SourceState][], now: Date, stale: string | null = null): string {
   const days = (s: SourceState) => Math.floor((now.getTime() - Date.parse(s.since!)) / DAY_MS);
   return [
     "The hero data refresh keeps the last good data for these sources, so the site still works, but they have kept failing:",
     "",
+    ...(stale ? [stale] : []),
     ...broken.map(([name, s]) => `- **${name}**: failing for ${days(s)} days, since ${s.since}. Last error: ${s.note ?? "none given"}`),
     "",
     "This issue closes itself when every source works again.",

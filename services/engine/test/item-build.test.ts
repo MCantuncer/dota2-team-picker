@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { STARTING_GOLD, affordableStart, itemBuild, listNames, sharesBuiltPart, threatsOf, withoutAlternatives } from "../src/engine/item-build";
+import { STARTING_GOLD, affordableStart, apartCheck, itemBuild, listNames, sharesBuiltPart, threatsOf, withoutAlternatives } from "../src/engine/item-build";
 import type { HeroInfo, ItemInfo, Snapshot } from "../src/engine/types";
 
 const hero = (id: number, name: string, roles: string[]): HeroInfo => ({ id, name, roles, attackType: "Melee", primaryAttr: "str" });
@@ -303,6 +303,31 @@ describe("items built from the same part", () => {
     expect(withoutAlternatives(six, byMinute, d.items!)).toEqual(six);
     const five: [number, number][] = [[147, 20], [154, 25], [200, 22]];
     expect(withoutAlternatives(five, byMinute, d.items!)).toEqual([[147, 20], [200, 22]]);
+  });
+
+  it("keeps one of two routes players rarely hold together and names the other as its or", () => {
+    const d = withYasha();
+    // Armlet at 12, Radiance at 17, Manta Style at 20, then BKB, 200 and 202.
+    d.itemTimings = timings([[151, 12, 14], [137, 17, 19], [147, 20, 24], [116, 23, 26], [200, 26, 30], [202, 31, 35]]);
+    expect(core(d)).toEqual(expect.arrayContaining(["Armlet of Mordiggian", "Radiance", "Manta Style"]));
+    // Radiance and Manta Style held together in 18% of the games with either: two routes 3 minutes apart.
+    d.itemsApart = { 1: { 1: [[137, 147, 18]] } };
+    const build = itemBuild(d, 1, 1, [])!;
+    expect(build.core.map((i) => i.name)).not.toContain("Manta Style");
+    expect(build.core.find((i) => i.name === "Radiance")?.or).toMatchObject({ itemId: 147, name: "Manta Style", minute: 20 });
+    // The freed slot goes to the next item.
+    expect(build.core.map((i) => i.name)).toContain(d.items![202]!.name);
+  });
+
+  it("keeps rarely held pairs far apart unless almost nobody holds both, and late items always", () => {
+    const d = withYasha();
+    const rows: [number, number][] = [[137, 12], [147, 20], [116, 26]];
+    // 18% together, 8 minutes apart: a later step, not another route.
+    expect(withoutAlternatives(rows, byMinute, d.items!, apartCheck({ itemsApart: { 1: { 1: [[137, 147, 18]] } } }, 1, 1))).toEqual(rows);
+    // 5% together: another route even 8 minutes on.
+    expect(withoutAlternatives(rows, byMinute, d.items!, apartCheck({ itemsApart: { 1: { 1: [[137, 147, 5]] } } }, 1, 1))).toEqual([[137, 12], [116, 26]]);
+    // From minute 25 on, six slots and the game's end decide what is held: kept.
+    expect(withoutAlternatives(rows, byMinute, d.items!, apartCheck({ itemsApart: { 1: { 1: [[147, 116, 5]] } } }, 1, 1))).toEqual(rows);
   });
 
   it("counts only a built part over the core cost, not a basic one", () => {

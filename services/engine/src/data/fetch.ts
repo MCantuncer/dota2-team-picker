@@ -28,6 +28,7 @@ import { fetchItemStarts } from "./item-starts";
 import { fetchItemTimings, itemTimingsDue } from "./item-timings";
 import { fetchItems, itemsDue } from "./items";
 import { countNeutralChoices } from "./neutral-choices";
+import { findItemsApart } from "./items-apart";
 import { fetchNeutralPool, neutralsDue } from "./neutral-items";
 import { dropRemovedItems, fetchRemovedItems } from "./removed-items";
 import { applyGameItems, fetchGameItems } from "./game-items";
@@ -36,6 +37,9 @@ import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
 import { applyGameTalents, fetchGameTalents } from "./talents";
 import { buildFactUpdates, describeUpdates } from "./fact-updates";
 import { getJson, getText, watchRelease } from "./patch-watch";
+import { HERO_DATA_URL } from "./pull";
+import { applyRecentWinRates, unusable } from "./recent-win-rates";
+import type { MetaFile } from "./meta";
 import { record } from "./source-health";
 import { fetchPositions, postStratz } from "./stratz";
 import {
@@ -64,6 +68,8 @@ const DECAY_PER_DAY = 0.99;
  */
 const PATCH_CARRYOVER = 0.25;
 const LANE_ROLES_MAX_AGE_DAYS = 7;
+/** Fewer heroes than this from heroStats is a broken answer (the game has 127). */
+const MIN_HEROES = 100;
 /** STRATZ matchups older than this get a warning in the refresh log (4 refreshes a day). */
 const STRATZ_STALE_HOURS = 48;
 /**
@@ -160,6 +166,31 @@ export function applyPatch(snapshot: Snapshot, latest: PatchRow): boolean {
 /** Records one source's result in the snapshot's source health (see source-health.ts). */
 function track(snapshot: Snapshot, name: string, state: "ok" | "fail" | "lag", now: Date, note?: string) {
   record((snapshot.sourceHealth ??= {}), name, state, now, note);
+}
+
+/**
+ * Moves each hero's win rate per rank group to the Meta page's weighted rate from the last meta.json (see
+ * recent-win-rates.ts), so pick scores follow a letter patch like the Meta page does. Never throws: when meta.json
+ * can't be read or used, heroStats' whole-patch rates stay.
+ */
+async function applyMetaWinRates(snapshot: Snapshot, now: Date) {
+  const url = HERO_DATA_URL.replace(/snapshot\.json$/, "meta.json");
+  try {
+    const meta = (await getJson(url)) as MetaFile;
+    const why = unusable(meta, snapshot, now);
+    if (why) {
+      console.log(`Hero win rates stay heroStats' whole patch: ${why}.`);
+      track(snapshot, "Meta Win Rates", "lag", now, why);
+      return;
+    }
+    const { groups, moved } = applyRecentWinRates(snapshot, meta, now);
+    const top = moved.slice(0, 5).map((m) => `${snapshot.heroes[m.id]?.name ?? m.id} ${m.from.toFixed(1)} to ${m.to.toFixed(1)}`);
+    console.log(`Hero win rates from the Meta page's days: ${groups} hero rank groups moved${top.length ? `, most ${top.join(", ")}` : ""}.`);
+    track(snapshot, "Meta Win Rates", "ok", now);
+  } catch (err) {
+    console.warn(`::warning::Hero win rates stay heroStats' whole patch: ${(err as Error).message}`);
+    track(snapshot, "Meta Win Rates", "fail", now, (err as Error).message);
+  }
 }
 
 /**
@@ -318,7 +349,22 @@ async function main() {
   const now = new Date();
 
   console.log("Hero stats...");
-  const stats = await get<HeroStatsRow[]>("/heroStats");
+  // A run without fresh hero stats keeps the last ones and goes on: one OpenDota error (HTTP 522 on 2026-11-24) used
+  // to stop the whole run, so STRATZ, the Meta page and the saved games all waited for the next run. Only a snapshot
+  // without heroes yet can't go on.
+  let stats: HeroStatsRow[] = [];
+  try {
+    stats = await get<HeroStatsRow[]>("/heroStats");
+    if (!Array.isArray(stats) || stats.length < MIN_HEROES) {
+      throw new Error(`heroStats listed ${Array.isArray(stats) ? stats.length : "no"} heroes`);
+    }
+    track(snapshot, "OpenDota Hero Stats", "ok", now);
+  } catch (err) {
+    if (Object.keys(snapshot.bracketStats).length < MIN_HEROES) throw err;
+    stats = [];
+    console.warn(`::warning::Hero stats failed, keeping the last ones: ${(err as Error).message}`);
+    track(snapshot, "OpenDota Hero Stats", "fail", now, (err as Error).message);
+  }
   for (const h of stats) {
     snapshot.heroes[h.id] = {
       id: h.id,
@@ -335,33 +381,58 @@ async function main() {
     }
     snapshot.bracketStats[h.id] = { picks, wins };
   }
+  const heroIds = Object.keys(snapshot.heroes).map(Number);
 
-  const patches = await get<PatchRow[]>("/constants/patch");
-  const latest = patches.reduce((a, b) => (Date.parse(b.date) > Date.parse(a.date) ? b : a));
-  if (applyPatch(snapshot, latest)) {
-    console.log(`New patch ${latest.name}: old matchups now count ${PATCH_CARRYOVER * 100}%.`);
-    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `new_patch=${latest.name}\n`);
-  } else {
-    console.log(`Patch ${latest.name}.`);
+  // The patch list fails like hero stats: the last patch stays (a new one is then found by the next run).
+  try {
+    const patches = await get<PatchRow[]>("/constants/patch");
+    if (!Array.isArray(patches) || !patches.length) throw new Error("the patch list came back empty");
+    const latest = patches.reduce((a, b) => (Date.parse(b.date) > Date.parse(a.date) ? b : a));
+    if (applyPatch(snapshot, latest)) {
+      console.log(`New patch ${latest.name}: old matchups now count ${PATCH_CARRYOVER * 100}%.`);
+      if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `new_patch=${latest.name}\n`);
+    } else {
+      console.log(`Patch ${latest.name}.`);
+    }
+    track(snapshot, "OpenDota Patch List", "ok", now);
+  } catch (err) {
+    if (!snapshot.patch) throw err;
+    console.warn(`::warning::The patch list failed, keeping patch ${snapshot.patch.name}: ${(err as Error).message}`);
+    track(snapshot, "OpenDota Patch List", "fail", now, (err as Error).message);
   }
   const patchStart = Date.parse(snapshot.patch!.startedAt) / 1000;
   await applyRelease(snapshot, now);
 
   if (laneRolesDue(snapshot, now)) {
-    console.log(`Lane roles for ${stats.length} heroes...`);
-    for (const h of stats) {
-      const rows = await get<LaneRoleRow[]>(`/scenarios/laneRoles?hero_id=${h.id}`);
+    console.log(`Lane roles for ${heroIds.length} heroes...`);
+    // A failed hero keeps its last lane roles; the date stays, so the next run tries them all again.
+    let laneRolesFailed = false;
+    for (const id of heroIds) {
+      let rows: LaneRoleRow[];
+      try {
+        rows = await get<LaneRoleRow[]>(`/scenarios/laneRoles?hero_id=${id}`);
+      } catch (err) {
+        console.warn(`::warning::Lane roles failed at hero ${id}, keeping the last ones: ${(err as Error).message}`);
+        track(snapshot, "OpenDota Lane Roles", "fail", now, (err as Error).message);
+        laneRolesFailed = true;
+        break;
+      }
       const lanes: Snapshot["laneRoles"][string] = {};
       for (const r of rows) {
         const lane = String(r.lane_role) as "1" | "2" | "3" | "4";
         lanes[lane] = (lanes[lane] ?? 0) + Number(r.games);
       }
-      snapshot.laneRoles[h.id] = lanes;
+      snapshot.laneRoles[id] = lanes;
     }
-    snapshot.laneRolesAt = now.toISOString();
+    if (!laneRolesFailed) {
+      track(snapshot, "OpenDota Lane Roles", "ok", now);
+      snapshot.laneRolesAt = now.toISOString();
+    }
   } else {
     console.log(`Lane roles are from ${snapshot.laneRolesAt}, keeping them.`);
   }
+
+  await applyMetaWinRates(snapshot, now);
 
   const stratzToken = process.env.STRATZ_TOKEN;
   if (stratzToken) {
@@ -487,7 +558,7 @@ async function main() {
     }
   }
 
-  console.log("Pick phases and neutral choices from the saved ranked games...");
+  console.log("Pick phases, neutral choices and item routes from the saved ranked games...");
   try {
     const nowS = Math.floor(now.getTime() / 1000);
     const games = (await Promise.all(monthPaths(patchStart, nowS).map(loadEvalGames))).flat();
@@ -497,6 +568,11 @@ async function main() {
     if (snapshot.neutrals) {
       snapshot.neutralChoices = countNeutralChoices(thisPatch, patchStart, snapshot.neutrals);
       console.log(`Neutral choices from ${snapshot.neutralChoices.games} games.`);
+    }
+    if (snapshot.items) {
+      snapshot.itemsApart = findItemsApart(thisPatch, snapshot.items, patchStart);
+      const apart = Object.values(snapshot.itemsApart).flatMap((byPosition) => Object.values(byPosition));
+      console.log(`Item routes apart: ${apart.flat().length} pairs for ${apart.length} hero positions.`);
     }
   } catch (err) {
     // Pick phases are an extra; keep the last ones and go on.
