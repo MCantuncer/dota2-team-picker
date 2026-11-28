@@ -36,6 +36,9 @@ import { fetchSkillBuilds, pathsCoverage } from "./skill-builds";
 import { applyGameTalents, fetchGameTalents } from "./talents";
 import { buildFactUpdates, describeUpdates } from "./fact-updates";
 import { getJson, getText, watchRelease } from "./patch-watch";
+import { HERO_DATA_URL } from "./pull";
+import { applyRecentWinRates, unusable } from "./recent-win-rates";
+import type { MetaFile } from "./meta";
 import { record } from "./source-health";
 import { fetchPositions, postStratz } from "./stratz";
 import {
@@ -160,6 +163,31 @@ export function applyPatch(snapshot: Snapshot, latest: PatchRow): boolean {
 /** Records one source's result in the snapshot's source health (see source-health.ts). */
 function track(snapshot: Snapshot, name: string, state: "ok" | "fail" | "lag", now: Date, note?: string) {
   record((snapshot.sourceHealth ??= {}), name, state, now, note);
+}
+
+/**
+ * Moves each hero's win rate per rank group to the Meta page's weighted rate from the last meta.json (see
+ * recent-win-rates.ts), so pick scores follow a letter patch like the Meta page does. Never throws: when meta.json
+ * can't be read or used, heroStats' whole-patch rates stay.
+ */
+async function applyMetaWinRates(snapshot: Snapshot, now: Date) {
+  const url = HERO_DATA_URL.replace(/snapshot\.json$/, "meta.json");
+  try {
+    const meta = (await getJson(url)) as MetaFile;
+    const why = unusable(meta, snapshot, now);
+    if (why) {
+      console.log(`Hero win rates stay heroStats' whole patch: ${why}.`);
+      track(snapshot, "Meta Win Rates", "lag", now, why);
+      return;
+    }
+    const { groups, moved } = applyRecentWinRates(snapshot, meta, now);
+    const top = moved.slice(0, 5).map((m) => `${snapshot.heroes[m.id]?.name ?? m.id} ${m.from.toFixed(1)} to ${m.to.toFixed(1)}`);
+    console.log(`Hero win rates from the Meta page's days: ${groups} hero rank groups moved${top.length ? `, most ${top.join(", ")}` : ""}.`);
+    track(snapshot, "Meta Win Rates", "ok", now);
+  } catch (err) {
+    console.warn(`::warning::Hero win rates stay heroStats' whole patch: ${(err as Error).message}`);
+    track(snapshot, "Meta Win Rates", "fail", now, (err as Error).message);
+  }
 }
 
 /**
@@ -362,6 +390,8 @@ async function main() {
   } else {
     console.log(`Lane roles are from ${snapshot.laneRolesAt}, keeping them.`);
   }
+
+  await applyMetaWinRates(snapshot, now);
 
   const stratzToken = process.env.STRATZ_TOKEN;
   if (stratzToken) {
