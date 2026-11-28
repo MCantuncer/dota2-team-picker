@@ -136,6 +136,10 @@ export function isCoreItem(item: ItemInfo | undefined): boolean {
 
 /** Two items built from the same part and bought within this many minutes of each other are one choice. */
 export const ALTERNATIVE_WINDOW = 6;
+/** Items players rarely hold together count as two routes only before this minute (see withoutAlternatives). */
+export const ROUTE_MINUTE = 25;
+/** Items held together in under this share of the games with either are two routes at any minute before ROUTE_MINUTE. */
+export const SEPARATE_ROUTE_SHARE = 0.1;
 
 /**
  * Whether two items are built from the same big part that is itself built (Yasha in Manta Style and Sange and
@@ -157,38 +161,68 @@ export function sharesBuiltPart(a: number, b: number, items: Record<string, Item
  * The minutes are what tell the two cases apart: Sange and Yasha at 25 and Abyssal Blade at 39 each need their
  * own Sange, but come far apart, so players buy both. OpenDota's rough minutes are phase averages, so two items
  * bought mostly in the same phase always count as about the same minute.
+ *
+ * `apart` tells items players of this hero rarely hold in one game (Snapshot.itemsApart, see apartCheck): those are
+ * two routes too (Weaver's Maelstrom at 15 and Desolator at 18: of the saved games with either, 18% held both even at
+ * the end), so the less bought one is left out, and `onApart` hears which kept item it lost to. Items from
+ * ROUTE_MINUTE on stay, where six slots and the game's end decide what a player still holds.
  */
 export function withoutAlternatives<T>(
   mostBoughtFirst: T[],
   of: (t: T) => { id: number; minute: number },
   items: Record<string, ItemInfo>,
+  apart?: (a: number, b: number, minutes: number) => boolean,
+  onApart?: (kept: T, left: T) => void,
 ): T[] {
   const kept: T[] = [];
   for (const t of mostBoughtFirst) {
     const { id, minute } = of(t);
-    const taken = kept.some((k) => {
-      const other = of(k);
-      return Math.abs(other.minute - minute) < ALTERNATIVE_WINDOW && sharesBuiltPart(other.id, id, items);
-    });
-    if (!taken) kept.push(t);
+    const near = (k: T) => Math.abs(of(k).minute - minute) < ALTERNATIVE_WINDOW;
+    if (kept.some((k) => near(k) && sharesBuiltPart(of(k).id, id, items))) continue;
+    const route =
+      apart && minute < ROUTE_MINUTE && kept.find((k) => of(k).minute < ROUTE_MINUTE && apart(of(k).id, id, Math.abs(of(k).minute - minute)));
+    if (route) {
+      onApart?.(route, t);
+      continue;
+    }
+    kept.push(t);
   }
   return kept;
 }
 
 /**
+ * The `apart` check of withoutAlternatives for one hero position, from Snapshot.itemsApart: whether two items are
+ * rarely held together, and so two routes when bought `minutes` apart. Within ALTERNATIVE_WINDOW any pair counts;
+ * further apart only one held together in under SEPARATE_ROUTE_SHARE of the games (Faceless Void's Battle Fury at 16
+ * and Mjollnir at 25: 2 of 139 games held both). Undefined without pairs.
+ */
+export function apartCheck(data: Pick<Snapshot, "itemsApart">, heroId: number, position: Position) {
+  const pairs = data.itemsApart?.[heroId]?.[position];
+  if (!pairs?.length) return undefined;
+  const together = new Map(pairs.flatMap(([a, b, pct]) => [[`${a}:${b}`, pct], [`${b}:${a}`, pct]] as const));
+  return (a: number, b: number, minutes: number) => {
+    const pct = together.get(`${a}:${b}`);
+    return pct !== undefined && (minutes < ALTERNATIVE_WINDOW || pct < SEPARATE_ROUTE_SHARE * 100);
+  };
+}
+
+/**
  * The slice's core items past boots, most bought first, as the build takes them: finished items (no parts of
  * another item in the slice), big, not boots, no alternative to a more bought one (withoutAlternatives), at most
- * `slots`. Shared with item-paths.ts so its key items are the ones game-plan.ts keyItem can pick.
+ * `slots`. Shared with item-paths.ts so its key items are the ones game-plan.ts keyItem can pick. With `apart`,
+ * `onApart` hears each item left out as the other route of a kept one.
  */
 export function coreTimingItems(
   slice: ItemTimingSlice,
   items: Record<string, ItemInfo>,
   slots: number,
+  apart?: (a: number, b: number, minutes: number) => boolean,
+  onApart?: (kept: ItemTimingSlice["items"][number], left: ItemTimingSlice["items"][number]) => void,
 ): ItemTimingSlice["items"] {
   const big = finishedItems(slice, items).filter(
     ([id]) => isCoreItem(items[String(id)]) && !BOOTS.has(items[String(id)]?.key ?? ""),
   );
-  return withoutAlternatives(big, ([id, minute]) => ({ id, minute }), items).slice(0, slots);
+  return withoutAlternatives(big, ([id, minute]) => ({ id, minute }), items, apart, onApart).slice(0, slots);
 }
 
 /**
@@ -261,6 +295,11 @@ export interface BuildItem {
   draft?: true;
   /** The usual core item this one is bought instead of, for a counter item (see swapFor). */
   replaces?: number;
+  /**
+   * The other route players of the hero take here instead, with its own minute: two big items they rarely hold in
+   * one game (Snapshot.itemsApart), of which the build lists the more bought one. Core items only.
+   */
+  or?: BuildItem;
   /** Why it is in the build, naming the enemy heroes it answers. Empty for the usual build. */
   reason?: string;
   /** The enemy hero ids the item answers, most matching threats first. Set with `reason`. */
@@ -352,11 +391,18 @@ export function itemBuild(
   const bootsMinute = stratzBoots?.[1] ?? (boots ? bought.get(boots)?.minute : undefined) ?? PHASE_MINUTE.early;
   const chosen = chooseTimingSlice(data, heroId, position, rankBracket);
   const timed = new Map(chosen?.slice.items.map(([id, minute, lateMinute]) => [String(id), { minute, lateMinute }]));
+  // Two routes players rarely take in one game (Weaver's Maelstrom and Desolator): the build keeps the more bought
+  // one and names the first other route it left out as its "or".
+  const apart = apartCheck(data, heroId, position);
+  const orOf = new Map<number, { id: number; minute: number }>();
+  const noteOr = (kept: number, left: number, minute: number) => {
+    if (!orOf.has(kept)) orOf.set(kept, { id: left, minute });
+  };
   const core = chosen
     ? [
         // STRATZ keeps boots out of its item timings, so they still come from OpenDota.
         ...(boots ? [toItem(boots, bootsMinute)] : []),
-        ...coreTimingItems(chosen.slice, items, CORE_ITEMS - (boots ? 1 : 0))
+        ...coreTimingItems(chosen.slice, items, CORE_ITEMS - (boots ? 1 : 0), apart, ([kept], [left, minute]) => noteOr(kept, left, minute))
           .map(([id, minute, lateMinute]) => ({ ...toItem(String(id), minute), lateMinute })),
       ].sort((a, b) => a.minute - b.minute)
     : [
@@ -365,10 +411,16 @@ export function itemBuild(
           candidates.filter(([id]) => isBig(id) && !isBoots(id)),
           ([id, b]) => ({ id: Number(id), minute: b.minute }),
           items,
+          apart,
+          ([kept], [left, b]) => noteOr(Number(kept), Number(left), b.minute),
         )
           .slice(0, CORE_ITEMS - (boots ? 1 : 0))
           .map(([id, b]) => toItem(id, b.minute)),
       ].sort((a, b) => a.minute - b.minute);
+  for (const [i, item] of core.entries()) {
+    const or = orOf.get(item.itemId);
+    if (or) core[i] = { ...item, or: toItem(String(or.id), or.minute) };
+  }
   oneAfterAnother(core);
   // STRATZ lane items in buy order when the slice has them, else OpenDota's most bought small items.
   // An item already in the start (Medusa's Magic Wand) is not bought again in lane.

@@ -28,6 +28,7 @@ import { fetchItemStarts } from "./item-starts";
 import { fetchItemTimings, itemTimingsDue } from "./item-timings";
 import { fetchItems, itemsDue } from "./items";
 import { countNeutralChoices } from "./neutral-choices";
+import { findItemsApart } from "./items-apart";
 import { fetchNeutralPool, neutralsDue } from "./neutral-items";
 import { dropRemovedItems, fetchRemovedItems } from "./removed-items";
 import { applyGameItems, fetchGameItems } from "./game-items";
@@ -487,7 +488,7 @@ async function main() {
     }
   }
 
-  console.log("Pick phases and neutral choices from the saved ranked games...");
+  console.log("Pick phases, neutral choices and item routes from the saved ranked games...");
   try {
     const nowS = Math.floor(now.getTime() / 1000);
     const games = (await Promise.all(monthPaths(patchStart, nowS).map(loadEvalGames))).flat();
@@ -497,6 +498,11 @@ async function main() {
     if (snapshot.neutrals) {
       snapshot.neutralChoices = countNeutralChoices(thisPatch, patchStart, snapshot.neutrals);
       console.log(`Neutral choices from ${snapshot.neutralChoices.games} games.`);
+    }
+    if (snapshot.items) {
+      snapshot.itemsApart = findItemsApart(thisPatch, snapshot.items, patchStart);
+      const apart = Object.values(snapshot.itemsApart).flatMap((byPosition) => Object.values(byPosition));
+      console.log(`Item routes apart: ${apart.flat().length} pairs for ${apart.length} hero positions.`);
     }
   } catch (err) {
     // Pick phases are an extra; keep the last ones and go on.
