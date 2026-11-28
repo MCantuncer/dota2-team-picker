@@ -64,6 +64,8 @@ const DECAY_PER_DAY = 0.99;
  */
 const PATCH_CARRYOVER = 0.25;
 const LANE_ROLES_MAX_AGE_DAYS = 7;
+/** Fewer heroes than this from heroStats is a broken answer (the game has 127). */
+const MIN_HEROES = 100;
 /** STRATZ matchups older than this get a warning in the refresh log (4 refreshes a day). */
 const STRATZ_STALE_HOURS = 48;
 /**
@@ -318,7 +320,22 @@ async function main() {
   const now = new Date();
 
   console.log("Hero stats...");
-  const stats = await get<HeroStatsRow[]>("/heroStats");
+  // A run without fresh hero stats keeps the last ones and goes on: one OpenDota error (HTTP 522 on 2026-11-24) used
+  // to stop the whole run, so STRATZ, the Meta page and the saved games all waited for the next run. Only a snapshot
+  // without heroes yet can't go on.
+  let stats: HeroStatsRow[] = [];
+  try {
+    stats = await get<HeroStatsRow[]>("/heroStats");
+    if (!Array.isArray(stats) || stats.length < MIN_HEROES) {
+      throw new Error(`heroStats listed ${Array.isArray(stats) ? stats.length : "no"} heroes`);
+    }
+    track(snapshot, "OpenDota Hero Stats", "ok", now);
+  } catch (err) {
+    if (Object.keys(snapshot.bracketStats).length < MIN_HEROES) throw err;
+    stats = [];
+    console.warn(`::warning::Hero stats failed, keeping the last ones: ${(err as Error).message}`);
+    track(snapshot, "OpenDota Hero Stats", "fail", now, (err as Error).message);
+  }
   for (const h of stats) {
     snapshot.heroes[h.id] = {
       id: h.id,
@@ -335,30 +352,53 @@ async function main() {
     }
     snapshot.bracketStats[h.id] = { picks, wins };
   }
+  const heroIds = Object.keys(snapshot.heroes).map(Number);
 
-  const patches = await get<PatchRow[]>("/constants/patch");
-  const latest = patches.reduce((a, b) => (Date.parse(b.date) > Date.parse(a.date) ? b : a));
-  if (applyPatch(snapshot, latest)) {
-    console.log(`New patch ${latest.name}: old matchups now count ${PATCH_CARRYOVER * 100}%.`);
-    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `new_patch=${latest.name}\n`);
-  } else {
-    console.log(`Patch ${latest.name}.`);
+  // The patch list fails like hero stats: the last patch stays (a new one is then found by the next run).
+  try {
+    const patches = await get<PatchRow[]>("/constants/patch");
+    if (!Array.isArray(patches) || !patches.length) throw new Error("the patch list came back empty");
+    const latest = patches.reduce((a, b) => (Date.parse(b.date) > Date.parse(a.date) ? b : a));
+    if (applyPatch(snapshot, latest)) {
+      console.log(`New patch ${latest.name}: old matchups now count ${PATCH_CARRYOVER * 100}%.`);
+      if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `new_patch=${latest.name}\n`);
+    } else {
+      console.log(`Patch ${latest.name}.`);
+    }
+    track(snapshot, "OpenDota Patch List", "ok", now);
+  } catch (err) {
+    if (!snapshot.patch) throw err;
+    console.warn(`::warning::The patch list failed, keeping patch ${snapshot.patch.name}: ${(err as Error).message}`);
+    track(snapshot, "OpenDota Patch List", "fail", now, (err as Error).message);
   }
   const patchStart = Date.parse(snapshot.patch!.startedAt) / 1000;
   await applyRelease(snapshot, now);
 
   if (laneRolesDue(snapshot, now)) {
-    console.log(`Lane roles for ${stats.length} heroes...`);
-    for (const h of stats) {
-      const rows = await get<LaneRoleRow[]>(`/scenarios/laneRoles?hero_id=${h.id}`);
+    console.log(`Lane roles for ${heroIds.length} heroes...`);
+    // A failed hero keeps its last lane roles; the date stays, so the next run tries them all again.
+    let laneRolesFailed = false;
+    for (const id of heroIds) {
+      let rows: LaneRoleRow[];
+      try {
+        rows = await get<LaneRoleRow[]>(`/scenarios/laneRoles?hero_id=${id}`);
+      } catch (err) {
+        console.warn(`::warning::Lane roles failed at hero ${id}, keeping the last ones: ${(err as Error).message}`);
+        track(snapshot, "OpenDota Lane Roles", "fail", now, (err as Error).message);
+        laneRolesFailed = true;
+        break;
+      }
       const lanes: Snapshot["laneRoles"][string] = {};
       for (const r of rows) {
         const lane = String(r.lane_role) as "1" | "2" | "3" | "4";
         lanes[lane] = (lanes[lane] ?? 0) + Number(r.games);
       }
-      snapshot.laneRoles[h.id] = lanes;
+      snapshot.laneRoles[id] = lanes;
     }
-    snapshot.laneRolesAt = now.toISOString();
+    if (!laneRolesFailed) {
+      track(snapshot, "OpenDota Lane Roles", "ok", now);
+      snapshot.laneRolesAt = now.toISOString();
+    }
   } else {
     console.log(`Lane roles are from ${snapshot.laneRolesAt}, keeping them.`);
   }
